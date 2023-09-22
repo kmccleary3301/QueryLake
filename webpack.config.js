@@ -11,18 +11,13 @@ module.exports = async function (env, argv) {
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
-      '/chain': {
+      '/uploadfile': {
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
-      '/fetch': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/streaming/ask': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
+    },
+    externals: {
+      "react-native": true,
     },
   }
 
