@@ -11,19 +11,21 @@ import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
 
 type CollectionPreviewProps = {
+	style?: React.CSSProperties,
 	onToggleSelected?: (selected: boolean) => void,
 	selectedState: {
 		selected: boolean,
 		setSelected: React.Dispatch<React.SetStateAction<boolean>>,
 	},
 	title: string,
+	documentCount: number;
 }
 
 export default function CollectionPreview(props: CollectionPreviewProps) {
 	const [panelMode, setPanelMode] = useState("");
 	// const [opened, setOpened] = useState(true);
 	// const [selected, setSelected] = useState(false);
-	const {selectedState: {selected, setSelected}, title} = props;
+	const {selectedState: {selected, setSelected}, title, documentCount} = props;
 
 	function changePanelMode(new_mode: string) {
 		setPanelMode(new_mode);
@@ -57,52 +59,106 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 
 	return (
 		<View style={{
-			height: 40,
-			paddingTop: 10,
-			borderRadius: 20,
-			backgroundColor: '#23232D',
-			flexDirection: 'row',
+			...props.style,
+			width: '100%',
+			flexDirection: 'column',
+			// justifyContent: 'space-around',
+			// paddingVertical: 10,
+			paddingHorizontal: 8,
+			// alignSelf: 'center',
 		}}>
-			<View style={{flexDirection: 'column', justifyContent: 'center'}}>
-				<Pressable style={{
-					width: 25,
-					height: 25,
-					borderRadius: 12,
-					backgroundColor: '#7968D9',
-					alignItems: 'center',
-					justifyContent: 'center',
-				}}
-				onPress={() => {
-					if (props.onToggleSelected) { props.onToggleSelected(!selected); }
-					setSelected(selected => !selected);
-				}}
-				>
-					<Animated.View style={{
-						paddingLeft: 1,
-						backgroundColor: '#23232D',
-						height: selectionCircleSize,
-						borderRadius: 6,
-						width: selectionCircleSize,
-						// opacity: selectionCircleSize
-					}}/>
-				</Pressable>
-			</View>
 			<View style={{
-				width: '80%',
-				flexDirection: 'column',
-				justifyContent: 'center',
-				paddingLeft: 9,
+				height: 40,
+				borderRadius: 20,
+				backgroundColor: '#23232D',
+				flexDirection: 'row',
+				paddingLeft: 8,
+				paddingRight: -20,
+				// alignItems: 'center',
+				// justifyContent: 'space-around',
 			}}>
-				<Text style={{
-					fontSize: 20,
-					color: '#E8E3E3',
-					textAlign: 'left',
-					textAlignVertical: 'center',
+				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
+					<Pressable style={{
+						width: 25,
+						height: 25,
+						borderRadius: 12,
+						backgroundColor: '#7968D9',
+						alignItems: 'center',
+						justifyContent: 'center',
+						// flexDirection: 'column',
+						// paddingLeft: 1,
+					}}
+					onPress={() => {
+						if (props.onToggleSelected) { props.onToggleSelected(!selected); }
+						setSelected(selected => !selected);
+					}}
+					>
+						{/* {selected && ( */}
+							<Animated.View style={{
+								paddingLeft: 1,
+								backgroundColor: '#23232D',
+								height: selectionCircleSize,
+								borderRadius: 6,
+								width: selectionCircleSize,
+								// opacity: selectionCircleSize
+							}}/>
+						{/* )} */}
+					</Pressable>
+				</View>
+				<View style={{
+					width: '80%',
+					height: 40,
+					flexDirection: 'column',
+					justifyContent: 'center',
+					paddingLeft: 9,
 				}}>
-					{props.title}
-				</Text>
+					<View style={{width: '85%'}}>
+					<Text style={{
+						fontSize: 20,
+						color: '#E8E3E3',
+						textAlign: 'left',
+						textAlignVertical: 'center',
+						paddingBottom: 3,
+					}}
+					numberOfLines={1}
+					>
+						{title}
+					</Text>
+					</View>
+				</View>
+				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
+					{/* Notification count */}
+					<View style={{
+						// flexDirection: 'row',
+						// justifyContent: 'flex-start',
+						width: 20,
+						paddingRight: 10,
+						// alignSelf: 'flex-end',
+					}}>
+						<View style={{
+							flexDirection: 'column',
+							alignSelf: 'flex-end',
+							// paddingHorizontal: 10,
+							borderRadius: 10,
+							borderColor: '#00000000',
+						}}>
+							<Text style={{
+								backgroundColor: '#D9D9D9',
+								color: 'black',
+								fontSize: 10,
+								textAlign: 'center',
+								alignSelf: 'flex-end',
+								borderRadius: 8,
+								paddingVertical: 2,
+								paddingHorizontal: 6,
+								verticalAlign: 'bottom',
+							}}>
+								{(documentCount <= 999)?documentCount.toString():"999+"}
+							</Text>
+						</View>
+					</View>
+				</View>
 			</View>
-
 		</View>
 	);
 }

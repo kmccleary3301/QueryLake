@@ -4,7 +4,7 @@ import {
   useWindowDimensions,
 	Pressable,
 } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import TestUploadBox from './TestUploadBox';
 // import SwitchSelector from "react-native-switch-selector";
 import SwitchSelector from '../react-native-switch-selector';
@@ -18,13 +18,90 @@ type selectedState = [
 	setSelected: React.Dispatch<React.SetStateAction<boolean>>,
 ];
 
+type collectionGroup = {
+	title: string,
+	toggleSelections: selectedState[],
+	selected: selectedState,
+	collections: any,
+};
+
+const test_collections = [
+	{
+		"title": "Test Collectionsajdhfkshdkfhskd",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 55
+	},
+	{
+		"title": "Test Collection",
+		"items": 555
+	},
+	{
+		"title": "Test Collection sdfasdfasdfsf",
+		"items": 5555
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+	{
+		"title": "Test Collection",
+		"items": 5
+	},
+];
+
 export default function Sidebar(props: any) {
 	const [panelMode, setPanelMode] = useState("");
-	let bigArray = Array(20).fill(0);
 	let toggleSelections: selectedState[] = [];
-	for (let i = 0; i < 20; i++) {
+	for (let i = 0; i < test_collections.length; i++) {
 		toggleSelections.push(useState(false));
 	}
+
+	let CollectionGroups : collectionGroup[] = [
+		{
+			title: "My Collections",
+			toggleSelections: [],
+			selected: useState(false),
+			collections: test_collections,
+		},
+		{
+			title: "Added Collections",
+			toggleSelections: [],
+			selected: useState(false),
+			collections: test_collections,
+		}
+	];
+
+	const reloadCollectionGroup = (group_key : number) => {
+		CollectionGroups[group_key].toggleSelections = [];
+		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
+			CollectionGroups[group_key].toggleSelections.push(useState(false));
+		} 
+	};
+
+	for (let i = 0; i < CollectionGroups.length; i++) {
+		reloadCollectionGroup(i);
+	}
+
+	const [myCollectionsSelected, setMyCollectionsSelected] = useState(false);
 
 
 	const changePanelMode = (new_mode : string) => {
@@ -50,6 +127,14 @@ export default function Sidebar(props: any) {
 		return url.toString();
 	};
 
+	const toggleMyCollections = (selected: boolean, group_key: number) => {
+		// if (selected) {
+		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
+			CollectionGroups[group_key].toggleSelections[i][1](selected);
+		}
+		// }
+	};
+
 	return (
 		// <DrawerContent>
 			<View {...props}>
@@ -61,7 +146,7 @@ export default function Sidebar(props: any) {
 				}}>
 					<View style={{
 						flex: 5,
-						// paddingHorizontal: 22,
+						paddingHorizontal: 0,
 						// paddingVertical: 10,
 						alignItems: 'center',
 						flexDirection: 'column',
@@ -92,6 +177,7 @@ export default function Sidebar(props: any) {
 						}}>
 							<SwitchSelector
 								initial={0}
+								width={"100%"}
 								onPress={(value : string) => {
 									setPanelMode(value);
 									console.log(value);
@@ -118,23 +204,104 @@ export default function Sidebar(props: any) {
 								accessibilityLabel="gender-switch-selector"
 							/>
 						</View>
+						<View style={{
+							width: '100%',
+							// paddingVertical: 10,
+							paddingHorizontal: 22,
+							paddingTop: 10,
+							paddingBottom: 10,
+							
+						}}>
+							<View style={{
+								flexDirection: 'row',
+								backgroundColor: '#23232D',
+								paddingVertical: 10,
+								paddingHorizontal: 10,
+								borderRadius: 10,
+							}}>
+								<Feather name="search" size={24} color="#E8E3E3" style={{flex: 1}}/>
+								<View style={{width: '86%', paddingRight: 5}}>
+									<TextInput
+										style={{
+											color: '#E8E3E3',
+											fontSize: 18,
+											outlineStyle: 'none',
+										}}
+										placeholder={'Search Public Collections'}
+										placeholderTextColor={'#E8E3E3'}
+									/>
+								</View>
+							</View>
+						</View>
 						<ScrollView style={{
 							width: '100%',
 							paddingHorizontal: 22,
-							paddingTop: 10,
+							// paddingTop: 10,
 						}}>
-							<CollectionWrapper title="My Collections" onToggleCollapse={() => {console.log("Toggle collapse upper");}} onToggleSelected={() => {}}>
-								{bigArray.map((v, k) => (
+
+							{CollectionGroups.map((v, k) => (
+								<View style={{
+									paddingVertical: 5
+								}}>
+									<CollectionWrapper 
+										title={CollectionGroups[k].title}
+										// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
+										onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
+										selectedState={{
+											selected: CollectionGroups[k].selected[0],
+											setSelected: CollectionGroups[k].selected[1]
+										}}
+									>
+										{CollectionGroups[k].collections.map((v_2, k_2) => (
+											<CollectionPreview
+												style={{
+													paddingTop: (k_2===0)?0:10,
+												}}
+												title={CollectionGroups[k].collections[k_2].title}
+												selectedState={{
+													selected: CollectionGroups[k].toggleSelections[k_2][0],
+													setSelected: CollectionGroups[k].toggleSelections[k_2][1]
+												}}
+												documentCount={v_2.items}
+												onToggleSelected={(collection_selected: boolean) => {
+													if (!collection_selected &&  CollectionGroups[k].selected[0]) {
+														CollectionGroups[k].selected[1](false);
+													}
+												}}
+											/>
+										))}
+									</CollectionWrapper>
+								</View>
+							))}
+							{/* <CollectionWrapper 
+								title="My Collections"
+								// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
+								onToggleSelected={toggleMyCollections}
+								selectedState={{
+									selected: myCollectionsSelected,
+									setSelected: setMyCollectionsSelected
+								}}
+							>
+								{test_collections.map((v, k) => (
 									<CollectionPreview
-										title={"Test Collection"}
+										style={{
+											paddingTop: (k===0)?0:10,
+										}}
+										title={v.title}
 										selectedState={{
 											selected: toggleSelections[k][0],
 											setSelected: toggleSelections[k][1]
 										}}
+										documentCount={v.items}
+										onToggleSelected={(collection_selected: boolean) => {
+											if (!collection_selected && myCollectionsSelected) {
+												setMyCollectionsSelected(false);
+											}
+										}}
 									/>
 								))}
-							</CollectionWrapper>
-							<View style={{
+							</CollectionWrapper> */}
+							{/* <View style={{
 								alignItems: 'center',
 								justifyContent: 'center'
 							}}>
@@ -142,16 +309,33 @@ export default function Sidebar(props: any) {
 							{big_array.map((v, k) => (
 								<Text key={k}>Hello</Text>
 							))}
-							</View>
+							</View> */}
 						</ScrollView>
 					</View>
-					<View style={{backgroundColor: "#00FF00", flex: 1}}>
-
-						<ScrollView>
-							{big_array.map((v, k) => (
-								<Text key={k}>Goodbye</Text>
-							))}
-						</ScrollView>
+					<View style={{
+						flexDirection: "column", 
+						justifyContent: "flex-end", 
+						paddingHorizontal: 20, 
+						paddingBottom: 15,
+						paddingTop: 15,
+					}}>
+						
+						<Pressable>
+							<Text style={{
+								fontSize: 20,
+								color: "#E8E3E3",
+							}}>
+								{"Model Settings"}
+							</Text>
+						</Pressable>
+						<Pressable>
+							<Text style={{
+								fontSize: 20,
+								color: "#E8E3E3",
+							}}>
+								{"Manage Collections"}
+							</Text>
+						</Pressable>
 					</View>
 				</View>
 			</View>

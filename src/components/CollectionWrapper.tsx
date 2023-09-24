@@ -4,7 +4,8 @@ import {
   useWindowDimensions,
 	Pressable,
 	Animated,
-	Easing
+	Easing,
+	ScrollView,
 } from 'react-native';
 // import SwitchSelector from "react-native-switch-selector";
 import { useState, useRef, useEffect } from 'react';
@@ -13,15 +14,36 @@ import { Feather } from '@expo/vector-icons';
 type CollectionWrapperProps = {
 	onToggleCollapse?: (opened: boolean) => void,
 	onToggleSelected?: (selected: boolean) => void,
-	children: any,
+	selectedState: {
+		selected: boolean,
+		setSelected: React.Dispatch<React.SetStateAction<boolean>>,
+	},
+	children?: any,
 	title: string,
 }
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const [opened, setOpened] = useState(true);
-	const [selected, setSelected] = useState(false);
+	// const [selected, setSelected] = useState(false);
+	const [viewScrollable, setViewScrollable] = useState(false);
+	
+	const {selectedState: {selected, setSelected}, children, title,} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
+	const boxHeight = useRef(new Animated.Value(50)).current;
+
+	useEffect(() => {
+    Animated.timing(boxHeight, {
+      toValue: opened?(children.length*50+55):50,
+      // toValue: opened?Math.min(300,(children.length*50+60)):50,
+      duration: 200,
+			easing: Easing.elastic(1),
+      useNativeDriver: true,
+    }).start();
+		setTimeout(() => {
+			setViewScrollable(opened);
+		}, opened?0:100)
+  }, [opened]);
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
@@ -33,20 +55,22 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
   }, [selected]);
 
 	return (
-		<View style={{
+		<Animated.View style={{
 			width: '100%',
 			backgroundColor: '#39393C',
 			flexDirection: 'column',
 			borderRadius: 20,
 			// justifyContent: 'space-around',
 			// paddingVertical: 10,
-			paddingHorizontal: 16,
 			paddingTop: 10,
+			height: boxHeight,
 			// alignSelf: 'center',
 		}}>
 			<View style={{
 				// height: 200,
 				flexDirection: 'row',
+				paddingHorizontal: 16,
+				paddingBottom: 10,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
 			}}>
@@ -90,7 +114,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						textAlign: 'left',
 						textAlignVertical: 'center',
 					}}>
-						{props.title}
+						{title}
 					</Text>
 				</View>
 				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
@@ -104,15 +128,22 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 							name="chevron-down" 
 							size={24} 
 							color="#E8E3E3"
+							style={{
+								transform: opened?"rotate(0deg)":"rotate(90deg)"
+							}}
 						/>
 					</Pressable>
 				</View>
 			</View>
-			<View style={{
-				paddingVertical: 10,
-			}}>
+			{viewScrollable &&
+			<ScrollView style={{
+				paddingBottom: 10,
+			}}
+			showsVerticalScrollIndicator={false}
+			>
 			{props.children}
-			</View>
-		</View>
+			</ScrollView>
+			}
+		</Animated.View>
 	);
 }
