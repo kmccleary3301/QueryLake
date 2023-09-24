@@ -30,7 +30,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import Uploady, { useItemProgressListener } from '@rpldy/uploady';
 import UploadButton from "@rpldy/upload-button";
 import ChatWindow from './src/pages/ChatWindow';
-import Sidebar from './src/components/Sidebar/Sidebar';
+import Sidebar from './src/components/Sidebar';
 
 const Drawer = createDrawerNavigator();
 
