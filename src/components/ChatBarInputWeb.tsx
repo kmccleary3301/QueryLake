@@ -56,7 +56,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [inputLineCount]);
 
@@ -119,7 +119,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
             }}
             style={Platform.select({
               web: {
-                height: inputBoxHeight,
+                // height: inputBoxHeight,
                 color: '#E8E3E3',
                 fontSize: 18,
                 textAlignVertical: 'center',

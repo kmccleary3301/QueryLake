@@ -56,7 +56,7 @@ export default function ChatBarInputMobile(props: ChatBarInputProps) {
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [inputLineCount]);
 
@@ -88,7 +88,7 @@ export default function ChatBarInputMobile(props: ChatBarInputProps) {
         paddingVertical: 5,
     }}>
       <View id="InputText" style={{
-      flex: 1,
+      width: "80%",
       flexDirection: 'column',
       justifyContent: 'center',
       paddingVertical: 5,
@@ -111,7 +111,7 @@ export default function ChatBarInputMobile(props: ChatBarInputProps) {
               setInputLineCount(Math.min(line_count, 4));
             }}
             style={{ 
-                height: inputBoxHeight,
+                // height: inputBoxHeight,
                 color: '#E8E3E3',
                 fontSize: 18,
                 textAlignVertical: 'center',

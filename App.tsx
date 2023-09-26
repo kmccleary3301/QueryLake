@@ -94,7 +94,7 @@ export default function App() {
   return (
     <NavigationContainer>
       <Drawer.Navigator initialRouteName='ChatWindow'
-        drawerContent={(props) => <Sidebar {...props} />} >
+        drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} >
         <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
           headerShown: false, 
           drawerType: Platform.select({

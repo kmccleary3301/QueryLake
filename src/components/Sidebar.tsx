@@ -137,10 +137,10 @@ export default function Sidebar(props: any) {
 
 	return (
 		// <DrawerContent>
-			<View {...props}>
+			<View {...props} style={{height: height}}>
 				<View style={{
 					backgroundColor: "#17181D", 
-					height: height, 
+					height: "100%", 
 					flexDirection: 'column', 
 					padding: 0, 
 				}}>
@@ -227,6 +227,7 @@ export default function Sidebar(props: any) {
 											fontSize: 18,
 											outlineStyle: 'none',
 										}}
+										spellCheck={false}
 										placeholder={'Search Public Collections'}
 										placeholderTextColor={'#E8E3E3'}
 									/>
@@ -238,12 +239,11 @@ export default function Sidebar(props: any) {
 							paddingHorizontal: 22,
 							// paddingTop: 10,
 						}}>
-
 							{CollectionGroups.map((v, k) => (
-								<View style={{
+								<View key={k} style={{
 									paddingVertical: 5
 								}}>
-									<CollectionWrapper 
+									<CollectionWrapper key={k} 
 										title={CollectionGroups[k].title}
 										// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
 										onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
@@ -253,7 +253,7 @@ export default function Sidebar(props: any) {
 										}}
 									>
 										{CollectionGroups[k].collections.map((v_2, k_2) => (
-											<CollectionPreview
+											<CollectionPreview key={k_2}
 												style={{
 													paddingTop: (k_2===0)?0:10,
 												}}
@@ -273,43 +273,6 @@ export default function Sidebar(props: any) {
 									</CollectionWrapper>
 								</View>
 							))}
-							{/* <CollectionWrapper 
-								title="My Collections"
-								// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
-								onToggleSelected={toggleMyCollections}
-								selectedState={{
-									selected: myCollectionsSelected,
-									setSelected: setMyCollectionsSelected
-								}}
-							>
-								{test_collections.map((v, k) => (
-									<CollectionPreview
-										style={{
-											paddingTop: (k===0)?0:10,
-										}}
-										title={v.title}
-										selectedState={{
-											selected: toggleSelections[k][0],
-											setSelected: toggleSelections[k][1]
-										}}
-										documentCount={v.items}
-										onToggleSelected={(collection_selected: boolean) => {
-											if (!collection_selected && myCollectionsSelected) {
-												setMyCollectionsSelected(false);
-											}
-										}}
-									/>
-								))}
-							</CollectionWrapper> */}
-							{/* <View style={{
-								alignItems: 'center',
-								justifyContent: 'center'
-							}}>
-							<TestUploadBox/>
-							{big_array.map((v, k) => (
-								<Text key={k}>Hello</Text>
-							))}
-							</View> */}
 						</ScrollView>
 					</View>
 					<View style={{

@@ -260,7 +260,7 @@ export default function ChatWindow({ navigation }) {
             style={{
               color: "#E8E3E3",
               fontSize: 20,
-              fontFamily: "YingHei",
+              // fontFamily: "YingHei",
               flex: 1,
               flexDirection: "column",
             }}
@@ -271,7 +271,7 @@ export default function ChatWindow({ navigation }) {
             <Text
               style={{
                 color: "white",
-                fontFamily: "YingHei",
+                // fontFamily: "YingHei",
                 fontSize: 20,
                 flex: 1,
                 flexDirection: "column",
@@ -373,7 +373,7 @@ export default function ChatWindow({ navigation }) {
           
           {PlatformIsWeb && (
             <Text style={{
-                fontFamily: "YingHei",
+                // fontFamily: "YingHei",
                 color: "#4D4D56",
                 fontSize: 15,
                 fontStyle: "italic",
@@ -461,7 +461,7 @@ const styles = {
     paddingVertical: 25,
   },
   chatBoxText: {
-    fontFamily: "YingHei",
+    // fontFamily: "YingHei",
     fontSize: 20,
     height: "10px",
     color: "white",
@@ -491,7 +491,7 @@ const styles = {
     // padding: 10,
   },
   inputBoxTextInput: {
-    fontFamily: "YingHei",
+    // fontFamily: "YingHei",
     fontSize: 15,
     height: "100%",
     flex: 8,
