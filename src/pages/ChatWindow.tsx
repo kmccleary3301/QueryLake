@@ -1,7 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 // import EventSource from "./src/react-native-server-sent-events";
 import { useFonts } from "expo-font";
-import { View, Text, Pressable, TextInput, StatusBar } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  StatusBar,
+  Modal,
+  Button,
+  Alert,
+} from "react-native";
+import Clipboard from "@react-native-clipboard/clipboard";
 import { Feather } from "@expo/vector-icons";
 import { ScrollView, Switch } from "react-native-gesture-handler";
 // import Uploady, { useItemProgressListener } from '@rpldy/uploady';
@@ -13,9 +23,13 @@ import Icon from "react-native-vector-icons/FontAwesome";
 export default function ChatWindow({ navigation }) {
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState(
+    "Write a python function that calculates the Fibonacci sequence up to a given number n. Include type hints and a function description."
+  );
   const [isEnabled, setIsEnabled] = useState(false);
-  const [chat, setChat] = useState("Sample Text");
+  const [chat, setChat] = useState(
+    "Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:"
+  );
   const [sseOpened, setSseOpened] = useState(false);
   const [fileDragHover, setFileDragHover] = useState(false);
   const [filesPrepared, setFilesPrepared] = useState<File[]>([]);
@@ -28,6 +42,14 @@ export default function ChatWindow({ navigation }) {
 
   let genString = "";
   let termLet: string[] = [];
+
+  const copyToClipboard = () => {
+    Clipboard.setString(inputText);
+  };
+
+  const copyChatToClipboard = () => {
+    Clipboard.setString(chat);
+  };
 
   const sse_fetch = async function () {
     if (sseOpened === true) {
@@ -167,9 +189,38 @@ export default function ChatWindow({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Icon name="user" size={40} style={styles.userIcon}></Icon>
       <View style={styles.chatColumn}>
+        <Text
+          style={{
+            color: "#E8E3E3",
+            fontSize: 20,
+            fontFamily: "YingHei",
+            flex: 1,
+            flexDirection: "column",
+          }}
+        >
+          {inputText}
+        </Text>
         <View style={styles.chatBoxContainer}>
+          <Text
+            style={{
+              color: "white",
+              fontFamily: "YingHei",
+              fontSize: 20,
+              flex: 1,
+              flexDirection: "column",
+            }}
+          >
+            {chat}
+          </Text>
+          <Pressable>
+            <Icon
+              name="copy"
+              size={30}
+              style={styles.chatBoxContainerCopyButton}
+              onPress={copyToClipboard}
+            ></Icon>
+          </Pressable>
           <ScrollView
             style={styles.chatBoxPrimary}
             ref={scrollViewRef}
@@ -178,15 +229,38 @@ export default function ChatWindow({ navigation }) {
             }
           >
             <Text style={styles.chatBoxText}>{chat}</Text>
+            <Pressable>
+              <Icon
+                name="copy"
+                size={30}
+                style={styles.chatBoxContainerCopyButton}
+                onPress={copyChatToClipboard}
+              ></Icon>
+            </Pressable>
           </ScrollView>
         </View>
 
         <View style={styles.switchButton}>
-          <Switch onValueChange={toggleSwitch}>
-            trackColor = {{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-            value = {isEnabled}
-          </Switch>
+          <Switch
+            trackColor={{ false: "#4D4D56", true: "#7968D9" }}
+            // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
+            thumbColor={"#D9D9D9"}
+            onValueChange={toggleSwitch}
+            value={isEnabled}
+          />
+          <Text
+            style={{
+              color: "#4D4D56",
+              fontSize: 15,
+              flex: 1,
+              flexDirection: "column",
+              alignContent: "space-between",
+              left: "5%",
+              bottom: "50%",
+            }}
+          >
+            Search web
+          </Text>
         </View>
 
         <View style={styles.inputBoxContainer}>
@@ -219,6 +293,7 @@ export default function ChatWindow({ navigation }) {
               }}
               style={{
                 fontFamily: "YingHei",
+                color: "#E8E3E3",
                 fontSize: 15,
                 height: "60%",
                 width: "100%",
@@ -228,6 +303,23 @@ export default function ChatWindow({ navigation }) {
                 paddingVertical: 10,
               }}
             />
+            <Text
+              style={{
+                fontFamily: "YingHei",
+                color: "#4D4D56",
+                fontSize: 15,
+                fontStyle: "italic",
+              }}
+            >
+              Model:{" "}
+              <a
+                href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf"
+                target="_blank"
+              >
+                meta-llama/Llama-2-70b-chat-hf
+              </a>
+              · Generated content may be inaccurate or false.
+            </Text>
           </div>
 
           <View style={styles.inputBoxSendContainer}>
@@ -260,12 +352,6 @@ const styles = {
     elevation: 3,
     backgroundColor: "black",
   },
-  userIcon: {
-    color: "white",
-    padding: 10,
-    position: "relative",
-    paddingBottom: "50%",
-  },
   leftPanelContainer: {
     flex: 1,
     backgroundColor: "#D7AE98",
@@ -273,6 +359,13 @@ const styles = {
     // justifyContent: 'center',
     alignItems: "center",
     paddingVertical: 20,
+  },
+  chatBoxContainerCopyButton: {
+    color: "white",
+    flex: 1,
+    paddingLeft: "95%",
+    bottom: 20,
+    left: 20,
   },
   uploadButton: {
     // flex: 1,
