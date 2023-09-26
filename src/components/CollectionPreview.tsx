@@ -53,7 +53,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
       toValue: selected?12:0,
       duration: 100,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [selected]);
 
@@ -73,65 +73,67 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 				backgroundColor: '#23232D',
 				flexDirection: 'row',
 				paddingLeft: 8,
-				paddingRight: -20,
+				paddingRight: -10,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
 			}}>
-				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
-					<Pressable style={{
-						width: 25,
-						height: 25,
-						borderRadius: 12,
-						backgroundColor: '#7968D9',
-						alignItems: 'center',
-						justifyContent: 'center',
-						// flexDirection: 'column',
-						// paddingLeft: 1,
-					}}
-					onPress={() => {
-						if (props.onToggleSelected) { props.onToggleSelected(!selected); }
-						setSelected(selected => !selected);
-					}}
-					>
-						{/* {selected && ( */}
-							<Animated.View style={{
-								paddingLeft: 1,
-								backgroundColor: '#23232D',
-								height: selectionCircleSize,
-								borderRadius: 6,
-								width: selectionCircleSize,
-								// opacity: selectionCircleSize
-							}}/>
-						{/* )} */}
-					</Pressable>
-				</View>
-				<View style={{
-					width: '80%',
-					height: 40,
-					flexDirection: 'column',
-					justifyContent: 'center',
-					paddingLeft: 9,
-				}}>
-					<View style={{width: '85%'}}>
-					<Text style={{
-						fontSize: 20,
-						color: '#E8E3E3',
-						textAlign: 'left',
-						textAlignVertical: 'center',
-						paddingBottom: 3,
-					}}
-					numberOfLines={1}
-					>
-						{title}
-					</Text>
-					</View>
-				</View>
-				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
+        <View style={{flex:1, flexDirection: 'row'}}>
+          <View style={{flexDirection: 'column', justifyContent: 'center'}}>
+            <Pressable style={{
+              width: 25,
+              height: 25,
+              borderRadius: 12,
+              backgroundColor: '#7968D9',
+              alignItems: 'center',
+              justifyContent: 'center',
+              // flexDirection: 'column',
+              // paddingLeft: 1,
+            }}
+            onPress={() => {
+              if (props.onToggleSelected) { props.onToggleSelected(!selected); }
+              setSelected(selected => !selected);
+            }}
+            >
+              {/* {selected && ( */}
+                <Animated.View style={{
+                  paddingLeft: 1,
+                  backgroundColor: '#23232D',
+                  height: selectionCircleSize,
+                  borderRadius: 6,
+                  width: selectionCircleSize,
+                  // opacity: selectionCircleSize
+                }}/>
+              {/* )} */}
+            </Pressable>
+          </View>
+          <View style={{
+            width: '100%',
+            height: 40,
+            flexDirection: 'column',
+            justifyContent: 'center',
+            paddingLeft: 9,
+          }}>
+            <View style={{width: '83%'}}>
+              <Text style={{
+                fontSize: 16,
+                color: '#E8E3E3',
+                textAlign: 'left',
+                textAlignVertical: 'center',
+                paddingBottom: 3,
+              }}
+              numberOfLines={1}
+              >
+                {title}
+              </Text>
+            </View>
+          </View>
+        </View>
+				<View style={{flexDirection: 'column', justifyContent: 'center', paddingLeft: 5}}>
 					{/* Notification count */}
 					<View style={{
 						// flexDirection: 'row',
 						// justifyContent: 'flex-start',
-						width: 20,
+						width: 45,
 						paddingRight: 10,
 						// alignSelf: 'flex-end',
 					}}>
@@ -140,12 +142,11 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 							alignSelf: 'flex-end',
 							// paddingHorizontal: 10,
 							borderRadius: 10,
-							borderColor: '#00000000',
 						}}>
 							<Text style={{
 								backgroundColor: '#D9D9D9',
-								color: 'black',
-								fontSize: 10,
+								color: '#000000',
+								fontSize: 9,
 								textAlign: 'center',
 								alignSelf: 'flex-end',
 								borderRadius: 8,

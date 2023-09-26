@@ -22,6 +22,8 @@ import { ScrollView, Switch } from "react-native-gesture-handler";
 import EventSource from "../react-native-server-sent-events";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import Icon from "react-native-vector-icons/FontAwesome";
+import ChatBarInputWeb from "../components/ChatBarInputWeb";
+import ChatBarInputMobile from "../components/ChatBarInputMobile";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -61,6 +63,8 @@ export default function ChatWindow({ navigation }) {
 
   const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
+  const PlatformIsWeb = Platform.select({web: true, default: false});
+
   useFonts({
     YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
   });
@@ -76,19 +80,19 @@ export default function ChatWindow({ navigation }) {
     Clipboard.setString(chat);
   };
 
-  const sse_fetch = async function () {
+  const sse_fetch = async function (message : string) {
     if (sseOpened === true) {
       return;
     }
     console.log("Starting SSE");
 
     const url = new URL("http://localhost:5000/chat");
-    url.searchParams.append("query", inputText);
+    url.searchParams.append("query", message);
 
 
     let user_entry : ChatEntry = {
       origin: "user",
-      content: [inputText],
+      content: [message],
     };
     
     setNewChat(newChat => [...newChat, user_entry])
@@ -154,18 +158,6 @@ export default function ChatWindow({ navigation }) {
     console.log("switch on");
   };
 
-  const handleDragOver = (event: any) => {
-    setFileDragHover(true);
-    event.preventDefault();
-    console.log("Hello");
-  };
-
-  const handleDragEnd = (event: any) => {
-    setFileDragHover(false);
-    event.preventDefault();
-    console.log("Goodbye");
-  };
-
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
   const handleDrop = (event: any) => {
@@ -213,6 +205,11 @@ export default function ChatWindow({ navigation }) {
     //     //})
     //     console.log("Then hook called");
     // })
+  };
+
+
+  const onMessageSend = (message : string) => {
+    sse_fetch(message);
   };
 
   const log_key_press = (e: {
@@ -358,110 +355,40 @@ export default function ChatWindow({ navigation }) {
             </Text>
           </View>
           </View>
-          <div
-            id="Input"
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-            onDrop={handleDrop}
-            onDragLeave={handleDragEnd}
-            style={{
-              // padding: 0,
-              // height: 60,
-              width: '100%',
-              flexDirection: "row",
-              backgroundColor: fileDragHover ? "#836454" : "#17181D",
-              borderRadius: 15,
-              paddingLeft: 10,
-            }}
-          >
-            <View style={{
-              flexDirection: 'row',
-              paddingVertical: 5,
-            }}>
-              <View id="InputText" style={{
-                flex: 1,
-                flexDirection: 'column',
-                justifyContent: 'center',
-                paddingVertical: 5,
+          {Platform.select({
+            web: (
+              <ChatBarInputWeb
+                onMessageSend={onMessageSend}
+                handleDrop={handleDrop}
+              />
+            ),
+            default: (
+              <ChatBarInputMobile
+                onMessageSend={onMessageSend}
+              />
+            )
 
-              }}>
-                <Animated.View style={{height: inputBoxHeight}}>
-                  <TextInput
-                    editable
-                    multiline
-                    numberOfLines={inputLineCount}
-                    placeholder="Ask Anything"
-                    placeholderTextColor={"#4D4D56"}
-                    value={inputText}
-                    onKeyPress={(e) => {
-                      log_key_press(e);
-                    }}
-                    onChangeText={(text) => {
-                      setInputText(text);
-                      let line_count = (text === "")?1:text.split("\n").length;
-                      setInputLineCount(Math.min(line_count, 4));
-                    }}
-                    style={Platform.select({
-                      web: {
-                        height: inputBoxHeight,
-                        color: '#E8E3E3',
-                        fontSize: 18,
-                        textAlignVertical: 'center',
-                        outlineStyle: 'none',
-                      },
-                      default: { //The Platform specific switch is necessary because 'outlineStyle' is only on Web, and causes errors on mobile.
-                        height: inputBoxHeight,
-                        color: '#E8E3E3',
-                        fontSize: 18,
-                        textAlignVertical: 'center',
-                      }
-                    })}
-                  />
-                </Animated.View>
-              </View>
-              <View id="PressablePadView" style={{
-                paddingLeft: 10,
-                paddingRight: 10,
-                alignSelf: 'center',
-              }}>
-                <Pressable 
-                  id="SendButton"
-                  onPress={() => {
-                    sse_fetch();
-                    setInputText("");
-                    setInputLineCount(1);
-                  }}
-                  style={{
-                    // padding: 10,
-                    height: 30,
-                    width: 30,
-                    backgroundColor: "#7968D9",
-                    borderRadius: 15,
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <Feather name="send" size={15} color="#000000" />
-                </Pressable>
-              </View>
-            </View>
-          </div>
-          <Text style={{
-              fontFamily: "YingHei",
-              color: "#4D4D56",
-              fontSize: 15,
-              fontStyle: "italic",
-              textAlignVertical: 'center',
-              // backgroundColor: '#4D4D56',
-          }}>
-            <i>
-            Model:{" "}
-              <a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf" target="_blank">
-                meta-llama/Llama-2-70b-chat-hf
-              </a>
-            {" · "}Generated content may be inaccurate or false.
-            </i>
-          </Text>
+          })}
+          
+          
+          {PlatformIsWeb && (
+            <Text style={{
+                fontFamily: "YingHei",
+                color: "#4D4D56",
+                fontSize: 15,
+                fontStyle: "italic",
+                textAlignVertical: 'center',
+                // backgroundColor: '#4D4D56',
+            }}>
+              <i>
+              Model:{" "}
+                <a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf" target="_blank">
+                  meta-llama/Llama-2-70b-chat-hf
+                </a>
+              {" · "}Generated content may be inaccurate or false.
+              </i>
+            </Text>
+          )}
         </View> 
             
           
