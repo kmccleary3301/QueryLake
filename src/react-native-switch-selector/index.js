@@ -287,7 +287,7 @@ SwitchSelector.defaultProps = {
   buttonMargin: 0,
   buttonColor: '#BCD635',
   returnObject: false,
-  animationDuration: 100,
+  animationDuration: 300,
   disabled: false,
   disableValueChangeOnPress: false,
   initial: -1,

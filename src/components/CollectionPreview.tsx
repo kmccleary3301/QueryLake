@@ -53,7 +53,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
       toValue: selected?12:0,
       duration: 100,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [selected]);
 

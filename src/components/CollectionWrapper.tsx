@@ -36,13 +36,20 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
     Animated.timing(boxHeight, {
       toValue: opened?(children.length*50+55):50,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
-      duration: 200,
-			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      duration: 300,
+			easing: Easing.elastic(0.8),
+      useNativeDriver: false,
     }).start();
-		setTimeout(() => {
-			setViewScrollable(opened);
-		}, opened?0:100)
+		if (opened) {
+			setViewScrollable(true);
+			setTimeout(() => { //This solves a really weird bug where setViewScrollable becomes the wrong value
+				setViewScrollable(true);
+			}, 250)
+		} else {
+			setTimeout(() => {
+				setViewScrollable(false);
+			}, 250)
+		}
   }, [opened]);
 
   useEffect(() => {
@@ -50,7 +57,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
       toValue: selected?12:0,
       duration: 100,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [selected]);
 
@@ -113,6 +120,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						color: '#E8E3E3',
 						textAlign: 'left',
 						textAlignVertical: 'center',
+						// paddingBottom: 3,
 					}}>
 						{title}
 					</Text>
@@ -129,7 +137,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 							size={24} 
 							color="#E8E3E3"
 							style={{
-								transform: opened?"rotate(0deg)":"rotate(90deg)"
+								transform: [{rotate: opened?"0deg":"90deg"}]
 							}}
 						/>
 					</Pressable>

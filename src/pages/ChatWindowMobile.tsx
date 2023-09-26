@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 // import EventSource from "./src/react-native-server-sent-events";
-import { useFonts } from 'expo-font';
+// import { useFonts } from 'expo-font';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import EventSource from '../react-native-server-sent-events';
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 
-export default function ChatWindow({ navigation }) {
+export default function ChatWindowMobile({ navigation }) {
 	const scrollViewRef = useRef();
 	const inputTwo = useRef("");
 	const [inputText, setInputText] = useState('');
@@ -26,9 +26,9 @@ export default function ChatWindow({ navigation }) {
 	const [filesProgress, setFilesProgress] = useState<Number[]>([]);
 	const [submitInput, setSubmitInput] = useState(false);
 
-	useFonts({
-		'YingHei': require('../../assets/fonts/MYingHeiHK-W4.otf'),
-	});
+	// useFonts({
+	// 	'YingHei': Font.load('../../assets/fonts/MYingHeiHK-W4.otf'),
+	// });
 
 	let genString = "";
 	let termLet: string[] = [];
@@ -158,57 +158,101 @@ export default function ChatWindow({ navigation }) {
 	}, [inputText]);
 
 	return (
-		<View style={styles.container}>
-			<View style={styles.chatColumn}>
-				<View style={styles.chatBoxContainer}>
+		<View style={{
+			flex: 1,
+			flexDirection: 'row',
+			backgroundColor: '#D7AE9888',
+			alignItems: 'center',
+			justifyContent: 'center',
+		}}>
+			<View style={{
+				flexDirection: 'column',
+				// flex: 5,
+				height: '100%',
+				width: '88%',
+				paddingHorizontal: 0,
+				paddingVertical: 24,
+			}}>
+				<View style={{
+					paddingVertical: 10,
+					// width: '100%',
+					// height: '500px',
+					flex: 5,
+					paddingHorizontal: 0,
+				}}>
 					<ScrollView 
-						style={styles.chatBoxPrimary}
+						style={{
+							borderRadius: 10,
+							backgroundColor: '#D7AE98',
+							padding: 10,
+						}}
 						ref={scrollViewRef}
 						onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
 					>
-						<Text style={styles.chatBoxText}>
+						<Text style={{
+							// fontFamily: "YingHei",
+							fontSize: 20,
+							height: '10px',
+						}}>
 							{chat}
 						</Text>
 					</ScrollView>
 				</View>
 
-				<View style={styles.inputBoxContainer}>
-					<div
-						onDragOver={handleDragOver}
-						onDragEnd={handleDragEnd}
-						onDrop = {handleDrop}
-						onDragLeave={handleDragEnd}
+				<View style={{
+					height: 60,
+					// flex: 1,
+					flexDirection: 'row',
+					backgroundColor: '#FFAAAA00',
+					borderRadius: 10,
+					// margin: '10px 0',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					// paddingRight: 24,
+					paddingVertical: 2,
+					paddingHorizontal: 0,
+					// padding: 10,
+				}}>
+					<TextInput
+						// ref={input => { this.textInput = inputTwo }}
+						editable
+						multiline
+						numberOfLines={4}
+						value={inputText}
+						onKeyPress={(e: {nativeEvent: {key: string, shiftKey: boolean}}) => {log_key_press(e)}}
+						onChangeText={text => {
+							setInputText(text);
+						}} 
 						style={{
-							flex: 8,
-							padding: 0,
+							// fontFamily: "YingHei",
+							fontSize: 15,
 							height: '100%',
+							width: '80%',
+							backgroundColor: (fileDragHover?'#836454':'#D7AE98'),
+							borderRadius: 10,
+							paddingVertical: 10,
 						}}
-					>
-						<TextInput
-							// ref={input => { this.textInput = inputTwo }}
-							editable
-							multiline
-							numberOfLines={4}
-							value={inputText}
-							onKeyPress={(e: {nativeEvent: {key: string, shiftKey: boolean}}) => {log_key_press(e)}}
-							onChangeText={text => {
-								setInputText(text);
-							}} 
-							style={{
-								fontFamily: "YingHei",
-								fontSize: 15,
-								height: '100%',
-								width: '100%',
-								backgroundColor: (fileDragHover?'#836454':'#D7AE98'),
-								borderRadius: 10,
-								padding: 10,
-							}}
-						/>
-					</div>
-					
-					<View style={styles.inputBoxSendContainer}>
-						<Pressable onPress={sse_fetch} style={styles.inputBoxSendRequest}>
-							<Text style={{fontFamily: "YingHei", fontSize: 15}}>Go</Text>
+					/>
+					<View style={{
+						paddingLeft: 0,
+						height: '80%',
+						width: '10%',
+					}}>
+						<Pressable onPress={sse_fetch} style={{
+							flex: 1,
+							height: '100%',
+							backgroundColor: '#D7AE98',
+							borderRadius: 20,
+							alignItems: 'center',
+							justifyContent: 'center',
+							// paddingLeft: 10,
+						}}>
+							<Text 
+								style={{
+									fontFamily: "YingHei", 
+									fontSize: 15
+								}}
+							>Go</Text>
 						</Pressable>
 					</View>
 					
@@ -270,7 +314,7 @@ const styles = {
 		padding: 10,
 	},
 	chatBoxText: {
-		fontFamily: "YingHei",
+		// fontFamily: "YingHei",
 		fontSize: 20,
 		height: '10px',
 	},
@@ -283,8 +327,8 @@ const styles = {
 		paddingVertical: 24,
 	},
 	inputBoxContainer: {
-		// height: '20%',
-		flex: 1,
+		height: 60,
+		// flex: 1,
 		flexDirection: 'row',
 		backgroundColor: '#FFAAAA00',
 		borderRadius: 10,
@@ -298,13 +342,13 @@ const styles = {
 		// padding: 10,
 	},
 	inputBoxTextInput: {
-		fontFamily: "YingHei",
+		// fontFamily: "YingHei",
 		fontSize: 15,
 		height: '100%',
 		flex: 8,
 		backgroundColor: '#D7AE98',
 		borderRadius: 10,
-		padding: 10,
+		// padding: 10,
 	},
 	inputBoxSendRequest: {
 		flex: 1,
@@ -313,10 +357,10 @@ const styles = {
 		borderRadius: 20,
 		alignItems: 'center',
 		justifyContent: 'center',
-		padding: 10,
+		// paddingLeft: 10,
 	},
 	inputBoxSendContainer: {
-		paddingLeft: 10,
+		paddingLeft: 0,
 		height: '80%',
 		width: '10%',
 	},
