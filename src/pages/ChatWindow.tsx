@@ -24,6 +24,7 @@ import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import Icon from "react-native-vector-icons/FontAwesome";
 import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
+import ChatBubble from "../components/ChatBubble";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -279,7 +280,9 @@ export default function ChatWindow({ navigation }) {
           }}>
 
 
-
+            {newChat.map((v_2 : ChatEntry, k_2 : number) => (
+              <ChatBubble entry={v_2}/>
+            ))}
             {/* <Text
               style={{
                 color: "#E8E3E3",
@@ -328,6 +331,9 @@ export default function ChatWindow({ navigation }) {
                 </Pressable>
               </ScrollView>
             </View> */}
+            {temporaryBotEntry && (
+              <ChatBubble entry={temporaryBotEntry}/>
+            )}
           </ScrollView>
 
           

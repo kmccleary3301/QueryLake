@@ -35,6 +35,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
   }) => {
     if (e.nativeEvent.key === "Enter" && e.nativeEvent.shiftKey === false) {
       setSubmitInput(true);
+      if (props.onMessageSend) { props.onMessageSend(inputText); }
     }
   };
   
@@ -143,9 +144,9 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
         <Pressable 
           id="SendButton"
           onPress={() => {
-          if (props.onMessageSend) { props.onMessageSend(inputText); }
-          setInputText("");
-          setInputLineCount(1);
+            if (props.onMessageSend) { props.onMessageSend(inputText); }
+            setInputText("");
+            setInputLineCount(1);
           }}
           style={{
           // padding: 10,

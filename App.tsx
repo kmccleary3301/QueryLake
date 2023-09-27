@@ -98,7 +98,7 @@ export default function App() {
       <Drawer.Navigator initialRouteName='ChatWindow'
         drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
         screenOptions={{
-          drawerStyle: {width: 400, borderRightWidth: 0},
+          drawerStyle: {width: 320, borderRightWidth: 0},
           overlayColor: 'transparent',
         }}
         >
