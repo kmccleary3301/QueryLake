@@ -91,17 +91,25 @@ function CustomDrawerContent(props: any) {
 }
 
 export default function App() {
+  
+
   return (
-    <NavigationContainer>
+    <NavigationContainer> 
       <Drawer.Navigator initialRouteName='ChatWindow'
-        drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} >
+        drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
+        screenOptions={{
+          drawerStyle: {width: 400, borderRightWidth: 0},
+          overlayColor: 'transparent',
+        }}
+        >
         <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
           headerShown: false, 
           drawerType: Platform.select({
-            web: 'permanent',
+            web: 'back',
             default: 'slide'
-          })
-        }}/>
+          }),
+        }}
+        />
         <Drawer.Screen name="HomeScreen" component={HomeScreen} options={{
           headerShown: false, 
           drawerType: Platform.select({

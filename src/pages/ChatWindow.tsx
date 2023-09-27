@@ -243,155 +243,180 @@ export default function ChatWindow({ navigation }) {
   }, [inputLineCount]);
 
   return (
-    <View style={styles.container}>
-      <View style={{
-        flexDirection: "column",
-        // flex: 5,
-        height: "100%",
-        width: "88%",
-        paddingHorizontal: 0,
-        // paddingVertical: 24,
-      }}>
-        <ScrollView style={{
-          flex: 5,
-
+    <View style={{
+      flex: 1,
+      flexDirection: "row",
+      backgroundColor: "#23232D",
+      alignItems: "center",
+      justifyContent: "center",
+      // width: "80vw"
+      height: "100vh",
+    }}>
+      <View style={{flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
+        <View id="ChatHeader" style={{
+          width: "100%",
+          height: 40,
+          backgroundColor: "#23232D",
+          flexDirection: 'row',
+          alignItems: 'center'
         }}>
-          <Text
-            style={{
-              color: "#E8E3E3",
-              fontSize: 20,
-              // fontFamily: "YingHei",
-              flex: 1,
-              flexDirection: "column",
-            }}
-          >
-            {inputText}
-          </Text>
-          <View style={styles.chatBoxContainer}>
-            <Text
+          <Pressable style={{padding: 0}} onPress={() => {navigation.toggleDrawer()}}>
+            <Feather name="sidebar" size={24} color="#E8E3E3" />
+          </Pressable>
+          {/* Decide what to put here */}
+        </View>
+        <View style={{
+          flexDirection: "column",
+          flex: 1,
+          // height: "100%",
+          width: "88%",
+          paddingHorizontal: 0,
+          // paddingVertical: 24,
+        }}>
+          <ScrollView style={{
+            flex: 5,
+
+          }}>
+
+
+
+            {/* <Text
               style={{
-                color: "white",
-                // fontFamily: "YingHei",
+                color: "#E8E3E3",
                 fontSize: 20,
+                // fontFamily: "YingHei",
                 flex: 1,
                 flexDirection: "column",
               }}
             >
-              {chat}
+              {inputText}
             </Text>
-            <Pressable>
-              <Icon
-                name="copy"
-                size={30}
-                style={styles.chatBoxContainerCopyButton}
-                onPress={copyToClipboard}
-              ></Icon>
-            </Pressable>
-            <ScrollView
-              style={styles.chatBoxPrimary}
-              ref={scrollViewRef}
-              onContentSizeChange={() =>
-                scrollViewRef.current.scrollToEnd({ animated: true })
-            }>
-              <Text style={styles.chatBoxText}>{chat}</Text>
+            <View style={styles.chatBoxContainer}>
+              <Text
+                style={{
+                  color: "white",
+                  // fontFamily: "YingHei",
+                  fontSize: 20,
+                  flex: 1,
+                  flexDirection: "column",
+                }}
+              >
+                {chat}
+              </Text>
               <Pressable>
                 <Icon
                   name="copy"
                   size={30}
                   style={styles.chatBoxContainerCopyButton}
-                  onPress={copyChatToClipboard}
+                  onPress={copyToClipboard}
                 ></Icon>
               </Pressable>
-            </ScrollView>
-          </View>
-        </ScrollView>
+              <ScrollView
+                style={styles.chatBoxPrimary}
+                ref={scrollViewRef}
+                onContentSizeChange={() =>
+                  scrollViewRef.current.scrollToEnd({ animated: true })
+              }>
+                <Text style={styles.chatBoxText}>{chat}</Text>
+                <Pressable>
+                  <Icon
+                    name="copy"
+                    size={30}
+                    style={styles.chatBoxContainerCopyButton}
+                    onPress={copyChatToClipboard}
+                  ></Icon>
+                </Pressable>
+              </ScrollView>
+            </View> */}
+          </ScrollView>
 
-        
+          
 
-        <View id="InputBox" style={{
-          flexDirection: 'column',
-          justifyContent: 'space-around',
-          // flex: 1,
-          // height: 200,
-          width: '100%',
-          paddingVertical: 10,
-        }}>
-          <View style={{paddingBottom: 5}}>
-          <View id="Switch" style={{
-            // width: 200,
-            width: 150,
-            height: 28,
-            borderRadius: 14,
-            // backgroundColor: '#4D4D56',
-            borderWidth: 1,
-            borderColor: '#4D4D56',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingLeft: 3,
+          <View id="InputBox" style={{
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            // flex: 1,
+            // height: 200,
+            width: '100%',
+            paddingVertical: 10,
           }}>
-            <Switch
-              trackColor={{ false: "#4D4D56", true: "#7968D9" }}
-              // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
-              thumbColor={"#D9D9D9"}
-              
-              
-              onValueChange={toggleSwitch}
-              value={isEnabled}
-            />
-            <Text
-              style={{
-                color: "#4D4D56",
-                fontSize: 15,
-                paddingLeft: 10,
-                // flex: 1,
-                // flexDirection: "column",
-                // alignContent: "space-between",
-                // left: "5%",
-                // bottom: "50%",
-              }}
-            >
-              Search web
-            </Text>
-          </View>
-          </View>
-          {Platform.select({
-            web: (
-              <ChatBarInputWeb
-                onMessageSend={onMessageSend}
-                handleDrop={handleDrop}
-              />
-            ),
-            default: (
-              <ChatBarInputMobile
-                onMessageSend={onMessageSend}
-              />
-            )
-
-          })}
-          
-          
-          {PlatformIsWeb && (
-            <Text style={{
-                // fontFamily: "YingHei",
-                color: "#4D4D56",
-                fontSize: 15,
-                fontStyle: "italic",
-                textAlignVertical: 'center',
-                // backgroundColor: '#4D4D56',
+            <View style={{paddingBottom: 5}}>
+            <View id="Switch" style={{
+              // width: 200,
+              width: 150,
+              height: 28,
+              borderRadius: 14,
+              // backgroundColor: '#4D4D56',
+              borderWidth: 1,
+              borderColor: '#4D4D56',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingLeft: 3,
             }}>
-              <i>
-              Model:{" "}
-                <a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf" target="_blank">
-                  meta-llama/Llama-2-70b-chat-hf
-                </a>
-              {" · "}Generated content may be inaccurate or false.
-              </i>
-            </Text>
-          )}
-        </View> 
+              <Switch
+                trackColor={{ false: "#4D4D56", true: "#7968D9" }}
+                // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
+                thumbColor={"#D9D9D9"}
+                
+                
+                onValueChange={toggleSwitch}
+                value={isEnabled}
+              />
+              <Text
+                style={{
+                  color: "#4D4D56",
+                  fontSize: 15,
+                  paddingLeft: 10,
+                  // flex: 1,
+                  // flexDirection: "column",
+                  // alignContent: "space-between",
+                  // left: "5%",
+                  // bottom: "50%",
+                }}
+              >
+                Search web
+              </Text>
+            </View>
+            </View>
+            {Platform.select({
+              web: (
+                <ChatBarInputWeb
+                  onMessageSend={onMessageSend}
+                  handleDrop={handleDrop}
+                />
+              ),
+              default: (
+                <ChatBarInputMobile
+                  onMessageSend={onMessageSend}
+                />
+              )
+
+            })}
             
-          
+            
+            {PlatformIsWeb && (
+              <Text style={{
+                  // fontFamily: "YingHei",
+                  color: "#4D4D56",
+                  fontSize: 15,
+                  fontStyle: "italic",
+                  textAlignVertical: 'center',
+                  // backgroundColor: '#4D4D56',
+              }}>
+                <i>
+                Model:{" "}
+                  <a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf" target="_blank">
+                    meta-llama/Llama-2-70b-chat-hf
+                  </a>
+                {" · "}Generated content may be inaccurate or false.
+                </i>
+              </Text>
+            )}
+          </View> 
+              
+            
+        </View>
       </View>
       <StatusBar style="auto" />
     </View>
