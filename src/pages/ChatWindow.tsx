@@ -1,323 +1,560 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 // import EventSource from "./src/react-native-server-sent-events";
-import { useFonts } from 'expo-font';
+import { useFonts } from "expo-font";
 import {
   View,
   Text,
   Pressable,
   TextInput,
-  StatusBar
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { ScrollView } from 'react-native-gesture-handler';
+  StatusBar,
+  Modal,
+  Button,
+  Alert,
+  Platform,
+  Animated,
+  Easing
+} from "react-native";
+import Clipboard from "@react-native-clipboard/clipboard";
+import { Feather } from "@expo/vector-icons";
+import { ScrollView, Switch } from "react-native-gesture-handler";
 // import Uploady, { useItemProgressListener } from '@rpldy/uploady';
 // import UploadButton from "@rpldy/upload-button";
-import EventSource from '../react-native-server-sent-events';
+import EventSource from "../react-native-server-sent-events";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
+import Icon from "react-native-vector-icons/FontAwesome";
+import ChatBarInputWeb from "../components/ChatBarInputWeb";
+import ChatBarInputMobile from "../components/ChatBarInputMobile";
+import ChatBubble from "../components/ChatBubble";
+
+type CodeSegmentExcerpt = {
+  text: string,
+  color: string,
+};
+
+type CodeSegment = CodeSegmentExcerpt[];
+
+type ChatContentExcerpt = string | CodeSegment;
+
+type ChatContent = ChatContentExcerpt[];
+
+type ChatEntry = {
+  origin: ("user" | "server"),
+  content: ChatContent,
+};
 
 export default function ChatWindow({ navigation }) {
-	const scrollViewRef = useRef();
-	const inputTwo = useRef("");
-	const [inputText, setInputText] = useState('');
-	const [chat, setChat] = useState("Sample Text");
-	const [sseOpened, setSseOpened] = useState(false);
-	const [fileDragHover, setFileDragHover] = useState(false);
-	const [filesPrepared, setFilesPrepared] = useState<File[]>([]);
-	const [filesProgress, setFilesProgress] = useState<Number[]>([]);
-	const [submitInput, setSubmitInput] = useState(false);
+  const scrollViewRef = useRef();
+  const inputTwo = useRef("");
+  const [inputText, setInputText] = useState(
+    "Write a python function that calculates the Fibonacci sequence up to a given number n. Include type hints and a function description."
+  );
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
+  const [sseOpened, setSseOpened] = useState(false);
+  const [fileDragHover, setFileDragHover] = useState(false);
+  const [filesPrepared, setFilesPrepared] = useState<File[]>([]);
+  const [filesProgress, setFilesProgress] = useState<Number[]>([]);
+  const [submitInput, setSubmitInput] = useState(false);
+  
+  const [newChat, setNewChat] = useState<ChatEntry[]>([]);
+  
+  const [temporaryBotEntry, setTemporaryBotEntry] = useState<ChatEntry | null>(null);
 
-	useFonts({
-		'YingHei': require('../../assets/fonts/MYingHeiHK-W4.otf'),
-	});
+  const [inputLineCount, setInputLineCount] = useState(1);
 
-	let genString = "";
-	let termLet: string[] = [];
+  const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+  const PlatformIsWeb = Platform.select({web: true, default: false});
+
+  useFonts({
+    YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
+  });
+
+  let genString = "";
+  let termLet: string[] = [];
+
+  const copyToClipboard = () => {
+    Clipboard.setString(inputText);
+  };
+
+  const copyChatToClipboard = () => {
+    Clipboard.setString(chat);
+  };
+
+  const sse_fetch = async function (message : string) {
+    if (sseOpened === true) {
+      return;
+    }
+    console.log("Starting SSE");
+
+    const url = new URL("http://localhost:5000/chat");
+    url.searchParams.append("query", message);
 
 
-	const sse_fetch = async function() {
-		if (sseOpened === true) {
-			return;
-		}
-		console.log("Starting SSE")
+    let user_entry : ChatEntry = {
+      origin: "user",
+      content: [message],
+    };
+    
+    setNewChat(newChat => [...newChat, user_entry])
+    
+    let bot_entry : ChatEntry = {
+      origin: "server",
+      content: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
+    }
 
-		const url = new URL("http://localhost:5000/chat");
-		url.searchParams.append("query", inputText);
+    setTemporaryBotEntry(bot_entry);
+    // setInputText("");
 
-		// setInputText("");
+    console.log(url.toString());
+    const es = new EventSource(url, {
+      method: "GET",
+    });
 
-		console.log(url.toString());
-		const es = new EventSource(url, {
-			method: "GET"
-		});
+    es.addEventListener("open", (event) => {
+      console.log("Open SSE connection.");
+      setSseOpened(true);
+    });
 
-		es.addEventListener("open", (event) => {
-			console.log("Open SSE connection.");
-			setSseOpened(true);
-		});
+    es.addEventListener("message", (event) => {
+      // console.log("New message event:", event);
+      if (event === undefined || event.data === undefined) return;
+      let decoded = event.data.toString();
+      if (decoded == "-DONE-") {
+        setNewChat(newChat => [...newChat, bot_entry])
+        setTemporaryBotEntry(null);
+        es.close();
+      } else {
+        // for (let key in Object.keys(uri_decode_map)) {
+        //   decoded = decoded.replace(key, uri_decode_map[key]);
+        // }
+        decoded = decodeURI(decoded);
+        console.log([decoded]);
+        genString += decoded;
+        setChat(genString);
+        bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
+        setTemporaryBotEntry(bot_entry);
+      }
 
-		es.addEventListener("message", (event) => {
-			// console.log("New message event:", event);
-			if (event === undefined || event.data === undefined)
-				return;
-			let decoded = event.data.toString();
-			if (decoded == '-DONE-') {
-				es.close()
-			} else {
-				// for (let key in Object.keys(uri_decode_map)) {
-				//   decoded = decoded.replace(key, uri_decode_map[key]);
-				// }
-				decoded = decodeURI(decoded);
-				console.log([decoded]);
-				genString += decoded;
-			}
+      // setLog(chat+" HELLOOOOOOOOOOOO"+chat+chat);
+    });
 
-			setChat(genString);
-			// setLog(chat+" HELLOOOOOOOOOOOO"+chat+chat);
-		});
+    es.addEventListener("error", (event) => {
+      if (event.type === "error") {
+        console.error("Connection error:", event.message);
+      } else if (event.type === "exception") {
+        console.error("Error:", event.message, event.error);
+      }
+    });
 
-		es.addEventListener("error", (event) => {
-			if (event.type === "error") {
-				console.error("Connection error:", event.message);
-			} else if (event.type === "exception") {
-				console.error("Error:", event.message, event.error);
-			}
-		});
-		
-		es.addEventListener("close", (event) => {
-			console.log("Close SSE connection.");
-			setSseOpened(false);
-		});
-	}
+    es.addEventListener("close", (event) => {
+      console.log("Close SSE connection.");
+      setSseOpened(false);
+    });
+  };
 
-	const handleDragOver = (event: any) => {
-		setFileDragHover(true);
-		event.preventDefault();
-		console.log("Hello");
-	  };
-	
-	  const handleDragEnd = (event: any) => {
-		setFileDragHover(false);
-		event.preventDefault();
-		console.log("Goodbye");
-	  };
-	
-	  const handleDrop = (event: any) => {
-		setFileDragHover(false);
-		event.preventDefault();
-		setFilesPrepared(event.dataTransfer.files);
-		console.log("Set files to:", event.dataTransfer.files);
-		let formData = new FormData()
-		formData.append("file", event.dataTransfer.files[0]);
-		const uploader = createUploader({ 
-		  destination: {method: 'POST', url: "http://localhost:5000/uploadfile", filesParamName: 'file'},
-		  autoUpload: true,
-		  grouped: true,
-		  
-		  //...
-		});
-		
-		uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
-			console.log(`item ${item.id} started uploading`);  
-		});
-	
-		uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
-		  console.log(`item ${item.id} progress ${JSON.stringify(item)}`);
-		});
-		
-		uploader.add(event.dataTransfer.files[0]);
-		// // fetch("http://localhost:5000/uploadfile", {method: "POST", body: formData});
-		// axios.request({
-		//   method: "post", 
-		//   url: "http://localhost:5000/uploadfile", 
-		//   data: formData, 
-		//   onUploadProgress: (p) => {
-		//     console.log(p); 
-		//     //this.setState({
-		//         //fileprogress: p.loaded / p.total
-		//     //})
-		//   }
-	  // }).then (data => {
-	  //     //this.setState({
-	  //       //fileprogress: 1.0,
-	  //     //})
-	  //     console.log("Then hook called");
-	  // })
-	  };
+  const handleSwitch = (event: any) => {
+    setIsEnabled(true);
+    event.preventDefault();
+    console.log("switch on");
+  };
 
-	const log_key_press = (e: {nativeEvent: {key: string, shiftKey: boolean}}) => {
-		if (e.nativeEvent.key === 'Enter' && e.nativeEvent.shiftKey === false) {
-			setSubmitInput(true);
-		}
-	};
+  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+
+  const handleDrop = (event: any) => {
+    setFileDragHover(false);
+    event.preventDefault();
+    setFilesPrepared(event.dataTransfer.files);
+    console.log("Set files to:", event.dataTransfer.files);
+    let formData = new FormData();
+    formData.append("file", event.dataTransfer.files[0]);
+    const uploader = createUploader({
+      destination: {
+        method: "POST",
+        url: "http://localhost:5000/uploadfile",
+        filesParamName: "file",
+      },
+      autoUpload: true,
+      grouped: true,
+
+      //...
+    });
+
+    uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
+      console.log(`item ${item.id} started uploading`);
+    });
+
+    uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
+      console.log(`item ${item.id} progress ${JSON.stringify(item)}`);
+    });
+
+    uploader.add(event.dataTransfer.files[0]);
+    // // fetch("http://localhost:5000/uploadfile", {method: "POST", body: formData});
+    // axios.request({
+    //   method: "post",
+    //   url: "http://localhost:5000/uploadfile",
+    //   data: formData,
+    //   onUploadProgress: (p) => {
+    //     console.log(p);
+    //     //this.setState({
+    //         //fileprogress: p.loaded / p.total
+    //     //})
+    //   }
+    // }).then (data => {
+    //     //this.setState({
+    //       //fileprogress: 1.0,
+    //     //})
+    //     console.log("Then hook called");
+    // })
+  };
+
+
+  const onMessageSend = (message : string) => {
+    sse_fetch(message);
+  };
+
+  const log_key_press = (e: {
+    nativeEvent: { key: string; shiftKey: boolean };
+  }) => {
+    if (e.nativeEvent.key === "Enter" && e.nativeEvent.shiftKey === false) {
+      setSubmitInput(true);
+    }
+  };
+  
+  const inputBoxHeight = useRef(new Animated.Value(26)).current;
+  
+  useEffect(() => {
+    if (submitInput && inputText !== "") {
+      setSubmitInput(false);
+      setInputText("");
+      inputBoxHeight.setValue(26);
+      setInputLineCount(1);
+    }
+  }, [inputText]);
+
 
 	useEffect(() => {
-		if (submitInput && inputText !== "") {
-			setSubmitInput(false);
-			setInputText("");
-		}
-	}, [inputText]);
+    Animated.timing(inputBoxHeight, {
+      toValue: (24*inputLineCount+6),
+      // toValue: opened?Math.min(300,(children.length*50+60)):50,
+      duration: 200,
+			easing: Easing.elastic(1),
+      useNativeDriver: true,
+    }).start();
+  }, [inputLineCount]);
 
-	return (
-		<View style={styles.container}>
-			<View style={styles.chatColumn}>
-				<View style={styles.chatBoxContainer}>
-					<ScrollView 
-						style={styles.chatBoxPrimary}
-						ref={scrollViewRef}
-						onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-					>
-						<Text style={styles.chatBoxText}>
-							{chat}
-						</Text>
-					</ScrollView>
-				</View>
+  return (
+    <View style={{
+      flex: 1,
+      flexDirection: "row",
+      backgroundColor: "#23232D",
+      alignItems: "center",
+      justifyContent: "center",
+      // width: "80vw"
+      height: "100vh",
+    }}>
+      <View style={{flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
+        <View id="ChatHeader" style={{
+          width: "100%",
+          height: 40,
+          backgroundColor: "#23232D",
+          flexDirection: 'row',
+          alignItems: 'center'
+        }}>
+          <Pressable style={{padding: 0}} onPress={() => {navigation.toggleDrawer()}}>
+            <Feather name="sidebar" size={24} color="#E8E3E3" />
+          </Pressable>
+          {/* Decide what to put here */}
+        </View>
+        <View style={{
+          flexDirection: "column",
+          flex: 1,
+          // height: "100%",
+          width: "88%",
+          paddingHorizontal: 0,
+          // paddingVertical: 24,
+        }}>
+          <ScrollView style={{
+            flex: 5,
 
-				<View style={styles.inputBoxContainer}>
-					<div
-						onDragOver={handleDragOver}
-						onDragEnd={handleDragEnd}
-						onDrop = {handleDrop}
-						onDragLeave={handleDragEnd}
-						style={{
-							flex: 8,
-							padding: 0,
-							height: '100%',
-						}}
-					>
-						<TextInput
-							// ref={input => { this.textInput = inputTwo }}
-							editable
-							multiline
-							numberOfLines={4}
-							value={inputText}
-							onKeyPress={(e: {nativeEvent: {key: string, shiftKey: boolean}}) => {log_key_press(e)}}
-							onChangeText={text => {
-								setInputText(text);
-							}} 
-							style={{
-								fontFamily: "YingHei",
-								fontSize: 15,
-								height: '100%',
-								width: '100%',
-								backgroundColor: (fileDragHover?'#836454':'#D7AE98'),
-								borderRadius: 10,
-								padding: 10,
-							}}
-						/>
-					</div>
-					
-					<View style={styles.inputBoxSendContainer}>
-						<Pressable onPress={sse_fetch} style={styles.inputBoxSendRequest}>
-							<Text style={{fontFamily: "YingHei", fontSize: 15}}>Go</Text>
-						</Pressable>
-					</View>
-					
-				</View>
-			</View>
-			<StatusBar style="auto"/>
-		</View>
-	);
+          }}>
+
+
+            {newChat.map((v_2 : ChatEntry, k_2 : number) => (
+              <ChatBubble entry={v_2}/>
+            ))}
+            {/* <Text
+              style={{
+                color: "#E8E3E3",
+                fontSize: 20,
+                // fontFamily: "YingHei",
+                flex: 1,
+                flexDirection: "column",
+              }}
+            >
+              {inputText}
+            </Text>
+            <View style={styles.chatBoxContainer}>
+              <Text
+                style={{
+                  color: "white",
+                  // fontFamily: "YingHei",
+                  fontSize: 20,
+                  flex: 1,
+                  flexDirection: "column",
+                }}
+              >
+                {chat}
+              </Text>
+              <Pressable>
+                <Icon
+                  name="copy"
+                  size={30}
+                  style={styles.chatBoxContainerCopyButton}
+                  onPress={copyToClipboard}
+                ></Icon>
+              </Pressable>
+              <ScrollView
+                style={styles.chatBoxPrimary}
+                ref={scrollViewRef}
+                onContentSizeChange={() =>
+                  scrollViewRef.current.scrollToEnd({ animated: true })
+              }>
+                <Text style={styles.chatBoxText}>{chat}</Text>
+                <Pressable>
+                  <Icon
+                    name="copy"
+                    size={30}
+                    style={styles.chatBoxContainerCopyButton}
+                    onPress={copyChatToClipboard}
+                  ></Icon>
+                </Pressable>
+              </ScrollView>
+            </View> */}
+            {temporaryBotEntry && (
+              <ChatBubble entry={temporaryBotEntry}/>
+            )}
+          </ScrollView>
+
+          
+
+          <View id="InputBox" style={{
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            // flex: 1,
+            // height: 200,
+            width: '100%',
+            paddingVertical: 10,
+          }}>
+            <View style={{paddingBottom: 5}}>
+            <View id="Switch" style={{
+              // width: 200,
+              width: 150,
+              height: 28,
+              borderRadius: 14,
+              // backgroundColor: '#4D4D56',
+              borderWidth: 1,
+              borderColor: '#4D4D56',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingLeft: 3,
+            }}>
+              <Switch
+                trackColor={{ false: "#4D4D56", true: "#7968D9" }}
+                // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
+                thumbColor={"#D9D9D9"}
+                
+                
+                onValueChange={toggleSwitch}
+                value={isEnabled}
+              />
+              <Text
+                style={{
+                  color: "#4D4D56",
+                  fontSize: 15,
+                  paddingLeft: 10,
+                  // flex: 1,
+                  // flexDirection: "column",
+                  // alignContent: "space-between",
+                  // left: "5%",
+                  // bottom: "50%",
+                }}
+              >
+                Search web
+              </Text>
+            </View>
+            </View>
+            {Platform.select({
+              web: (
+                <ChatBarInputWeb
+                  onMessageSend={onMessageSend}
+                  handleDrop={handleDrop}
+                />
+              ),
+              default: (
+                <ChatBarInputMobile
+                  onMessageSend={onMessageSend}
+                />
+              )
+
+            })}
+            
+            
+            {PlatformIsWeb && (
+              <Text style={{
+                  // fontFamily: "YingHei",
+                  color: "#4D4D56",
+                  fontSize: 15,
+                  fontStyle: "italic",
+                  textAlignVertical: 'center',
+                  // backgroundColor: '#4D4D56',
+              }}>
+                <i>
+                Model:{" "}
+                  <a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf" target="_blank">
+                    meta-llama/Llama-2-70b-chat-hf
+                  </a>
+                {" · "}Generated content may be inaccurate or false.
+                </i>
+              </Text>
+            )}
+          </View> 
+              
+            
+        </View>
+      </View>
+      <StatusBar style="auto" />
+    </View>
+  );
 }
 
 const styles = {
-	buttonTest: {
-		alignItems: 'center',
-		justifyContent: 'center',
-		paddingVertical: 12,
-		paddingHorizontal: 12,
-		borderRadius: 4,
-		elevation: 3,
-		backgroundColor: 'black',
-	},
-	leftPanelContainer: {
-		flex: 1,
-		backgroundColor: '#D7AE98',
-		height: '100%',
-		// justifyContent: 'center',
-		alignItems: 'center',
-		paddingVertical: 20
-	},
-	uploadButton: {
-		// flex: 1,
-		backgroundColor: '#FF0000',
-		// borderRadius: 20,
-		alignItems: 'center',
-		justifyContent: 'center',
-		width: '100%',
-		paddingVertical: 10,
-		paddingHorizontal: 20
-	},
-	container: {
-		flex: 1,
-		flexDirection: 'row',
-		backgroundColor: '#D7AE9888',
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-	chatBoxContainer: {
-		paddingVertical: 10,
-		// width: '100%',
-		// height: '500px',
-		flex: 5,
-		paddingHorizontal: 0,
-	},
-	chatBoxPrimary: {
-		// width: '100%',
-		// height: '100%',
-		// flexGrow: 0,
-		borderRadius: 10,
-		backgroundColor: '#D7AE98',
-		padding: 10,
-	},
-	chatBoxText: {
-		fontFamily: "YingHei",
-		fontSize: 20,
-		height: '10px',
-	},
-	chatColumn: {
-		flexDirection: 'column',
-		// flex: 5,
-		height: '100%',
-		width: '88%',
-		paddingHorizontal: 0,
-		paddingVertical: 24,
-	},
-	inputBoxContainer: {
-		// height: '20%',
-		flex: 1,
-		flexDirection: 'row',
-		backgroundColor: '#FFAAAA00',
-		borderRadius: 10,
-		// margin: '10px 0',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		// paddingRight: 24,
-		paddingVertical: 2,
-		
-		paddingHorizontal: 0,
-		// padding: 10,
-	},
-	inputBoxTextInput: {
-		fontFamily: "YingHei",
-		fontSize: 15,
-		height: '100%',
-		flex: 8,
-		backgroundColor: '#D7AE98',
-		borderRadius: 10,
-		padding: 10,
-	},
-	inputBoxSendRequest: {
-		flex: 1,
-		height: '100%',
-		backgroundColor: '#D7AE98',
-		borderRadius: 20,
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: 10,
-	},
-	inputBoxSendContainer: {
-		paddingLeft: 10,
-		height: '80%',
-		width: '10%',
-	},
+  buttonTest: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    elevation: 3,
+    backgroundColor: "black",
+  },
+  leftPanelContainer: {
+    flex: 1,
+    backgroundColor: "#D7AE98",
+    height: "100%",
+    // justifyContent: 'center',
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  chatBoxContainerCopyButton: {
+    color: "white",
+    flex: 1,
+    paddingLeft: "95%",
+    bottom: 20,
+    left: 20,
+  },
+  uploadButton: {
+    // flex: 1,
+    backgroundColor: "#FF0000",
+    // borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  container: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#23232D",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatBoxContainer: {
+    paddingVertical: 50,
+    paddingLeft: 30,
+    paddingRight: 30,
+    backgroundColor: "#39393C",
+    borderRadius: 50,
+    flex: 5,
+    // width: '100%',
+    // height: '500px',
+  },
+  chatBoxPrimary: {
+    width: "100%",
+    height: "100%",
+    // flexGrow: 0,
+    borderRadius: 50,
+    backgroundColor: "#17181D",
+    padding: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 25,
+  },
+  chatBoxText: {
+    // fontFamily: "YingHei",
+    fontSize: 20,
+    height: "10px",
+    color: "white",
+  },
+  chatColumn: {
+    flexDirection: "column",
+    // flex: 5,
+    height: "100%",
+    width: "88%",
+    paddingHorizontal: 0,
+    paddingVertical: 24,
+  },
+  inputBoxContainer: {
+    // height: '20%',
+    width: "100%",
+    flex: 1,
+    flexDirection: "row",
+    color: "#E8E3E3",
+    backgroundColor: "#FFAAAA00",
+    borderRadius: 10,
+    // margin: '10px 0',
+    alignItems: "center",
+    justifyContent: "space-between",
+    // paddingRight: 24,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    // padding: 10,
+  },
+  inputBoxTextInput: {
+    // fontFamily: "YingHei",
+    fontSize: 15,
+    height: "100%",
+    flex: 8,
+    backgroundColor: "#D7AE98",
+    borderRadius: 10,
+    padding: 10,
+    color: "white",
+  },
+  inputBoxSendRequest: {
+    flex: 1,
+    width: "100%",
+    bottom: "45%",
+    flexDirection: "row",
+    height: "50%",
+    backgroundColor: "#17181D",
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+  },
+  inputBoxSendContainer: {
+    flex: 1,
+    backgroundColor: "#23232D",
+    paddingLeft: 20,
+    height: "50%",
+    width: "100%",
+    justifyContent: "center",
+  },
+  switchButton: {
+    flexDirection: "column",
+    paddingVertical: 15,
+    alignItems: "left",
+    justifyContent: "center",
+  },
 };

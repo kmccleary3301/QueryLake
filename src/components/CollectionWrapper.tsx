@@ -38,7 +38,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
 		setTimeout(() => {
 			setViewScrollable(opened);
@@ -50,7 +50,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
       toValue: selected?12:0,
       duration: 100,
 			easing: Easing.elastic(1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [selected]);
 

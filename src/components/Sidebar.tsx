@@ -12,6 +12,7 @@ import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
+import { useDrawerStatus } from '@react-navigation/drawer';
 
 type selectedState = [
 	selected: boolean,
@@ -69,7 +70,9 @@ const test_collections = [
 ];
 
 export default function Sidebar(props: any) {
+  console.log(props);
 	const [panelMode, setPanelMode] = useState("");
+
 	let toggleSelections: selectedState[] = [];
 	for (let i = 0; i < test_collections.length; i++) {
 		toggleSelections.push(useState(false));
@@ -136,210 +139,175 @@ export default function Sidebar(props: any) {
 	};
 
 	return (
-		// <DrawerContent>
-			<View {...props}>
-				<View style={{
-					backgroundColor: "#17181D", 
-					height: height, 
-					flexDirection: 'column', 
-					padding: 0, 
-				}}>
-					<View style={{
-						flex: 5,
-						paddingHorizontal: 0,
-						// paddingVertical: 10,
-						alignItems: 'center',
-						flexDirection: 'column',
-						justifyContent: 'space-evenly'
-					}}>
-						<View style={{
-							flexDirection: 'row',
-							paddingVertical: 7.5,
-							paddingHorizontal: 30,
-							alignItems: 'center',
-							width: '100%',
-							justifyContent: 'space-between',
-						}}>
-							<Pressable style={{padding: 0}}>
-								<Feather name="settings" size={24} color="#E8E3E3" />
-							</Pressable>
-							<Pressable style={{padding: 0}}>
-								<Feather name="info" size={24} color="#E8E3E3" />
-							</Pressable>
-							<Pressable style={{padding: 0}}>
-								<Feather name="sidebar" size={24} color="#E8E3E3" />
-							</Pressable>
-						</View>
-						<View style={{
-							width: '100%',
-							paddingHorizontal: 22,
-							// alignSelf: 'center'
-						}}>
-							<SwitchSelector
-								initial={0}
-								width={"100%"}
-								onPress={(value : string) => {
-									setPanelMode(value);
-									console.log(value);
-								}}
-								textColor={'#000000'} //'#7a44cf'
-								selectedColor={'#000000'}
-								buttonColor={'#E8E3E3'}
-								backgroundColor={'#7968D9'}
-								// borderColor={'#7a44cf'}
-								height={35}
-								borderRadius={10}
-								hasPadding={false}
-								imageStyle={{
-									height: 24,
-									width: 24,
-									resizeMode: 'stretch'
-								}}
-								options={[
-									{ value: "collections", imageIcon: icons.folder}, //images.feminino = require('./path_to/assets/img/feminino.png')
-									{ value: "history", imageIcon: icons.clock}, //images.masculino = require('./path_to/assets/img/masculino.png')
-									{ value: "tools", imageIcon: icons.aperture}
-								]}
-								testID="gender-switch-selector"
-								accessibilityLabel="gender-switch-selector"
-							/>
-						</View>
-						<View style={{
-							width: '100%',
-							// paddingVertical: 10,
-							paddingHorizontal: 22,
-							paddingTop: 10,
-							paddingBottom: 10,
-							
-						}}>
-							<View style={{
-								flexDirection: 'row',
-								backgroundColor: '#23232D',
-								paddingVertical: 10,
-								paddingHorizontal: 10,
-								borderRadius: 10,
-							}}>
-								<Feather name="search" size={24} color="#E8E3E3" style={{flex: 1}}/>
-								<View style={{width: '86%', paddingRight: 5}}>
-									<TextInput
-										style={{
-											color: '#E8E3E3',
-											fontSize: 18,
-											outlineStyle: 'none',
-										}}
-										placeholder={'Search Public Collections'}
-										placeholderTextColor={'#E8E3E3'}
-									/>
-								</View>
-							</View>
-						</View>
-						<ScrollView style={{
-							width: '100%',
-							paddingHorizontal: 22,
-							// paddingTop: 10,
-						}}>
-
-							{CollectionGroups.map((v, k) => (
-								<View style={{
-									paddingVertical: 5
-								}}>
-									<CollectionWrapper 
-										title={CollectionGroups[k].title}
-										// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
-										onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
-										selectedState={{
-											selected: CollectionGroups[k].selected[0],
-											setSelected: CollectionGroups[k].selected[1]
-										}}
-									>
-										{CollectionGroups[k].collections.map((v_2, k_2) => (
-											<CollectionPreview
-												style={{
-													paddingTop: (k_2===0)?0:10,
-												}}
-												title={CollectionGroups[k].collections[k_2].title}
-												selectedState={{
-													selected: CollectionGroups[k].toggleSelections[k_2][0],
-													setSelected: CollectionGroups[k].toggleSelections[k_2][1]
-												}}
-												documentCount={v_2.items}
-												onToggleSelected={(collection_selected: boolean) => {
-													if (!collection_selected &&  CollectionGroups[k].selected[0]) {
-														CollectionGroups[k].selected[1](false);
-													}
-												}}
-											/>
-										))}
-									</CollectionWrapper>
-								</View>
-							))}
-							{/* <CollectionWrapper 
-								title="My Collections"
-								// onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
-								onToggleSelected={toggleMyCollections}
-								selectedState={{
-									selected: myCollectionsSelected,
-									setSelected: setMyCollectionsSelected
-								}}
-							>
-								{test_collections.map((v, k) => (
-									<CollectionPreview
-										style={{
-											paddingTop: (k===0)?0:10,
-										}}
-										title={v.title}
-										selectedState={{
-											selected: toggleSelections[k][0],
-											setSelected: toggleSelections[k][1]
-										}}
-										documentCount={v.items}
-										onToggleSelected={(collection_selected: boolean) => {
-											if (!collection_selected && myCollectionsSelected) {
-												setMyCollectionsSelected(false);
-											}
-										}}
-									/>
-								))}
-							</CollectionWrapper> */}
-							{/* <View style={{
-								alignItems: 'center',
-								justifyContent: 'center'
-							}}>
-							<TestUploadBox/>
-							{big_array.map((v, k) => (
-								<Text key={k}>Hello</Text>
-							))}
-							</View> */}
-						</ScrollView>
-					</View>
-					<View style={{
-						flexDirection: "column", 
-						justifyContent: "flex-end", 
-						paddingHorizontal: 20, 
-						paddingBottom: 15,
-						paddingTop: 15,
-					}}>
-						
-						<Pressable>
-							<Text style={{
-								fontSize: 20,
-								color: "#E8E3E3",
-							}}>
-								{"Model Settings"}
-							</Text>
-						</Pressable>
-						<Pressable>
-							<Text style={{
-								fontSize: 20,
-								color: "#E8E3E3",
-							}}>
-								{"Manage Collections"}
-							</Text>
-						</Pressable>
-					</View>
-				</View>
-			</View>
-		/* </DrawerContent> */
+    <View {...props} style={{height: '100vh'}}>
+      <View style={{
+        backgroundColor: "#17181D", 
+        height: "100%", 
+        flexDirection: 'column', 
+        padding: 0, 
+      }}>
+        <View style={{
+          flex: 5,
+          paddingHorizontal: 0,
+          // paddingVertical: 10,
+          alignItems: 'center',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly'
+        }}>
+          <View style={{
+            flexDirection: 'row',
+            paddingVertical: 7.5,
+            paddingHorizontal: 30,
+            alignItems: 'center',
+            width: '100%',
+            justifyContent: 'space-between',
+          }}>
+            <Pressable style={{padding: 0}}>
+              <Feather name="settings" size={24} color="#E8E3E3" />
+            </Pressable>
+            <Pressable style={{padding: 0}}>
+              <Feather name="info" size={24} color="#E8E3E3" />
+            </Pressable>
+            <Pressable style={{padding: 0}} onPress={() => {
+              props.navigation.closeDrawer();
+            }}>
+              <Feather name="sidebar" size={24} color="#E8E3E3" />
+            </Pressable>
+          </View>
+          <View style={{
+            width: '100%',
+            paddingHorizontal: 22,
+            // alignSelf: 'center'
+          }}>
+            <SwitchSelector
+              initial={0}
+              width={"100%"}
+              onPress={(value : string) => {
+                setPanelMode(value);
+                console.log(value);
+              }}
+              textColor={'#000000'} //'#7a44cf'
+              selectedColor={'#000000'}
+              buttonColor={'#E8E3E3'}
+              backgroundColor={'#7968D9'}
+              // borderColor={'#7a44cf'}
+              height={35}
+              borderRadius={10}
+              hasPadding={false}
+              imageStyle={{
+                height: 24,
+                width: 24,
+                resizeMode: 'stretch'
+              }}
+              options={[
+                { value: "collections", imageIcon: icons.folder}, //images.feminino = require('./path_to/assets/img/feminino.png')
+                { value: "history", imageIcon: icons.clock}, //images.masculino = require('./path_to/assets/img/masculino.png')
+                { value: "tools", imageIcon: icons.aperture}
+              ]}
+              testID="gender-switch-selector"
+              accessibilityLabel="gender-switch-selector"
+            />
+          </View>
+          <View style={{
+            width: '100%',
+            // paddingVertical: 10,
+            paddingHorizontal: 22,
+            paddingTop: 10,
+            paddingBottom: 10,
+            
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              backgroundColor: '#23232D',
+              paddingVertical: 10,
+              paddingHorizontal: 10,
+              borderRadius: 10,
+            }}>
+              <Feather name="search" size={24} color="#E8E3E3" style={{flex: 1}}/>
+              <View style={{width: '86%', paddingRight: 5}}>
+                <TextInput
+                  style={{
+                    color: '#E8E3E3',
+                    fontSize: 18,
+                    outlineStyle: 'none',
+                  }}
+                  spellCheck={false}
+                  placeholder={'Search Public Collections'}
+                  placeholderTextColor={'#E8E3E3'}
+                />
+              </View>
+            </View>
+          </View>
+          <ScrollView style={{
+            width: '100%',
+            paddingHorizontal: 22,
+            // paddingTop: 10,
+          }}
+          
+          >
+            {CollectionGroups.map((v, k) => (
+              <View key={k} style={{
+                paddingVertical: 5
+              }}>
+                <CollectionWrapper key={k} 
+                  title={CollectionGroups[k].title}
+                  // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
+                  onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
+                  selectedState={{
+                    selected: CollectionGroups[k].selected[0],
+                    setSelected: CollectionGroups[k].selected[1]
+                  }}
+                >
+                  {CollectionGroups[k].collections.map((v_2, k_2) => (
+                    <CollectionPreview key={k_2}
+                      style={{
+                        paddingTop: (k_2===0)?0:10,
+                      }}
+                      title={CollectionGroups[k].collections[k_2].title}
+                      selectedState={{
+                        selected: CollectionGroups[k].toggleSelections[k_2][0],
+                        setSelected: CollectionGroups[k].toggleSelections[k_2][1]
+                      }}
+                      documentCount={v_2.items}
+                      onToggleSelected={(collection_selected: boolean) => {
+                        if (!collection_selected &&  CollectionGroups[k].selected[0]) {
+                          CollectionGroups[k].selected[1](false);
+                        }
+                      }}
+                    />
+                  ))}
+                </CollectionWrapper>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+        <View style={{
+          flexDirection: "column", 
+          justifyContent: "flex-end", 
+          paddingHorizontal: 20, 
+          paddingBottom: 15,
+          paddingTop: 15,
+        }}>
+          
+          <Pressable>
+            <Text style={{
+              fontSize: 20,
+              color: "#E8E3E3",
+            }}>
+              {"Model Settings"}
+            </Text>
+          </Pressable>
+          <Pressable>
+            <Text style={{
+              fontSize: 20,
+              color: "#E8E3E3",
+            }}>
+              {"Manage Collections"}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
 	);
 }
 
