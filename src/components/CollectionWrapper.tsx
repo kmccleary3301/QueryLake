@@ -34,10 +34,10 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 
 	useEffect(() => {
     Animated.timing(boxHeight, {
-      toValue: opened?(children.length*50+55):50,
+      toValue: opened?(children.length*45+48):50,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
-			easing: Easing.elastic(1),
+			easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
 		setTimeout(() => {
@@ -92,7 +92,6 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					>
 						{/* {selected && ( */}
 							<Animated.View style={{
-								paddingLeft: 1,
 								backgroundColor: '#23232D',
 								height: selectionCircleSize,
 								borderRadius: 6,
@@ -103,17 +102,20 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					</Pressable>
 				</View>
 				<View style={{
-					width: '80%',
+					width: '83%',
 					flexDirection: 'column',
 					justifyContent: 'center',
 					paddingLeft: 9,
 				}}>
 					<Text style={{
-						fontSize: 20,
+						fontSize: 16,
 						color: '#E8E3E3',
 						textAlign: 'left',
 						textAlignVertical: 'center',
-					}}>
+            height: 25,
+					}}
+          numberOfLines={1}
+          >
 						{title}
 					</Text>
 				</View>
@@ -137,7 +139,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			</View>
 			{viewScrollable &&
 			<ScrollView style={{
-				paddingBottom: 10,
+				paddingBottom: 5,
 			}}
 			showsVerticalScrollIndicator={false}
 			>

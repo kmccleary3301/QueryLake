@@ -53,7 +53,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
 
 	useEffect(() => {
     Animated.timing(inputBoxHeight, {
-      toValue: (24*inputLineCount+6),
+      toValue: (18*inputLineCount),
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(1),
@@ -122,14 +122,14 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
               web: {
                 // height: inputBoxHeight,
                 color: '#E8E3E3',
-                fontSize: 18,
+                fontSize: 14,
                 textAlignVertical: 'center',
                 outlineStyle: 'none',
               },
               default: { //The Platform specific switch is necessary because 'outlineStyle' is only on Web, and causes errors on mobile.
                 height: inputBoxHeight,
                 color: '#E8E3E3',
-                fontSize: 18,
+                fontSize: 14,
                 textAlignVertical: 'center',
               }
             })}

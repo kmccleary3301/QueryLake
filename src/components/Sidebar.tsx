@@ -223,13 +223,14 @@ export default function Sidebar(props: any) {
               paddingHorizontal: 10,
               borderRadius: 10,
             }}>
-              <Feather name="search" size={24} color="#E8E3E3" style={{flex: 1}}/>
-              <View style={{width: '86%', paddingRight: 5}}>
+              <Feather name="search" size={20} color="#E8E3E3" style={{flex: 1}}/>
+              <View style={{width: '86%', height: "100%", paddingRight: 5}}>
                 <TextInput
                   style={{
                     color: '#E8E3E3',
-                    fontSize: 18,
+                    fontSize: 14,
                     outlineStyle: 'none',
+                    textAlignVertical: 'center'
                   }}
                   spellCheck={false}
                   placeholder={'Search Public Collections'}
@@ -261,7 +262,7 @@ export default function Sidebar(props: any) {
                   {CollectionGroups[k].collections.map((v_2, k_2) => (
                     <CollectionPreview key={k_2}
                       style={{
-                        paddingTop: (k_2===0)?0:10,
+                        paddingTop: (k_2===0)?0:5,
                       }}
                       title={CollectionGroups[k].collections[k_2].title}
                       selectedState={{

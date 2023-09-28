@@ -25,6 +25,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
+import { DrawerActions } from "@react-navigation/native";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -274,12 +275,13 @@ export default function ChatWindow({ navigation }) {
           paddingHorizontal: 0,
           // paddingVertical: 24,
         }}>
-          <ScrollView style={{
-            flex: 5,
-
-          }}>
-
-
+          <ScrollView 
+            ref={scrollViewRef}
+            onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+            style={{
+              flex: 5,
+            }}
+          >
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
               <ChatBubble entry={v_2}/>
             ))}
@@ -346,44 +348,49 @@ export default function ChatWindow({ navigation }) {
             width: '100%',
             paddingVertical: 10,
           }}>
-            <View style={{paddingBottom: 5}}>
-            <View id="Switch" style={{
-              // width: 200,
-              width: 150,
-              height: 28,
-              borderRadius: 14,
-              // backgroundColor: '#4D4D56',
-              borderWidth: 1,
-              borderColor: '#4D4D56',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingLeft: 3,
-            }}>
-              <Switch
-                trackColor={{ false: "#4D4D56", true: "#7968D9" }}
-                // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
-                thumbColor={"#D9D9D9"}
-                
-                
-                onValueChange={toggleSwitch}
-                value={isEnabled}
-              />
-              <Text
-                style={{
-                  color: "#4D4D56",
-                  fontSize: 15,
-                  paddingLeft: 10,
-                  // flex: 1,
-                  // flexDirection: "column",
-                  // alignContent: "space-between",
-                  // left: "5%",
-                  // bottom: "50%",
-                }}
-              >
-                Search web
-              </Text>
-            </View>
+            <View style={{paddingBottom: 5, paddingLeft: 12, flexDirection: "row"}}>
+              <View id="Switch" style={{
+                // width: 200,
+                // width: 140,
+                height: 28,
+                borderRadius: 14,
+                // backgroundColor: '#4D4D56',
+                borderWidth: 1,
+                borderColor: '#4D4D56',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+                <View style={{paddingLeft: 10}}>
+                  <Switch
+                    trackColor={{ false: "#4D4D56", true: "#7968D9" }}
+                    // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
+                    thumbColor={"#D9D9D9"}
+                    
+                    
+                    onValueChange={toggleSwitch}
+                    value={isEnabled}
+                  />
+                </View>
+                <Text
+                  style={{
+                    color: "#4D4D56",
+                    fontSize: 12,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    // flex: 1,
+                    // flexDirection: "column",
+                    // alignContent: "space-between",
+                    // left: "5%",
+                    // bottom: "50%",
+                  }}
+                >
+                  Search web
+                </Text>
+              </View>
+              <View style={{flex: 1}}>
+
+              </View>
             </View>
             {Platform.select({
               web: (
@@ -405,9 +412,10 @@ export default function ChatWindow({ navigation }) {
               <Text style={{
                   // fontFamily: "YingHei",
                   color: "#4D4D56",
-                  fontSize: 15,
+                  fontSize: 12,
                   fontStyle: "italic",
                   textAlignVertical: 'center',
+                  paddingLeft: 12,
                   // backgroundColor: '#4D4D56',
               }}>
                 <i>

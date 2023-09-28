@@ -8,7 +8,8 @@ import {
   TextInput,
   Platform,
   Animated,
-  Easing
+  Easing,
+  Image
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
@@ -33,23 +34,61 @@ type ChatBubbleProps = {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-  
+  let string_array = [];
+  for (let i = 0; i < props.entry.content.length; i++) {
+    if (typeof props.entry.content[i] === "string") { 
+      string_array.push(props.entry.content[i]); 
+    } else {
+      let code_seg_array : CodeSegment = props.entry.content[i];
+      for (let i_2 = 0; i_2 < code_seg_array.length; i_2++) {
+        string_array.push(code_seg_array[i_2].text);
+      }
+    }
+  }
+
+  const queryLakeIcon = require("../../assets/favicon.png");
 
   return (
     <View style={{
-      flexDirection: 'column',
+      flexDirection: Platform.select({web: "row", default: "column"}),
       width: "100%",
       paddingBottom: 10,
       paddingRight: 10
     }}>
-      <View style={{
-        width: 50,
-        height:50,
-        borderRadius: 25,
-        backgroundColor: "#FF0000"
-      }}>
-
-      </View>
+      {(props.entry.origin === "user")?(
+        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+        <View style={{
+          width: 40,
+          height:40,
+          borderRadius: 25,
+          backgroundColor: "#E8E3E3",
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <Text style={{
+            fontSize: 30,
+            height: "100%",
+            width: "100%",
+            textAlign: 'center',
+            textAlignVertical: 'center'
+          }}>
+            {"K"}
+          </Text>
+        </View>
+        </View>
+      ):(
+        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+        <Image 
+          style={{
+            width: 40,
+            height:40,
+            borderRadius: 25,
+          }}
+          source={queryLakeIcon}
+        />
+        </View>
+      )}
+      
       <View style={{
         paddingRight: 10, 
         flexDirection: "row", 
@@ -57,19 +96,27 @@ export default function ChatBubble(props: ChatBubbleProps) {
         // backgroundColor: "#3939FF",
         borderRadius: 10,
       }}>
-        <View style={{
-          padding: 20,
-          maxWidth: "100%",
-          // width: "80svw",
-          backgroundColor: "#39393C",
-          borderRadius: 30,
+        <View 
+          style={{
+            padding: 10,
+            maxWidth: "100%",
+            minWidth: 40,
+            minHeight: 40,
+            // width: "80svw",
+            backgroundColor: "#39393C",
+            borderRadius: 15,
           
-        }}>
+          }}
+        >
+          <Text selectable={true}>
           {props.entry.content.map((v : ChatContentExcerpt, k : number) => (typeof v === 'string')?(
 
-            <Text key={k} style={{
+            <Text 
+              key={k} 
+              style={{
               // backgroundColor: "#00FF00"
-            }}>
+              }}
+            >
               <Text style={{color: '#E8E3E3'}}>{v}</Text>
             </Text>
           ):( //Code Segment
@@ -85,6 +132,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
               </Text>
             </View>
           ))}
+          </Text>
         </View>
       </View>
     </View>

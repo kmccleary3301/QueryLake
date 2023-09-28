@@ -96,7 +96,6 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
             >
               {/* {selected && ( */}
                 <Animated.View style={{
-                  paddingLeft: 1,
                   backgroundColor: '#23232D',
                   height: selectionCircleSize,
                   borderRadius: 6,
