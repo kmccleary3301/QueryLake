@@ -43,7 +43,17 @@ type ChatEntry = {
   content: ChatContent,
 };
 
-export default function ChatWindow({ navigation }) {
+type ChatWindowProps = {
+  navigation?: any,
+  toggleSideBar?: () => void,
+  sidebarOpened?: boolean,
+}
+
+
+export default function ChatWindow(props : ChatWindowProps) {
+
+
+  // props.navigation.navigate("HomeScreen")
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
   const [inputText, setInputText] = useState(
@@ -63,7 +73,7 @@ export default function ChatWindow({ navigation }) {
 
   const [inputLineCount, setInputLineCount] = useState(1);
 
-  const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+  // const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
   const PlatformIsWeb = Platform.select({web: true, default: false});
 
@@ -253,6 +263,7 @@ export default function ChatWindow({ navigation }) {
       justifyContent: "center",
       // width: "80vw"
       height: "100vh",
+      // width: "100%",
     }}>
       <View style={{flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
         <View id="ChatHeader" style={{
@@ -262,7 +273,7 @@ export default function ChatWindow({ navigation }) {
           flexDirection: 'row',
           alignItems: 'center'
         }}>
-          <Pressable style={{padding: 0}} onPress={() => {navigation.toggleDrawer()}}>
+          <Pressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
             <Feather name="sidebar" size={24} color="#E8E3E3" />
           </Pressable>
           {/* Decide what to put here */}
@@ -283,7 +294,7 @@ export default function ChatWindow({ navigation }) {
             }}
           >
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
-              <ChatBubble entry={v_2}/>
+              <ChatBubble key={k_2} entry={v_2}/>
             ))}
             {/* <Text
               style={{

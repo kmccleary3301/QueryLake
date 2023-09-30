@@ -98,17 +98,24 @@ export default function ChatBubble(props: ChatBubbleProps) {
       }}>
         <View 
           style={{
-            padding: 10,
+            
             maxWidth: "100%",
             minWidth: 40,
             minHeight: 40,
             // width: "80svw",
-            backgroundColor: "#39393C",
-            borderRadius: 15,
+            paddingRight: 50
+            
           
           }}
         >
-          <Text selectable={true}>
+          <Text 
+            style={{
+              backgroundColor: "#39393C",
+              borderRadius: 15,
+              padding: 10,
+            }}
+            selectable={true}
+          >
           {props.entry.content.map((v : ChatContentExcerpt, k : number) => (typeof v === 'string')?(
 
             <Text 

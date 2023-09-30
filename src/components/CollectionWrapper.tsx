@@ -34,7 +34,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 
 	useEffect(() => {
     Animated.timing(boxHeight, {
-      toValue: opened?(children.length*45+48):50,
+      toValue: opened?(children.length*45+48):42,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(0),
@@ -47,7 +47,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
-      toValue: selected?12:0,
+      toValue: selected?10:0,
       duration: 100,
 			easing: Easing.elastic(1),
       useNativeDriver: false,
@@ -62,22 +62,23 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			borderRadius: 20,
 			// justifyContent: 'space-around',
 			// paddingVertical: 10,
-			paddingTop: 10,
+			paddingTop: 8,
 			height: boxHeight,
 			// alignSelf: 'center',
 		}}>
 			<View style={{
 				// height: 200,
 				flexDirection: 'row',
-				paddingHorizontal: 16,
-				paddingBottom: 10,
+				paddingRight: 16,
+        paddingLeft: 12,
+				paddingBottom: 8,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
 			}}>
 				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
 					<Pressable style={{
-						width: 25,
-						height: 25,
+						width: 20,
+						height: 20,
 						borderRadius: 12,
 						backgroundColor: '#7968D9',
 						alignItems: 'center',
@@ -94,7 +95,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 							<Animated.View style={{
 								backgroundColor: '#23232D',
 								height: selectionCircleSize,
-								borderRadius: 6,
+								borderRadius: 5,
 								width: selectionCircleSize,
 								// opacity: selectionCircleSize
 							}}/>

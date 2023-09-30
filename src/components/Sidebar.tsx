@@ -69,8 +69,13 @@ const test_collections = [
 	},
 ];
 
-export default function Sidebar(props: any) {
-  console.log(props);
+type SidebarProps = {
+  toggleSideBar?: () => void,
+  // sidebarOpened?: boolean,
+}
+
+export default function Sidebar(props: SidebarProps) {
+  // console.log(props);
 	const [panelMode, setPanelMode] = useState("");
 
 	let toggleSelections: selectedState[] = [];
@@ -169,7 +174,7 @@ export default function Sidebar(props: any) {
               <Feather name="info" size={24} color="#E8E3E3" />
             </Pressable>
             <Pressable style={{padding: 0}} onPress={() => {
-              props.navigation.closeDrawer();
+              if (props.toggleSideBar) { props.toggleSideBar(); }
             }}>
               <Feather name="sidebar" size={24} color="#E8E3E3" />
             </Pressable>
@@ -191,12 +196,12 @@ export default function Sidebar(props: any) {
               buttonColor={'#E8E3E3'}
               backgroundColor={'#7968D9'}
               // borderColor={'#7a44cf'}
-              height={35}
-              borderRadius={10}
+              height={30}
+              borderRadius={15}
               hasPadding={false}
               imageStyle={{
-                height: 24,
-                width: 24,
+                height: 20,
+                width: 20,
                 resizeMode: 'stretch'
               }}
               options={[
@@ -219,7 +224,7 @@ export default function Sidebar(props: any) {
             <View style={{
               flexDirection: 'row',
               backgroundColor: '#23232D',
-              paddingVertical: 10,
+              paddingVertical: 6,
               paddingHorizontal: 10,
               borderRadius: 10,
             }}>

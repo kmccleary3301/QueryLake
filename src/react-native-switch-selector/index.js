@@ -98,7 +98,7 @@ export default class SwitchSelector extends Component {
     Animated.timing(this.animatedValue, {
       toValue: value,
       duration: animationDuration,
-      easing: Easing.elastic(1),
+      easing: Easing.elastic(0),
       useNativeDriver: true,
     }).start();
   };
