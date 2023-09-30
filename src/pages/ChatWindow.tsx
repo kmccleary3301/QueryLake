@@ -77,9 +77,6 @@ export default function ChatWindow(props : ChatWindowProps) {
 
   const PlatformIsWeb = Platform.select({web: true, default: false});
 
-  useFonts({
-    YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
-  });
 
   let genString = "";
   let termLet: string[] = [];

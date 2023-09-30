@@ -34,6 +34,9 @@ type ChatBubbleProps = {
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
+  const normalTextFont = "Inter-Regular";
+  const codeFont = "Consolas";
+
   let string_array = [];
   for (let i = 0; i < props.entry.content.length; i++) {
     if (typeof props.entry.content[i] === "string") { 
@@ -66,6 +69,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
           alignItems: 'center'
         }}>
           <Text style={{
+            fontFamily: normalTextFont,
             fontSize: 30,
             height: "100%",
             width: "100%",
@@ -104,12 +108,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
             minHeight: 40,
             // width: "80svw",
             paddingRight: 50
-            
-          
           }}
         >
           <Text 
             style={{
+              fontFamily: normalTextFont,
               backgroundColor: "#39393C",
               borderRadius: 15,
               padding: 10,
@@ -121,18 +124,19 @@ export default function ChatBubble(props: ChatBubbleProps) {
             <Text 
               key={k} 
               style={{
+                fontFamily: normalTextFont,
               // backgroundColor: "#00FF00"
               }}
             >
-              <Text style={{color: '#E8E3E3'}}>{v}</Text>
+              <Text style={{color: '#E8E3E3', fontFamily: normalTextFont,}}>{v}</Text>
             </Text>
           ):( //Code Segment
             <View style={{
               // backgroundColor: "#0000FF"
             }}>
-              <Text>
+              <Text style={{fontFamily: codeFont,}}>
                 {v.map((v_2 : CodeSegmentExcerpt, k_2 : number) => (
-                  <Text style={{color: v_2.color}}>
+                  <Text style={{color: v_2.color, fontFamily: codeFont,}}>
                     {v_2.text}
                   </Text>
                 ))}
