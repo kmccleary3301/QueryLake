@@ -26,6 +26,7 @@ import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
+// import MarkdownRender from "../components/MarkdownTestComponent";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -46,7 +47,7 @@ type ChatEntry = {
 type ChatWindowProps = {
   navigation?: any,
   toggleSideBar?: () => void,
-  sidebarOpened?: boolean,
+  sidebarOpened: boolean,
 }
 
 
@@ -246,10 +247,33 @@ export default function ChatWindow(props : ChatWindowProps) {
       toValue: (24*inputLineCount+6),
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
-			easing: Easing.elastic(1),
-      useNativeDriver: true,
+			easing: Easing.elastic(0),
+      useNativeDriver: false,
     }).start();
   }, [inputLineCount]);
+
+  const translateSidebarButton = useRef(new Animated.Value(0)).current;
+  const opacitySidebarButton = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    console.log("Change detected in sidebar:", props.sidebarOpened);
+    Animated.timing(translateSidebarButton, {
+      toValue: props.sidebarOpened?-320:0,
+      // toValue: opened?Math.min(300,(children.length*50+60)):50,
+      duration: 400,
+			easing: Easing.elastic(0),
+      useNativeDriver: false,
+    }).start();
+    setTimeout(() => {
+      Animated.timing(opacitySidebarButton, {
+        toValue: props.sidebarOpened?0:1,
+        // toValue: opened?Math.min(300,(children.length*50+60)):50,
+        duration: props.sidebarOpened?50:300,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }, props.sidebarOpened?0:300);
+  }, [props.sidebarOpened]);
 
   return (
     <View style={{
@@ -270,9 +294,21 @@ export default function ChatWindow(props : ChatWindowProps) {
           flexDirection: 'row',
           alignItems: 'center'
         }}>
-          <Pressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
-            <Feather name="sidebar" size={24} color="#E8E3E3" />
-          </Pressable>
+          <Animated.View style={{
+            paddingLeft: 10,
+            transform: [{ translateX: translateSidebarButton,},],
+            elevation: -1,
+            zIndex: -1,
+            opacity: opacitySidebarButton,
+          }}>
+            {props.sidebarOpened?(
+              <Feather name="sidebar" size={24} color="#E8E3E3" />
+            ):(
+              <Pressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
+                <Feather name="sidebar" size={24} color="#E8E3E3" />
+              </Pressable> 
+            )}
+          </Animated.View>
           {/* Decide what to put here */}
         </View>
         <View style={{
@@ -293,54 +329,6 @@ export default function ChatWindow(props : ChatWindowProps) {
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
               <ChatBubble key={k_2} entry={v_2}/>
             ))}
-            {/* <Text
-              style={{
-                color: "#E8E3E3",
-                fontSize: 20,
-                // fontFamily: "YingHei",
-                flex: 1,
-                flexDirection: "column",
-              }}
-            >
-              {inputText}
-            </Text>
-            <View style={styles.chatBoxContainer}>
-              <Text
-                style={{
-                  color: "white",
-                  // fontFamily: "YingHei",
-                  fontSize: 20,
-                  flex: 1,
-                  flexDirection: "column",
-                }}
-              >
-                {chat}
-              </Text>
-              <Pressable>
-                <Icon
-                  name="copy"
-                  size={30}
-                  style={styles.chatBoxContainerCopyButton}
-                  onPress={copyToClipboard}
-                ></Icon>
-              </Pressable>
-              <ScrollView
-                style={styles.chatBoxPrimary}
-                ref={scrollViewRef}
-                onContentSizeChange={() =>
-                  scrollViewRef.current.scrollToEnd({ animated: true })
-              }>
-                <Text style={styles.chatBoxText}>{chat}</Text>
-                <Pressable>
-                  <Icon
-                    name="copy"
-                    size={30}
-                    style={styles.chatBoxContainerCopyButton}
-                    onPress={copyChatToClipboard}
-                  ></Icon>
-                </Pressable>
-              </ScrollView>
-            </View> */}
             {temporaryBotEntry && (
               <ChatBubble entry={temporaryBotEntry}/>
             )}
@@ -382,6 +370,7 @@ export default function ChatWindow(props : ChatWindowProps) {
                 </View>
                 <Text
                   style={{
+                    fontFamily: 'Inter-Regular',
                     color: "#4D4D56",
                     fontSize: 12,
                     paddingLeft: 10,
@@ -418,7 +407,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             
             {PlatformIsWeb && (
               <Text style={{
-                  // fontFamily: "YingHei",
+                  fontFamily: "Inter-Regular",
                   color: "#4D4D56",
                   fontSize: 12,
                   fontStyle: "italic",
@@ -445,132 +434,102 @@ export default function ChatWindow(props : ChatWindowProps) {
   );
 }
 
-const styles = {
-  buttonTest: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    elevation: 3,
-    backgroundColor: "black",
-  },
-  leftPanelContainer: {
-    flex: 1,
-    backgroundColor: "#D7AE98",
-    height: "100%",
-    // justifyContent: 'center',
-    alignItems: "center",
-    paddingVertical: 20,
-  },
-  chatBoxContainerCopyButton: {
-    color: "white",
-    flex: 1,
-    paddingLeft: "95%",
-    bottom: 20,
-    left: 20,
-  },
-  uploadButton: {
-    // flex: 1,
-    backgroundColor: "#FF0000",
-    // borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#23232D",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chatBoxContainer: {
-    paddingVertical: 50,
-    paddingLeft: 30,
-    paddingRight: 30,
-    backgroundColor: "#39393C",
-    borderRadius: 50,
-    flex: 5,
-    // width: '100%',
-    // height: '500px',
-  },
-  chatBoxPrimary: {
-    width: "100%",
-    height: "100%",
-    // flexGrow: 0,
-    borderRadius: 50,
-    backgroundColor: "#17181D",
-    padding: 10,
-    paddingHorizontal: 25,
-    paddingVertical: 25,
-  },
-  chatBoxText: {
-    // fontFamily: "YingHei",
-    fontSize: 20,
-    height: "10px",
-    color: "white",
-  },
-  chatColumn: {
-    flexDirection: "column",
-    // flex: 5,
-    height: "100%",
-    width: "88%",
-    paddingHorizontal: 0,
-    paddingVertical: 24,
-  },
-  inputBoxContainer: {
-    // height: '20%',
-    width: "100%",
-    flex: 1,
-    flexDirection: "row",
-    color: "#E8E3E3",
-    backgroundColor: "#FFAAAA00",
-    borderRadius: 10,
-    // margin: '10px 0',
-    alignItems: "center",
-    justifyContent: "space-between",
-    // paddingRight: 24,
-    paddingVertical: 2,
-    paddingHorizontal: 0,
-    // padding: 10,
-  },
-  inputBoxTextInput: {
-    // fontFamily: "YingHei",
-    fontSize: 15,
-    height: "100%",
-    flex: 8,
-    backgroundColor: "#D7AE98",
-    borderRadius: 10,
-    padding: 10,
-    color: "white",
-  },
-  inputBoxSendRequest: {
-    flex: 1,
-    width: "100%",
-    bottom: "45%",
-    flexDirection: "row",
-    height: "50%",
-    backgroundColor: "#17181D",
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 10,
-  },
-  inputBoxSendContainer: {
-    flex: 1,
-    backgroundColor: "#23232D",
-    paddingLeft: 20,
-    height: "50%",
-    width: "100%",
-    justifyContent: "center",
-  },
-  switchButton: {
-    flexDirection: "column",
-    paddingVertical: 15,
-    alignItems: "left",
-    justifyContent: "center",
-  },
+const MARKDOWN_TEST_MESSAGE = `
+# Heading level 1
+
+This is the first paragraph.
+
+This is the second paragraph.
+
+This is the third paragraph.
+
+## Heading level 2
+
+This is an [anchor](https://github.com).
+
+### Heading level 3
+
+This is **bold** and _italics_.
+
+#### Heading level 4
+
+This is \`inline\` code.
+
+This is a code block:
+
+\`\`\`tsx
+const Message = () => {
+  return <div>hi</div>;
 };
+\`\`\`
+
+##### Heading level 5
+
+This is an unordered list:
+
+- One
+- Two
+- Three, and **bold**
+
+This is an ordered list:
+
+1. One
+1. Two
+1. Three
+
+This is a complex list:
+
+1. **Bold**: One
+    - One
+    - Two
+    - Three
+  
+2. **Bold**: Three
+    - One
+    - Two
+    - Three
+  
+3. **Bold**: Four
+    - One
+    - Two
+    - Three
+
+###### Heading level 6
+
+> This is a blockquote.
+
+This is a table:
+
+| Vegetable | Description |
+|-----------|-------------|
+| Carrot    | A crunchy, orange root vegetable that is rich in vitamins and minerals. It is commonly used in soups, salads, and as a snack. |
+| Broccoli  | A green vegetable with tightly packed florets that is high in fiber, vitamins, and antioxidants. It can be steamed, boiled, stir-fried, or roasted. |
+| Spinach   | A leafy green vegetable that is dense in nutrients like iron, calcium, and vitamins. It can be eaten raw in salads or cooked in various dishes. |
+| Bell Pepper | A colorful, sweet vegetable available in different colors such as red, yellow, and green. It is often used in stir-fries, salads, or stuffed recipes. |
+| Tomato    | A juicy fruit often used as a vegetable in culinary preparations. It comes in various shapes, sizes, and colors and is used in salads, sauces, and sandwiches. |
+| Cucumber   | A cool and refreshing vegetable with a high water content. It is commonly used in salads, sandwiches, or as a crunchy snack. |
+| Zucchini | A summer squash with a mild flavor and tender texture. It can be sautéed, grilled, roasted, or used in baking recipes. |
+| Cauliflower | A versatile vegetable that can be roasted, steamed, mashed, or used to make gluten-free alternatives like cauliflower rice or pizza crust. |
+| Green Beans | Long, slender pods that are low in calories and rich in vitamins. They can be steamed, stir-fried, or used in casseroles and salads. |
+| Potato | A starchy vegetable available in various varieties. It can be boiled, baked, mashed, or used in soups, fries, and many other dishes. |
+
+This is a mermaid diagram:
+
+\`\`\`mermaid
+gitGraph
+    commit
+    commit
+    branch develop
+    checkout develop
+    commit
+    commit
+    checkout main
+    merge develop
+    commit
+    commit
+\`\`\`
+
+\`\`\`latex
+\\[F(x) = \\int_{a}^{b} f(x) \\, dx\\]
+\`\`\`
+`;

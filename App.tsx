@@ -120,18 +120,20 @@ function AppWeb() {
         flexDirection: "row",
         width: "100vw",
         height: "100vh",
-        backgroundColor: "#FF0000"
+        backgroundColor: "#FF0000",
       }}>
-        <Animated.View
-          style={{
-            width: sidebarWidth
-          }}
-          >
-          <View style={{width: 320}}>
-            <Sidebar toggleSideBar={toggle_sidebar}/>
-          </View>
+        <Animated.View style={{elevation: sidebarOpened?1:0,}}>
+          <Animated.View
+            style={{
+              width: sidebarWidth,
+            }}
+            >
+            <View style={{width: 320}}>
+              <Sidebar toggleSideBar={toggle_sidebar}/>
+            </View>
+          </Animated.View>
         </Animated.View>
-        <ChatWindow toggleSideBar={toggle_sidebar}/>
+        <ChatWindow toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
       </Animated.View>
     </>
   );
