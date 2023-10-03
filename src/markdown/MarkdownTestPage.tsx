@@ -87,7 +87,10 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
       justifyContent: "center",
       // width: "80vw"
       height: "100vh",
-      // width: "100%",
+      paddingRight: 10, 
+      width: "100%",
+      // backgroundColor: "#3939FF",
+      borderRadius: 10,
     }}>
       <View style={{flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
         <View id="ChatHeader" style={{
@@ -127,7 +130,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
               flex: 5,
             }}
           >
-            <MarkdownRenderer input={MARKDOWN_TEST_2}/>
+            <MarkdownRenderer input={MARKDOWN_TEST_MESSAGE}/>
             
           </ScrollView>
 
@@ -154,7 +157,7 @@ This is an [anchor](https://github.com).
 
 ### Heading level 3
 
-This is **bold** and _italics_.
+This is **bold** and *italics*.
 
 #### Heading level 4
 
@@ -237,9 +240,7 @@ gitGraph
 \`\`\`latex
 \\[F(x) = \\int_{a}^{b} f(x) \\, dx\\]
 \`\`\`
-`;
 
-const MARKDOWN_TEST_2 = `
 # Introduction to Naive Bayes Classifier 
 The Naive Bayes classifier is a simple probabilistic classifier that is based on Bayes' theorem. It is called "naive" because it assumes that the features are independent of each other, which is often not true in real-world datasets. Despite its simplicity, the Naive Bayes classifier has been shown to perform well in many applications, including text classification, image classification, and bioinformatics. In this set of notes, we will cover the basics of the Naive Bayes classifier, including how it works, how to train it, and how to use it for classification. 
 ## How does Naive Bayes work? 

@@ -9,25 +9,25 @@ import {
 import { marked, TokensList, Token, Tokens } from 'marked';
 
 
-const lexer = new marked.Lexer();
+
 //See here: https://marked.js.org/using_pro#tokenizer
-const tokenizer = {
-  codespan(src : string) {
-    const match = src.match(/^\$+([^\$\n]+?)\$+/);
-    if (match) {
-      return {
-        type: 'codespan',
-        raw: match[0],
-        text: match[1].trim()
-      };
-    }
+// const tokenizer = {
+//   codespan(src : string) {
+//     const match = src.match(/^\$+([^\$\n]+?)\$+/);
+//     if (match) {
+//       return {
+//         type: 'codespan',
+//         raw: match[0],
+//         text: match[1].trim()
+//       };
+//     }
 
-    // return false to use original codespan tokenizer
-    return false;
-  }
-};
+//     // return false to use original codespan tokenizer
+//     return false;
+//   }
+// };
 
-marked.use({ tokenizer });
+// marked.use({ tokenizer });
 
 // Run marked
 console.log(marked.parse('$ latex code $\n\n` other code `'));
@@ -107,8 +107,10 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
     5: 20,
     6: 16,
   }
-
+  
+  
   const { token } = props;
+    
   switch (token.type) {
     case 'space':
       return (
@@ -122,11 +124,29 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (null);
     case 'heading':
       let fontSizeGet = (token.depth === 1)?36:32 - 4*token.depth;
+      // if (token.hasOwnProperty("tokens")) {
+      //   return (
+      //     <Text>
+      //     {token["tokens"].map((k: Number, v: Token) => (
+      //       <Text style={{
+      //         fontFamily: normalTextFont,
+      //         fontSize: fontSizeGet,
+      //         paddingLeft: 3*token.depth,
+      //         color: '#E8E3E3'
+      //       }}>
+      //         {v.text}
+      //       </Text>
+          
+      //     ))}
+      //     </Text>
+      //   );
+      // }
       return (
         <Text style={{
           fontFamily: normalTextFont,
           fontSize: fontSizeGet,
-          paddingLeft: 2*token.depth,
+          paddingLeft: 3*token.depth,
+          color: '#E8E3E3'
         }}>
           {token.text}
         </Text>
@@ -157,14 +177,16 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           }}>
             <Text style={{
               fontFamily: normalTextFont, 
-              fontSize: 11,
+              fontSize: 14,
               width: 20,
-              textAlign: 'center'
+              textAlign: 'center',
+              color: '#E8E3E3'
               }}>·</Text>
           </View>
           <Text style={{
             fontFamily: normalTextFont,
-            fontSize: 11
+            fontSize: 14,
+            color: '#E8E3E3'
             }}>{token.text}</Text>
         </View>
       );
@@ -176,7 +198,8 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         }}>
           <Text style={{
             fontFamily: normalTextFont,
-            fontSize: 11
+            fontSize: 14,
+            color: '#E8E3E3'
             }}>{token.text}</Text>
         </View>
       );
@@ -213,17 +236,21 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 }
 
 export default function MarkdownRenderer(props: ChatBubbleProps) {
-  const normalTextFont = "Inter-Regular";
+  const normalTextFont = "Inter";
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
-  
+  const lexer = new marked.Lexer();
   const { input } = props;
-  useEffect(() => {
 
+  // useEffect(() => {
+
+  // }, [input]);
+
+  useEffect(() => {
     let lexed_input = lexer.lex(input);
     console.log(lexed_input);
     setMarkdownTokens(lexed_input);
-  }, []);
+  }, [input]);
   // console.log([marked.parse(input)]);
   // console.log("Lexer");
 
@@ -235,14 +262,21 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
 
   return (
     <View style={{
+      maxWidth: "100%",
+            minWidth: 40,
+            minHeight: 40,
+            // width: "80svw",
+            paddingRight: 50
+    }}>
+    <View style={{
       flexDirection: "column",
       padding: 10,
-      backgroundColor: "#FFFFFF",
+      backgroundColor: "#39393C",
+      // backgroundColor: "#1E1E1E",
       borderRadius: 20,
       alignSelf: "center",
-      alignItems: '',
       justifyContent: 'flex-start',
-
+      width: "100%",
     }}>
       {/* <Text style={{fontFamily: normalTextFont}}> */}
       {/* <div dangerouslySetInnerHTML={getMarkdownText(input)} />; */}
@@ -257,9 +291,9 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
       </Text> */}
       {/* </Text> */}
       {markdownTokens.map((v : Token, k : number) => (
-        
         <MarkdownMapComponent key={k} token={v}/>
       ))}
+    </View>
     </View>
   );
 }
