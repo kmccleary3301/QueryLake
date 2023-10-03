@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 
+import Markdown from "@ronradtke/react-native-markdown-display";
+
 type MarkdownTestComponent = {
   text: string
 };
@@ -20,6 +22,12 @@ type MarkdownTestComponent = {
 export default function MarkdownTestComponent(props: MarkdownTestComponent) {
   
   return (
-    <></>
+    <>
+      <Markdown style={{
+        
+      }}>
+        {props.text}
+      </Markdown>
+    </>
   );
 }

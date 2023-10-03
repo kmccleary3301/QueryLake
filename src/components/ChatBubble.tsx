@@ -12,6 +12,8 @@ import {
   Image
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import Markdown from "@ronradtke/react-native-markdown-display";
+import MarkdownRenderer from "../markdown/MarkdownRenderer";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -27,6 +29,7 @@ type ChatContent = ChatContentExcerpt[];
 type ChatEntry = {
   origin: ("user" | "server"),
   content: ChatContent,
+  content_raw_string: string,
 };
 
 type ChatBubbleProps = {
@@ -110,6 +113,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
             paddingRight: 50
           }}
         >
+          
           <Text 
             style={{
               fontFamily: normalTextFont,
@@ -119,6 +123,9 @@ export default function ChatBubble(props: ChatBubbleProps) {
             }}
             selectable={true}
           >
+            {/* <Markdown style={markdown_style}>
+              {props.entry.content_raw_string}
+            </Markdown> */}
           {props.entry.content.map((v : ChatContentExcerpt, k : number) => (typeof v === 'string')?(
 
             <Text 
@@ -148,4 +155,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
       </View>
     </View>
   );
+}
+
+
+
+const markdown_style = {
+  'heading1': {
+    color: '#E8E3E3',
+    FontFace: 'Inter',
+  },
 }

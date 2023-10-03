@@ -26,8 +26,9 @@ import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
+import MarkdownTestComponent from "../components/MarkdownTestComponent";
 // import MarkdownRender from "../components/MarkdownTestComponent";
-
+import MarkdownRenderer from "../markdown/MarkdownRenderer";
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -42,6 +43,7 @@ type ChatContent = ChatContentExcerpt[];
 type ChatEntry = {
   origin: ("user" | "server"),
   content: ChatContent,
+  content_raw_string: string,
 };
 
 type ChatWindowProps = {
@@ -103,6 +105,7 @@ export default function ChatWindow(props : ChatWindowProps) {
     let user_entry : ChatEntry = {
       origin: "user",
       content: [message],
+      content_raw_string: message,
     };
     
     setNewChat(newChat => [...newChat, user_entry])
@@ -142,6 +145,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         genString += decoded;
         setChat(genString);
         bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
+        bot_entry["content_raw_string"] = genString;
         setTemporaryBotEntry(bot_entry);
       }
 
@@ -326,6 +330,7 @@ export default function ChatWindow(props : ChatWindowProps) {
               flex: 5,
             }}
           >
+            <MarkdownTestComponent text={MARKDOWN_TEST_MESSAGE}/>
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
               <ChatBubble key={k_2} entry={v_2}/>
             ))}
