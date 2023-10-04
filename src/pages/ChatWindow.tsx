@@ -133,6 +133,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       // console.log("New message event:", event);
       if (event === undefined || event.data === undefined) return;
       let decoded = event.data.toString();
+      decoded = decoded.replace("�", "");
       if (decoded == "-DONE-") {
         // setNewChat(newChat => [...newChat, bot_entry])
         // setTemporaryBotEntry(null);

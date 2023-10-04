@@ -10,9 +10,14 @@ import {
 import Latex from 'react-latex';
 // import '../katex/dist/katex.min.css';
 // import { InlineMath, BlockMath } from 'react-katex';
+// import * as katex from 'katex';
+// import katex from "katex/dist/katex.mjs";
+import katex from "../katex/dist/katex";
 // import '../../assets/katex.min.css';
 // import Late
+import renderLatexInTextAsHTMLString from "react-latex-next/dist/renderLatex";
 import { InlineMath, BlockMath } from "../react-katex/src";
+// import Kate
 
 type textSegment = {
   text: string,
@@ -49,13 +54,23 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
           //   { left: '$', right: '$', display: false },
           // ]}>{"$"+props.textSeg.text+"$"}</Latex>
           // <InlineMath math={props.textSeg.text}/>
-          <Latex output={"mathml"}>{"$$a^2_a$$"}</Latex>
+          <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+            output: 'mathml',
+            throwOnError: false,
+            displayMode: false
+          })}} />
+          // <Latex output={"mathml"}>{"$$a^2_a$$"}</Latex>
       )}
       {(props.textSeg.type === "mathjax_newline") && (
           // <Text selectable={true}>{props.textSeg.text}</Text>
           // <Latex output="Mathml">{"$$"+props.textSeg.text+"$$"}</Latex>
-          <Latex>{"$$a^2_a$$"}</Latex>
-          // <BlockMath math={props.textSeg.text}/>
+          // <Latex>{"$$a^2_a$$"}</Latex>
+          // katex.render(props.textSeg.text)
+          <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+            output: 'mathml',
+            throwOnError: false,
+            displayMode: true
+          })}} />
       )}
       {(props.textSeg.type === "bold") && (
           <Text selectable={true}><b>{props.textSeg.text}</b></Text>

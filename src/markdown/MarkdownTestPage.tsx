@@ -90,7 +90,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
       paddingRight: 10, 
       width: "100%",
       // backgroundColor: "#3939FF",
-      borderRadius: 10,
+      // borderRadius: 10,
     }}>
       <View style={{flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
         <View id="ChatHeader" style={{
@@ -263,5 +263,6 @@ Training a Naive Bayes classifier involves estimating the parameters of the mode
 In conclusion, the Naive Bayes classifier is a simple probabilistic classifier that has been widely used in many applications. It assumes that the features are independent of each other, which may not always be true in real-world datasets. However, it has several advantages, such as being easy to implement and interpret, handling missing values, and being robust to outliers and noisy data. Despite its limitations, the Naive Bayes classifier remains a popular choice for classification tasks due to its simplicity and effectiveness.
 
 
-Lecture Notes: Naive Bayes Classifier Introduction: The Naive Bayes classifier is a simple probabilistic classifier that is based on Bayes’ theorem. It is called “naive” because it assumes that the features are independent of each other, which is often not true in real-world datasets. Despite its simplicity, the Naive Bayes classifier has been shown to perform well in many applications, including text classification, image classification, and bioinformatics. Math Expressions: To understand how the Naive Bayes classifier works, let’s start by defining some mathematical notation. Let $X$ be the feature matrix, where each row represents a sample and each column represents a feature. Let $Y$ be the label vector, where each element $y_i$ represents the class of the $i^{th}$ sample. Let $p(x)$ be the prior probability distribution over the features, and let $p(y|x)$ be the conditional probability distribution over the
+The Jacobian of a function is a matrix that represents the partial derivatives of the function's output variables with respect to its input variables. It is a powerful tool in multivariate calculus and is used in many areas of mathematics, science, and engineering. In mathematical notation, the Jacobian of a function $f: \\mathbb{R}^n \\to \\mathbb{R}^m$ at a point $\\mathbf{x} = (x_1, \\ldots, x_n)$ is denoted by $\\mathbf{J}_f(\\mathbf{x})$ and has dimensions $m \\times n$. Its entries are given by: $$\\mathbf{J}_f(\\mathbf{x}) = \\begin{bmatrix} \\frac{\\partial f_1}{\\partial x_1} & \\frac{\\partial f_1}{\\partial x_2} & \\cdots & \\frac{\\partial f_1}{\\partial x_n} \\\\ \\vdots & \\vdots & \\ddots & \\vdots \\\\ \\frac{\\partial f_m}{\\partial x_1} & \\frac{\\partial f_m}{\\partial x_2} & \\cdots & \\frac{\\partial f_m}{\\partial x_n} \\end{bmatrix}$$ where $f_i$ is the $i$th component of the vector-valued function $f$. The Jacobian can be used to linearize the behavior of a function near a point, which can be useful for optimization problems or other applications where you want to approximate the behavior of a function locally. It can also be used to compute the differential of a function, which is important in many areas of mathematics and physics.
+
 `;

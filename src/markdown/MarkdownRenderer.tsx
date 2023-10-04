@@ -170,7 +170,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
     case 'code':
       return (null);
     case 'heading':
-      let fontSizeGet = (token.depth === 1)?36:32 - 4*token.depth;
+      let fontSizeGet = 36 - 3*token.depth;
       // if (token.hasOwnProperty("tokens")) {
       //   return (
       //     <Text>
@@ -192,7 +192,6 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         <Text selectable={true} style={{
           fontFamily: normalTextFont,
           fontSize: fontSizeGet,
-          paddingLeft: 3*token.depth,
           color: '#E8E3E3'
         }}>
           {token.text}
@@ -207,7 +206,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
     case 'list':
       return (
         <View style={{
-          paddingLeft: 10
+          paddingLeft: 3
         }}>
           {token.items.map((v : Tokens.ListItem, k : number) => (
             <MarkdownMapComponent key={k} token={v}/>
@@ -254,24 +253,6 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (null);
     case 'text':
       return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
-    // case 'space':
-    //   return (null);
     default:
       return (
         <MarkdownMapComponentError type={token.type}/>
