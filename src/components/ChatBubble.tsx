@@ -15,23 +15,6 @@ import { Feather } from "@expo/vector-icons";
 import Markdown from "@ronradtke/react-native-markdown-display";
 import MarkdownRenderer from "../markdown/MarkdownRenderer";
 
-type CodeSegmentExcerpt = {
-  text: string,
-  color: string,
-};
-
-type CodeSegment = CodeSegmentExcerpt[];
-
-type ChatContentExcerpt = string | CodeSegment;
-
-type ChatContent = ChatContentExcerpt[];
-
-type ChatEntry = {
-  origin: ("user" | "server"),
-  content: ChatContent,
-  content_raw_string: string,
-};
-
 type ChatBubbleProps = {
   origin: ("user" | "server"),
   input: string
@@ -41,17 +24,6 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const normalTextFont = "Inter-Regular";
   const codeFont = "Consolas";
 
-  let string_array = [];
-  // for (let i = 0; i < props.entry.content.length; i++) {
-  //   if (typeof props.entry.content[i] === "string") { 
-  //     string_array.push(props.entry.content[i]); 
-  //   } else {
-  //     let code_seg_array : CodeSegment = props.entry.content[i];
-  //     for (let i_2 = 0; i_2 < code_seg_array.length; i_2++) {
-  //       string_array.push(code_seg_array[i_2].text);
-  //     }
-  //   }
-  // }
 
   const queryLakeIcon = require("../../assets/favicon.png");
 
@@ -72,16 +44,17 @@ export default function ChatBubble(props: ChatBubbleProps) {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <Text style={{
-            fontFamily: normalTextFont,
-            fontSize: 30,
-            height: "100%",
-            width: "100%",
-            textAlign: 'center',
-            textAlignVertical: 'center'
+          <View style={{
+            justifyContent: 'center',
+            alignSelf: 'center'
           }}>
-            {"K"}
-          </Text>
+            <Text style={{
+              fontFamily: normalTextFont,
+              fontSize: 24,
+            }}>
+              {"K"}
+            </Text>
+          </View>
         </View>
         </View>
       ):(

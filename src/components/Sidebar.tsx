@@ -14,6 +14,7 @@ import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import SidebarColectionSelect from './SidebarCollectionSelect';
+import AnimatedPressable from './AnimatedPressable';
 
 type selectedState = [
 	selected: boolean,
@@ -159,17 +160,17 @@ export default function Sidebar(props: SidebarProps) {
             width: '100%',
             justifyContent: 'space-between',
           }}>
-            <Pressable style={{padding: 0}}>
+            <AnimatedPressable style={{padding: 0}}>
               <Feather name="settings" size={24} color="#E8E3E3" />
-            </Pressable>
-            <Pressable style={{padding: 0}}>
+            </AnimatedPressable>
+            <AnimatedPressable style={{padding: 0}}>
               <Feather name="info" size={24} color="#E8E3E3" />
-            </Pressable>
-            <Pressable style={{padding: 0}} onPress={() => {
+            </AnimatedPressable>
+            <AnimatedPressable style={{padding: 2, borderRadius: 5}} onPress={() => {
               if (props.toggleSideBar) { props.toggleSideBar(); }
             }}>
               <Feather name="sidebar" size={24} color="#E8E3E3" />
-            </Pressable>
+            </AnimatedPressable>
           </View>
           <View style={{
             width: '100%',

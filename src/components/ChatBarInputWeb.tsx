@@ -18,7 +18,7 @@ type ChatBarInputProps = {
 
 export default function ChatBarInputWeb(props: ChatBarInputProps) {
   const [inputText, setInputText] = useState(
-    "Write a python function that calculates the Fibonacci sequence up to a given number n. Include type hints and a function description."
+    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
   );
   const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [fileDragHover, setFileDragHover] = useState(false);

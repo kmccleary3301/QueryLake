@@ -26,9 +26,7 @@ import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
-import MarkdownTestComponent from "../components/MarkdownTestComponent";
-// import MarkdownRender from "../components/MarkdownTestComponent";
-import MarkdownRenderer from "../markdown/MarkdownRenderer";
+import AnimatedPressable from "../components/AnimatedPressable";
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -42,7 +40,7 @@ type ChatContent = ChatContentExcerpt[];
 
 type ChatEntry = {
   origin: ("user" | "server"),
-  content: ChatContent,
+  // content_392098: ChatContent,
   content_raw_string: string,
 };
 
@@ -105,14 +103,14 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     let user_entry : ChatEntry = {
       origin: "user",
-      // content: [message],
       content_raw_string: message,
     };
     
     
     let bot_entry : ChatEntry = {
       origin: "server",
-      content: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
+      // content_392098: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
+      content_raw_string: "",
     }
     
     setActiveBotEntryIndex(newChat.length+1);
@@ -154,7 +152,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         // bot_entry["content_raw_string"] = genString;
         setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
           "origin": newChat[newChat.length-1].origin,
-          "content": newChat[newChat.length-1].content,
+          // "content_392098": newChat[newChat.length-1].content_392098,
           "content_raw_string": genString
         }])
         // setTemporaryBotEntry(bot_entry);
@@ -319,9 +317,9 @@ export default function ChatWindow(props : ChatWindowProps) {
             {props.sidebarOpened?(
               <Feather name="sidebar" size={24} color="#E8E3E3" />
             ):(
-              <Pressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
+              <AnimatedPressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
                 <Feather name="sidebar" size={24} color="#E8E3E3" />
-              </Pressable> 
+              </AnimatedPressable> 
             )}
           </Animated.View>
           {/* Decide what to put here */}

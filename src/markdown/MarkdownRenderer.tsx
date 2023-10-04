@@ -7,9 +7,56 @@ import {
 } from "react-native";
 // import { Marked } from "marked";
 import { marked, TokensList, Token, Tokens } from 'marked';
+import MarkdownTextSplitter from "./MarkdownTextSplitter";
+// import {KateX}
 
+// marked.use({
+//   renderer: {
+//     codespan: (code) => {
+//       if (code[0] == '$') {
+//         return katex.renderToString(code.slice(1), {throwOnError: false})
+//       }
 
+//       return false
+//     }
+//   }
+// })
 
+// marked.use({
+//   tokenizer: {
+//     inlineText(src : string, inRawBlock) {
+//       const cap = src.match(/^([`$]+|[^`$])(?:[\s\S]*?(?:(?=[\\<!\[`$*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/);
+//         if (cap) {
+//           var text;
+//           if (inRawBlock) {
+//             text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : cap[0] : cap[0];
+//           } else {
+//             text = cap[0];
+//           }
+//           return {
+//             type: 'text',
+//             raw: cap[0],
+//             text: text
+//           };
+//        }
+//   }
+// }})
+
+// function inlineText(src, inRawBlock, smartypants) {
+//   const cap = src.match(/^([`$]+|[^`$])(?:[\s\S]*?(?:(?=[\\<!\[`$*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/);
+//     if (cap) {
+//       var text;
+//       if (inRawBlock) {
+//         text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : cap[0] : cap[0];
+//       } else {
+//         text = (this.options.smartypants ? smartypants(cap[0]) : cap[0]);
+//       }
+//       return {
+//         type: 'text',
+//         raw: cap[0],
+//         text: text
+//       };
+//    }
 //See here: https://marked.js.org/using_pro#tokenizer
 // const tokenizer = {
 //   codespan(src : string) {
@@ -81,7 +128,7 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
       borderRadius: "10",
       alignItems: 'center'
     }}>
-      <Text style={{
+      <Text selectable={true} style={{
         fontSize: 18,
         color: "#FF0000",
         padding: 10,
@@ -142,7 +189,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       //   );
       // }
       return (
-        <Text style={{
+        <Text selectable={true} style={{
           fontFamily: normalTextFont,
           fontSize: fontSizeGet,
           paddingLeft: 3*token.depth,
@@ -175,7 +222,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           <View style={{
             flexDirection: 'column'
           }}>
-            <Text style={{
+            <Text selectable={true} style={{
               fontFamily: normalTextFont, 
               fontSize: 14,
               width: 20,
@@ -183,11 +230,11 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
               color: '#E8E3E3'
               }}>·</Text>
           </View>
-          <Text style={{
+          <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
             fontSize: 14,
             color: '#E8E3E3'
-            }}>{token.text}</Text>
+            }} text={token.text}/>
         </View>
       );
     case 'paragraph':
@@ -196,11 +243,11 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           flexDirection: 'row',
           paddingLeft: 10
         }}>
-          <Text style={{
+          <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
             fontSize: 14,
             color: '#E8E3E3'
-            }}>{token.text}</Text>
+            }} text={token.text}/>
         </View>
       );
     case 'html':
@@ -239,8 +286,9 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
   const normalTextFont = "Inter";
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
-  const lexer = new marked.Lexer();
+  
   const { input } = props;
+  const lexer = new marked.Lexer();
 
   // useEffect(() => {
 
