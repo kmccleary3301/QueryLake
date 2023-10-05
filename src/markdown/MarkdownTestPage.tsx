@@ -265,4 +265,106 @@ In conclusion, the Naive Bayes classifier is a simple probabilistic classifier t
 
 The Jacobian of a function is a matrix that represents the partial derivatives of the function's output variables with respect to its input variables. It is a powerful tool in multivariate calculus and is used in many areas of mathematics, science, and engineering. In mathematical notation, the Jacobian of a function $f: \\mathbb{R}^n \\to \\mathbb{R}^m$ at a point $\\mathbf{x} = (x_1, \\ldots, x_n)$ is denoted by $\\mathbf{J}_f(\\mathbf{x})$ and has dimensions $m \\times n$. Its entries are given by: $$\\mathbf{J}_f(\\mathbf{x}) = \\begin{bmatrix} \\frac{\\partial f_1}{\\partial x_1} & \\frac{\\partial f_1}{\\partial x_2} & \\cdots & \\frac{\\partial f_1}{\\partial x_n} \\\\ \\vdots & \\vdots & \\ddots & \\vdots \\\\ \\frac{\\partial f_m}{\\partial x_1} & \\frac{\\partial f_m}{\\partial x_2} & \\cdots & \\frac{\\partial f_m}{\\partial x_n} \\end{bmatrix}$$ where $f_i$ is the $i$th component of the vector-valued function $f$. The Jacobian can be used to linearize the behavior of a function near a point, which can be useful for optimization problems or other applications where you want to approximate the behavior of a function locally. It can also be used to compute the differential of a function, which is important in many areas of mathematics and physics.
 
+Magma (in group theory)
+=====================
+
+A magma in group theory is an algebraic structure consisting of a set of elements together with two binary operations (usually called multiplication and addition) that satisfy certain axioms. The term "magma" was introduced by John H. Conway as a more generalization of the concept of a group, which he defined as a special kind of magma with additional properties.
+Definition of a magma
+-------------------------
+
+Formally, a magma M consists of a set X together with two binary operations + and ·, such that the following axioms are satisfied:
+1. Closure under +: For all a, b in X, a + b is also in X.
+2. Associativity: For all a, b, c in X, (a + b) + c = a + (b + c).
+3. Identity: There exists an element 0 in X, such that for any a in X, a + 0 = a.
+4. Inverse: For each element a in X, there exists an element -a in X, such that a + (-a) = 0.
+Note that these axioms are similar to those defining a group, but they do not include the requirement that the operation must be commutative or have an identity element.
+Examples of magmas
+--------------
+
+Many examples of magmas can be found in mathematics, particularly in abstract algebra and combinatorics. Here are some common ones:
+1. Vector spaces: A vector space over a field F forms a magma under vector addition and scalar multiplication.
+2. Groups: As mentioned earlier, a group is a special type of magma where the operation is commutative and has an identity element.
+3. Rings: A ring is a mathematical structure consisting of a set of elements together with two binary operations (usually called addition and multiplication) that satisfy certain axioms. Rings form a magma under ring addition and multiplication.
+4. Algebras: An algebra is a mathematical structure consisting of a set of elements together with two binary operations (usually called multiplication and addition) that satisfy certain axioms. Algebras form a magma under algebra multiplication and addition.
+5. Quotient magmas: Given a magma M, we can define a new magma Q by identifying certain elements of M as "equivalent" and forming a quotient set. This construction can be used to study various algebraic structures, including groups, rings, and algebras.
+Properties of magmas
+-------------------------
+
+Magmas share many properties with groups, but there are also some important differences. Some key properties of magmas include:
+1. Non-associativity: Unlike groups, which are associative under their operation, magmas do not necessarily have this property.
+2. Lack of closure under multiplication: Magmas do not have closure under multiplication, meaning that the product of two elements need not always exist in the magma.
+3. No identity element for multiplication: While magmas have an identity element for addition, they do not necessarily have one for multiplication.
+4. No inverse for each element: In contrast to groups, where every element has an inverse, magmas may or may not have an inverse for each element.
+Applications of magmas
+--------------
+
+Magmas have found applications in various areas of mathematics and computer science, including:
+
+1. Combinatorics: Magmas are used to study combinatorial objects such as graphs, posets, and designs.
+2. Computer science: Magmas are used in programming languages, compilers, and other computational systems.
+3. Cryptography: Magmas are used in cryptographic protocols, such as public-key encryption and digital signatures.
+4. Algebraic geometry: Magmas are used to study geometric objects defined by polynomial equations.
+Conclusion
+----------
+
+In conclusion, magmas are algebraic structures that generalize groups and provide a framework for studying various mathematical concepts. They offer a powerful tool for solving problems in algebra, combinatorics, and computer science, among other fields. By understanding magmas, we can gain insights into the structure and behavior of these mathematical objects and develop new techniques for working with them.
+
+# Naive Bayes Classifier
+
+The Naive Bayes classifier is a simple probabilistic classifier that is based on Bayes' theorem. It is called "naive" because it assumes that the features are independent of each other, which is often not true in real-world datasets. Despite its simplicity, the Naive Bayes classifier has been shown to perform well in many applications, including text classification, image classification, and bioinformatics. In this set of notes, we will provide an overview of the Naive Bayes classifier, its strengths and weaknesses, and how it can be used in practice.
+## How does the Naive Bayes classifier work?
+
+The Naive Bayes classifier works by estimating the probability of an instance belonging to each class given the feature values. The probability is calculated using Bayes' theorem, which states that the probability of a hypothesis (H) given some evidence (E) is equal to the probability of the evidence given the hypothesis multiplied by the prior probability of the hypothesis divided by the probability of all hypotheses:
+$$P(H|E) = \\frac{P(E|H) \\times P(H)}{P(E)}$$
+In the case of the Naive Bayes classifier, the hypothesis is represented by a vector of probabilities for each class, and the evidence is represented by a vector of feature values. The Naive Bayes classifier uses a simple trick to simplify the calculation of the posterior probability of the classes given the features: it sets one of the probabilities to 1, effectively eliminating that class from consideration. This allows the classifier to focus on the remaining classes and calculate their probabilities more accurately.
+## Strengths of the Naive Bayes classifier
+
+
+1. **Handling missing values**: The Naive Bayes classifier can handle missing values in the data, which is a common problem in many machine learning tasks. It simply ignores the missing values when calculating the probabilities.
+2. **Scalability**: The Naive Bayes classifier is very scalable, as it only requires computing the probabilities of each class given the features for each instance. This makes it well-suited for large datasets where computational resources are limited.
+3. **Interpretability**: The Naive Bayes classifier provides interpretable results, as the probabilities of each class given the features provide insight into how the classifier has made its prediction.
+4. **Robustness**: The Naive Bayes classifier is robust to outliers and noisy data, as it calculates the probabilities based on the entire dataset rather than just the instances with the most extreme features.
+5. **Flexibility**: The Naive Bayes classifier can be used for both binary and multiclass classification problems, and it can handle categorical variables directly without requiring any additional preprocessing steps.
+
+## Weaknesses of the Naive Bayes classifier
+
+
+1. **Assumes independence**: The Naive Bayes classifier assumes that the features are independent of each other, which is often not true in real-world datasets. In fact, many datasets exhibit complex relationships between the features, which can lead to poor performance if these relationships are not captured.
+2. **Sensitivity to prior probabilities**: The Naive Bayes classifier relies heavily on the prior probabilities of the classes, which can have a significant impact on its performance. If the prior probabilities are not accurate or fair, the classifier may make suboptimal predictions.
+3. **Lack of handling non-linear relationships**: The Naive Bayes classifier assumes linear relationships between the features and the classes, which can lead to poor performance when dealing with non-linear relationships.
+4. **Inability to handle high-dimensional data**: As the number of features increases, the computational complexity of the Naive Bayes classifier grows exponentially, making it difficult to apply to high-dimensional data.
+5. **Limited adaptability**: Once trained, the Naive Bayes classifier cannot adapt to new data, as it does not learn from the examples it sees. This means that the classifier will perform poorly on unseen data, especially in cases where the distribution of the data changes over time.
+
+## How to use the Naive Bayes classifier in practice
+
+
+To use the Naive Bayes classifier in practice, follow these steps:
+
+1. **Prepare the data**: Prepare your dataset by splitting it into training and testing sets, and encoding categorical variables if necessary.
+2. **Calculate the priors**: Calculate the prior probabilities of each class using the class distribution of the training set. You can use the class labels directly or estimate them using techniques such as k-means clustering.
+3. **Train the classifier**: Train the Naive Bayes classifier using the training set, setting one of the probabilities to 1 (usually the class with the highest probability).
+4. **Predict on the test set**: Use the trained classifier to predict the classes of the test set.
+5. **Evaluate the performance**: Evaluate the performance of the classifier using metrics such as accuracy, precision, recall, F1 score, etc. Compare the results to those obtained using other classification algorithms to determine which one performs better.
+6. **Tune the hyperparameters**: Tune the hyperparameters of the classifier, such as the prior probabilities, to improve its performance. This may involve iteratively retraining the classifier with different values for the hyperparameters until you find the best combination.
+7. **Deploy the classifier**: Once you are satisfied with the performance of the classifier, deploy it in your application, using it to make predictions on new data based on the features available.
+
+\`\`\`python
+from .langchain_sse import CustomStreamHandler, ThreadedGenerator
+# from . import Exllama
+
+from langchain.callbacks.manager import CallbackManager
+from langchain import PromptTemplate, LLMChain
+
+import threading
+import copy
+
+class LLMEnsemble:
+    def __init__(self, default_config, model_class) -> None:
+        self.max_instances = 1
+        self.llm_instances = []
+        self.default_config = default_config
+        self.model_class = model_class
+        self.make_new_instance(self.default_config)
+\`\`\`
+
 `;

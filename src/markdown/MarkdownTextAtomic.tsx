@@ -17,6 +17,7 @@ import katex from "../katex/dist/katex";
 // import Late
 import renderLatexInTextAsHTMLString from "react-latex-next/dist/renderLatex";
 import { InlineMath, BlockMath } from "../react-katex/src";
+import MarkdownLatex from "./MarkdownLatex";
 // import Kate
 
 type textSegment = {
@@ -30,7 +31,6 @@ type textSegment = {
 type MarkdownTextAtomicProps = {
   textSeg : textSegment
 }
-
 
 export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
 
@@ -54,11 +54,10 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
           //   { left: '$', right: '$', display: false },
           // ]}>{"$"+props.textSeg.text+"$"}</Latex>
           // <InlineMath math={props.textSeg.text}/>
-          <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
-            output: 'mathml',
-            throwOnError: false,
-            displayMode: false
-          })}} />
+          <Text style={{fontWeight: 'bold'}}>
+
+          <MarkdownLatex textSeg={props.textSeg} type={"inline"}/>
+          </Text>
           // <Latex output={"mathml"}>{"$$a^2_a$$"}</Latex>
       )}
       {(props.textSeg.type === "mathjax_newline") && (
@@ -66,11 +65,12 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
           // <Latex output="Mathml">{"$$"+props.textSeg.text+"$$"}</Latex>
           // <Latex>{"$$a^2_a$$"}</Latex>
           // katex.render(props.textSeg.text)
-          <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
-            output: 'mathml',
-            throwOnError: false,
-            displayMode: true
-          })}} />
+          <MarkdownLatex textSeg={props.textSeg} type={"newline"}/>
+          // <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+          //   output: 'mathml',
+          //   throwOnError: false,
+          //   displayMode: true
+          // })}} />
       )}
       {(props.textSeg.type === "bold") && (
           <Text selectable={true}><b>{props.textSeg.text}</b></Text>

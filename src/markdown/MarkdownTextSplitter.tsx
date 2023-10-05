@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Katex from "react-native-katex";
 import MarkdownTextAtomic from "./MarkdownTextAtomic";
 
+
 type MarkdownTextSplitterProps = {
     selectable?: boolean,
     style?: React.CSSProperties,
@@ -13,27 +14,6 @@ type textSegment = {
     text: string,
     type: "regular" | "bold" | "italic" | "bolditalic" | "mathjax_newline" | "mathjax_inline"
 }
-
-// function splitStringArrayRegex(stringArrayIn: string[], regexIn : RegExp) {
-    
-// }
-// type markdownTextSegmentRenderProps = {
-//     textSeg : textSegment
-// }
-
-// function markdownTextSegmentRender(props : markdownTextSegmentRenderProps){
-
-//     return (
-//         <>
-//         {(props.textSeg.type === "mathjax_inline") && (
-//             <Katex expression={props.textSeg.text}/>
-//         )}
-//         {(props.textSeg.type !== "mathjax_inline") && (
-//             <Text>{props.textSeg.text}</Text>
-//         )}
-//         </>
-//     );
-// }
 
 export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
     const [textSplit, setTextSplit] = useState<textSegment[]>([]);
@@ -61,32 +41,45 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
                     type: "bolditalic"
                 });
             }
-            else if (match[0].length > 2 && match[0].slice(0, 2) === "**") {
+            else if (match[0].length > 2 && match[0].slice(0, 2) === "**" && match[0].length > 4) {
                 string_segments.push({
                     text: match[0].slice(2, match[0].length-2),
                     type: "bold"
                 });
             }
-            else if (match[0].length > 2 && match[0].slice(0, 2) === "$$") {
+            else if (match[0].length > 2 && match[0].slice(0, 2) === "$$" && match[0].length > 4) {
                 string_segments.push({
                     text: match[0].slice(2, match[0].length-2),
                     type: "mathjax_newline"
                 });
             }
-            else if (match[0].length > 1 && match[0].slice(0, 1) === "*") {
+            else if (match[0].length > 1 && match[0].slice(0, 1) === "*" && match[0].length > 2) {
                 string_segments.push({
                     text: match[0].slice(1, match[0].length-1),
                     type: "italic"
                 });
             }
-            else if (match[0].length > 1 && match[0].slice(0, 1) === "$") {
+            else if (match[0].length > 1 && match[0].slice(0, 1) === "$" && match[0].length > 2) {
                 string_segments.push({
                     text: match[0].slice(1, match[0].length-1),
                     type: "mathjax_inline"
                 });
+            } else {
+                string_segments.push({
+                    text: match[0],
+                    type: "regular"
+                });
             }
             let new_index = index+match[0].length+match.index;
-            match = props.text.slice(new_index).match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/);
+            let new_match = props.text.slice(new_index).match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/);
+            if (new_match === null && new_index < props.text.length) {
+                string_segments.push({
+                    text: props.text.slice(new_index),
+                    type: "regular"
+                })
+            }
+            
+            match = new_match;
             index = new_index;
         }
         setTextSplit(string_segments);
@@ -94,7 +87,6 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
 
     return (
         <Text selectable={true} style={(props.style)?props.style:{}}>
-            {/* {props.text} */}
             {textSplit.map((v : textSegment, k : number) => (
                 <MarkdownTextAtomic key={k} textSeg={v}/>
             ))}

@@ -329,7 +329,8 @@ export default function ChatWindow(props : ChatWindowProps) {
           flexDirection: "column",
           flex: 1,
           // height: "100%",
-          width: "88%",
+          // width: "88%",
+          width: "60vw",
           paddingHorizontal: 0,
           // paddingVertical: 24,
         }}>

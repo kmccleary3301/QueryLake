@@ -102,7 +102,7 @@ function AppWeb() {
   const sidebarWidth = useRef(new Animated.Value(320)).current;
 
   // const Stack = createStackNavigator();
-  const [pageNavigate, setPageNavigate] = useState<pageID>("MarkdownTestPage");
+  const [pageNavigate, setPageNavigate] = useState<pageID>("ChatWindow");
 
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
@@ -153,56 +153,56 @@ function AppWeb() {
 function AppMobile() {
   
 
-  return (
-    <View style={{height: "100vh", width: "100vw", backgroundColor: "#FF0000", alignItems: 'center', justifyContent: 'center'}}>
-      <Text style={{
-        fontSize: 30,
-        width: 400,
-        height: 400,
-        color: 'black',
-        fontFamily: 'YingHei4'
-      }}>
-        {"Hello there 马云1964年9月10日—[8]，祖籍浙江嵊县，生于浙江杭州，中国大陆企业家，中国共产党党员。曾为亚洲首富、阿里巴巴集团董事局主席（董事长）[9]，淘宝网、支付宝的创始人，大自然保護協會大中華理事會名譽主席，華誼兄弟董事。目前擔任香港大學經管學院名譽教授，所在的學術領域為「管理及商業策略」，以及擔任東京大學所屬研究機構東京學院的客座教授，研究方向為「可持续农业和粮食生产」。"}
-      </Text>
-    </View>
-  );
-
-  // const Drawer = createDrawerNavigator();
   // return (
-  //   <NavigationContainer>
-  //     <Drawer.Navigator initialRouteName='ChatWindow'
-  //       drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
-  //       screenOptions={{
-  //         drawerStyle: {width: 320, borderRightWidth: 0},
-  //         overlayColor: 'transparent',
-  //       }}
-  //       >
-  //       <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'back',
-  //           default: 'slide'
-  //         }),
-  //       }}
-  //       />
-  //       <Drawer.Screen name="HomeScreen" component={HomeScreen} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'permanent',
-  //           default: 'front'
-  //         })
-  //       }}/>
-  //       <Drawer.Screen name="NotificationsScreen" component={NotificationsScreen} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'permanent',
-  //           default: 'front'
-  //         })
-  //       }}/>
-  //       {/* <Drawer.Screen name="StackNav" component={TabNav} options={{headerShown: false}}/> */}
-  //     </Drawer.Navigator>
-  //   </NavigationContainer>
-  // )
+  //   <View style={{height: "100vh", width: "100vw", backgroundColor: "#FF0000", alignItems: 'center', justifyContent: 'center'}}>
+  //     <Text style={{
+  //       fontSize: 30,
+  //       width: 400,
+  //       height: 400,
+  //       color: 'black',
+  //       fontFamily: 'YingHei4'
+  //     }}>
+  //       {"Hello there 马云1964年9月10日—[8]，祖籍浙江嵊县，生于浙江杭州，中国大陆企业家，中国共产党党员。曾为亚洲首富、阿里巴巴集团董事局主席（董事长）[9]，淘宝网、支付宝的创始人，大自然保護協會大中華理事會名譽主席，華誼兄弟董事。目前擔任香港大學經管學院名譽教授，所在的學術領域為「管理及商業策略」，以及擔任東京大學所屬研究機構東京學院的客座教授，研究方向為「可持续农业和粮食生产」。"}
+  //     </Text>
+  //   </View>
+  // );
+
+  const Drawer = createDrawerNavigator();
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator initialRouteName='NotificationsScreen'
+        drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
+        screenOptions={{
+          drawerStyle: {width: 320, borderRightWidth: 0},
+          overlayColor: 'transparent',
+        }}
+        >
+        <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'back',
+            default: 'slide'
+          }),
+        }}
+        />
+        <Drawer.Screen name="HomeScreen" component={HomeScreen} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'permanent',
+            default: 'front'
+          })
+        }}/>
+        <Drawer.Screen name="NotificationsScreen" component={NotificationsScreen} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'permanent',
+            default: 'front'
+          })
+        }}/>
+        {/* <Drawer.Screen name="StackNav" component={TabNav} options={{headerShown: false}}/> */}
+      </Drawer.Navigator>
+    </NavigationContainer>
+  )
 }
 
 export default function App() {

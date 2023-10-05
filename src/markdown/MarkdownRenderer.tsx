@@ -8,6 +8,7 @@ import {
 // import { Marked } from "marked";
 import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./MarkdownTextSplitter";
+import MarkdownCodeBlock from "./MarkdownCodeBlock";
 // import {KateX}
 
 // marked.use({
@@ -144,7 +145,7 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
 
 
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
-  const normalTextFont = "YingHei4";
+  const normalTextFont = "YingHei3";
   const codeFont = "Consolas";
   const headerFontSizes = {
     1: 36,
@@ -168,7 +169,9 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         </View>
       );
     case 'code':
-      return (null);
+      return (
+        <MarkdownCodeBlock text={token.text}/>
+      );
     case 'heading':
       let fontSizeGet = 36 - 3*token.depth;
       // if (token.hasOwnProperty("tokens")) {
@@ -190,7 +193,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       // }
       return (
         <Text selectable={true} style={{
-          fontFamily: normalTextFont,
+          fontFamily: "YingHei5",
           fontSize: fontSizeGet,
           color: '#E8E3E3'
         }}>
@@ -223,7 +226,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           }}>
             <Text selectable={true} style={{
               fontFamily: normalTextFont, 
-              fontSize: 14,
+              fontSize: 16,
               width: 20,
               textAlign: 'center',
               color: '#E8E3E3'
@@ -231,7 +234,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           </View>
           <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
-            fontSize: 14,
+            fontSize: 16,
             color: '#E8E3E3'
             }} text={token.text}/>
         </View>
@@ -244,7 +247,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         }}>
           <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
-            fontSize: 14,
+            fontSize: 16,
             color: '#E8E3E3'
             }} text={token.text}/>
         </View>
@@ -299,7 +302,8 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
     }}>
     <View style={{
       flexDirection: "column",
-      padding: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 6,
       backgroundColor: "#39393C",
       // backgroundColor: "#1E1E1E",
       borderRadius: 20,

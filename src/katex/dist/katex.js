@@ -273,7 +273,7 @@ var SETTINGS_SCHEMA = {
   },
   errorColor: {
     type: "string",
-    default: "#cc0000",
+    default: "#888888",
     cli: "-c, --error-color <color>",
     cliDescription: "A color string given in the format 'rgb' or 'rrggbb' " + "(no #). This option determines the color of errors rendered by the " + "-t option.",
     cliProcessor: function cliProcessor(color) {

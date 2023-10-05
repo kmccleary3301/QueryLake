@@ -10,6 +10,7 @@ import {
   Easing
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import AnimatedPressable from "./AnimatedPressable";
 
 type ChatBarInputProps = {
   onMessageSend?: (message: string) => void,
@@ -140,7 +141,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
         paddingRight: 10,
         alignSelf: 'center',
       }}>
-        <Pressable 
+        <AnimatedPressable 
           id="SendButton"
           onPress={() => {
             if (props.onMessageSend) { props.onMessageSend(inputText); }
@@ -158,7 +159,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
           }}
         >
           <Feather name="send" size={15} color="#000000" />
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </View>
     </div>
