@@ -26,9 +26,6 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
 
   const [inputLineCount, setInputLineCount] = useState(1);
 
-  useFonts({
-    YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
-  });
 
   const log_key_press = (e: {
     nativeEvent: { key: string; shiftKey: boolean };
@@ -125,12 +122,14 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
                 fontSize: 14,
                 textAlignVertical: 'center',
                 outlineStyle: 'none',
+                fontFamily: 'Inter-Regular',
               },
               default: { //The Platform specific switch is necessary because 'outlineStyle' is only on Web, and causes errors on mobile.
                 height: inputBoxHeight,
                 color: '#E8E3E3',
                 fontSize: 14,
                 textAlignVertical: 'center',
+                fontFamily: 'Inter-Regular',
               }
             })}
           />

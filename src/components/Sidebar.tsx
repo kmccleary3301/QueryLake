@@ -14,6 +14,7 @@ import { useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
+import SidebarColectionSelect from './SidebarCollectionSelect';
 
 type selectedState = [
 	selected: boolean,
@@ -26,6 +27,8 @@ type collectionGroup = {
 	selected: selectedState,
 	collections: any,
 };
+
+
 
 const test_collections = [
 	{
@@ -72,12 +75,15 @@ const test_collections = [
 
 type SidebarProps = {
   toggleSideBar?: () => void,
+  onChangeCollections?: (collectionGroups: collectionGroup[]) => void, 
   // sidebarOpened?: boolean,
 }
 
+type panelModeType = "collections" | "history" | "tools";
+
 export default function Sidebar(props: SidebarProps) {
   // console.log(props);
-	const [panelMode, setPanelMode] = useState("");
+	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
 
 	let toggleSelections: selectedState[] = [];
 	for (let i = 0; i < test_collections.length; i++) {
@@ -112,6 +118,9 @@ export default function Sidebar(props: SidebarProps) {
 
 	const [myCollectionsSelected, setMyCollectionsSelected] = useState(false);
 
+  const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
+    if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
+  };
 
 	const changePanelMode = (new_mode : string) => {
 		setPanelMode(new_mode);
@@ -119,30 +128,13 @@ export default function Sidebar(props: SidebarProps) {
 		// user collections, user history, and toolchains.
 	};
 
-	const width = useWindowDimensions().width;
-	const height = useWindowDimensions().height;
-
 	const icons = {
 		aperture: require('../../assets/aperture.svg'),
 		clock: require('../../assets/clock.svg'),
 		folder: require('../../assets/folder.svg')
 	};
 
-	const big_array = Array(100).fill(0);
-
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
-
-	const toggleMyCollections = (selected: boolean, group_key: number) => {
-		// if (selected) {
-		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-			CollectionGroups[group_key].toggleSelections[i][1](selected);
-		}
-		// }
-	};
+	
 
 	return (
     <View {...props} style={{height: '100vh'}}>
@@ -214,86 +206,7 @@ export default function Sidebar(props: SidebarProps) {
               accessibilityLabel="gender-switch-selector"
             />
           </View>
-          <View style={{
-            width: '100%',
-            // paddingVertical: 10,
-            paddingHorizontal: 22,
-            paddingTop: 10,
-            paddingBottom: 10,
-            
-          }}>
-            <View style={{
-              flexDirection: 'row',
-              backgroundColor: '#23232D',
-              paddingVertical: 6,
-              paddingHorizontal: 10,
-              borderRadius: 10,
-            }}>
-              <Feather name="search" size={20} color="#E8E3E3" style={{flex: 1}}/>
-              <View style={{width: '86%', height: "100%", paddingRight: 5}}>
-                <TextInput
-                  style={Platform.select({
-                    web: {
-                      color: '#E8E3E3',
-                      fontSize: 14,
-                      outlineStyle: 'none',
-                      textAlignVertical: 'center'
-                    },
-                    default: {
-                      color: '#E8E3E3',
-                      fontSize: 14,
-                      textAlignVertical: 'center'
-                    }
-                  })}
-                  spellCheck={false}
-                  placeholder={'Search Public Collections'}
-                  placeholderTextColor={'#E8E3E3'}
-                />
-              </View>
-            </View>
-          </View>
-          <ScrollView style={{
-            width: '100%',
-            paddingHorizontal: 22,
-            // paddingTop: 10,
-          }}
-          
-          >
-            {CollectionGroups.map((v, k) => (
-              <View key={k} style={{
-                paddingVertical: 5
-              }}>
-                <CollectionWrapper key={k} 
-                  title={CollectionGroups[k].title}
-                  // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
-                  onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
-                  selectedState={{
-                    selected: CollectionGroups[k].selected[0],
-                    setSelected: CollectionGroups[k].selected[1]
-                  }}
-                >
-                  {CollectionGroups[k].collections.map((v_2, k_2) => (
-                    <CollectionPreview key={k_2}
-                      style={{
-                        paddingTop: (k_2===0)?0:5,
-                      }}
-                      title={CollectionGroups[k].collections[k_2].title}
-                      selectedState={{
-                        selected: CollectionGroups[k].toggleSelections[k_2][0],
-                        setSelected: CollectionGroups[k].toggleSelections[k_2][1]
-                      }}
-                      documentCount={v_2.items}
-                      onToggleSelected={(collection_selected: boolean) => {
-                        if (!collection_selected &&  CollectionGroups[k].selected[0]) {
-                          CollectionGroups[k].selected[1](false);
-                        }
-                      }}
-                    />
-                  ))}
-                </CollectionWrapper>
-              </View>
-            ))}
-          </ScrollView>
+          <SidebarColectionSelect onChangeCollections={onChangeCollectionsHook}/>
         </View>
         <View style={{
           flexDirection: "column", 
