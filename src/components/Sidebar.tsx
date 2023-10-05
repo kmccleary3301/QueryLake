@@ -3,6 +3,7 @@ import {
   Text,
   useWindowDimensions,
 	Pressable,
+  Platform
 } from 'react-native';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import TestUploadBox from './TestUploadBox';
@@ -231,12 +232,19 @@ export default function Sidebar(props: SidebarProps) {
               <Feather name="search" size={20} color="#E8E3E3" style={{flex: 1}}/>
               <View style={{width: '86%', height: "100%", paddingRight: 5}}>
                 <TextInput
-                  style={{
-                    color: '#E8E3E3',
-                    fontSize: 14,
-                    outlineStyle: 'none',
-                    textAlignVertical: 'center'
-                  }}
+                  style={Platform.select({
+                    web: {
+                      color: '#E8E3E3',
+                      fontSize: 14,
+                      outlineStyle: 'none',
+                      textAlignVertical: 'center'
+                    },
+                    default: {
+                      color: '#E8E3E3',
+                      fontSize: 14,
+                      textAlignVertical: 'center'
+                    }
+                  })}
                   spellCheck={false}
                   placeholder={'Search Public Collections'}
                   placeholderTextColor={'#E8E3E3'}

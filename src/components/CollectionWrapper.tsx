@@ -132,7 +132,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 							size={24} 
 							color="#E8E3E3"
 							style={{
-								transform: opened?"rotate(0deg)":"rotate(90deg)"
+								transform: [{rotate: opened?"0deg":"90deg"}]
 							}}
 						/>
 					</Pressable>
