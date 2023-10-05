@@ -22,25 +22,14 @@ type CollectionPreviewProps = {
 }
 
 export default function CollectionPreview(props: CollectionPreviewProps) {
-	const [panelMode, setPanelMode] = useState("");
+	// const [panelMode, setPanelMode] = useState("");
 	// const [opened, setOpened] = useState(true);
 	// const [selected, setSelected] = useState(false);
 	const {selectedState: {selected, setSelected}, title, documentCount} = props;
 
-	function changePanelMode(new_mode: string) {
-		setPanelMode(new_mode);
-		// Fill this out with fetch functionality for
-		// user collections, user history, and toolchains.
-	}
-
 	// const AnimatedFeather = Animated.createAnimatedComponent(Feather);
 
 
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
 
 	// const selectionCircleSize = new Animated.Value(0);
 
@@ -98,7 +87,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
                 <Animated.View style={{
                   backgroundColor: '#23232D',
                   height: selectionCircleSize,
-                  borderRadius: "50%",
+                  borderRadius: 6,
                   width: selectionCircleSize,
                   // opacity: selectionCircleSize
                 }}/>
@@ -132,7 +121,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 					<View style={{
 						// flexDirection: 'row',
 						// justifyContent: 'flex-start',
-						width: 45,
+						width: 55,
 						paddingRight: 10,
 						// alignSelf: 'flex-end',
 					}}>
@@ -153,7 +142,9 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 								paddingVertical: 2,
 								paddingHorizontal: 6,
 								verticalAlign: 'bottom',
-							}}>
+							}}
+              numberOfLines={1}
+              >
 								{(documentCount <= 999)?documentCount.toString():"999+"}
 							</Text>
 						</View>

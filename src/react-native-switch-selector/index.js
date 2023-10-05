@@ -99,7 +99,7 @@ export default class SwitchSelector extends Component {
       toValue: value,
       duration: animationDuration,
       easing: Easing.elastic(0),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 

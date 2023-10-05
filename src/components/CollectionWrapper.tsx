@@ -34,7 +34,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 
 	useEffect(() => {
     Animated.timing(boxHeight, {
-      toValue: opened?(children.length*45+48):42,
+      toValue: opened?((children?children.length:0)*45+48):42,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 400,
 			easing: Easing.elastic(0),
@@ -95,7 +95,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 							<Animated.View style={{
 								backgroundColor: '#23232D',
 								height: selectionCircleSize,
-								borderRadius: '50%',
+								borderRadius: 6,
 								width: selectionCircleSize,
 								// opacity: selectionCircleSize
 							}}/>

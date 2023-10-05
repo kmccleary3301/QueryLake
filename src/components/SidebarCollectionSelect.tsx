@@ -3,6 +3,7 @@ import {
   Text,
   useWindowDimensions,
   Pressable,
+  Platform,
 } from 'react-native';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
@@ -80,25 +81,25 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
   }
 
   let CollectionGroups : collectionGroup[] = [
-      {
-          title: "My Collections",
-          toggleSelections: [],
-          selected: useState(false),
-          collections: test_collections,
-      },
-      {
-          title: "Added Collections",
-          toggleSelections: [],
-          selected: useState(false),
-          collections: test_collections,
-      }
+    {
+      title: "My Collections",
+      toggleSelections: [],
+      selected: useState(false),
+      collections: test_collections,
+    },
+    {
+      title: "Added Collections",
+      toggleSelections: [],
+      selected: useState(false),
+      collections: test_collections,
+    }
   ];
 
   const reloadCollectionGroup = (group_key : number) => {
-      CollectionGroups[group_key].toggleSelections = [];
-      for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-          CollectionGroups[group_key].toggleSelections.push(useState(false));
-      } 
+    CollectionGroups[group_key].toggleSelections = [];
+    for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
+      CollectionGroups[group_key].toggleSelections.push(useState(false));
+    } 
   };
 
   for (let i = 0; i < CollectionGroups.length; i++) {
@@ -133,12 +134,19 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
           <Feather name="search" size={20} color="#E8E3E3" style={{flex: 1}}/>
           <View style={{width: '86%', height: "100%", paddingRight: 5}}>
             <TextInput
-              style={{
-                color: '#E8E3E3',
-                fontSize: 14,
-                outlineStyle: 'none',
-                textAlignVertical: 'center'
-              }}
+              style={Platform.select({
+                web: {
+                  color: '#E8E3E3',
+                  fontSize: 14,
+                  outlineStyle: 'none',
+                  textAlignVertical: 'center'
+                },
+                default: {
+                  color: '#E8E3E3',
+                  fontSize: 14,
+                  textAlignVertical: 'center'
+                }
+              })}
               spellCheck={false}
               placeholder={'Search Public Collections'}
               placeholderTextColor={'#E8E3E3'}
@@ -147,10 +155,10 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
         </View>
       </View>
       <ScrollView style={{
-        width: '100%',
-        paddingHorizontal: 22,
-        // paddingTop: 10,
-      }}
+          width: '100%',
+          paddingHorizontal: 22,
+          // paddingTop: 10,
+        }}
       
       >
         {CollectionGroups.map((v, k) => (

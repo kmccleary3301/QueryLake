@@ -142,56 +142,56 @@ function AppWeb() {
 function AppMobile() {
   
 
-  return (
-    <View style={{height: "100vh", width: "100vw", backgroundColor: "#FF0000", alignItems: 'center', justifyContent: 'center'}}>
-      <Text style={{
-        fontSize: 30,
-        width: 400,
-        height: 400,
-        color: 'black',
-        fontFamily: 'YingHei4'
-      }}>
-        {"Hello there 马云1964年9月10日—[8]，祖籍浙江嵊县，生于浙江杭州，中国大陆企业家，中国共产党党员。曾为亚洲首富、阿里巴巴集团董事局主席（董事长）[9]，淘宝网、支付宝的创始人，大自然保護協會大中華理事會名譽主席，華誼兄弟董事。目前擔任香港大學經管學院名譽教授，所在的學術領域為「管理及商業策略」，以及擔任東京大學所屬研究機構東京學院的客座教授，研究方向為「可持续农业和粮食生产」。"}
-      </Text>
-    </View>
-  );
-
-  // const Drawer = createDrawerNavigator();
   // return (
-  //   <NavigationContainer>
-  //     <Drawer.Navigator initialRouteName='ChatWindow'
-  //       drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
-  //       screenOptions={{
-  //         drawerStyle: {width: 320, borderRightWidth: 0},
-  //         overlayColor: 'transparent',
-  //       }}
-  //       >
-  //       <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'back',
-  //           default: 'slide'
-  //         }),
-  //       }}
-  //       />
-  //       <Drawer.Screen name="HomeScreen" component={HomeScreen} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'permanent',
-  //           default: 'front'
-  //         })
-  //       }}/>
-  //       <Drawer.Screen name="NotificationsScreen" component={NotificationsScreen} options={{
-  //         headerShown: false, 
-  //         drawerType: Platform.select({
-  //           web: 'permanent',
-  //           default: 'front'
-  //         })
-  //       }}/>
-  //       {/* <Drawer.Screen name="StackNav" component={TabNav} options={{headerShown: false}}/> */}
-  //     </Drawer.Navigator>
-  //   </NavigationContainer>
-  // )
+  //   <View style={{height: "100vh", width: "100vw", backgroundColor: "#FF0000", alignItems: 'center', justifyContent: 'center'}}>
+  //     <Text style={{
+  //       fontSize: 30,
+  //       width: 400,
+  //       height: 400,
+  //       color: 'black',
+  //       fontFamily: 'YingHei4'
+  //     }}>
+  //       {"Hello there 马云1964年9月10日—[8]，祖籍浙江嵊县，生于浙江杭州，中国大陆企业家，中国共产党党员。曾为亚洲首富、阿里巴巴集团董事局主席（董事长）[9]，淘宝网、支付宝的创始人，大自然保護協會大中華理事會名譽主席，華誼兄弟董事。目前擔任香港大學經管學院名譽教授，所在的學術領域為「管理及商業策略」，以及擔任東京大學所屬研究機構東京學院的客座教授，研究方向為「可持续农业和粮食生产」。"}
+  //     </Text>
+  //   </View>
+  // );
+
+  const Drawer = createDrawerNavigator();
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator initialRouteName='ChatWindow'
+        drawerContent={(props) => <Sidebar {...props} style={{backgroundColor: "black"}}/>} 
+        screenOptions={{
+          drawerStyle: {width: 320, borderRightWidth: 0},
+          // overlayColor: 'transparent',
+        }}
+        >
+        <Drawer.Screen name="ChatWindow" component={ChatWindow} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'back',
+            default: 'front'
+          }),
+        }}
+        />
+        <Drawer.Screen name="HomeScreen" component={HomeScreen} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'permanent',
+            default: 'front'
+          })
+        }}/>
+        <Drawer.Screen name="NotificationsScreen" component={NotificationsScreen} options={{
+          headerShown: false, 
+          drawerType: Platform.select({
+            web: 'permanent',
+            default: 'front'
+          })
+        }}/>
+        {/* <Drawer.Screen name="StackNav" component={TabNav} options={{headerShown: false}}/> */}
+      </Drawer.Navigator>
+    </NavigationContainer>
+  )
 }
 
 export default function App() {
@@ -207,15 +207,24 @@ export default function App() {
     "Consolas-Bold": require("./assets/fonts/Consolas/Consolas-Bold.otf"),
     "Consolas-Italic": require("./assets/fonts/Consolas/Consolas-Italic.otf"),
     "Consolas-BoldItalic": require("./assets/fonts/Consolas/Consolas-BoldItalic.otf"),
-    "Inter-Black": require("./assets/fonts/Inter/Inter-Black.otf"),
-    "Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.otf"),
-    "Inter-ExtraBold": require("./assets/fonts/Inter/Inter-ExtraBold.otf"),
-    "Inter-ExtraLight": require("./assets/fonts/Inter/Inter-ExtraLight.otf"),
-    "Inter-Light": require("./assets/fonts/Inter/Inter-Light.otf"),
-    "Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.otf"),
-    "Inter-Regular": require("./assets/fonts/Inter/Inter-Regular.otf"),
-    "Inter-SemiBold": require("./assets/fonts/Inter/Inter-SemiBold.otf"),
-    "Inter-Thin": require("./assets/fonts/Inter/Inter-Thin.otf"),
+    // "Inter-Black": require("./assets/fonts/Inter/Inter-Black.otf"),
+    // "Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.otf"),
+    // "Inter-ExtraBold": require("./assets/fonts/Inter/Inter-ExtraBold.otf"),
+    // "Inter-ExtraLight": require("./assets/fonts/Inter/Inter-ExtraLight.otf"),
+    // "Inter-Light": require("./assets/fonts/Inter/Inter-Light.otf"),
+    // "Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.otf"),
+    // "Inter-Regular": require("./assets/fonts/Inter/Inter-Regular.otf"),
+    // "Inter-SemiBold": require("./assets/fonts/Inter/Inter-SemiBold.otf"),
+    // "Inter-Thin": require("./assets/fonts/Inter/Inter-Thin.otf"),
+    "Inter-Black": require("./assets/fonts/Inter-Black.ttf"),
+    "Inter-Bold": require("./assets/fonts/Inter-Bold.ttf"),
+    "Inter-ExtraBold": require("./assets/fonts/Inter-ExtraBold.ttf"),
+    "Inter-ExtraLight": require("./assets/fonts/Inter-ExtraLight.ttf"),
+    "Inter-Light": require("./assets/fonts/Inter-Light.ttf"),
+    "Inter-Medium": require("./assets/fonts/Inter-Medium.ttf"),
+    "Inter-Regular": require("./assets/fonts/Inter-Regular.ttf"),
+    "Inter-SemiBold": require("./assets/fonts/Inter-SemiBold.ttf"),
+    "Inter-Thin": require("./assets/fonts/Inter-Thin.ttf"),
   });
 
   useEffect(() => {

@@ -81,14 +81,21 @@ export default function ChatBarInputMobile(props: ChatBarInputProps) {
       }}
     >
     <View style={{
-        flexDirection: 'row',
-        paddingVertical: 5,
+      // justifyContent: 'space-between',
+      width: "100%",
+      flexDirection: 'row',
+      display: 'flex',
+      paddingVertical: 5,
     }}>
       <View id="InputText" style={{
-      width: "80%",
-      flexDirection: 'column',
-      justifyContent: 'center',
-      paddingVertical: 5,
+        // flex: 1,
+        // flexGrow: 0.5,
+
+        flexShrink: 0.8,
+        width: "100%",
+        flexDirection: 'column',
+        justifyContent: 'center',
+        paddingVertical: 5,
 
       }}>
         <Animated.View style={{height: inputBoxHeight}}>
