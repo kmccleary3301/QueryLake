@@ -26,8 +26,9 @@ import ChatBarInputWeb from "../components/ChatBarInputWeb";
 import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
+import MarkdownTestComponent from "../components/MarkdownTestComponent";
 // import MarkdownRender from "../components/MarkdownTestComponent";
-
+import MarkdownRenderer from "../markdown/MarkdownRenderer";
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -42,6 +43,7 @@ type ChatContent = ChatContentExcerpt[];
 type ChatEntry = {
   origin: ("user" | "server"),
   content: ChatContent,
+  content_raw_string: string,
 };
 
 type ChatWindowProps = {
@@ -58,7 +60,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
   const [inputText, setInputText] = useState(
-    "Write a python function that calculates the Fibonacci sequence up to a given number n. Include type hints and a function description."
+    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
   );
   const [isEnabled, setIsEnabled] = useState(false);
   const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
@@ -73,6 +75,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [temporaryBotEntry, setTemporaryBotEntry] = useState<ChatEntry | null>(null);
 
   const [inputLineCount, setInputLineCount] = useState(1);
+  const [activeBotEntryIndex, setActiveBotEntryIndex] = useState(1);
 
   // const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -94,7 +97,7 @@ export default function ChatWindow(props : ChatWindowProps) {
     if (sseOpened === true) {
       return;
     }
-    console.log("Starting SSE");
+    // console.log("Starting SSE");
 
     const url = new URL("http://localhost:5000/chat");
     url.searchParams.append("query", message);
@@ -102,17 +105,20 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     let user_entry : ChatEntry = {
       origin: "user",
-      content: [message],
+      // content: [message],
+      content_raw_string: message,
     };
     
-    setNewChat(newChat => [...newChat, user_entry])
     
     let bot_entry : ChatEntry = {
       origin: "server",
       content: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
     }
-
-    setTemporaryBotEntry(bot_entry);
+    
+    setActiveBotEntryIndex(newChat.length+1);
+    let active_bot_entry_index = newChat.length+1;
+    setNewChat(newChat => [...newChat, user_entry, bot_entry])
+    // setTemporaryBotEntry(bot_entry);
     // setInputText("");
 
     console.log(url.toString());
@@ -130,19 +136,28 @@ export default function ChatWindow(props : ChatWindowProps) {
       if (event === undefined || event.data === undefined) return;
       let decoded = event.data.toString();
       if (decoded == "-DONE-") {
-        setNewChat(newChat => [...newChat, bot_entry])
-        setTemporaryBotEntry(null);
+        // setNewChat(newChat => [...newChat, bot_entry])
+        // setTemporaryBotEntry(null);
+        console.log("Completed response:");
+        console.log(genString);
         es.close();
       } else {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);
         // }
         decoded = decodeURI(decoded);
-        console.log([decoded]);
+        // console.log([decoded]);
         genString += decoded;
         setChat(genString);
-        bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
-        setTemporaryBotEntry(bot_entry);
+        // bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
+      
+        // bot_entry["content_raw_string"] = genString;
+        setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
+          "origin": newChat[newChat.length-1].origin,
+          "content": newChat[newChat.length-1].content,
+          "content_raw_string": genString
+        }])
+        // setTemporaryBotEntry(bot_entry);
       }
 
       // setLog(chat+" HELLOOOOOOOOOOOO"+chat+chat);
@@ -327,11 +342,11 @@ export default function ChatWindow(props : ChatWindowProps) {
             }}
           >
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
-              <ChatBubble key={k_2} entry={v_2}/>
+              <ChatBubble key={k_2} origin={v_2.origin} input={v_2.content_raw_string}/>
             ))}
-            {temporaryBotEntry && (
-              <ChatBubble entry={temporaryBotEntry}/>
-            )}
+            {/* {temporaryBotEntry && (
+              <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
+            )} */}
           </ScrollView>
 
           
@@ -433,103 +448,3 @@ export default function ChatWindow(props : ChatWindowProps) {
     </View>
   );
 }
-
-const MARKDOWN_TEST_MESSAGE = `
-# Heading level 1
-
-This is the first paragraph.
-
-This is the second paragraph.
-
-This is the third paragraph.
-
-## Heading level 2
-
-This is an [anchor](https://github.com).
-
-### Heading level 3
-
-This is **bold** and _italics_.
-
-#### Heading level 4
-
-This is \`inline\` code.
-
-This is a code block:
-
-\`\`\`tsx
-const Message = () => {
-  return <div>hi</div>;
-};
-\`\`\`
-
-##### Heading level 5
-
-This is an unordered list:
-
-- One
-- Two
-- Three, and **bold**
-
-This is an ordered list:
-
-1. One
-1. Two
-1. Three
-
-This is a complex list:
-
-1. **Bold**: One
-    - One
-    - Two
-    - Three
-  
-2. **Bold**: Three
-    - One
-    - Two
-    - Three
-  
-3. **Bold**: Four
-    - One
-    - Two
-    - Three
-
-###### Heading level 6
-
-> This is a blockquote.
-
-This is a table:
-
-| Vegetable | Description |
-|-----------|-------------|
-| Carrot    | A crunchy, orange root vegetable that is rich in vitamins and minerals. It is commonly used in soups, salads, and as a snack. |
-| Broccoli  | A green vegetable with tightly packed florets that is high in fiber, vitamins, and antioxidants. It can be steamed, boiled, stir-fried, or roasted. |
-| Spinach   | A leafy green vegetable that is dense in nutrients like iron, calcium, and vitamins. It can be eaten raw in salads or cooked in various dishes. |
-| Bell Pepper | A colorful, sweet vegetable available in different colors such as red, yellow, and green. It is often used in stir-fries, salads, or stuffed recipes. |
-| Tomato    | A juicy fruit often used as a vegetable in culinary preparations. It comes in various shapes, sizes, and colors and is used in salads, sauces, and sandwiches. |
-| Cucumber   | A cool and refreshing vegetable with a high water content. It is commonly used in salads, sandwiches, or as a crunchy snack. |
-| Zucchini | A summer squash with a mild flavor and tender texture. It can be sautéed, grilled, roasted, or used in baking recipes. |
-| Cauliflower | A versatile vegetable that can be roasted, steamed, mashed, or used to make gluten-free alternatives like cauliflower rice or pizza crust. |
-| Green Beans | Long, slender pods that are low in calories and rich in vitamins. They can be steamed, stir-fried, or used in casseroles and salads. |
-| Potato | A starchy vegetable available in various varieties. It can be boiled, baked, mashed, or used in soups, fries, and many other dishes. |
-
-This is a mermaid diagram:
-
-\`\`\`mermaid
-gitGraph
-    commit
-    commit
-    branch develop
-    checkout develop
-    commit
-    commit
-    checkout main
-    merge develop
-    commit
-    commit
-\`\`\`
-
-\`\`\`latex
-\\[F(x) = \\int_{a}^{b} f(x) \\, dx\\]
-\`\`\`
-`;

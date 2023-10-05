@@ -12,6 +12,8 @@ import {
   Image
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import Markdown from "@ronradtke/react-native-markdown-display";
+import MarkdownRenderer from "../markdown/MarkdownRenderer";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -27,10 +29,12 @@ type ChatContent = ChatContentExcerpt[];
 type ChatEntry = {
   origin: ("user" | "server"),
   content: ChatContent,
+  content_raw_string: string,
 };
 
 type ChatBubbleProps = {
-  entry: ChatEntry
+  origin: ("user" | "server"),
+  input: string
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
@@ -38,16 +42,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const codeFont = "Consolas";
 
   let string_array = [];
-  for (let i = 0; i < props.entry.content.length; i++) {
-    if (typeof props.entry.content[i] === "string") { 
-      string_array.push(props.entry.content[i]); 
-    } else {
-      let code_seg_array : CodeSegment = props.entry.content[i];
-      for (let i_2 = 0; i_2 < code_seg_array.length; i_2++) {
-        string_array.push(code_seg_array[i_2].text);
-      }
-    }
-  }
+  // for (let i = 0; i < props.entry.content.length; i++) {
+  //   if (typeof props.entry.content[i] === "string") { 
+  //     string_array.push(props.entry.content[i]); 
+  //   } else {
+  //     let code_seg_array : CodeSegment = props.entry.content[i];
+  //     for (let i_2 = 0; i_2 < code_seg_array.length; i_2++) {
+  //       string_array.push(code_seg_array[i_2].text);
+  //     }
+  //   }
+  // }
 
   const queryLakeIcon = require("../../assets/favicon.png");
 
@@ -58,7 +62,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
       paddingBottom: 10,
       paddingRight: 10
     }}>
-      {(props.entry.origin === "user")?(
+      {(props.origin === "user")?(
         <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
         <View style={{
           width: 40,
@@ -92,8 +96,10 @@ export default function ChatBubble(props: ChatBubbleProps) {
         />
         </View>
       )}
-      
-      <View style={{
+      {props.input && props.input.length > 0 && (
+        <MarkdownRenderer input={props.input}/>
+      )}
+      {/* <View style={{
         paddingRight: 10, 
         flexDirection: "row", 
         width: "100%",
@@ -110,6 +116,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
             paddingRight: 50
           }}
         >
+          
           <Text 
             style={{
               fontFamily: normalTextFont,
@@ -145,7 +152,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
           ))}
           </Text>
         </View>
-      </View>
+      </View> */}
     </View>
   );
+}
+
+
+
+const markdown_style = {
+  'heading1': {
+    color: '#E8E3E3',
+    FontFace: 'Inter',
+  },
 }

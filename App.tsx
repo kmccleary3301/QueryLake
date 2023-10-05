@@ -36,7 +36,8 @@ import Sidebar from './src/components/Sidebar';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SplashScreen from 'expo-splash-screen';
-
+import testTextMate from './src/tests/testTextMate';
+import MarkdownTestPage from './src/markdown/MarkdownTestPage';
 
 
 function HomeScreen({ navigation }) {
@@ -94,11 +95,14 @@ function CustomDrawerContent(props: any) {
   );
 }
 
+type pageID = "ChatWindow" | "MarkdownTestPage";
+
 function AppWeb() {
   const [sidebarOpened, setSidebarOpened] = useState(true);
   const sidebarWidth = useRef(new Animated.Value(320)).current;
 
-  const Stack = createStackNavigator();
+  // const Stack = createStackNavigator();
+  const [pageNavigate, setPageNavigate] = useState<pageID>("MarkdownTestPage");
 
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
@@ -113,6 +117,8 @@ function AppWeb() {
       useNativeDriver: false,
     }).start();
   }, [sidebarOpened]);
+
+
 
   return (
     <>
@@ -133,7 +139,12 @@ function AppWeb() {
             </View>
           </Animated.View>
         </Animated.View>
-        <ChatWindow toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
+        {(pageNavigate === "ChatWindow") && (
+          <ChatWindow toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
+        )}
+        {(pageNavigate === "MarkdownTestPage") && (
+          <MarkdownTestPage toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
+        )}
       </Animated.View>
     </>
   );
@@ -242,8 +253,7 @@ export default function App() {
 
   const is_web = Platform.select({web: true, default: false});
   const AppGet = is_web?AppWeb:AppMobile;
-
-
+  testTextMate();
   return (
     <AppGet/>
   );
