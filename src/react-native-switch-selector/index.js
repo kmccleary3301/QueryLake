@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 const styles = {
   button: {
@@ -99,7 +100,7 @@ export default class SwitchSelector extends Component {
       toValue: value,
       duration: animationDuration,
       easing: Easing.elastic(0),
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   };
 
@@ -166,17 +167,18 @@ export default class SwitchSelector extends Component {
             ? element.customIcon(isSelected)
             : element.customIcon}
           {element.imageIcon && (
-            <Image
-              source={element.imageIcon}
-              style={[
-                {
-                  height: 30,
-                  width: 30,
-                  tintColor: isSelected ? selectedColor : textColor,
-                },
-                imageStyle,
-              ]}
-            />
+            // <Image
+            //   source={element.imageIcon}
+            //   style={[
+            //     {
+            //       height: 30,
+            //       width: 30,
+            //       tintColor: isSelected ? selectedColor : textColor,
+            //     },
+            //     imageStyle,
+            //   ]}
+            // />
+            <Feather name={element.featherIconName} size={imageStyle.height} color={isSelected ? selectedColor : textColor}/>
           )}
           <Text
             style={[

@@ -198,9 +198,9 @@ export default function Sidebar(props: SidebarProps) {
                 resizeMode: 'stretch'
               }}
               options={[
-                { value: "collections", imageIcon: icons.folder}, //images.feminino = require('./path_to/assets/img/feminino.png')
-                { value: "history", imageIcon: icons.clock}, //images.masculino = require('./path_to/assets/img/masculino.png')
-                { value: "tools", imageIcon: icons.aperture}
+                { value: "collections", imageIcon: icons.folder, featherIconName: "folder"}, //images.feminino = require('./path_to/assets/img/feminino.png')
+                { value: "history", imageIcon: icons.clock, featherIconName: "clock"}, //images.masculino = require('./path_to/assets/img/masculino.png')
+                { value: "tools", imageIcon: icons.aperture, featherIconName: "aperture"}
               ]}
               testID="gender-switch-selector"
               accessibilityLabel="gender-switch-selector"
