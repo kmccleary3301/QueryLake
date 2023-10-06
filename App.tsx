@@ -38,6 +38,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 import testTextMate from './src/tests/testTextMate';
 import MarkdownTestPage from './src/markdown/MarkdownTestPage';
+import LoginPage from './src/pages/LoginPage';
 
 
 function HomeScreen({ navigation }) {
@@ -95,14 +96,49 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-type pageID = "ChatWindow" | "MarkdownTestPage";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
+
+type userDataType = {
+  username: string,
+  password_pre_hash: string,
+};
+
+type AppWebPageProps = {
+  page : pageID, 
+  sidebarOpened : boolean, 
+  toggleSideBarOpened : () => void,
+  pageNavigate: pageID, 
+  setPageNavigate: React.Dispatch<React.SetStateAction<pageID>>,
+  userData: userDataType,
+  setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
+}
+
+
+function AppWebPage(props : AppWebPageProps) {
+  switch(props.page) {
+    case 'ChatWindow':
+      return (
+        <ChatWindow toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate} userData={props.userData}/>
+      );
+    case 'MarkdownTestPage':
+      return (
+        <MarkdownTestPage toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate}/>
+      );
+    case 'LoginPage':
+      return (
+        <LoginPage setPageNavigate={props.setPageNavigate} setUserData={props.setUserData}/>
+      );
+  }
+}
 
 function AppWeb() {
   const [sidebarOpened, setSidebarOpened] = useState(true);
   const sidebarWidth = useRef(new Animated.Value(320)).current;
+  const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
+  const [userData, setUserData] = useState<userDataType>();
+  const transitionOpacity = useRef(new Animated.Value(1)).current;
 
-  // const Stack = createStackNavigator();
-  const [pageNavigate, setPageNavigate] = useState<pageID>("ChatWindow");
+  const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
 
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
@@ -118,6 +154,30 @@ function AppWeb() {
     }).start();
   }, [sidebarOpened]);
 
+  const pagesWithSidebarDisabled = ["LoginPage"]
+
+  useEffect(() => {
+    if (pagesWithSidebarDisabled.indexOf(pageNavigate) > -1) {
+      setSidebarOpened(false);
+    }
+    Animated.timing(transitionOpacity, {
+      toValue: 0,
+      // toValue: opened?Math.min(300,(children.length*50+60)):50,
+      duration: 250,
+			easing: Easing.elastic(0),
+      useNativeDriver: false,
+    }).start();
+    setTimeout(() => {
+      setPageNavigateDelayed(pageNavigate);
+      Animated.timing(transitionOpacity, {
+        toValue: 1,
+        // toValue: opened?Math.min(300,(children.length*50+60)):50,
+        duration: 250,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }, 350);
+  }, [pageNavigate]);
 
 
   return (
@@ -126,7 +186,7 @@ function AppWeb() {
         flexDirection: "row",
         width: "100vw",
         height: "100vh",
-        backgroundColor: "#FF0000",
+        backgroundColor: "#23232D",
       }}>
         <Animated.View style={{elevation: sidebarOpened?1:0,}}>
           <Animated.View
@@ -134,17 +194,37 @@ function AppWeb() {
               width: sidebarWidth,
             }}
             >
-            <View style={{width: 320}}>
-              <Sidebar toggleSideBar={toggle_sidebar}/>
-            </View>
+            {(sidebarWidth) && (
+              <View style={{width: 320}}>
+                <Sidebar toggleSideBar={toggle_sidebar}/>
+              </View>
+
+            )}
           </Animated.View>
         </Animated.View>
-        {(pageNavigate === "ChatWindow") && (
+
+        <View style={{flex: 1, height: "100vh", backgroundColor: '#23232D'}}>
+          <Animated.View style={{height: '100%', width: '100%', opacity: transitionOpacity}}>
+            <AppWebPage 
+              page={pageNavigateDelayed} 
+              toggleSideBarOpened={toggle_sidebar} 
+              sidebarOpened={sidebarOpened} 
+              pageNavigate={pageNavigate} 
+              setPageNavigate={setPageNavigate}
+              setUserData={setUserData}
+              userData={userData}
+            />
+          </Animated.View>
+        </View>
+        {/* {(pageNavigate === "ChatWindow") && (
           <ChatWindow toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
         )}
         {(pageNavigate === "MarkdownTestPage") && (
           <MarkdownTestPage toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
         )}
+        {(pageNavigate === "MarkdownTestPage") && (
+          <MarkdownTestPage toggleSideBar={toggle_sidebar} sidebarOpened={sidebarOpened}/>
+        )} */}
       </Animated.View>
     </>
   );
@@ -218,15 +298,24 @@ export default function App() {
     "Consolas-Bold": require("./assets/fonts/Consolas/Consolas-Bold.otf"),
     "Consolas-Italic": require("./assets/fonts/Consolas/Consolas-Italic.otf"),
     "Consolas-BoldItalic": require("./assets/fonts/Consolas/Consolas-BoldItalic.otf"),
-    "Inter-Black": require("./assets/fonts/Inter/Inter-Black.otf"),
-    "Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.otf"),
-    "Inter-ExtraBold": require("./assets/fonts/Inter/Inter-ExtraBold.otf"),
-    "Inter-ExtraLight": require("./assets/fonts/Inter/Inter-ExtraLight.otf"),
-    "Inter-Light": require("./assets/fonts/Inter/Inter-Light.otf"),
-    "Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.otf"),
-    "Inter-Regular": require("./assets/fonts/Inter/Inter-Regular.otf"),
-    "Inter-SemiBold": require("./assets/fonts/Inter/Inter-SemiBold.otf"),
-    "Inter-Thin": require("./assets/fonts/Inter/Inter-Thin.otf"),
+    // "Inter-Black": require("./assets/fonts/Inter/Inter-Black.otf"),
+    // "Inter-Bold": require("./assets/fonts/Inter/Inter-Bold.otf"),
+    // "Inter-ExtraBold": require("./assets/fonts/Inter/Inter-ExtraBold.otf"),
+    // "Inter-ExtraLight": require("./assets/fonts/Inter/Inter-ExtraLight.otf"),
+    // "Inter-Light": require("./assets/fonts/Inter/Inter-Light.otf"),
+    // "Inter-Medium": require("./assets/fonts/Inter/Inter-Medium.otf"),
+    // "Inter-Regular": require("./assets/fonts/Inter/Inter-Regular.otf"),
+    // "Inter-SemiBold": require("./assets/fonts/Inter/Inter-SemiBold.otf"),
+    // "Inter-Thin": require("./assets/fonts/Inter/Inter-Thin.otf"),
+    "Inter-Black": require("./assets/fonts/Inter-Black.ttf"),
+    "Inter-Bold": require("./assets/fonts/Inter-Bold.ttf"),
+    "Inter-ExtraBold": require("./assets/fonts/Inter-ExtraBold.ttf"),
+    "Inter-ExtraLight": require("./assets/fonts/Inter-ExtraLight.ttf"),
+    "Inter-Light": require("./assets/fonts/Inter-Light.ttf"),
+    "Inter-Medium": require("./assets/fonts/Inter-Medium.ttf"),
+    "Inter-Regular": require("./assets/fonts/Inter-Regular.ttf"),
+    "Inter-SemiBold": require("./assets/fonts/Inter-SemiBold.ttf"),
+    "Inter-Thin": require("./assets/fonts/Inter-Thin.ttf"),
   });
 
   useEffect(() => {

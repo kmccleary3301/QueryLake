@@ -151,7 +151,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
         paddingHorizontal: 22,
         // paddingTop: 10,
       }}
-      
+      showsVerticalScrollIndicator={false}
       >
         {CollectionGroups.map((v, k) => (
           <View key={k} style={{

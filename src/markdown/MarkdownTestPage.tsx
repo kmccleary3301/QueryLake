@@ -29,6 +29,7 @@ import { DrawerActions } from "@react-navigation/native";
 import MarkdownTestComponent from "../components/MarkdownTestComponent";
 import MarkdownRenderer from "./MarkdownRenderer";
 // import MarkdownRender from "../components/MarkdownTestComponent";
+import AnimatedPressable from "../components/AnimatedPressable";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -78,6 +79,41 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
     }, props.sidebarOpened?0:300);
   }, [props.sidebarOpened]);
 
+  const test_auth_login = () => {
+    const url = new URL("http://localhost:5000/login");
+    url.searchParams.append("name", "John_5817263");
+    url.searchParams.append("password", "John_5817263");
+    fetch(url, {method: "POST"}).then((response) => {
+      console.log(response);
+      response.json().then((data) => {
+          console.log(data);
+      });
+    });
+  };
+
+  const test_auth_add_account = () => {
+    const url = new URL("http://localhost:5000/create_account");
+    url.searchParams.append("name", "John_5817263");
+    url.searchParams.append("password", "John_5817263");
+    fetch(url, {method: "POST"}).then((response) => {
+      console.log(response);
+      response.json().then((data) => {
+          console.log(data);
+      });
+    });
+  };
+
+  const test_auth_hash = () => {
+    const url = new URL("http://localhost:5000/auth");
+    url.searchParams.append("input", "John_5817263");
+    fetch(url, {method: "POST"}).then((response) => {
+      console.log(response);
+      response.json().then((data) => {
+          console.log(data);
+      });
+  });
+  };
+
   return (
     <View style={{
       flex: 1,
@@ -110,11 +146,20 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
             {props.sidebarOpened?(
               <Feather name="sidebar" size={24} color="#E8E3E3" />
             ):(
-              <Pressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
+              <AnimatedPressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
                 <Feather name="sidebar" size={24} color="#E8E3E3" />
-              </Pressable> 
+              </AnimatedPressable> 
             )}
           </Animated.View>
+          <AnimatedPressable style={{padding: 0}} onPress={test_auth_hash}>
+            <Feather name="key" size={24} color="#E8E3E3" />
+          </AnimatedPressable> 
+          <AnimatedPressable style={{padding: 0}} onPress={test_auth_add_account}>
+            <Feather name="plus" size={24} color="#E8E3E3" />
+          </AnimatedPressable>
+          <AnimatedPressable style={{padding: 0}} onPress={test_auth_login}>
+            <Feather name="log-in" size={24} color="#E8E3E3" />
+          </AnimatedPressable> 
           {/* Decide what to put here */}
         </View>
         <View style={{

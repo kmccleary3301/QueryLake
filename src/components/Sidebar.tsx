@@ -212,26 +212,26 @@ export default function Sidebar(props: SidebarProps) {
           flexDirection: "column", 
           justifyContent: "flex-end", 
           paddingHorizontal: 20, 
-          paddingBottom: 15,
-          paddingTop: 15,
+          paddingBottom: 10,
+          paddingTop: 10,
         }}>
           
-          <Pressable>
+          <AnimatedPressable>
             <Text style={{
-              fontSize: 20,
+              fontSize: 16,
               color: "#E8E3E3",
             }}>
               {"Model Settings"}
             </Text>
-          </Pressable>
-          <Pressable>
+          </AnimatedPressable>
+          <AnimatedPressable>
             <Text style={{
-              fontSize: 20,
+              fontSize: 16,
               color: "#E8E3E3",
             }}>
               {"Manage Collections"}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </View>

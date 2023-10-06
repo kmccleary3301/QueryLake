@@ -25,7 +25,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       {/* <TextInput
 
       /> */}
-      <div class='code'>
+      <div id='code'>
         <div dangerouslySetInnerHTML={{ __html: highlights.value}} />
       </div>
       

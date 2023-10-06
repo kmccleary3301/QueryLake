@@ -44,10 +44,16 @@ type ChatEntry = {
   content_raw_string: string,
 };
 
+type userDataType = {
+  username: string,
+  password_pre_hash: string,
+};
+
 type ChatWindowProps = {
   navigation?: any,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
+  userData: userDataType
 }
 
 
@@ -185,6 +191,9 @@ export default function ChatWindow(props : ChatWindowProps) {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
   const handleDrop = (event: any) => {
+    const url = new URL("http://localhost:5000/uploadfile");
+    url.searchParams.append("name", props.userData.username);
+    url.searchParams.append("password_prehashed", props.userData.password_pre_hash);
     setFileDragHover(false);
     event.preventDefault();
     setFilesPrepared(event.dataTransfer.files);
@@ -194,12 +203,11 @@ export default function ChatWindow(props : ChatWindowProps) {
     const uploader = createUploader({
       destination: {
         method: "POST",
-        url: "http://localhost:5000/uploadfile",
+        url: url,
         filesParamName: "file",
       },
       autoUpload: true,
       grouped: true,
-
       //...
     });
 
@@ -209,6 +217,10 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
       console.log(`item ${item.id} progress ${JSON.stringify(item)}`);
+    });
+
+    uploader.on(UPLOADER_EVENTS.ITEM_FINISH, (item) => {
+      console.log(`item ${item.id} response:`, item.uploadResponse);
     });
 
     uploader.add(event.dataTransfer.files[0]);
@@ -340,6 +352,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             style={{
               flex: 5,
             }}
+            showsVerticalScrollIndicator={false}
           >
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
               <ChatBubble key={k_2} origin={v_2.origin} input={v_2.content_raw_string}/>
