@@ -142,7 +142,58 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
   );
 }
 
+type MarkdownParagraphComponentProps = {
+  token: Token,
+};
 
+function MarkdownParagraphComponent(props : MarkdownParagraphComponentProps) {
+  const normalTextFont = "YingHei3";
+  switch (props.token.type) {
+    case 'text': //Normal Case
+      return (
+        <MarkdownTextSplitter selectable={true} style={{
+          fontFamily: normalTextFont,
+          fontSize: 16,
+          color: '#E8E3E3'
+          }} text={props.token.text}/>
+      );
+    case 'strong': //Bold case
+      return (
+        <Text style={{
+          fontFamily: 'YingHei4',
+          fontSize: 16,
+          color: '#E8E3E3'
+        }}>
+          {props.token.text}
+        </Text>
+      );
+    case 'em': //Bold case
+      return (
+        <Text style={{
+          fontFamily: normalTextFont,
+          fontSize: 16,
+          color: '#E8E3E3',
+          fontStyle: 'italic'
+        }}>
+          {props.token.text}
+        </Text>
+      );
+    case 'codespan': //Bold case
+      return (
+        <Text style={{
+          fontFamily: 'Consolas',
+          fontSize: 16,
+          color: '#E8E3E3',
+          fontStyle: 'italic',
+          // backgroundColor: '#17181D',
+          borderRadius: 3,
+          paddingHorizontal: 2,
+        }}>
+          {props.token.raw}
+        </Text>
+      );
+  }
+}
 
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
   const normalTextFont = "YingHei3";
@@ -240,6 +291,19 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         </View>
       );
     case 'paragraph':
+      // if (token.tokens) {
+      //   return (
+      //     <View style={{
+      //       flexDirection: 'row',
+      //       paddingLeft: 10
+      //     }}>
+      //       {token.tokens.map((value: Token, index: number) => (
+      //         <MarkdownParagraphComponent key={index} token={value}/>
+      //       ))}
+      //     </View>
+      //   );
+      // }
+
       return (
         <View style={{
           flexDirection: 'row',

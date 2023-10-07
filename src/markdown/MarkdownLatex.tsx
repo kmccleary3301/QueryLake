@@ -3,6 +3,7 @@ import {
   Platform
 } from "react-native";
 import katex from "../katex/dist/katex";
+import RenderHTML from "react-native-render-html";
 
 type MarkdownLatexProps = {
   textSeg : {text: string},
@@ -17,9 +18,17 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
     );
   }
 
+  let latex_html = katex.renderToString(props.textSeg.text, {
+    output: 'mathml',
+    throwOnError: throwOnError,
+    displayMode: false
+  });
+  console.log(latex_html);
+
   try {
     if (props.type === "inline") {
       return (
+        // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
         <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
           output: 'mathml',
           throwOnError: throwOnError,
@@ -28,6 +37,7 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
       );
     } else {
       return (
+        // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
         <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
           output: 'mathml',
           throwOnError: throwOnError,

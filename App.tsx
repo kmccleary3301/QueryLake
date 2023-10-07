@@ -133,11 +133,11 @@ function AppWebPage(props : AppWebPageProps) {
 function AppWeb() {
   const pagesWithSidebarDisabled = ["LoginPage"];
 
-  const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
+  const [pageNavigate, setPageNavigate] = useState<pageID>("MarkdownTestPage");
   const [userData, setUserData] = useState<userDataType>();
   const transitionOpacity = useRef(new Animated.Value(1)).current;
   
-  const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
+  const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("MarkdownTestPage");
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
   
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;

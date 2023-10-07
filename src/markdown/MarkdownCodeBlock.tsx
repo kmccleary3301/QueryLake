@@ -29,10 +29,10 @@ type scoped_text = {
 type parser_segment = scoped_text | "\n";
 
 function decode_html(input : string) {
-  input = input.replace('&amp;', '&');
   input = input.replace('&lt;', "\<");
   input = input.replace('&gt;', "\>");
   input = input.replace('&quot;', "\"");
+  input = input.replace('&amp;', '&');
   return input;
 }
 
@@ -151,7 +151,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   // let relevance_scores = [highlights.map((value, key: number) => value.relevance)];
   // console.log(relevance_scores);
   return (
-    <View style={{paddingVertical: 10}}>
+    <View style={{paddingVertical: 20, paddingHorizontal: 10}}>
       <View style={{
         padding: 20,
         borderRadius: 10,

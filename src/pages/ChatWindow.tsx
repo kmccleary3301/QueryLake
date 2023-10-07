@@ -19,7 +19,7 @@ import { Feather } from "@expo/vector-icons";
 import { ScrollView, Switch } from "react-native-gesture-handler";
 // import Uploady, { useItemProgressListener } from '@rpldy/uploady';
 // import UploadButton from "@rpldy/upload-button";
-import EventSource from "../react-native-server-sent-events";
+import EventSource from "../lib/react-native-server-sent-events";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import Icon from "react-native-vector-icons/FontAwesome";
 import ChatBarInputWeb from "../components/ChatBarInputWeb";

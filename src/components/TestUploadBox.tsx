@@ -2,14 +2,14 @@ import {
   View,
   Text,
 } from 'react-native';
-import Uploady, { useUploady } from "@rpldy/uploady";
+// import Uploady, { useUploady } from "@rpldy/uploady";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 
 import { useState } from 'react';
-import Dropzone from '../react-dropzone-uploader';
+// import Dropzone from '../react-dropzone-uploader';
 // import 'react-dropzone-uploader/dist/styles.css'
 // import './TestUploadBox.css';
-import axios from 'axios';
+// import axios from 'axios';
 
 // const LogProgress = () => {
 //   useItemProgressListener((item) => {

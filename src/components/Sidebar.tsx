@@ -7,7 +7,7 @@ import {
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import TestUploadBox from './TestUploadBox';
 // import SwitchSelector from "react-native-switch-selector";
-import SwitchSelector from '../react-native-switch-selector';
+import SwitchSelector from '../lib/react-native-switch-selector';
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';

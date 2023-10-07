@@ -7,16 +7,16 @@ import {
 } from "react-native";
 // import Katex from "react-native-katex";
 // import 'katex/dist/katex.min.css';
-import Latex from 'react-latex';
+// import Latex from 'react-latex';
 // import '../katex/dist/katex.min.css';
 // import { InlineMath, BlockMath } from 'react-katex';
 // import * as katex from 'katex';
 // import katex from "katex/dist/katex.mjs";
-import katex from "../katex/dist/katex";
+// import katex from "../katex/dist/katex";
 // import '../../assets/katex.min.css';
 // import Late
-import renderLatexInTextAsHTMLString from "react-latex-next/dist/renderLatex";
-import { InlineMath, BlockMath } from "../react-katex/src";
+// import renderLatexInTextAsHTMLString from "react-latex-next/dist/renderLatex";
+// import { InlineMath, BlockMath } from "../react-katex/src";
 import MarkdownLatex from "./MarkdownLatex";
 // import Kate
 
