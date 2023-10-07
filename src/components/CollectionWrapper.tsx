@@ -30,10 +30,18 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const {selectedState: {selected, setSelected}, children, title,} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
-	const boxHeight = useRef(new Animated.Value(50)).current;
+	const boxHeight = useRef(new Animated.Value(50));
+  useEffect(() => {
+    if (boxHeight > 42) {
+      setViewScrollable(true);
+    }
+  }, [boxHeight]);
 
+  let direct_opened_state = false;
 	useEffect(() => {
-    Animated.timing(boxHeight, {
+    direct_opened_state = opened;
+    let tmp_cmp = opened;
+    Animated.timing(boxHeight.current, {
       toValue: opened?(children.length*45+48):42,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 400,
@@ -41,8 +49,13 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
       useNativeDriver: false,
     }).start();
 		setTimeout(() => {
-			setViewScrollable(opened);
-		}, opened?0:300)
+			setViewScrollable(direct_opened_state);
+		}, 300)
+    if (opened) {
+      setViewScrollable(opened);
+      // setTimeout(() => {
+      // }, 300)
+    }
   }, [opened]);
 
   useEffect(() => {
@@ -55,7 +68,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
   }, [selected]);
 
 	return (
-		<Animated.View style={{
+		<Animated.ScrollView style={{
 			width: '100%',
 			backgroundColor: '#39393C',
 			flexDirection: 'column',
@@ -63,9 +76,9 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			// justifyContent: 'space-around',
 			// paddingVertical: 10,
 			paddingTop: 8,
-			height: boxHeight,
+			height: boxHeight.current,
 			// alignSelf: 'center',
-		}}>
+		}} scrollEnabled={false} showsVerticalScrollIndicator={false}>
 			<View style={{
 				// height: 200,
 				flexDirection: 'row',
@@ -138,15 +151,15 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					</Pressable>
 				</View>
 			</View>
-			{viewScrollable &&
+			
 			<ScrollView style={{
 				paddingBottom: 5,
 			}}
 			showsVerticalScrollIndicator={false}
 			>
-			{props.children}
+			  {props.children}
 			</ScrollView>
-			}
-		</Animated.View>
+			
+		</Animated.ScrollView>
 	);
 }

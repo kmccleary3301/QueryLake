@@ -29,7 +29,7 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
         }
         while (match !== null) {
             if (match.index > 0) {
-                console.log()
+                // console.log()
                 string_segments.push({
                     text: props.text.slice(index, index+match.index),
                     type: "regular"

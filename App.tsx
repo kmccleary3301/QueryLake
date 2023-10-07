@@ -113,7 +113,6 @@ type AppWebPageProps = {
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
 }
 
-
 function AppWebPage(props : AppWebPageProps) {
   switch(props.page) {
     case 'ChatWindow':
