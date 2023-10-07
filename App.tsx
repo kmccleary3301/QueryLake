@@ -132,17 +132,23 @@ function AppWebPage(props : AppWebPageProps) {
 }
 
 function AppWeb() {
-  const [sidebarOpened, setSidebarOpened] = useState(true);
-  const sidebarWidth = useRef(new Animated.Value(320)).current;
+  const pagesWithSidebarDisabled = ["LoginPage"];
+
   const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
   const [userData, setUserData] = useState<userDataType>();
   const transitionOpacity = useRef(new Animated.Value(1)).current;
-
+  
   const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
-
+  const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
+  
+  const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
   };
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     Animated.timing(sidebarWidth, {
@@ -154,9 +160,9 @@ function AppWeb() {
     }).start();
   }, [sidebarOpened]);
 
-  const pagesWithSidebarDisabled = ["LoginPage"]
 
   useEffect(() => {
+    if (!mounted) { return; }
     if (pagesWithSidebarDisabled.indexOf(pageNavigate) > -1) {
       setSidebarOpened(false);
     }
@@ -176,6 +182,7 @@ function AppWeb() {
         easing: Easing.elastic(0),
         useNativeDriver: false,
       }).start();
+      setSidebarOpened((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
     }, 350);
   }, [pageNavigate]);
 

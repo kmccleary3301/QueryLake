@@ -56,6 +56,25 @@ type ChatWindowProps = {
   userData: userDataType
 }
 
+function hexToUtf8(s : string)
+{
+  return decodeURIComponent(
+     s.replace(/\s+/g, '') // remove spaces
+      .replace(/[0-9a-f]{2}/g, '%$&') // add '%' before each 2 characters
+  );
+}
+
+
+function utf8ToHex(s : string)
+{
+  const utf8encoder = new TextEncoder();
+  const rb = utf8encoder.encode(s);
+  let r = '';
+  for (const b of rb) {
+    r += ('0' + b.toString(16)).slice(-2);
+  }
+  return r;
+}
 
 export default function ChatWindow(props : ChatWindowProps) {
 
@@ -105,6 +124,8 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     const url = new URL("http://localhost:5000/chat");
     url.searchParams.append("query", message);
+    url.searchParams.append("username", props.userData.username);
+    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
 
 
     let user_entry : ChatEntry = {
@@ -139,7 +160,8 @@ export default function ChatWindow(props : ChatWindowProps) {
       // console.log("New message event:", event);
       if (event === undefined || event.data === undefined) return;
       let decoded = event.data.toString();
-      decoded = decoded.replace("�", "");
+      decoded = hexToUtf8(decoded);
+      // decoded = decoded.replace("�", "");
       if (decoded == "-DONE-") {
         // setNewChat(newChat => [...newChat, bot_entry])
         // setTemporaryBotEntry(null);
@@ -150,7 +172,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);
         // }
-        decoded = decodeURI(decoded);
+        // decoded = decodeURI(decoded);
         // console.log([decoded]);
         genString += decoded;
         setChat(genString);

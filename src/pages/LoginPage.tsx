@@ -48,7 +48,7 @@ export default function LoginPage(props : LoginPageProps) {
           console.log(result);
           try {
             if (result["login_successful"]) {
-              setErrorMessage("Login Successful");
+              // setErrorMessage("Login Successful");
               props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
               if (props.setPageNavigate) {
                 props.setPageNavigate("ChatWindow");
@@ -78,7 +78,7 @@ export default function LoginPage(props : LoginPageProps) {
           console.log(result);
           try {
             if (result["account_made"]) {
-              setErrorMessage("Signup Successful");
+              // setErrorMessage("Signup Successful");
               props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
               if (props.setPageNavigate) {
                 props.setPageNavigate("ChatWindow");
