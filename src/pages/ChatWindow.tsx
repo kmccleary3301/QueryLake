@@ -101,6 +101,26 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [inputLineCount, setInputLineCount] = useState(1);
   const [activeBotEntryIndex, setActiveBotEntryIndex] = useState(1);
 
+  const [sessionHash, setSessionHash] = useState();
+  
+  useEffect(() => {
+    if (sessionHash === undefined) {
+      const url = new URL("http://localhost:5000/create_session");
+      url.searchParams.append("username", props.userData.username);
+      url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+      fetch(url, {method: "POST"}).then((response) => {
+        console.log(response);
+        response.json().then((data) => {
+            if (data["success"]) {
+              setSessionHash(data["session_hash"]);
+            } else {
+              console.error("Session hash failed");
+            }
+        });
+      });
+    }
+  }, []);
+
   // const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
   const PlatformIsWeb = Platform.select({web: true, default: false});
@@ -122,18 +142,21 @@ export default function ChatWindow(props : ChatWindowProps) {
       return;
     }
     // console.log("Starting SSE");
+    if (sessionHash === undefined) {
+      console.error("Session Hash is null!");
+      return;
+    }
 
     const url = new URL("http://localhost:5000/chat");
+    url.searchParams.append("session_hash", sessionHash);
     url.searchParams.append("query", message);
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-
 
     let user_entry : ChatEntry = {
       origin: "user",
       content_raw_string: message,
     };
-    
     
     let bot_entry : ChatEntry = {
       origin: "server",
@@ -175,6 +198,9 @@ export default function ChatWindow(props : ChatWindowProps) {
         // }
         // decoded = decodeURI(decoded);
         // console.log([decoded]);
+        if (genString.length == 0) {
+          decoded = decoded.replace(/(?<=^\s*)\s/gm, "");
+        }
         genString += decoded;
         setChat(genString);
         // bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
