@@ -243,13 +243,18 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       //   );
       // }
       return (
-        <Text selectable={true} style={{
+        // <Text selectable={true} style={{
+        //   fontFamily: "YingHei5",
+        //   fontSize: fontSizeGet,
+        //   color: '#E8E3E3'
+        // }}>
+        //   {token.text}
+        // </Text>
+        <MarkdownTextSplitter selectable={true} style={{
           fontFamily: "YingHei5",
           fontSize: fontSizeGet,
           color: '#E8E3E3'
-        }}>
-          {token.text}
-        </Text>
+        }} text={token.text}/>
       );
     case 'table':
       return (null);
@@ -291,19 +296,6 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         </View>
       );
     case 'paragraph':
-      // if (token.tokens) {
-      //   return (
-      //     <View style={{
-      //       flexDirection: 'row',
-      //       paddingLeft: 10
-      //     }}>
-      //       {token.tokens.map((value: Token, index: number) => (
-      //         <MarkdownParagraphComponent key={index} token={value}/>
-      //       ))}
-      //     </View>
-      //   );
-      // }
-
       return (
         <View style={{
           flexDirection: 'row',
@@ -324,8 +316,6 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (
         <MarkdownMapComponentError type={token.type}/>
       );
-        
-
   }
 
 }

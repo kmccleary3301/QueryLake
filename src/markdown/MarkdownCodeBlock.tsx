@@ -1,12 +1,13 @@
 import {
   Text,
-  View
+  View,
+  ScrollView
 } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import hljs from 'highlight.js';
 import { useEffect, useState } from "react";
 import { defaultHTMLElementModels, RenderHTML } from "react-native-render-html";
-  
+
 type MarkdownCodeBlockProps = {
   text : string,
 }
@@ -29,10 +30,10 @@ type scoped_text = {
 type parser_segment = scoped_text | "\n";
 
 function decode_html(input : string) {
-  input = input.replace('&lt;', "\<");
-  input = input.replace('&gt;', "\>");
-  input = input.replace('&quot;', "\"");
-  input = input.replace('&amp;', '&');
+  input = input.replaceAll('\&quot;', "\"");
+  input = input.replaceAll('\&lt;', "\<");
+  input = input.replaceAll('\&gt;', "\>");
+  input = input.replaceAll('\&amp;', '&');
   return input;
 }
 
@@ -136,28 +137,22 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
     
     let highlights_get = hljs.highlightAuto(props.text);
     setLang(highlights_get.language);
-    let text_lines = props.text.split("\n");
-    setTextLines(text_lines);
-    let highlights_make = [];
-    console.log(highlights_get.value);
     let scope_tree = parseScopeTreeText(highlights_get.value);
     console.log(scope_tree);
     setHighlights(scope_tree);
-    // console.log(highlights_get);
-    // console.log(parseScopeTreeText(highlights_get.value));
-    // setLang(hljs.getLanguage())
   }, [props.text]);
 
   // let relevance_scores = [highlights.map((value, key: number) => value.relevance)];
   // console.log(relevance_scores);
   return (
     <View style={{paddingVertical: 20, paddingHorizontal: 10}}>
-      <View style={{
+      <ScrollView style={{
         padding: 20,
         borderRadius: 10,
         backgroundColor: '#17181D',
         flexDirection: "column",
-        alignItems: 'baseline',
+        // alignItems: 'baseline',
+        maxWidth: '%80'
       }}>
       {highlights.map((line: scoped_text[], line_number : number) => (//the value search command below finds index of first non whitespace character
         <View key={line_number} style={{
@@ -167,7 +162,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           minHeight: 20, //Empty Line Height
         }}>
           {line.map((token_seg : scoped_text, token_number : number) => (
-            <Text key={token_number} style={{color: "#D4D4D4"}}>
+            <Text selectable={true} key={token_number} style={{color: "#D4D4D4"}}>
               <Text style={{
                 color: (token_seg.scope.length > 0)?code_styling[token_seg.scope[token_seg.scope.length-1]]:code_styling["default"],
                 fontFamily: 'Consolas',
@@ -182,7 +177,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
         {/* <pre
           class="scrollbar-custom overflow-auto px-5 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20"><code
             class="language-{lang}">{@html highlightedCode || code.replaceAll("<", "&lt;")}</code></pre> */}
-      </View>
+      </ScrollView>
     </View>
   );
 }

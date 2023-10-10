@@ -23,7 +23,7 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
     throwOnError: throwOnError,
     displayMode: false
   });
-  console.log(latex_html);
+  // console.log(latex_html);
 
   try {
     if (props.type === "inline") {

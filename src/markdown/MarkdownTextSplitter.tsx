@@ -12,13 +12,14 @@ type MarkdownTextSplitterProps = {
 
 type textSegment = {
     text: string,
-    type: "regular" | "bold" | "italic" | "bolditalic" | "mathjax_newline" | "mathjax_inline"
+    link?: string
+    type: "regular" | "bold" | "italic" | "bolditalic" | "mathjax_newline" | "mathjax_inline" | "codespan" | "anchor"
 }
 
 export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
     const [textSplit, setTextSplit] = useState<textSegment[]>([]);
     useEffect(() => {
-        let match = props.text.match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/);
+        let match = props.text.match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\`.*?\`|\[.*?\]\(.*?\))/);
         let index = 0;
         let string_segments : textSegment[] = [];
         if (match === null) {
@@ -35,34 +36,51 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
                     type: "regular"
                 })
             }
-            if (match[0].length > 3 && match[0].slice(0, 3) === "***") {
+            if (match[0].length > 6 && match[0].slice(0, 3) === "***") {
                 string_segments.push({
                     text: match[0].slice(3, match[0].length-3),
                     type: "bolditalic"
                 });
             }
-            else if (match[0].length > 2 && match[0].slice(0, 2) === "**" && match[0].length > 4) {
+            else if (match[0].length > 4 && match[0].slice(0, 2) === "**") {
                 string_segments.push({
                     text: match[0].slice(2, match[0].length-2),
                     type: "bold"
                 });
             }
-            else if (match[0].length > 2 && match[0].slice(0, 2) === "$$" && match[0].length > 4) {
+            else if (match[0].length > 4 && match[0].slice(0, 2) === "$$") {
                 string_segments.push({
                     text: match[0].slice(2, match[0].length-2),
                     type: "mathjax_newline"
                 });
             }
-            else if (match[0].length > 1 && match[0].slice(0, 1) === "*" && match[0].length > 2) {
+            else if (match[0].length > 4 && match[0].slice(0, 1) === "\[" && match[0].length > 2) {
+                let text = match[0].match(/\[.*?\]/)[0];
+                text = text.slice(1, text.length-1);
+                let link = match[0].match(/\(.*?\)/)[0];
+                link = link.slice(1, link.length-1);
+                string_segments.push({
+                    text: text,
+                    link: link,
+                    type: "anchor"
+                });
+            }
+            else if (match[0].length > 2 && match[0].slice(0, 1) === "*") {
                 string_segments.push({
                     text: match[0].slice(1, match[0].length-1),
                     type: "italic"
                 });
             }
-            else if (match[0].length > 1 && match[0].slice(0, 1) === "$" && match[0].length > 2) {
+            else if (match[0].length > 2 && match[0].slice(0, 1) === "$") {
                 string_segments.push({
                     text: match[0].slice(1, match[0].length-1),
                     type: "mathjax_inline"
+                });
+            }
+            else if (match[0].length > 2 && match[0].slice(0, 1) === "\`") {
+                string_segments.push({
+                    text: match[0].slice(1, match[0].length-1),
+                    type: "codespan"
                 });
             } else {
                 string_segments.push({
@@ -71,7 +89,7 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
                 });
             }
             let new_index = index+match[0].length+match.index;
-            let new_match = props.text.slice(new_index).match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/);
+            let new_match = props.text.slice(new_index).match(/(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\`.*?\`|\[.*?\]\(.*?\))/);
             if (new_match === null && new_index < props.text.length) {
                 string_segments.push({
                     text: props.text.slice(new_index),

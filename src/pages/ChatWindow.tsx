@@ -27,6 +27,7 @@ import ChatBarInputMobile from "../components/ChatBarInputMobile";
 import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
 import AnimatedPressable from "../components/AnimatedPressable";
+import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -368,12 +369,12 @@ export default function ChatWindow(props : ChatWindowProps) {
           paddingHorizontal: 0,
           // paddingVertical: 24,
         }}>
-          <ScrollView 
-            ref={scrollViewRef}
-            onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-            style={{
-              flex: 5,
-            }}
+          <ScrollViewBottomStick
+            // ref={scrollViewRef}
+            // onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+            // style={{
+            //   flex: 5,
+            // }}
             showsVerticalScrollIndicator={false}
           >
             {newChat.map((v_2 : ChatEntry, k_2 : number) => (
@@ -382,7 +383,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             {/* {temporaryBotEntry && (
               <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
             )} */}
-          </ScrollView>
+          </ScrollViewBottomStick>
 
           
 
