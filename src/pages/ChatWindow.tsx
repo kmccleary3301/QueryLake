@@ -199,7 +199,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         // decoded = decodeURI(decoded);
         // console.log([decoded]);
         if (genString.length == 0) {
-          decoded = decoded.replace(/(?<=^\s*)\s/gm, "");
+          decoded = decoded.replace(/(?<=^\s*)\s/gm, ""); //Strip leading whitespace
         }
         genString += decoded;
         setChat(genString);

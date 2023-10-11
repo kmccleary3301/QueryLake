@@ -30,6 +30,7 @@ type scoped_text = {
 type parser_segment = scoped_text | "\n";
 
 function decode_html(input : string) {
+  input = input.replaceAll('\&#x27;', "\'");
   input = input.replaceAll('\&quot;', "\"");
   input = input.replaceAll('\&lt;', "\<");
   input = input.replaceAll('\&gt;', "\>");
