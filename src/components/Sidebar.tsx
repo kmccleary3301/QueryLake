@@ -7,12 +7,14 @@ import {
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import TestUploadBox from './TestUploadBox';
 // import SwitchSelector from "react-native-switch-selector";
-import SwitchSelector from '../react-native-switch-selector';
+import SwitchSelector from '../lib/react-native-switch-selector';
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
+import SidebarColectionSelect from './SidebarCollectionSelect';
+import AnimatedPressable from './AnimatedPressable';
 
 type selectedState = [
 	selected: boolean,
@@ -25,6 +27,8 @@ type collectionGroup = {
 	selected: selectedState,
 	collections: any,
 };
+
+
 
 const test_collections = [
 	{
@@ -69,9 +73,17 @@ const test_collections = [
 	},
 ];
 
-export default function Sidebar(props: any) {
-  console.log(props);
-	const [panelMode, setPanelMode] = useState("");
+type SidebarProps = {
+  toggleSideBar?: () => void,
+  onChangeCollections?: (collectionGroups: collectionGroup[]) => void, 
+  // sidebarOpened?: boolean,
+}
+
+type panelModeType = "collections" | "history" | "tools";
+
+export default function Sidebar(props: SidebarProps) {
+  // console.log(props);
+	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
 
 	let toggleSelections: selectedState[] = [];
 	for (let i = 0; i < test_collections.length; i++) {
@@ -106,6 +118,9 @@ export default function Sidebar(props: any) {
 
 	const [myCollectionsSelected, setMyCollectionsSelected] = useState(false);
 
+  const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
+    if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
+  };
 
 	const changePanelMode = (new_mode : string) => {
 		setPanelMode(new_mode);
@@ -113,30 +128,13 @@ export default function Sidebar(props: any) {
 		// user collections, user history, and toolchains.
 	};
 
-	const width = useWindowDimensions().width;
-	const height = useWindowDimensions().height;
-
 	const icons = {
 		aperture: require('../../assets/aperture.svg'),
 		clock: require('../../assets/clock.svg'),
 		folder: require('../../assets/folder.svg')
 	};
 
-	const big_array = Array(100).fill(0);
-
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
-
-	const toggleMyCollections = (selected: boolean, group_key: number) => {
-		// if (selected) {
-		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-			CollectionGroups[group_key].toggleSelections[i][1](selected);
-		}
-		// }
-	};
+	
 
 	return (
     <View {...props} style={{height: '100vh'}}>
@@ -162,17 +160,17 @@ export default function Sidebar(props: any) {
             width: '100%',
             justifyContent: 'space-between',
           }}>
-            <Pressable style={{padding: 0}}>
+            <AnimatedPressable style={{padding: 0}}>
               <Feather name="settings" size={24} color="#E8E3E3" />
-            </Pressable>
-            <Pressable style={{padding: 0}}>
+            </AnimatedPressable>
+            <AnimatedPressable style={{padding: 0}}>
               <Feather name="info" size={24} color="#E8E3E3" />
-            </Pressable>
-            <Pressable style={{padding: 0}} onPress={() => {
-              props.navigation.closeDrawer();
+            </AnimatedPressable>
+            <AnimatedPressable style={{padding: 2, borderRadius: 5}} onPress={() => {
+              if (props.toggleSideBar) { props.toggleSideBar(); }
             }}>
               <Feather name="sidebar" size={24} color="#E8E3E3" />
-            </Pressable>
+            </AnimatedPressable>
           </View>
           <View style={{
             width: '100%',
@@ -191,12 +189,12 @@ export default function Sidebar(props: any) {
               buttonColor={'#E8E3E3'}
               backgroundColor={'#7968D9'}
               // borderColor={'#7a44cf'}
-              height={35}
-              borderRadius={10}
+              height={30}
+              borderRadius={15}
               hasPadding={false}
               imageStyle={{
-                height: 24,
-                width: 24,
+                height: 20,
+                width: 20,
                 resizeMode: 'stretch'
               }}
               options={[
@@ -208,103 +206,32 @@ export default function Sidebar(props: any) {
               accessibilityLabel="gender-switch-selector"
             />
           </View>
-          <View style={{
-            width: '100%',
-            // paddingVertical: 10,
-            paddingHorizontal: 22,
-            paddingTop: 10,
-            paddingBottom: 10,
-            
-          }}>
-            <View style={{
-              flexDirection: 'row',
-              backgroundColor: '#23232D',
-              paddingVertical: 10,
-              paddingHorizontal: 10,
-              borderRadius: 10,
-            }}>
-              <Feather name="search" size={24} color="#E8E3E3" style={{flex: 1}}/>
-              <View style={{width: '86%', paddingRight: 5}}>
-                <TextInput
-                  style={{
-                    color: '#E8E3E3',
-                    fontSize: 18,
-                    outlineStyle: 'none',
-                  }}
-                  spellCheck={false}
-                  placeholder={'Search Public Collections'}
-                  placeholderTextColor={'#E8E3E3'}
-                />
-              </View>
-            </View>
-          </View>
-          <ScrollView style={{
-            width: '100%',
-            paddingHorizontal: 22,
-            // paddingTop: 10,
-          }}
-          
-          >
-            {CollectionGroups.map((v, k) => (
-              <View key={k} style={{
-                paddingVertical: 5
-              }}>
-                <CollectionWrapper key={k} 
-                  title={CollectionGroups[k].title}
-                  // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
-                  onToggleSelected={(selected: boolean) => {toggleMyCollections(selected, k)}}
-                  selectedState={{
-                    selected: CollectionGroups[k].selected[0],
-                    setSelected: CollectionGroups[k].selected[1]
-                  }}
-                >
-                  {CollectionGroups[k].collections.map((v_2, k_2) => (
-                    <CollectionPreview key={k_2}
-                      style={{
-                        paddingTop: (k_2===0)?0:10,
-                      }}
-                      title={CollectionGroups[k].collections[k_2].title}
-                      selectedState={{
-                        selected: CollectionGroups[k].toggleSelections[k_2][0],
-                        setSelected: CollectionGroups[k].toggleSelections[k_2][1]
-                      }}
-                      documentCount={v_2.items}
-                      onToggleSelected={(collection_selected: boolean) => {
-                        if (!collection_selected &&  CollectionGroups[k].selected[0]) {
-                          CollectionGroups[k].selected[1](false);
-                        }
-                      }}
-                    />
-                  ))}
-                </CollectionWrapper>
-              </View>
-            ))}
-          </ScrollView>
+          <SidebarColectionSelect onChangeCollections={onChangeCollectionsHook}/>
         </View>
         <View style={{
           flexDirection: "column", 
           justifyContent: "flex-end", 
           paddingHorizontal: 20, 
-          paddingBottom: 15,
-          paddingTop: 15,
+          paddingBottom: 10,
+          paddingTop: 10,
         }}>
           
-          <Pressable>
+          <AnimatedPressable>
             <Text style={{
-              fontSize: 20,
+              fontSize: 16,
               color: "#E8E3E3",
             }}>
               {"Model Settings"}
             </Text>
-          </Pressable>
-          <Pressable>
+          </AnimatedPressable>
+          <AnimatedPressable>
             <Text style={{
-              fontSize: 20,
+              fontSize: 16,
               color: "#E8E3E3",
             }}>
               {"Manage Collections"}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </View>

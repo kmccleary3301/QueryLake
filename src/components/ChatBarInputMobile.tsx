@@ -26,9 +26,6 @@ export default function ChatBarInputMobile(props: ChatBarInputProps) {
 
   const [inputLineCount, setInputLineCount] = useState(1);
 
-  useFonts({
-    YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
-  });
 
   const log_key_press = (e: {
     nativeEvent: { key: string; shiftKey: boolean };

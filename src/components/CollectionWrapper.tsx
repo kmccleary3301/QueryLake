@@ -30,24 +30,37 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const {selectedState: {selected, setSelected}, children, title,} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
-	const boxHeight = useRef(new Animated.Value(50)).current;
+	const boxHeight = useRef(new Animated.Value(50));
+  useEffect(() => {
+    if (boxHeight > 42) {
+      setViewScrollable(true);
+    }
+  }, [boxHeight]);
 
+  let direct_opened_state = false;
 	useEffect(() => {
-    Animated.timing(boxHeight, {
-      toValue: opened?(children.length*50+55):50,
+    direct_opened_state = opened;
+    let tmp_cmp = opened;
+    Animated.timing(boxHeight.current, {
+      toValue: opened?(children.length*45+48):42,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
-      duration: 200,
-			easing: Easing.elastic(1),
+      duration: 400,
+			easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
 		setTimeout(() => {
-			setViewScrollable(opened);
-		}, opened?0:100)
+			setViewScrollable(direct_opened_state);
+		}, 300)
+    if (opened) {
+      setViewScrollable(opened);
+      // setTimeout(() => {
+      // }, 300)
+    }
   }, [opened]);
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
-      toValue: selected?12:0,
+      toValue: selected?11:0,
       duration: 100,
 			easing: Easing.elastic(1),
       useNativeDriver: false,
@@ -55,29 +68,30 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
   }, [selected]);
 
 	return (
-		<Animated.View style={{
+		<Animated.ScrollView style={{
 			width: '100%',
 			backgroundColor: '#39393C',
 			flexDirection: 'column',
 			borderRadius: 20,
 			// justifyContent: 'space-around',
 			// paddingVertical: 10,
-			paddingTop: 10,
-			height: boxHeight,
+			paddingTop: 8,
+			height: boxHeight.current,
 			// alignSelf: 'center',
-		}}>
+		}} scrollEnabled={false} showsVerticalScrollIndicator={false}>
 			<View style={{
 				// height: 200,
 				flexDirection: 'row',
-				paddingHorizontal: 16,
-				paddingBottom: 10,
+				paddingRight: 16,
+        paddingLeft: 12,
+				paddingBottom: 8,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
 			}}>
 				<View style={{flexDirection: 'column', justifyContent: 'center'}}>
 					<Pressable style={{
-						width: 25,
-						height: 25,
+						width: 21,
+						height: 21,
 						borderRadius: 12,
 						backgroundColor: '#7968D9',
 						alignItems: 'center',
@@ -92,10 +106,9 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					>
 						{/* {selected && ( */}
 							<Animated.View style={{
-								paddingLeft: 1,
 								backgroundColor: '#23232D',
 								height: selectionCircleSize,
-								borderRadius: 6,
+								borderRadius: '50%',
 								width: selectionCircleSize,
 								// opacity: selectionCircleSize
 							}}/>
@@ -103,17 +116,20 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					</Pressable>
 				</View>
 				<View style={{
-					width: '80%',
+					width: '83%',
 					flexDirection: 'column',
 					justifyContent: 'center',
 					paddingLeft: 9,
 				}}>
 					<Text style={{
-						fontSize: 20,
+						fontSize: 16,
 						color: '#E8E3E3',
 						textAlign: 'left',
 						textAlignVertical: 'center',
-					}}>
+            height: 25,
+					}}
+          numberOfLines={1}
+          >
 						{title}
 					</Text>
 				</View>
@@ -135,15 +151,15 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					</Pressable>
 				</View>
 			</View>
-			{viewScrollable &&
+			
 			<ScrollView style={{
-				paddingBottom: 10,
+				paddingBottom: 5,
 			}}
 			showsVerticalScrollIndicator={false}
 			>
-			{props.children}
+			  {props.children}
 			</ScrollView>
-			}
-		</Animated.View>
+			
+		</Animated.ScrollView>
 	);
 }

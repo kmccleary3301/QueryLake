@@ -50,7 +50,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
-      toValue: selected?12:0,
+      toValue: selected?11:0,
       duration: 100,
 			easing: Easing.elastic(1),
       useNativeDriver: false,
@@ -64,7 +64,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 			flexDirection: 'column',
 			// justifyContent: 'space-around',
 			// paddingVertical: 10,
-			paddingHorizontal: 8,
+			paddingHorizontal: 4,
 			// alignSelf: 'center',
 		}}>
 			<View style={{
@@ -80,8 +80,8 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
         <View style={{flex:1, flexDirection: 'row'}}>
           <View style={{flexDirection: 'column', justifyContent: 'center'}}>
             <Pressable style={{
-              width: 25,
-              height: 25,
+              width: 21,
+              height: 21,
               borderRadius: 12,
               backgroundColor: '#7968D9',
               alignItems: 'center',
@@ -96,10 +96,9 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
             >
               {/* {selected && ( */}
                 <Animated.View style={{
-                  paddingLeft: 1,
                   backgroundColor: '#23232D',
                   height: selectionCircleSize,
-                  borderRadius: 6,
+                  borderRadius: "50%",
                   width: selectionCircleSize,
                   // opacity: selectionCircleSize
                 }}/>
@@ -144,9 +143,10 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 							borderRadius: 10,
 						}}>
 							<Text style={{
+                fontFamily: 'Inter-Light',
 								backgroundColor: '#D9D9D9',
 								color: '#000000',
-								fontSize: 9,
+								fontSize: 11,
 								textAlign: 'center',
 								alignSelf: 'flex-end',
 								borderRadius: 8,

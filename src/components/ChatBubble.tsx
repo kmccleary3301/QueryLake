@@ -8,85 +8,133 @@ import {
   TextInput,
   Platform,
   Animated,
-  Easing
+  Easing,
+  Image
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-
-type CodeSegmentExcerpt = {
-  text: string,
-  color: string,
-};
-
-type CodeSegment = CodeSegmentExcerpt[];
-
-type ChatContentExcerpt = string | CodeSegment;
-
-type ChatContent = ChatContentExcerpt[];
-
-type ChatEntry = {
-  origin: ("user" | "server"),
-  content: ChatContent,
-};
+import Markdown from "@ronradtke/react-native-markdown-display";
+import MarkdownRenderer from "../markdown/MarkdownRenderer";
 
 type ChatBubbleProps = {
-  entry: ChatEntry
+  origin: ("user" | "server"),
+  input: string
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
-  
+  const normalTextFont = "Inter-Regular";
+  const codeFont = "Consolas";
+
+
+  const queryLakeIcon = require("../../assets/favicon.png");
 
   return (
     <View style={{
-      flexDirection: 'column',
+      flexDirection: Platform.select({web: "row", default: "column"}),
       width: "100%",
       paddingBottom: 10,
       paddingRight: 10
     }}>
-      <View style={{
-        width: 50,
-        height:50,
-        borderRadius: 25,
-        backgroundColor: "#FF0000"
-      }}>
-
-      </View>
-      <View style={{
+      {(props.origin === "user")?(
+        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+        <View style={{
+          width: 40,
+          height:40,
+          borderRadius: 25,
+          backgroundColor: "#E8E3E3",
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <View style={{
+            justifyContent: 'center',
+            alignSelf: 'center'
+          }}>
+            <Text style={{
+              fontFamily: normalTextFont,
+              fontSize: 24,
+            }}>
+              {"K"}
+            </Text>
+          </View>
+        </View>
+        </View>
+      ):(
+        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+        <Image 
+          style={{
+            width: 40,
+            height:40,
+            borderRadius: 25,
+          }}
+          source={queryLakeIcon}
+        />
+        </View>
+      )}
+      {props.input && props.input.length > 0 && (
+        <MarkdownRenderer input={props.input}/>
+      )}
+      {/* <View style={{
         paddingRight: 10, 
         flexDirection: "row", 
         width: "100%",
         // backgroundColor: "#3939FF",
         borderRadius: 10,
       }}>
-        <View style={{
-          padding: 20,
-          maxWidth: "100%",
-          // width: "80svw",
-          backgroundColor: "#39393C",
-          borderRadius: 30,
+        <View 
+          style={{
+            
+            maxWidth: "100%",
+            minWidth: 40,
+            minHeight: 40,
+            // width: "80svw",
+            paddingRight: 50
+          }}
+        >
           
-        }}>
+          <Text 
+            style={{
+              fontFamily: normalTextFont,
+              backgroundColor: "#39393C",
+              borderRadius: 15,
+              padding: 10,
+            }}
+            selectable={true}
+          >
           {props.entry.content.map((v : ChatContentExcerpt, k : number) => (typeof v === 'string')?(
 
-            <Text key={k} style={{
+            <Text 
+              key={k} 
+              style={{
+                fontFamily: normalTextFont,
               // backgroundColor: "#00FF00"
-            }}>
-              <Text style={{color: '#E8E3E3'}}>{v}</Text>
+              }}
+            >
+              <Text style={{color: '#E8E3E3', fontFamily: normalTextFont,}}>{v}</Text>
             </Text>
           ):( //Code Segment
             <View style={{
               // backgroundColor: "#0000FF"
             }}>
-              <Text>
+              <Text style={{fontFamily: codeFont,}}>
                 {v.map((v_2 : CodeSegmentExcerpt, k_2 : number) => (
-                  <Text style={{color: v_2.color}}>
+                  <Text style={{color: v_2.color, fontFamily: codeFont,}}>
                     {v_2.text}
                   </Text>
                 ))}
               </Text>
             </View>
           ))}
+          </Text>
         </View>
-      </View>
+      </View> */}
     </View>
   );
+}
+
+
+
+const markdown_style = {
+  'heading1': {
+    color: '#E8E3E3',
+    FontFace: 'Inter',
+  },
 }

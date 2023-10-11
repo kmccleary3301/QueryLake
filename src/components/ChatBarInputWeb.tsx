@@ -10,6 +10,7 @@ import {
   Easing
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import AnimatedPressable from "./AnimatedPressable";
 
 type ChatBarInputProps = {
   onMessageSend?: (message: string) => void,
@@ -18,7 +19,7 @@ type ChatBarInputProps = {
 
 export default function ChatBarInputWeb(props: ChatBarInputProps) {
   const [inputText, setInputText] = useState(
-    "Write a python function that calculates the Fibonacci sequence up to a given number n. Include type hints and a function description."
+    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
   );
   const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [fileDragHover, setFileDragHover] = useState(false);
@@ -26,9 +27,6 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
 
   const [inputLineCount, setInputLineCount] = useState(1);
 
-  useFonts({
-    YingHei: require("../../assets/fonts/MYingHeiHK-W4.otf"),
-  });
 
   const log_key_press = (e: {
     nativeEvent: { key: string; shiftKey: boolean };
@@ -53,7 +51,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
 
 	useEffect(() => {
     Animated.timing(inputBoxHeight, {
-      toValue: (24*inputLineCount+6),
+      toValue: (18*inputLineCount),
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 200,
 			easing: Easing.elastic(1),
@@ -122,15 +120,17 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
               web: {
                 // height: inputBoxHeight,
                 color: '#E8E3E3',
-                fontSize: 18,
+                fontSize: 14,
                 textAlignVertical: 'center',
                 outlineStyle: 'none',
+                fontFamily: 'Inter-Regular',
               },
               default: { //The Platform specific switch is necessary because 'outlineStyle' is only on Web, and causes errors on mobile.
                 height: inputBoxHeight,
                 color: '#E8E3E3',
-                fontSize: 18,
+                fontSize: 14,
                 textAlignVertical: 'center',
+                fontFamily: 'Inter-Regular',
               }
             })}
           />
@@ -141,7 +141,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
         paddingRight: 10,
         alignSelf: 'center',
       }}>
-        <Pressable 
+        <AnimatedPressable 
           id="SendButton"
           onPress={() => {
             if (props.onMessageSend) { props.onMessageSend(inputText); }
@@ -159,7 +159,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
           }}
         >
           <Feather name="send" size={15} color="#000000" />
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </View>
     </div>
