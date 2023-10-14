@@ -28,6 +28,7 @@ import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
+
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -54,7 +55,8 @@ type ChatWindowProps = {
   navigation?: any,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
-  userData: userDataType
+  userData: userDataType,
+  pageNavigateArguments: any,
 }
 
 function hexToUtf8(s : string)
@@ -65,22 +67,7 @@ function hexToUtf8(s : string)
   );
 }
 
-
-function utf8ToHex(s : string)
-{
-  const utf8encoder = new TextEncoder();
-  const rb = utf8encoder.encode(s);
-  let r = '';
-  for (const b of rb) {
-    r += ('0' + b.toString(16)).slice(-2);
-  }
-  return r;
-}
-
 export default function ChatWindow(props : ChatWindowProps) {
-
-
-  // props.navigation.navigate("HomeScreen")
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
   const [inputText, setInputText] = useState(
@@ -104,7 +91,35 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [sessionHash, setSessionHash] = useState();
   
   useEffect(() => {
-    if (sessionHash === undefined) {
+    if (props.pageNavigateArguments.length > 0) {
+      setSessionHash(props.pageNavigateArguments);
+      const url = new URL("http://localhost:5000/fetch_session");
+      url.searchParams.append("username", props.userData.username);
+      url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+      url.searchParams.append("hash_id", props.pageNavigateArguments);
+      fetch(url, {method: "POST"}).then((response) => {
+        console.log(response);
+        response.json().then((data) => {
+            if (!data["success"]) {
+              console.error("Failed to retrieve session");
+              return;
+            }
+            console.log(data);
+            let new_entries : ChatEntry[] = [];
+            for (let i = 0; i < data.result.length; i++) {
+              new_entries.push({
+                content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                origin: (data.result[i].type === "user")?"user":"server"
+              });
+            }
+            setNewChat(new_entries);
+        });
+      });
+    }
+  }, [props.pageNavigateArguments]);
+
+  useEffect(() => {
+    if (sessionHash === undefined && props.pageNavigateArguments.length == 0) {
       const url = new URL("http://localhost:5000/create_session");
       url.searchParams.append("username", props.userData.username);
       url.searchParams.append("password_prehash", props.userData.password_pre_hash);
@@ -255,7 +270,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         url: url,
         filesParamName: "file",
       },
-      autoUpload: true,
+      autoUpload: false,
       grouped: true,
       //...
     });

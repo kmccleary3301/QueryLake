@@ -17,20 +17,20 @@ import {
 import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
 
-// type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
 };
 
-type LoginPageProps = {
-  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
+type CollectionManagerProps = {
+  setPageNavigate?: React.Dispatch<React.SetStateAction<pageID>>,
   navigation?: any,
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>
 }
 
-export default function LoginPage(props : LoginPageProps) {
+export default function CollectionManager(props : CollectionManagerProps) {
   const [modeIsLogin, setModeIsLogin] = useState(true); //A boolean for if you're signing up or logging in.
   const [usernameText, setUsernameText] = useState("");
   const [password, setPassword] = useState("");

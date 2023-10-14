@@ -39,6 +39,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import testTextMate from './src/tests/testTextMate';
 import MarkdownTestPage from './src/markdown/MarkdownTestPage';
 import LoginPage from './src/pages/LoginPage';
+import CreateCollectionPage from './src/pages/CreateCollectionPage';
 
 
 function HomeScreen({ navigation }) {
@@ -96,7 +97,7 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage";
 
 type userDataType = {
   username: string,
@@ -111,13 +112,23 @@ type AppWebPageProps = {
   setPageNavigate: React.Dispatch<React.SetStateAction<pageID>>,
   userData: userDataType,
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
+  pageNavigateArguments: any,
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
+  refreshSidePanel: boolean,
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 function AppWebPage(props : AppWebPageProps) {
   switch(props.page) {
     case 'ChatWindow':
       return (
-        <ChatWindow toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate} userData={props.userData}/>
+        <ChatWindow 
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened} 
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData} 
+          pageNavigateArguments={props.pageNavigateArguments}
+        />
       );
     case 'MarkdownTestPage':
       return (
@@ -126,6 +137,10 @@ function AppWebPage(props : AppWebPageProps) {
     case 'LoginPage':
       return (
         <LoginPage setPageNavigate={props.setPageNavigate} setUserData={props.setUserData}/>
+      );
+    case 'CreateCollectionPage':
+      return (
+        <CreateCollectionPage setPageNavigate={props.setPageNavigate} userData={props.userData}/>
       );
   }
 }
@@ -136,10 +151,11 @@ function AppWeb() {
   const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
   const [userData, setUserData] = useState<userDataType>();
   const transitionOpacity = useRef(new Animated.Value(1)).current;
-  
   const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
-  
+  const [pageNavigateArguments, setPageNavigateArguments] = useState("");
+  const [refreshSidePanel, setRefreshSidePanel] = useState(false);
+
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
@@ -194,20 +210,28 @@ function AppWeb() {
         height: "100vh",
         backgroundColor: "#23232D",
       }}>
-        <Animated.View style={{elevation: sidebarOpened?1:0,}}>
-          <Animated.View
-            style={{
-              width: sidebarWidth,
-            }}
-            >
-            {(sidebarWidth) && (
-              <View style={{width: 320}}>
-                <Sidebar toggleSideBar={toggle_sidebar}/>
-              </View>
-
-            )}
+        {(userData !== undefined) && (
+          <Animated.View style={{elevation: sidebarOpened?1:0,}}>
+            <Animated.View
+              style={{
+                width: sidebarWidth,
+              }}
+              >
+              {(sidebarWidth) && (
+                <View style={{width: 320}}>
+                  <Sidebar 
+                    toggleSideBar={toggle_sidebar} 
+                    userData={userData} 
+                    setPageNavigate={setPageNavigate} 
+                    setPageNavigateArguments={setPageNavigateArguments}
+                    refreshSidePanel={refreshSidePanel}
+                    setRefreshSidePanel={setRefreshSidePanel}
+                  />
+                </View>
+              )}
+            </Animated.View>
           </Animated.View>
-        </Animated.View>
+        )}
 
         <View style={{flex: 1, height: "100vh", backgroundColor: '#23232D'}}>
           <Animated.View style={{height: '100%', width: '100%', opacity: transitionOpacity}}>
@@ -219,6 +243,8 @@ function AppWeb() {
               setPageNavigate={setPageNavigate}
               setUserData={setUserData}
               userData={userData}
+              pageNavigateArguments={pageNavigateArguments}
+              setPageNavigateArguments={setPageNavigateArguments}
             />
           </Animated.View>
         </View>

@@ -78,7 +78,7 @@ import MarkdownCodeBlock from "./MarkdownCodeBlock";
 // marked.use({ tokenizer });
 
 // Run marked
-console.log(marked.parse('$ latex code $\n\n` other code `'));
+// console.log(marked.parse('$ latex code $\n\n` other code `'));
 
 
 const example_scope_parsed = [
@@ -334,7 +334,7 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
 
   useEffect(() => {
     let lexed_input = lexer.lex(input);
-    console.log(lexed_input);
+    // console.log(lexed_input);
     setMarkdownTokens(lexed_input);
   }, [input]);
   // console.log([marked.parse(input)]);
@@ -342,7 +342,7 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
 
   const getMarkdownText = (input_text : string) => {
     var rawMarkup = marked.parse(input_text);
-    console.log(rawMarkup);
+    // console.log(rawMarkup);
     return { __html: rawMarkup };
   }
 

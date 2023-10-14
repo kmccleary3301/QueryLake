@@ -15,6 +15,7 @@ import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import SidebarColectionSelect from './SidebarCollectionSelect';
 import AnimatedPressable from './AnimatedPressable';
+import SidebarChatHistory from './SidebarChatHistory';
 
 type selectedState = [
 	selected: boolean,
@@ -30,52 +31,20 @@ type collectionGroup = {
 
 
 
-const test_collections = [
-	{
-		"title": "Test Collectionsajdhfkshdkfhskd",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 55
-	},
-	{
-		"title": "Test Collection",
-		"items": 555
-	},
-	{
-		"title": "Test Collection sdfasdfasdfsf",
-		"items": 5555
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-];
+type userDataType = {
+  username: string,
+  password_pre_hash: string,
+};
 
 type SidebarProps = {
   toggleSideBar?: () => void,
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void, 
+  userData: userDataType,
+  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
+  navigation?: any,
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
+  refreshSidePanel: boolean,
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<boolean>>
   // sidebarOpened?: boolean,
 }
 
@@ -85,48 +54,13 @@ export default function Sidebar(props: SidebarProps) {
   // console.log(props);
 	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
 
-	let toggleSelections: selectedState[] = [];
-	for (let i = 0; i < test_collections.length; i++) {
-		toggleSelections.push(useState(false));
-	}
 
-	let CollectionGroups : collectionGroup[] = [
-		{
-			title: "My Collections",
-			toggleSelections: [],
-			selected: useState(false),
-			collections: test_collections,
-		},
-		{
-			title: "Added Collections",
-			toggleSelections: [],
-			selected: useState(false),
-			collections: test_collections,
-		}
-	];
+	
 
-	const reloadCollectionGroup = (group_key : number) => {
-		CollectionGroups[group_key].toggleSelections = [];
-		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-			CollectionGroups[group_key].toggleSelections.push(useState(false));
-		} 
-	};
-
-	for (let i = 0; i < CollectionGroups.length; i++) {
-		reloadCollectionGroup(i);
-	}
-
-	const [myCollectionsSelected, setMyCollectionsSelected] = useState(false);
 
   const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
     if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
   };
-
-	const changePanelMode = (new_mode : string) => {
-		setPanelMode(new_mode);
-		// Fill this out with fetch functionality for
-		// user collections, user history, and toolchains.
-	};
 
 	const icons = {
 		aperture: require('../../assets/aperture.svg'),
@@ -182,6 +116,7 @@ export default function Sidebar(props: SidebarProps) {
               width={"100%"}
               onPress={(value : string) => {
                 setPanelMode(value);
+                props.setRefreshSidePanel(!props.refreshSidePanel);
                 console.log(value);
               }}
               textColor={'#000000'} //'#7a44cf'
@@ -206,7 +141,23 @@ export default function Sidebar(props: SidebarProps) {
               accessibilityLabel="gender-switch-selector"
             />
           </View>
-          <SidebarColectionSelect onChangeCollections={onChangeCollectionsHook}/>
+          {(panelMode == "collections") && (
+            <SidebarColectionSelect 
+              onChangeCollections={onChangeCollectionsHook} 
+              userData={props.userData} 
+              setPageNavigate={props.setPageNavigate} 
+              navigation={props.navigation}
+              refreshSidePanel={props.refreshSidePanel}
+            />
+          )}
+          {(panelMode == "history") && (
+            <SidebarChatHistory 
+              userData={props.userData} 
+              setPageNavigateArguments={props.setPageNavigateArguments} 
+              setPageNavigate={props.setPageNavigate}
+              refreshSidePanel={props.refreshSidePanel}
+            />
+          )}
         </View>
         <View style={{
           flexDirection: "column", 

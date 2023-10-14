@@ -6,109 +6,123 @@ import {
 } from 'react-native';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
+import AnimatedPressable from './AnimatedPressable';
 
 type selectedState = [
     selected: boolean,
     setSelected: React.Dispatch<React.SetStateAction<boolean>>,
 ];
 
+type collectionType = {
+  title: string,
+  items: number,
+  id?: number,
+}
+
 type collectionGroup = {
     title: string,
-    toggleSelections: selectedState[],
+    // toggleSelections: selectedState[],
     selected: selectedState,
-    collections: any,
+    collections: collectionType[],
 };
 
-const test_collections = [
-    {
-        "title": "Test Collectionsajdhfkshdkfhskd",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 55
-    },
-    {
-        "title": "Test Collection",
-        "items": 555
-    },
-    {
-        "title": "Test Collection sdfasdfasdfsf",
-        "items": 5555
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-    {
-        "title": "Test Collection",
-        "items": 5
-    },
-];
+type userDataType = {
+  username: string,
+  password_pre_hash: string,
+};
 
 type SidebarCollectionSelectProps = {
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void,
-  // sidebarOpened?: boolean,
+  userData: userDataType,
+  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
+  navigation?: any,
+  refreshSidePanel: boolean
 }
 
 export default function SidebarColectionSelect(props: SidebarCollectionSelectProps) {
-  // console.log(props);
-  const [panelMode, setPanelMode] = useState("");
+  const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
-  let toggleSelections: selectedState[] = [];
-  for (let i = 0; i < test_collections.length; i++) {
-      toggleSelections.push(useState(false));
-  }
+  useEffect(() => {
+    const url = new URL("http://localhost:5000/fetch_all_collections");
+    url.searchParams.append("username", props.userData.username);
+    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+    let collection_groups_fetch : collectionGroup[] = [];
 
-  let CollectionGroups : collectionGroup[] = [
-      {
-          title: "My Collections",
-          toggleSelections: [],
-          selected: useState(false),
-          collections: test_collections,
-      },
-      {
-          title: "Added Collections",
-          toggleSelections: [],
-          selected: useState(false),
-          collections: test_collections,
-      }
-  ];
+    let retrieved_data = {};
 
-  const reloadCollectionGroup = (group_key : number) => {
-      CollectionGroups[group_key].toggleSelections = [];
-      for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-          CollectionGroups[group_key].toggleSelections.push(useState(false));
-      } 
-  };
+    fetch(url, {method: "POST"}).then((response) => {
+      // console.log(response);
+      response.json().then((data) => {
+        // console.log(data);
+        retrieved_data = data;
+        if (data["success"] == false) {
+          console.error("Collection error:", data["note"]);
+          return;
+        }
+        try {
+          let personal_collections : collectionGroup = {
+            title: "My Collections",
+            collections: [],
+          };
+          for (let i = 0; i < data.result.user_collections.length; i++) {
+            console.log(data.result.user_collections[i]);
+            personal_collections.collections.push({
+              "title": data.result.user_collections[i]["name"],
+              "id": data.result.user_collections[i]["id"],
+              "items": data.result.user_collections[i]["document_count"],
+            })
+          }
+          collection_groups_fetch.push(personal_collections);
+        } catch {}
+        try {
+          let global_collections : collectionGroup = {
+            title: "Global Collections",
+            collections: [],
+          };
+          for (let i = 0; i < data["result"]["global_collections"].length; i++) {
+            global_collections.collections.push({
+              "title": data["result"]["global_collections"][i]["name"],
+              "id": data["result"]["global_collections"][i]["id"],
+              "items": data["result"]["global_collections"][i]["document_count"],
+            })
+          }
+          collection_groups_fetch.push(global_collections);
+        } catch {}
+        try {
+          let organization_ids = Object.keys(retrieved_data.result.organization_collections)
+          for (let j = 0; j < organization_ids.length; j++) {
+            try {
+              let org_id = organization_ids[j];
+              let organization_specific_collections : collectionGroup = {
+                title: retrieved_data.result.organization_collections[org_id].name,
+                collections: [],
+              };
+              for (let i = 0; i < retrieved_data.result.organization_collections[org_id].collections.length; i++) {
+                organization_specific_collections.collections.push({
+                  "title": retrieved_data.result.organization_collections[org_id].collections[i].name,
+                  "id": retrieved_data.result.organization_collections[org_id].collections[i].id,
+                  "items": retrieved_data.result.organization_collections[org_id].collections[i].document_count,
+                })
+              }
+              collection_groups_fetch.push(organization_specific_collections)
+            } catch {}
+          }
+        } catch {}
+        setCollectionGroups(collection_groups_fetch);
+      });
+    });
+    
+  }, [props.refreshSidePanel]);
 
-  for (let i = 0; i < CollectionGroups.length; i++) {
-      reloadCollectionGroup(i);
-  }
+  // 
 
   const toggleMyCollections = (selected: boolean, group_key: number) => {
       // if (selected) {
-      for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-          CollectionGroups[group_key].toggleSelections[i][1](selected);
+      for (let i = 0; i < collectionGroups[group_key].collections.length; i++) {
+          collectionGroups[group_key].toggleSelections[i][1](selected);
       }
       // }
   };
@@ -153,23 +167,20 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
       }}
       showsVerticalScrollIndicator={false}
       >
-        {CollectionGroups.map((v, k) => (
+        {collectionGroups.map((v, k) => (
           <View key={k} style={{
             paddingVertical: 5
           }}>
             <CollectionWrapper key={k} 
-              title={CollectionGroups[k].title}
+              title={collectionGroups[k].title}
               // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
               onToggleSelected={(selected: boolean) => {
                 toggleMyCollections(selected, k);
-                if (props.onChangeCollections) { props.onChangeCollections(CollectionGroups); }
+                if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
               }}
-              selectedState={{
-                selected: CollectionGroups[k].selected[0],
-                setSelected: CollectionGroups[k].selected[1]
-              }}
+              collections={v.collections}
             >
-              {CollectionGroups[k].collections.map((v_2, k_2) => (
+              {/* {CollectionGroups[k].collections.map((v_2, k_2) => (
                 <CollectionPreview key={k_2}
                   style={{
                     paddingTop: (k_2===0)?0:5,
@@ -187,10 +198,40 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
                     if (props.onChangeCollections) { props.onChangeCollections(CollectionGroups); }
                   }}
                 />
-              ))}
+              ))} */}
             </CollectionWrapper>
           </View>
         ))}
+        <View style={{paddingTop: 10, }}>
+        <AnimatedPressable style={{
+          width: '100%',
+          backgroundColor: '#39393C',
+          flexDirection: 'row',
+          borderRadius: 20,
+          // justifyContent: 'space-around',
+          // paddingVertical: 10,
+          height: 42,
+          alignItems: 'center',
+          justifyContent: 'center'}}
+          onPress={() => {
+            if (props.setPageNavigate) { props.setPageNavigate("CreateCollectionPage"); }
+            if (props.navigation) { props.navigation.navigate("CreateCollectionPage"); }
+          }}>
+            <View style={{paddingRight: 10}}>
+              <Feather name="plus" size={20} color="#E8E3E3" />
+            </View>
+            <View style={{alignSelf: 'center', justifyContent: 'center'}}>
+            <Text style={{
+              // width: '100%',
+              // height: '100%',
+              fontFamily: 'Inter-Regular',
+              fontSize: 16,
+              color: '#E8E3E3',
+              paddingTop: 1
+            }}>{"New Collection"}</Text>
+            </View>
+        </AnimatedPressable>
+        </View>
       </ScrollView>
     </> 
   );

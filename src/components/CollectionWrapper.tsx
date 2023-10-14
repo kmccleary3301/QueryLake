@@ -10,27 +10,37 @@ import {
 // import SwitchSelector from "react-native-switch-selector";
 import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
+import CollectionPreview from './CollectionPreview';
+
+type collectionType = {
+  title: string,
+  items: number,
+  id?: number,
+}
 
 type CollectionWrapperProps = {
 	onToggleCollapse?: (opened: boolean) => void,
 	onToggleSelected?: (selected: boolean) => void,
-	selectedState: {
-		selected: boolean,
-		setSelected: React.Dispatch<React.SetStateAction<boolean>>,
-	},
 	children?: any,
 	title: string,
+  collections: collectionType[]
 }
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
-	const [opened, setOpened] = useState(true);
+	const [opened, setOpened] = useState(false);
 	// const [selected, setSelected] = useState(false);
 	const [viewScrollable, setViewScrollable] = useState(false);
 	
-	const {selectedState: {selected, setSelected}, children, title,} = props;
+	const [selected, setSelected] = useState(false);
+	const {children, title} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
-	const boxHeight = useRef(new Animated.Value(50));
+	const boxHeight = useRef(new Animated.Value(42));
+  let selected_values : [boolean, React.Dispatch<React.SetStateAction<boolean>>][] = [];
+  for (let i = 0; i < props.collections.length; i++) {
+    selected_values.push(useState(false));
+  }
+
   useEffect(() => {
     if (boxHeight > 42) {
       setViewScrollable(true);
@@ -42,7 +52,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
     direct_opened_state = opened;
     let tmp_cmp = opened;
     Animated.timing(boxHeight.current, {
-      toValue: opened?(children.length*45+48):42,
+      toValue: (opened && props.collections.length > 0)?(props.collections.length*45+48):42,
       // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 400,
 			easing: Easing.elastic(0),
@@ -65,7 +75,20 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			easing: Easing.elastic(1),
       useNativeDriver: false,
     }).start();
+    if (selected) {
+      for (let i = 0; i < selected_values.length; i++) {
+        selected_values[i][1](true);
+      }
+    }
+
   }, [selected]);
+
+  // useEffect(() => {
+  //   selected_values = [];
+  //   for (let i = 0; i < props.collections.length; i++) {
+  //     selected_values.push(useState(false));
+  //   }
+  // }, [props.collections]);
 
 	return (
 		<Animated.ScrollView style={{
@@ -100,8 +123,14 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						// paddingLeft: 1,
 					}}
 					onPress={() => {
-						if (props.onToggleSelected) { props.onToggleSelected(!selected); }
+            if (selected == true) {
+              for (let i = 0; i < selected_values.length; i++) {
+                selected_values[i][1](false);
+              }
+            }
 						setSelected(selected => !selected);
+            
+						// if (props.onToggleSelected) { props.onToggleSelected(!selected); }
 					}}
 					>
 						{/* {selected && ( */}
@@ -153,11 +182,26 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			</View>
 			
 			<ScrollView style={{
-				paddingBottom: 5,
-			}}
-			showsVerticalScrollIndicator={false}
+				  paddingBottom: 5,
+			  }}
+			  showsVerticalScrollIndicator={false}
 			>
-			  {props.children}
+			  {props.collections.map((value : collectionType, index: number) => (
+          <View style={{paddingBottom: 5}} key={index}>
+            <CollectionPreview
+              title={value.title} 
+              documentCount={value.items} 
+              onToggleSelected={(collection_selected: boolean) => {
+                if (selected && !collection_selected) {
+                  // selected_values[index][1](false);
+                  setSelected(false);
+                }
+                // if (props.onChangeCollections) { props.onChangeCollections(CollectionGroups); }
+              }}
+              selectedState={{selected: selected_values[index][0], setSelected: selected_values[index][1]}}
+            />
+          </View>
+        ))}
 			</ScrollView>
 			
 		</Animated.ScrollView>
