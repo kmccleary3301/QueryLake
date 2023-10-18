@@ -15,7 +15,8 @@ import CollectionPreview from './CollectionPreview';
 type collectionType = {
   title: string,
   items: number,
-  id?: number,
+  hash_id: string,
+  type: string,
 }
 
 type CollectionWrapperProps = {
@@ -23,7 +24,9 @@ type CollectionWrapperProps = {
 	onToggleSelected?: (selected: boolean) => void,
 	children?: any,
 	title: string,
-  collections: collectionType[]
+  collections: collectionType[],
+  setPageNavigate: React.Dispatch<React.SetStateAction<string>>,
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>
 }
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
@@ -80,7 +83,6 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
         selected_values[i][1](true);
       }
     }
-
   }, [selected]);
 
   // useEffect(() => {
@@ -199,6 +201,10 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
                 // if (props.onChangeCollections) { props.onChangeCollections(CollectionGroups); }
               }}
               selectedState={{selected: selected_values[index][0], setSelected: selected_values[index][1]}}
+              onPress={() => {
+                props.setPageNavigateArguments(value.type+"-"+value.hash_id);
+                props.setPageNavigate("EditCollection");
+              }}
             />
           </View>
         ))}

@@ -349,10 +349,10 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
   return (
     <View style={{
       maxWidth: "100%",
-            minWidth: 40,
-            minHeight: 40,
-            // width: "80svw",
-            paddingRight: 50
+      minWidth: 40,
+      minHeight: 40,
+      // width: "80svw",
+      paddingRight: 50
     }}>
     <View style={{
       flexDirection: "column",

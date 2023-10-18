@@ -9,6 +9,7 @@ import {
 // import SwitchSelector from "react-native-switch-selector";
 import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
+import AnimatedPressable from './AnimatedPressable';
 
 type CollectionPreviewProps = {
 	style?: React.CSSProperties,
@@ -19,6 +20,7 @@ type CollectionPreviewProps = {
 	},
 	title: string,
 	documentCount: number;
+  onPress: () => void,
 }
 
 export default function CollectionPreview(props: CollectionPreviewProps) {
@@ -67,7 +69,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 			paddingHorizontal: 4,
 			// alignSelf: 'center',
 		}}>
-			<View style={{
+			<AnimatedPressable style={{
 				height: 40,
 				borderRadius: 20,
 				backgroundColor: '#23232D',
@@ -76,7 +78,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 				paddingRight: -10,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
-			}}>
+			}} onPress={props.onPress}>
         <View style={{flex:1, flexDirection: 'row'}}>
           <View style={{flexDirection: 'column', justifyContent: 'center'}}>
             <Pressable style={{
@@ -159,7 +161,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 						</View>
 					</View>
 				</View>
-			</View>
+			</AnimatedPressable>
 		</View>
 	);
 }

@@ -20,6 +20,7 @@ export default function ScrollViewBottomStick(props: ScrollViewBottomStickProps)
             scrollViewRef.current.scrollTo({y: contentHeight, animated: true});
           }
         }}
+        scrollEventThrottle={16}
         onScroll={(e) => {
           console.log(e);
           console.log(e.nativeEvent.contentOffset);

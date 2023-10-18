@@ -148,6 +148,7 @@ export default function Sidebar(props: SidebarProps) {
               setPageNavigate={props.setPageNavigate} 
               navigation={props.navigation}
               refreshSidePanel={props.refreshSidePanel}
+              setPageNavigateArguments={props.setPageNavigateArguments}
             />
           )}
           {(panelMode == "history") && (

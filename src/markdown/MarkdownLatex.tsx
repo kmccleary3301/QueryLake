@@ -33,7 +33,7 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
           output: 'mathml',
           throwOnError: throwOnError,
           displayMode: false
-        })}} style={{paddingTop: 10, paddingBottom: 10}}/>
+        })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
       );
     } else {
       return (
@@ -42,7 +42,7 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
           output: 'mathml',
           throwOnError: throwOnError,
           displayMode: true
-        })}} style={{paddingTop: 10, paddingBottom: 10}}/>
+        })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
       );
     }
   } catch (error) {

@@ -112,6 +112,37 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
         }}
         showsVerticalScrollIndicator={false}
       >
+        <View style={{paddingVertical: 10}}>
+          <AnimatedPressable style={{
+            width: '100%',
+            backgroundColor: '#39393C',
+            flexDirection: 'row',
+            borderRadius: 20,
+            // justifyContent: 'space-around',
+            height: 36,
+            alignItems: 'center',
+            justifyContent: 'center'}}
+            onPress={() => {
+              props.setPageNavigateArguments("");
+              props.setPageNavigateArguments("NEW");
+              if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
+              if (props.navigation) { props.navigation.navigate("ChatWindow"); }
+            }}>
+              <View style={{paddingRight: 5}}>
+                <Feather name="plus" size={20} color="#E8E3E3" />
+              </View>
+              <View style={{alignSelf: 'center', justifyContent: 'center'}}>
+              <Text style={{
+                // width: '100%',
+                // height: '100%',
+                fontFamily: 'Inter-Regular',
+                fontSize: 16,
+                color: '#E8E3E3',
+                paddingTop: 1
+              }}>{"New Chat"}</Text>
+              </View>
+          </AnimatedPressable>
+        </View>
         {(chatHistoryToday.length > 0) && (
           <>
           <Text style={{

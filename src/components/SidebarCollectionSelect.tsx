@@ -12,21 +12,22 @@ import CollectionPreview from './CollectionPreview';
 import AnimatedPressable from './AnimatedPressable';
 
 type selectedState = [
-    selected: boolean,
-    setSelected: React.Dispatch<React.SetStateAction<boolean>>,
+  selected: boolean,
+  setSelected: React.Dispatch<React.SetStateAction<boolean>>,
 ];
 
 type collectionType = {
   title: string,
   items: number,
-  id?: number,
+  hash_id: string,
+  type: string,
 }
 
 type collectionGroup = {
-    title: string,
-    // toggleSelections: selectedState[],
-    selected: selectedState,
-    collections: collectionType[],
+  title: string,
+  // toggleSelections: selectedState[],
+  selected: selectedState,
+  collections: collectionType[],
 };
 
 type userDataType = {
@@ -37,9 +38,10 @@ type userDataType = {
 type SidebarCollectionSelectProps = {
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void,
   userData: userDataType,
-  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
+  setPageNavigate: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
   refreshSidePanel: boolean
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
 }
 
 export default function SidebarColectionSelect(props: SidebarCollectionSelectProps) {
@@ -71,8 +73,9 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
             console.log(data.result.user_collections[i]);
             personal_collections.collections.push({
               "title": data.result.user_collections[i]["name"],
-              "id": data.result.user_collections[i]["id"],
+              "hash_id": data.result.user_collections[i]["hash_id"],
               "items": data.result.user_collections[i]["document_count"],
+              "type": data.result.user_collections[i]["type"]
             })
           }
           collection_groups_fetch.push(personal_collections);
@@ -85,8 +88,9 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
           for (let i = 0; i < data["result"]["global_collections"].length; i++) {
             global_collections.collections.push({
               "title": data["result"]["global_collections"][i]["name"],
-              "id": data["result"]["global_collections"][i]["id"],
+              "hash_id": data["result"]["global_collections"][i]["hash_id"],
               "items": data["result"]["global_collections"][i]["document_count"],
+              "type": data["result"]["global_collections"][i]["type"]
             })
           }
           collection_groups_fetch.push(global_collections);
@@ -103,8 +107,9 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
               for (let i = 0; i < retrieved_data.result.organization_collections[org_id].collections.length; i++) {
                 organization_specific_collections.collections.push({
                   "title": retrieved_data.result.organization_collections[org_id].collections[i].name,
-                  "id": retrieved_data.result.organization_collections[org_id].collections[i].id,
+                  "hash_id": retrieved_data.result.organization_collections[org_id].collections[i].hash_id,
                   "items": retrieved_data.result.organization_collections[org_id].collections[i].document_count,
+                  "type": retrieved_data.result.organization_collections[org_id].collections[i].type,
                 })
               }
               collection_groups_fetch.push(organization_specific_collections)
@@ -179,6 +184,8 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
                 if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
               }}
               collections={v.collections}
+              setPageNavigate={props.setPageNavigate}
+              setPageNavigateArguments={props.setPageNavigateArguments}
             >
               {/* {CollectionGroups[k].collections.map((v_2, k_2) => (
                 <CollectionPreview key={k_2}

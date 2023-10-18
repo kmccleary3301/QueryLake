@@ -71,10 +71,9 @@ export default function ChatWindow(props : ChatWindowProps) {
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
   const [inputText, setInputText] = useState(
-    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
+    ""
   );
   const [isEnabled, setIsEnabled] = useState(false);
-  const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [sseOpened, setSseOpened] = useState(false);
   const [fileDragHover, setFileDragHover] = useState(false);
   const [filesPrepared, setFilesPrepared] = useState<File[]>([]);
@@ -91,7 +90,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [sessionHash, setSessionHash] = useState();
   
   useEffect(() => {
-    if (props.pageNavigateArguments.length > 0) {
+    if (props.pageNavigateArguments.length > 0 && props.pageNavigateArguments != "NEW") {
       setSessionHash(props.pageNavigateArguments);
       const url = new URL("http://localhost:5000/fetch_session");
       url.searchParams.append("username", props.userData.username);
@@ -115,11 +114,8 @@ export default function ChatWindow(props : ChatWindowProps) {
             setNewChat(new_entries);
         });
       });
-    }
-  }, [props.pageNavigateArguments]);
-
-  useEffect(() => {
-    if (sessionHash === undefined && props.pageNavigateArguments.length == 0) {
+    } else if ((sessionHash === undefined && props.pageNavigateArguments.length == 0) || props.pageNavigateArguments == "NEW") {
+      setNewChat([]);
       const url = new URL("http://localhost:5000/create_session");
       url.searchParams.append("username", props.userData.username);
       url.searchParams.append("password_prehash", props.userData.password_pre_hash);
@@ -134,7 +130,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         });
       });
     }
-  }, []);
+  }, [props.pageNavigateArguments]);
 
   // const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -143,14 +139,6 @@ export default function ChatWindow(props : ChatWindowProps) {
 
   let genString = "";
   let termLet: string[] = [];
-
-  const copyToClipboard = () => {
-    Clipboard.setString(inputText);
-  };
-
-  const copyChatToClipboard = () => {
-    Clipboard.setString(chat);
-  };
 
   const sse_fetch = async function (message : string) {
     if (sseOpened === true) {
@@ -217,7 +205,7 @@ export default function ChatWindow(props : ChatWindowProps) {
           decoded = decoded.replace(/(?<=^\s*)\s/gm, ""); //Strip leading whitespace
         }
         genString += decoded;
-        setChat(genString);
+        // setChat(genString);
         // bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
       
         // bot_entry["content_raw_string"] = genString;

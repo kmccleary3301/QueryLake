@@ -58,14 +58,17 @@ function parseScopeTreeText(hljs_html : string) {
     if (match.index > 0) {
         let text = hljs_html.slice(index, index+match.index).split("\n");
         for (let i = 0; i < text.length; i++) {
-          if (i !== 0) { 
-            string_segments.push("\n") 
-          }
-          if (text[i].length > 0) {
-            string_segments.push({
-              scope: current_scope.slice(),
-              content: decode_html(text[i])
-            })
+          let decoded = decode_html(text[i]);
+          if (decoded.length > 0) {
+            if (i !== 0) { 
+              string_segments.push("\n") 
+            }
+            if (text[i].length > 0) {
+              string_segments.push({
+                scope: current_scope.slice(),
+                content: decoded
+              })
+            }
           }
         }
     }
@@ -80,13 +83,16 @@ function parseScopeTreeText(hljs_html : string) {
     if (new_match === null && new_index < hljs_html.length) {
       let text = hljs_html.slice(new_index).split("\n");
       for (let i = 0; i < text.length; i++) {
-        if (i != 0) { 
-          string_segments.push("\n")   
+        let decoded = decode_html(text[i]);
+        if (decoded.length > 0) {
+          if (i != 0) { 
+            string_segments.push("\n")   
+          }
+          string_segments.push({
+            scope: current_scope.slice(),
+            content: decode_html(text[i])
+          })
         }
-        string_segments.push({
-          scope: current_scope.slice(),
-          content: decode_html(text[i])
-        })
       }
     } 
     match = new_match;
@@ -153,8 +159,9 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
         backgroundColor: '#17181D',
         flexDirection: "column",
         // alignItems: 'baseline',
-        maxWidth: '%80'
-      }}>
+        maxWidth: '100%'
+      }} horizontal={true} showsHorizontalScrollIndicator={false}>
+      <View>
       {highlights.map((line: scoped_text[], line_number : number) => (//the value search command below finds index of first non whitespace character
         <View key={line_number} style={{
           flexDirection: 'row',
@@ -175,6 +182,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           ))}
         </View>
       ))}
+      </View>
         {/* <pre
           class="scrollbar-custom overflow-auto px-5 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20"><code
             class="language-{lang}">{@html highlightedCode || code.replaceAll("<", "&lt;")}</code></pre> */}

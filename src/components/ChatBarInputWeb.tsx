@@ -19,7 +19,7 @@ type ChatBarInputProps = {
 
 export default function ChatBarInputWeb(props: ChatBarInputProps) {
   const [inputText, setInputText] = useState(
-    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
+    "Give me a formatted set of markdown and latex notes on k-means clustering. Include formatted math equations whenever\npossible, and use inline LaTeX styling. Include some example python code using sklearn."
   );
   const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [fileDragHover, setFileDragHover] = useState(false);

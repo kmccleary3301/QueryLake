@@ -40,7 +40,7 @@ import testTextMate from './src/tests/testTextMate';
 import MarkdownTestPage from './src/markdown/MarkdownTestPage';
 import LoginPage from './src/pages/LoginPage';
 import CreateCollectionPage from './src/pages/CreateCollectionPage';
-
+import EditCollection from './src/pages/EditCollection';
 
 function HomeScreen({ navigation }) {
   return (
@@ -97,7 +97,7 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage" | "EditCollection";
 
 type userDataType = {
   username: string,
@@ -142,6 +142,11 @@ function AppWebPage(props : AppWebPageProps) {
       return (
         <CreateCollectionPage setPageNavigate={props.setPageNavigate} userData={props.userData}/>
       );
+    case 'EditCollection':
+      return (
+        <EditCollection setPageNavigate={props.setPageNavigate} userData={props.userData} pageNavigateArguments={props.pageNavigateArguments}/>
+      );
+
   }
 }
 
