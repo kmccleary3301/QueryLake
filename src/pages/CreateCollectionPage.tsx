@@ -54,7 +54,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
 
 
   useEffect(() => {
-    const url = new URL("http://localhost:5000/random_hash");
+    const url = new URL("http://localhost:5000/api/random_hash");
 
     fetch(url, {method: "POST"}).then((response) => {
       // console.log(response);
@@ -100,7 +100,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
   };
 
   const start_publish = () => {
-    const url = new URL("http://localhost:5000/create_document_collection");
+    const url = new URL("http://localhost:5000/api/create_document_collection");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url.searchParams.append("name", name);
@@ -119,7 +119,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
       });
     });
     // If organization specified, set that to author.
-    let url_2 = new URL("http://localhost:5000/upload_document");
+    let url_2 = new URL("http://localhost:5000/api/async/upload_document");
     url_2.searchParams.append("username", props.userData.username);
     url_2.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url_2.searchParams.append("collection_hash_id", hashId);
@@ -136,6 +136,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
     uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
       console.log(`item ${item.id} started uploading`);
       setFinishedUploads(finishedUploads => finishedUploads+1);
+      setCurrentUploadProgress(0);
     });
 
     uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
@@ -151,7 +152,6 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
         if (props.navigation) { props.navigation.navigate("ChatWindow"); }
       }
     });
-    1
     // let formData = new FormData();
     for (let i = 0; i < uploadFiles.length; i++) {
       // formData.append("file", event.dataTransfer.files[i]);
@@ -194,8 +194,9 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
                 fontSize: 20,
                 paddingBottom: 5,
                 paddingTop: 5,
-                width: '100%',
+                width: '30vw',
                 color: '#E8E3E3',
+                textAlign: 'center'
               }}>
                 {"Create a New Document Collection"}
               </Text>
@@ -472,17 +473,22 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
                 {finishedUploads.toString()+"/"+uploadFiles.length.toString()}
               </Text>
               <View style={{
-                width: 100,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: '#17181D'
+                flexDirection: 'column',
+                justifyContent: 'center',
               }}>
                 <View style={{
-                  width: currentUploadProgress,
-                  backgroundColor: '#7968D9',
+                  width: 100,
                   height: 4,
-                  borderRadius: 2
-                }}/>
+                  borderRadius: 2,
+                  backgroundColor: '#17181D'
+                }}>
+                  <View style={{
+                    width: currentUploadProgress,
+                    backgroundColor: '#7968D9',
+                    height: 4,
+                    borderRadius: 2
+                  }}/>
+                </View>
               </View>
             </View>
           )}

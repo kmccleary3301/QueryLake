@@ -37,8 +37,10 @@ export default function LoginPage(props : LoginPageProps) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const login = () => {
-    const url = new URL("http://localhost:5000/login");
-    url.searchParams.append("name", usernameText);
+    // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
+    //   response.json().then((data) => { console.log(data)})});
+    const url = new URL("http://localhost:5000/api/login");
+    url.searchParams.append("username", usernameText);
     url.searchParams.append("password", password);
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {
@@ -47,7 +49,7 @@ export default function LoginPage(props : LoginPageProps) {
           result = data;
           console.log(result);
           try {
-            if (result["login_successful"]) {
+            if (result["successful"]) {
               // setErrorMessage("Login Successful");
               props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
               if (props.setPageNavigate) {
@@ -67,8 +69,8 @@ export default function LoginPage(props : LoginPageProps) {
   };
 
   const signup = () => {
-    const url = new URL("http://localhost:5000/create_account");
-    url.searchParams.append("name", usernameText);
+    const url = new URL("http://localhost:5000/api/add_user");
+    url.searchParams.append("username", usernameText);
     url.searchParams.append("password", password);
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {

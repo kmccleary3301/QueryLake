@@ -28,7 +28,7 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
   const invert = (props.invert)?props.invert:false;
 
 	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
+		const url = new URL("http://localhost:5000/api/uploadfile");
 		url.searchParams.append("query", "test test test");
 		return url.toString();
 	};

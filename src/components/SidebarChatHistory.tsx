@@ -60,7 +60,7 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
 
 
   useEffect(() => {
-    const url = new URL("http://localhost:5000/fetch_chat_sessions");
+    const url = new URL("http://localhost:5000/api/fetch_chat_sessions");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     fetch(url, {method: "POST"}).then((response) => {

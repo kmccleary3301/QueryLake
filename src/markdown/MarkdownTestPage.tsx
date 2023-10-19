@@ -80,7 +80,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   }, [props.sidebarOpened]);
 
   const test_auth_login = () => {
-    const url = new URL("http://localhost:5000/login");
+    const url = new URL("http://localhost:5000/api/login");
     url.searchParams.append("name", "John_5817263");
     url.searchParams.append("password", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
@@ -92,7 +92,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   };
 
   const test_auth_add_account = () => {
-    const url = new URL("http://localhost:5000/create_account");
+    const url = new URL("http://localhost:5000/api/create_account");
     url.searchParams.append("name", "John_5817263");
     url.searchParams.append("password", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
@@ -104,7 +104,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   };
 
   const test_auth_hash = () => {
-    const url = new URL("http://localhost:5000/auth");
+    const url = new URL("http://localhost:5000/api/auth");
     url.searchParams.append("input", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);

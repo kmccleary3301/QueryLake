@@ -46,7 +46,7 @@ export default function TestUploadBox(props: any) {
     let formData = new FormData()
     formData.append("file", event.dataTransfer.files[0]);
     const uploader = createUploader({ 
-      destination: {method: 'POST', url: "http://localhost:5000/uploadfile", filesParamName: 'file'},
+      destination: {method: 'POST', url: "http://localhost:5000/api/uploadfile", filesParamName: 'file'},
       autoUpload: true,
       grouped: true,
       

@@ -92,7 +92,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   useEffect(() => {
     if (props.pageNavigateArguments.length > 0 && props.pageNavigateArguments != "NEW") {
       setSessionHash(props.pageNavigateArguments);
-      const url = new URL("http://localhost:5000/fetch_session");
+      const url = new URL("http://localhost:5000/api/fetch_session");
       url.searchParams.append("username", props.userData.username);
       url.searchParams.append("password_prehash", props.userData.password_pre_hash);
       url.searchParams.append("hash_id", props.pageNavigateArguments);
@@ -116,7 +116,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       });
     } else if ((sessionHash === undefined && props.pageNavigateArguments.length == 0) || props.pageNavigateArguments == "NEW") {
       setNewChat([]);
-      const url = new URL("http://localhost:5000/create_session");
+      const url = new URL("http://localhost:5000/api/create_chat_session");
       url.searchParams.append("username", props.userData.username);
       url.searchParams.append("password_prehash", props.userData.password_pre_hash);
       fetch(url, {method: "POST"}).then((response) => {
@@ -125,7 +125,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             if (data["success"]) {
               setSessionHash(data["session_hash"]);
             } else {
-              console.error("Session hash failed");
+              console.error("Session hash failed", data["note"]);
             }
         });
       });
@@ -150,7 +150,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       return;
     }
 
-    const url = new URL("http://localhost:5000/chat");
+    const url = new URL("http://localhost:5000/api/async/chat");
     url.searchParams.append("session_hash", sessionHash);
     url.searchParams.append("query", message);
     url.searchParams.append("username", props.userData.username);
@@ -243,7 +243,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
   const handleDrop = (event: any) => {
-    const url = new URL("http://localhost:5000/uploadfile");
+    const url = new URL("http://localhost:5000/api/uploadfile");
     url.searchParams.append("name", props.userData.username);
     url.searchParams.append("password_prehashed", props.userData.password_pre_hash);
     setFileDragHover(false);

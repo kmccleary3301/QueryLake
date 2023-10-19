@@ -48,7 +48,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
   const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
   useEffect(() => {
-    const url = new URL("http://localhost:5000/fetch_all_collections");
+    const url = new URL("http://localhost:5000/api/fetch_all_collections");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     let collection_groups_fetch : collectionGroup[] = [];

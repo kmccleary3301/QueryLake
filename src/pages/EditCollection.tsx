@@ -47,7 +47,7 @@ export default function EditCollection(props : EditCollectionProps) {
   const [fileNames, setFileNames] = useState([]);
   const [collectionType, setCollectionType] = useState("user");
   const [nonUploadedFileCount, setNonUploadedFileCount] = useState(0);
-
+  const [documentsToDelete, setDocumentsToDelete] = useState<string[]>([]);
 
   const hoverOpacity = useRef(new Animated.Value(1)).current;
   const [hashId, setHashId] = useState("");
@@ -66,11 +66,11 @@ export default function EditCollection(props : EditCollectionProps) {
 
 
   useEffect(() => {
+    if (props.pageNavigateArguments.length == 0) { return; }
     const nav_args = props.pageNavigateArguments.split("-");
-
     setHashId(nav_args[1]);
     setCollectionType(nav_args[0]);
-    const url = new URL("http://localhost:5000/fetch_collection");
+    const url = new URL("http://localhost:5000/api/fetch_collection");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url.searchParams.append("collection_type", nav_args[0]);
@@ -142,31 +142,40 @@ export default function EditCollection(props : EditCollectionProps) {
     setUploadFiles(new_files)
   };
 
-  const start_publish = () => {
-    const url = new URL("http://localhost:5000/create_document_collection");
+  const start_save = () => {
+    const url = new URL("http://localhost:5000/api/modify_document_collection");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("name", name);
+    url.searchParams.append("title", name);
     url.searchParams.append("description", description);
-    url.searchParams.append("hash_id", hashId);
+    url.searchParams.append("collection_hash_id", hashId);
     let collection_id = -1;
+
+    for (let i = 0; i < documentsToDelete.length; i++) {
+      const url_delete_document = new URL("http://localhost:5000/api/delete_document");
+      url_delete_document.searchParams.append("username", props.userData.username);
+      url_delete_document.searchParams.append("password_prehash", props.userData.password_pre_hash);
+      url_delete_document.searchParams.append("hash_id", documentsToDelete[i]);
+      fetch(url_delete_document, {method: "POST"});
+    }
 
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
       response.json().then((data) => {
         if (data["success"] == false) {
-          console.error("Collection Publish Failed");
+          console.error("Collection Publish Failed", data["note"]);
           return;
         }
         collection_id = data["collection_id"];
       });
     });
     // If organization specified, set that to author.
-    let url_2 = new URL("http://localhost:5000/upload_document");
+    let url_2 = new URL("http://localhost:5000/api/async/upload_document");
     url_2.searchParams.append("username", props.userData.username);
     url_2.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url_2.searchParams.append("collection_hash_id", hashId);
-    
+    url_2.searchParams.append("collection_type", collectionType);
+
     const uploader = createUploader({
       destination: {
         method: "POST",
@@ -179,6 +188,7 @@ export default function EditCollection(props : EditCollectionProps) {
     uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
       console.log(`item ${item.id} started uploading`);
       setFinishedUploads(finishedUploads => finishedUploads+1);
+      setCurrentUploadProgress(0);
     });
 
     uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
@@ -204,12 +214,16 @@ export default function EditCollection(props : EditCollectionProps) {
         upload_count += 1;
       }
     }
+    if (upload_count == 0) {
+      if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
+      if (props.navigation) { props.navigation.navigate("ChatWindow"); }
+    }
     setNonUploadedFileCount(upload_count);
     setPublishStarted(true);
   };
 
-  const deleteDocumentFromServer = (hash_id : string, upload_file_index : number) => {
-    const url = new URL("http://localhost:5000/delete_document");
+  const deleteDocumentFromServer = (hash_id : string) => {
+    const url = new URL("http://localhost:5000/api/delete_document");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url.searchParams.append("hash_id", hash_id);
@@ -221,13 +235,13 @@ export default function EditCollection(props : EditCollectionProps) {
           console.error("Document Delete Failed", data["note"]);
           return;
         }
-        setUploadFiles([...uploadFiles.slice(0, upload_file_index), ...uploadFiles.slice(upload_file_index+1, uploadFiles.length)]);
+        // setUploadFiles([...uploadFiles.slice(0, upload_file_index), ...uploadFiles.slice(upload_file_index+1, uploadFiles.length)]);
       });
     });
   };
 
   const openDocument = (hash_id : string) => {
-    const url = new URL("http://localhost:5000/fetch_document");
+    const url = new URL("http://localhost:5000/api/async/fetch_document");
     url.searchParams.append("username", props.userData.username);
     url.searchParams.append("password_prehash", props.userData.password_pre_hash);
     url.searchParams.append("hash_id", hash_id);
@@ -267,8 +281,9 @@ export default function EditCollection(props : EditCollectionProps) {
                 fontSize: 20,
                 paddingBottom: 5,
                 paddingTop: 5,
-                width: '100%',
+                width: '30vw',
                 color: '#E8E3E3',
+                textAlign: 'center'
               }}>
                 {"Edit Document Collection"}
               </Text>
@@ -426,8 +441,11 @@ export default function EditCollection(props : EditCollectionProps) {
                   key={index}
                   title={value.title}
                   deleteIndex={() => {
-                    if (value.uploaded) { deleteDocumentFromServer(value.hash_id, index); }
-                    else { setUploadFiles([...uploadFiles.slice(0, index), ...uploadFiles.slice(index+1, uploadFiles.length)]); }
+                    if (value.uploaded) {
+                      setDocumentsToDelete([...documentsToDelete, value.hash_id]);
+                      // deleteDocumentFromServer(value.hash_id, index); 
+                    }
+                    setUploadFiles([...uploadFiles.slice(0, index), ...uploadFiles.slice(index+1, uploadFiles.length)]);
                   }}
                   onPress={() => {
                     if (value.uploaded) { openDocument(value.hash_id); }
@@ -508,7 +526,7 @@ export default function EditCollection(props : EditCollectionProps) {
               backgroundColor: '#7968D9',
               alignItems: 'center',
               justifyContent: 'center'
-            }} onPress={start_publish}>
+            }} onPress={start_save}>
               <View style={{width: '100%'}}>
               <Text style={{
                 fontFamily: 'Inter-Regular',

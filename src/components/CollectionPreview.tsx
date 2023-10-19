@@ -39,7 +39,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 
 
 	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
+		const url = new URL("http://localhost:5000/api/uploadfile");
 		url.searchParams.append("query", "test test test");
 		return url.toString();
 	};
