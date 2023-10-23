@@ -9,6 +9,7 @@ import {
 import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./MarkdownTextSplitter";
 import MarkdownCodeBlock from "./MarkdownCodeBlock";
+import stringHash from "../hooks/stringHash";
 // import {KateX}
 
 // marked.use({
@@ -111,11 +112,13 @@ function scopeParser(string_in: string) {
 
 type ChatBubbleProps = {
   input: string,
+  transparentDisplay?: boolean,
 };
 
 type MarkdownMapComponentProps = {
   token: Token,
   key?: number,
+  padLeft?: boolean,
 }
 
 type MarkdownMapComponentErrorProps = {
@@ -196,7 +199,9 @@ function MarkdownParagraphComponent(props : MarkdownParagraphComponentProps) {
 }
 
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
-  const normalTextFont = "YingHei3";
+  const normalTextFont = "Inter-Regular";
+  const headingFont = "Inter-Bold";
+  const defaultFontSize = 14;
   const codeFont = "Consolas";
   const headerFontSizes = {
     1: 36,
@@ -221,10 +226,10 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'code':
       return (
-        <MarkdownCodeBlock text={token.text}/>
+        <MarkdownCodeBlock text={token.text} lang={token.lang}/>
       );
     case 'heading':
-      let fontSizeGet = 36 - 3*token.depth;
+      let fontSizeGet = 30 - 3*token.depth;
       // if (token.hasOwnProperty("tokens")) {
       //   return (
       //     <Text>
@@ -251,7 +256,8 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         //   {token.text}
         // </Text>
         <MarkdownTextSplitter selectable={true} style={{
-          fontFamily: "YingHei5",
+          paddingTop: 8,
+          fontFamily: headingFont,
           fontSize: fontSizeGet,
           color: '#E8E3E3'
         }} text={token.text}/>
@@ -290,7 +296,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           </View>
           <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
-            fontSize: 16,
+            fontSize: defaultFontSize,
             color: '#E8E3E3'
             }} text={token.text}/>
         </View>
@@ -299,11 +305,12 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (
         <View style={{
           flexDirection: 'row',
-          paddingLeft: 10
+          paddingLeft: (props.padLeft)?10:0,
+          paddingBottom: 5,
         }}>
           <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
-            fontSize: 16,
+            fontSize: defaultFontSize,
             color: '#E8E3E3'
             }} text={token.text}/>
         </View>
@@ -321,30 +328,71 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 }
 
 export default function MarkdownRenderer(props: ChatBubbleProps) {
-  const normalTextFont = "Inter";
+  const normalTextFont = "Inter-Regular";
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
   
   const { input } = props;
+  const transparentDisplay = (props.transparentDisplay)?props.transparentDisplay:false;
+  let oldTextLength = 0;
+  let textIndexActiveMarkdownSegment = 0;
+  let markdownSegmentAddresses = [];
+  let textUpdating = false;
+  let old_string_hash = 0;
   const lexer = new marked.Lexer();
+
 
   // useEffect(() => {
 
   // }, [input]);
 
   useEffect(() => {
-    let lexed_input = lexer.lex(input);
-    // console.log(lexed_input);
-    setMarkdownTokens(lexed_input);
+    // if (input.length === oldTextLength) {
+    //   return;
+    // }
+    
+    // let lexed_input = lexer.lex(input);
+    // // console.log(lexed_input);
+    // setMarkdownTokens(lexed_input);
+    let new_string_hash = stringHash(input);
+    if (new_string_hash === old_string_hash) {
+      textUpdating = false;
+      return;
+    }
+    if (markdownTokens.length === 0) {
+      let lexed_input = lexer.lex(input);
+      console.log(lexed_input)
+      setMarkdownTokens(lexed_input);
+      old_string_hash = stringHash(input);
+    } else {
+      textUpdating = true;
+      let lexed_input = markdownTokens;
+      if (lexed_input[lexed_input.length-1].text) {
+        lexed_input[lexed_input.length-1].text += input.slice(oldTextLength, input.length);
+      } else {
+        lexed_input[lexed_input.length-1].raw += input.slice(oldTextLength, input.length);
+      }
+      setMarkdownTokens(lexed_input);
+    }
   }, [input]);
-  // console.log([marked.parse(input)]);
-  // console.log("Lexer");
 
-  const getMarkdownText = (input_text : string) => {
-    var rawMarkup = marked.parse(input_text);
-    // console.log(rawMarkup);
-    return { __html: rawMarkup };
-  }
+  setInterval(() => {
+    if (textUpdating) {
+      // let new_string_hash = stringHash(input);
+      let lexed_input = lexer.lex(input);
+      console.log("LEXING");
+      setMarkdownTokens(lexed_input);
+      textUpdating = false;
+      oldTextLength = input.length;
+    }
+  }, 250);
+
+
+  // const getMarkdownText = (input_text : string) => {
+  //   var rawMarkup = marked.parse(input_text);
+  //   // console.log(rawMarkup);
+  //   return { __html: rawMarkup };
+  // }
 
   return (
     <View style={{
@@ -354,33 +402,22 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
       // width: "80svw",
       paddingRight: 50
     }}>
-    <View style={{
-      flexDirection: "column",
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      backgroundColor: "#39393C",
-      // backgroundColor: "#1E1E1E",
-      borderRadius: 20,
-      alignSelf: "center",
-      justifyContent: 'flex-start',
-      width: "100%",
-    }}>
-      {/* <Text style={{fontFamily: normalTextFont}}> */}
-      {/* <div dangerouslySetInnerHTML={getMarkdownText(input)} />; */}
-
-        {/* <Text style={{
-          fontSize: 18,
-          fontFamily: normalTextFont,
-          color: '#000000',
-          padding: 20
-        }}>
-        {input}
-      </Text> */}
-      {/* </Text> */}
-      {markdownTokens.map((v : Token, k : number) => (
-        <MarkdownMapComponent key={k} token={v}/>
-      ))}
-    </View>
+      <View style={{
+        flexDirection: "column",
+        paddingHorizontal: 14,
+        paddingVertical: transparentDisplay?0:6,
+        backgroundColor: transparentDisplay?"none":"#39393C",
+        // backgroundColor: "#1E1E1E",
+        borderRadius: 10,
+        alignSelf: "center",
+        justifyContent: transparentDisplay?"center":"flex-start",
+        width: "100%",
+        minHeight: 40,
+      }}>
+        {markdownTokens.map((v : Token, k : number) => (
+          <MarkdownMapComponent key={k} token={v}/>
+        ))}
+      </View>
     </View>
   );
 }

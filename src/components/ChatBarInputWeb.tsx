@@ -19,14 +19,15 @@ type ChatBarInputProps = {
 
 export default function ChatBarInputWeb(props: ChatBarInputProps) {
   const [inputText, setInputText] = useState(
-    "Give me a formatted set of markdown and latex notes on k-means clustering. Include formatted math equations whenever\npossible, and use inline LaTeX styling. Include some example python code using sklearn."
+    ""
+    // "Give me a formatted set of markdown and latex notes on k-means clustering. Include formatted math equations whenever\npossible, and use inline LaTeX styling. Include some example python code using sklearn."
   );
   const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [fileDragHover, setFileDragHover] = useState(false);
   const [submitInput, setSubmitInput] = useState(false);
 
   const [inputLineCount, setInputLineCount] = useState(1);
-
+  
 
   const log_key_press = (e: {
     nativeEvent: { key: string; shiftKey: boolean };
@@ -48,7 +49,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
     }
   }, [inputText]);
 
-
+  
 	useEffect(() => {
     Animated.timing(inputBoxHeight, {
       toValue: (18*inputLineCount),
@@ -100,7 +101,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
       paddingVertical: 5,
 
       }}>
-        <Animated.View style={{height: inputBoxHeight}}>
+        <Animated.View>
           <TextInput
             editable
             multiline
@@ -109,16 +110,31 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
             placeholderTextColor={"#4D4D56"}
             value={inputText}
             onKeyPress={(e) => {
-                log_key_press(e);
+              log_key_press(e);
             }}
             onChangeText={(text) => {
+              if (text.length < inputText.length) {
+                setInputLineCount(1);
+              }
               setInputText(text);
-              let line_count = (text === "")?1:text.split("\n").length;
-              setInputLineCount(Math.min(line_count, 4));
+              // let line_count = (text === "")?1:text.split("\n").length;
+              // setInputLineCount(Math.min(line_count, 4));
+            }}
+            // style={styles.input, {height: height}}
+            onContentSizeChange={e => {
+              // setHeight(e.nativeEvent.contentSize.height);
+              Animated.timing(inputBoxHeight, {
+                toValue: e.nativeEvent.contentSize.height,
+                duration: 200,
+                easing: Easing.elastic(1),
+                useNativeDriver: false,
+              }).start();
+              setInputLineCount(Math.round(e.nativeEvent.contentSize.height / 17));
+              console.log(e.nativeEvent.contentSize.height, Math.round(e.nativeEvent.contentSize.height / 17));
             }}
             style={Platform.select({
               web: {
-                // height: inputBoxHeight,
+                height: inputBoxHeight,
                 color: '#E8E3E3',
                 fontSize: 14,
                 textAlignVertical: 'center',

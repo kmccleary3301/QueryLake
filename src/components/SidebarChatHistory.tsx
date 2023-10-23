@@ -11,6 +11,7 @@ import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import AnimatedPressable from './AnimatedPressable';
 import HoverDocumentEntry from './HoverDocumentEntry';
+import getChatHistory from '../hooks/getChatHistory';
 
 type selectedState = [
     selected: boolean,
@@ -35,72 +36,68 @@ type userDataType = {
   password_pre_hash: string,
 };
 
+type timeWindowType = {
+  title: string,
+  cutoff: number,
+  entries: object[]
+}
+
 type SidebarChatHistoryProps = {
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void,
   userData: userDataType,
   setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
-  refreshSidePanel: boolean,
+  refreshSidePanel: string[],
 }
   
 export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
-  const [chatHistoryToday, setChatHistoryToday] = useState([]);
-  const [chatHistoryYesterday, setChatHistoryYesterday] = useState([]);
-  const [chatHistoryWeek, setChatHistoryWeek] = useState([]);
-  const [chatHistoryMonth, setChatHistoryMonth] = useState([]);
-  const [chatHistoryOlder, setChatHistoryOlder] = useState([]);
 
-  const currentTime = Date.now()/1000;
-  
-  const today_difference = 24*3600;
-  const yesterday_difference = 2*24*3600;
-  const week_difference = 7*24*3600;
-  const month_difference = 30*24*3600;
+  const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
+
+  const timeWindows : timeWindowType[] = [
+    {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
+    {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
+    {title: "Past Week", cutoff: 7*24*3600, entries: []},
+    {title: "Past Month", cutoff: 30*24*3600, entries: []},
+  ];
 
 
   useEffect(() => {
-    const url = new URL("http://localhost:5000/api/fetch_chat_sessions");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    fetch(url, {method: "POST"}).then((response) => {
-      console.log(response);
-      response.json().then((data) => {
-        console.log(data);
-        if (!data.success) {
-          console.error("Failed to retrieve sessions");
-          return;
+    let refresh = false;
+    if (chatHistory.length == 0) {
+      refresh = true;
+    } else {
+      for (let i = 0; i < props.refreshSidePanel.length; i++) {
+        if (props.refreshSidePanel[i] === "chat-history") {
+          refresh = true;
+          break;
         }
-        let chat_history_tmp_today = [];
-        let chat_history_tmp_yesterday = [];
-        let chat_history_tmp_week = [];
-        let chat_history_tmp_month = [];
-        let chat_history_tmp_older = [];
-        for (let i = 0; i < data.result.length; i++) {
-          let entry = {
-            time: data.result[i].time,
-            title: data.result[i].title,
-            hash_id: data.result[i].hash_id,
-          };
-          console.log((currentTime - entry.time));
-          if ((currentTime - entry.time) < today_difference) { chat_history_tmp_today.push(entry); }
-          else if ((currentTime - entry.time) < yesterday_difference) { chat_history_tmp_yesterday.push(entry); }
-          else if ((currentTime - entry.time) < week_difference) { chat_history_tmp_week.push(entry); }
-          else if ((currentTime - entry.time) < month_difference) { chat_history_tmp_month.push(entry); }
-          else { chat_history_tmp_older.push(entry); }
-        }
-        setChatHistoryToday(chat_history_tmp_today);
-        setChatHistoryYesterday(chat_history_tmp_yesterday);
-        setChatHistoryWeek(chat_history_tmp_week);
-        setChatHistoryMonth(chat_history_tmp_month);
-        setChatHistoryOlder(chat_history_tmp_older);
-      });
-    });
-
+      }
+    }
+    if (refresh) {
+      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+    }
   }, [props.refreshSidePanel]);
 
-  const deleteSession = () => {
-    
+  const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
+    const url = new URL("http://localhost:5000/api/hide_chat_session");
+    url.searchParams.append("username", props.userData.username);
+    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+    url.searchParams.append("hash_id", hash_id);
+    fetch(url, {method: "POST"}).then((response) => {
+      response.json().then((data) => {
+        if (!data.success) {
+          console.error("Failed to retrieve sessions", data.note);
+          return;
+        }
+      })
+    });
+    let chat_history_tmp = chatHistory.slice();
+    // chat_history_tmp[chat_history_window_index].entries = chat_history_tmp[chat_history_window_index].entries.splice(window_entry_index-1, 1);
+    let entries_tmp = chat_history_tmp[chat_history_window_index].entries;
+    chat_history_tmp[chat_history_window_index].entries = [...entries_tmp.slice(0, window_entry_index), ...entries_tmp.slice(window_entry_index+1, entries_tmp.length)];
+    setChatHistory(chat_history_tmp);
   };
   
   return (
@@ -123,8 +120,8 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
             alignItems: 'center',
             justifyContent: 'center'}}
             onPress={() => {
+              // props.setPageNavigateArguments("NEW");
               props.setPageNavigateArguments("");
-              props.setPageNavigateArguments("NEW");
               if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
               if (props.navigation) { props.navigation.navigate("ChatWindow"); }
             }}>
@@ -136,87 +133,56 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
                 // width: '100%',
                 // height: '100%',
                 fontFamily: 'Inter-Regular',
-                fontSize: 16,
+                fontSize: 14,
                 color: '#E8E3E3',
                 paddingTop: 1
               }}>{"New Chat"}</Text>
               </View>
           </AnimatedPressable>
         </View>
-        {(chatHistoryToday.length > 0) && (
-          <>
-          <Text style={{
-            width: "100%",
-            textAlign: 'left',
-            fontFamily: 'Inter-Regular',
-            fontSize: 16,
-            color: '#74748B',
-            paddingBottom: 10,
-          }}>
-            {"Today"}
-          </Text>
-          {chatHistoryToday.map((value, index : number) => (
-            <View style={{paddingVertical: 5}} key={index}>
-              <HoverDocumentEntry
-                key={index}
-                title={(value.title !== null)?value.title:"Test"}
-                deleteIndex={() => {
-
-                }}
-                textStyle={{
-                  width: "100%",
-                  textAlign: 'left',
-                  paddingLeft: 10,
-                  fontFamily: 'Inter-Regular',
-                  fontSize: 16,
-                  color: '#E8E3E3'
-                }}
-                onPress={() => {
-                  props.setPageNavigateArguments(value.hash_id);
-                  if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
-                }}
-              />
-            </View>
-          ))}
-          </>
-        )}
-        {(chatHistoryYesterday.length > 0) && (
-          <>
-          <Text style={{
-            width: "100%",
-            textAlign: 'left',
-            fontFamily: 'Inter-Regular',
-            fontSize: 16,
-            color: '#74748B',
-            paddingBottom: 10,
-          }}>
-            {"Yesterday"}
-          </Text>
-          {chatHistoryYesterday.map((value, index : number) => (
-            <View style={{paddingVertical: 5}} key={index}>
-              <HoverDocumentEntry
-                // key={index}
-                title={(value.title !== null)?value.title:"Test"}
-                deleteIndex={() => {
-
-                }}
-                textStyle={{
-                  width: "100%",
-                  textAlign: 'left',
-                  paddingLeft: 10,
-                  fontFamily: 'Inter-Regular',
-                  fontSize: 16,
-                  color: '#E8E3E3'
-                }}
-                onPress={() => {
-                  props.setPageNavigateArguments(value.hash_id);
-                  if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
-                }}
-              />
-            </View>
-          ))}
-          </>
-        )}
+        {chatHistory.map((chat_history_window : timeWindowType, chat_history_index : number) => (
+          <View key={chat_history_index}>
+            {(chat_history_window.entries.length > 0) && (
+              <>
+              <Text style={{
+                width: "100%",
+                textAlign: 'left',
+                fontFamily: 'Inter-Regular',
+                fontSize: 14,
+                color: '#74748B',
+                paddingBottom: 8,
+                paddingTop: 8
+              }}>
+                {chat_history_window.title}
+              </Text>
+              {chat_history_window.entries.map((value, index : number) => (
+                <View style={{paddingVertical: 5}} key={index}>
+                  <HoverDocumentEntry
+                    key={index}
+                    title={(value.title !== null)?value.title:"Test"}
+                    deleteIndex={() => {
+                      deleteSession(chat_history_index, index, value.hash_id);
+                    }}
+                    textStyle={{
+                      width: "100%",
+                      textAlign: 'left',
+                      paddingLeft: 10,
+                      fontFamily: 'Inter-Regular',
+                      fontSize: 14,
+                      color: '#E8E3E3'
+                    }}
+                    onPress={() => {
+                      props.setPageNavigateArguments("chatSession-"+value.hash_id);
+                      if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
+                    }}
+                  />
+                </View>
+              ))}
+              </>
+            )}
+          </View>
+        ))}
+       
       </ScrollView>
     </> 
   );

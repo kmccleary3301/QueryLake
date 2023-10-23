@@ -114,8 +114,8 @@ type AppWebPageProps = {
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
   pageNavigateArguments: any,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
-  refreshSidePanel: boolean,
-  setRefreshSidePanel: React.Dispatch<React.SetStateAction<boolean>>
+  refreshSidePanel: string[],
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 function AppWebPage(props : AppWebPageProps) {
@@ -132,19 +132,38 @@ function AppWebPage(props : AppWebPageProps) {
       );
     case 'MarkdownTestPage':
       return (
-        <MarkdownTestPage toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate}/>
+        <MarkdownTestPage 
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened} 
+          setPageNavigate={props.setPageNavigate}
+        />
       );
     case 'LoginPage':
       return (
-        <LoginPage setPageNavigate={props.setPageNavigate} setUserData={props.setUserData}/>
+        <LoginPage 
+          setPageNavigate={props.setPageNavigate} 
+          setUserData={props.setUserData}
+        />
       );
     case 'CreateCollectionPage':
       return (
-        <CreateCollectionPage setPageNavigate={props.setPageNavigate} userData={props.userData}/>
+        <CreateCollectionPage 
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData}
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
+        />
       );
     case 'EditCollection':
       return (
-        <EditCollection setPageNavigate={props.setPageNavigate} userData={props.userData} pageNavigateArguments={props.pageNavigateArguments}/>
+        <EditCollection 
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData} 
+          pageNavigateArguments={props.pageNavigateArguments}
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
+          setRefreshSidePanel={props.setRefreshSidePanel}
+        />
       );
 
   }
@@ -159,7 +178,7 @@ function AppWeb() {
   const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
   const [pageNavigateArguments, setPageNavigateArguments] = useState("");
-  const [refreshSidePanel, setRefreshSidePanel] = useState(false);
+  const [refreshSidePanel, setRefreshSidePanel] = useState([]);
 
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
   const toggle_sidebar = () => {
@@ -250,6 +269,7 @@ function AppWeb() {
               userData={userData}
               pageNavigateArguments={pageNavigateArguments}
               setPageNavigateArguments={setPageNavigateArguments}
+              setRefreshSidePanel={setRefreshSidePanel}
             />
           </Animated.View>
         </View>

@@ -31,7 +31,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
     <View style={{
       flexDirection: Platform.select({web: "row", default: "column"}),
       width: "100%",
-      paddingBottom: 10,
+      paddingBottom: 20,
       paddingRight: 10
     }}>
       {(props.origin === "user")?(
@@ -69,8 +69,14 @@ export default function ChatBubble(props: ChatBubbleProps) {
         />
         </View>
       )}
+      {/* {props.input && props.input.length > 0 && (
+        <MarkdownRenderer input={props.input} transparentDisplay={(props.origin === "user")}/>
+      )} */}
       {props.input && props.input.length > 0 && (
-        <MarkdownRenderer input={props.input}/>
+        <MarkdownRenderer input={props.input} transparentDisplay={(props.origin === "user")}/>
+        // <Text>
+        //   {props.input}
+        // </Text>
       )}
       {/* <View style={{
         paddingRight: 10, 

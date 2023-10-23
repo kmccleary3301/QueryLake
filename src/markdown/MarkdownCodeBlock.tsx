@@ -10,6 +10,7 @@ import { defaultHTMLElementModels, RenderHTML } from "react-native-render-html";
 
 type MarkdownCodeBlockProps = {
   text : string,
+  lang?: string,
 }
 
 const tagsStyles = {
@@ -38,11 +39,14 @@ function decode_html(input : string) {
   return input;
 }
 
+
 function parseScopeTreeText(hljs_html : string) {
   /*
    * Let's not discuss this lmao.
    */
 
+  console.log("HLJS HTML");
+  console.log(hljs_html);
   let match = hljs_html.match(/(\<.*?\>)/);
   let current_scope : string[] = [];
   let index = 0;
@@ -55,22 +59,27 @@ function parseScopeTreeText(hljs_html : string) {
       });
   }
   while (match !== null) {
+    console.log("match:", match[0]);
     if (match.index > 0) {
-        let text = hljs_html.slice(index, index+match.index).split("\n");
-        for (let i = 0; i < text.length; i++) {
-          let decoded = decode_html(text[i]);
-          if (decoded.length > 0) {
-            if (i !== 0) { 
-              string_segments.push("\n") 
-            }
-            if (text[i].length > 0) {
-              string_segments.push({
-                scope: current_scope.slice(),
-                content: decoded
-              })
-            }
+      let text = hljs_html.slice(index, index+match.index).split("\n");
+      console.log("Text");
+      console.log(text);
+      for (let i = 0; i < text.length; i++) {
+        let decoded = decode_html(text[i]);
+        if (decoded.length > 0) {
+          if (i !== 0) { 
+            string_segments.push("\n") 
           }
+          if (text[i].length > 0) {
+            string_segments.push({
+              scope: current_scope.slice(),
+              content: decoded
+            })
+          }
+        } else {
+          string_segments.push("\n")
         }
+      }
     }
     let match_open_scope = match[0].match(/(\".*?\")/);
     if (match_open_scope !== null) {
@@ -82,6 +91,8 @@ function parseScopeTreeText(hljs_html : string) {
     let new_match = hljs_html.slice(new_index).match(/(\<.*?\>)/);
     if (new_match === null && new_index < hljs_html.length) {
       let text = hljs_html.slice(new_index).split("\n");
+      console.log("Text");
+      console.log(text);
       for (let i = 0; i < text.length; i++) {
         let decoded = decode_html(text[i]);
         if (decoded.length > 0) {
@@ -92,6 +103,8 @@ function parseScopeTreeText(hljs_html : string) {
             scope: current_scope.slice(),
             content: decode_html(text[i])
           })
+        } else {
+          string_segments.push("\n")
         }
       }
     } 
@@ -115,7 +128,6 @@ function parseScopeTreeText(hljs_html : string) {
   return return_segments;
 }
 
-
 const code_styling={
   "hljs-keyword": "#9CDCFE",
   "hljs-function": "#DCDCAA",
@@ -131,26 +143,29 @@ const code_styling={
 };
 
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
-  // const throwOnError = false;
-  // const highlights = hljs.highlightAuto(props.text);
-  // const highlighted = hljs.highlightBlock;
-  // console.log(highlights);null
-  
+  const fontSize = 14;
   const [highlights, setHighlights] = useState<scoped_text[][]>([]);
-  const [lang, setLang] = useState<string | undefined>("");
-  const [textLines, setTextLines] = useState<string[]>([]);
-  // const highlights = hljs.highlightAuto(props.text);
+  let textUpdating = false;
+  let oldTextLength = 0;
+  let [unprocessedText, setUnprocessedText] = useState([""]);
+
   useEffect(() => {
-    
-    let highlights_get = hljs.highlightAuto(props.text);
-    setLang(highlights_get.language);
-    let scope_tree = parseScopeTreeText(highlights_get.value);
-    console.log(scope_tree);
-    setHighlights(scope_tree);
+    setUnprocessedText(props.text.slice(oldTextLength).split("\n"));
+    textUpdating = true;
   }, [props.text]);
 
-  // let relevance_scores = [highlights.map((value, key: number) => value.relevance)];
-  // console.log(relevance_scores);
+  setInterval(() => {
+    if (textUpdating) {
+      let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(props.text);
+      let scope_tree = parseScopeTreeText(highlights_get.value);
+      console.log("HIGHLIGHTING");
+      setHighlights(scope_tree);
+      oldTextLength = props.text.length;
+      textUpdating = false;
+      setUnprocessedText([]);
+    }
+  }, 500);
+
   return (
     <View style={{paddingVertical: 20, paddingHorizontal: 10}}>
       <ScrollView style={{
@@ -174,12 +189,39 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
               <Text style={{
                 color: (token_seg.scope.length > 0)?code_styling[token_seg.scope[token_seg.scope.length-1]]:code_styling["default"],
                 fontFamily: 'Consolas',
-                fontSize: 16,
+                fontSize: fontSize,
               }}>
                 {token_seg.content}
               </Text>
+
+              {(line_number === highlights.length-1 && token_number === line.length -1) && (
+                <Text style={{
+                  color: code_styling["default"],
+                  fontFamily: 'Consolas',
+                  fontSize: fontSize,
+                }}>
+                  {unprocessedText[0]}
+                </Text>
+              )}
             </Text>
           ))}
+        </View>
+      ))}
+      {unprocessedText.slice(0, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
+        <View key={line_number} style={{
+          flexDirection: 'row',
+          flexShrink: 1,
+          paddingVertical: 1,
+          minHeight: 20, //Empty Line Height
+        }}>
+          <Text style={{
+            color: code_styling["default"],
+            fontFamily: 'Consolas',
+            fontSize: fontSize,
+          }}>
+            {line}
+          </Text>
+
         </View>
       ))}
       </View>

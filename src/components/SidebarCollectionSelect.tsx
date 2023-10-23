@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import AnimatedPressable from './AnimatedPressable';
+import getUserCollections from '../hooks/getUserCollections';
 
 type selectedState = [
   selected: boolean,
@@ -40,7 +41,7 @@ type SidebarCollectionSelectProps = {
   userData: userDataType,
   setPageNavigate: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
-  refreshSidePanel: boolean
+  refreshSidePanel: string[]
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
 }
 
@@ -48,78 +49,20 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
   const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
   useEffect(() => {
-    const url = new URL("http://localhost:5000/api/fetch_all_collections");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    let collection_groups_fetch : collectionGroup[] = [];
-
-    let retrieved_data = {};
-
-    fetch(url, {method: "POST"}).then((response) => {
-      // console.log(response);
-      response.json().then((data) => {
-        // console.log(data);
-        retrieved_data = data;
-        if (data["success"] == false) {
-          console.error("Collection error:", data["note"]);
-          return;
+    let refresh = false;
+    if (collectionGroups.length == 0) {
+      refresh = true;
+    } else {
+      for (let i = 0; i < props.refreshSidePanel.length; i++) {
+        if (props.refreshSidePanel[i] === "collections") {
+          refresh = true;
+          break;
         }
-        try {
-          let personal_collections : collectionGroup = {
-            title: "My Collections",
-            collections: [],
-          };
-          for (let i = 0; i < data.result.user_collections.length; i++) {
-            console.log(data.result.user_collections[i]);
-            personal_collections.collections.push({
-              "title": data.result.user_collections[i]["name"],
-              "hash_id": data.result.user_collections[i]["hash_id"],
-              "items": data.result.user_collections[i]["document_count"],
-              "type": data.result.user_collections[i]["type"]
-            })
-          }
-          collection_groups_fetch.push(personal_collections);
-        } catch {}
-        try {
-          let global_collections : collectionGroup = {
-            title: "Global Collections",
-            collections: [],
-          };
-          for (let i = 0; i < data["result"]["global_collections"].length; i++) {
-            global_collections.collections.push({
-              "title": data["result"]["global_collections"][i]["name"],
-              "hash_id": data["result"]["global_collections"][i]["hash_id"],
-              "items": data["result"]["global_collections"][i]["document_count"],
-              "type": data["result"]["global_collections"][i]["type"]
-            })
-          }
-          collection_groups_fetch.push(global_collections);
-        } catch {}
-        try {
-          let organization_ids = Object.keys(retrieved_data.result.organization_collections)
-          for (let j = 0; j < organization_ids.length; j++) {
-            try {
-              let org_id = organization_ids[j];
-              let organization_specific_collections : collectionGroup = {
-                title: retrieved_data.result.organization_collections[org_id].name,
-                collections: [],
-              };
-              for (let i = 0; i < retrieved_data.result.organization_collections[org_id].collections.length; i++) {
-                organization_specific_collections.collections.push({
-                  "title": retrieved_data.result.organization_collections[org_id].collections[i].name,
-                  "hash_id": retrieved_data.result.organization_collections[org_id].collections[i].hash_id,
-                  "items": retrieved_data.result.organization_collections[org_id].collections[i].document_count,
-                  "type": retrieved_data.result.organization_collections[org_id].collections[i].type,
-                })
-              }
-              collection_groups_fetch.push(organization_specific_collections)
-            } catch {}
-          }
-        } catch {}
-        setCollectionGroups(collection_groups_fetch);
-      });
-    });
-    
+      }
+    }
+    if (refresh) {
+      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+    }
   }, [props.refreshSidePanel]);
 
   // 
@@ -177,7 +120,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
             paddingVertical: 5
           }}>
             <CollectionWrapper key={k} 
-              title={collectionGroups[k].title}
+              title={v.title}
               // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
               onToggleSelected={(selected: boolean) => {
                 toggleMyCollections(selected, k);

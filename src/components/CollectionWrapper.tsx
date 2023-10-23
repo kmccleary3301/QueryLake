@@ -32,7 +32,7 @@ type CollectionWrapperProps = {
 export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const [opened, setOpened] = useState(false);
 	// const [selected, setSelected] = useState(false);
-	const [viewScrollable, setViewScrollable] = useState(false);
+	// const [viewScrollable, setViewScrollable] = useState(false);
 	
 	const [selected, setSelected] = useState(false);
 	const {children, title} = props;
@@ -40,9 +40,12 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
 	const boxHeight = useRef(new Animated.Value(42));
   let selected_values : [boolean, React.Dispatch<React.SetStateAction<boolean>>][] = [];
+
   for (let i = 0; i < props.collections.length; i++) {
     selected_values.push(useState(false));
   }
+  // useEffect(() => {
+  // }, [props.collections]);
 
   useEffect(() => {
     if (boxHeight > 42) {
@@ -61,14 +64,14 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
-		setTimeout(() => {
-			setViewScrollable(direct_opened_state);
-		}, 300)
-    if (opened) {
-      setViewScrollable(opened);
-      // setTimeout(() => {
-      // }, 300)
-    }
+		// setTimeout(() => {
+		// 	setViewScrollable(direct_opened_state);
+		// }, 300)
+    // if (opened) {
+    //   // setViewScrollable(opened);
+    //   // setTimeout(() => {
+    //   // }, 300)
+    // }
   }, [opened]);
 
   useEffect(() => {
@@ -188,7 +191,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			  }}
 			  showsVerticalScrollIndicator={false}
 			>
-			  {props.collections.map((value : collectionType, index: number) => (
+			  {(props.collections.length === selected_values.length) && props.collections.map((value : collectionType, index: number) => (
           <View style={{paddingBottom: 5}} key={index}>
             <CollectionPreview
               title={value.title} 
@@ -202,7 +205,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
               }}
               selectedState={{selected: selected_values[index][0], setSelected: selected_values[index][1]}}
               onPress={() => {
-                props.setPageNavigateArguments(value.type+"-"+value.hash_id);
+                props.setPageNavigateArguments("collection-"+value.type+"-"+value.hash_id);
                 props.setPageNavigate("EditCollection");
               }}
             />

@@ -70,9 +70,7 @@ function hexToUtf8(s : string)
 export default function ChatWindow(props : ChatWindowProps) {
   const scrollViewRef = useRef();
   const inputTwo = useRef("");
-  const [inputText, setInputText] = useState(
-    ""
-  );
+  const [inputText, setInputText] = useState("");
   const [isEnabled, setIsEnabled] = useState(false);
   const [sseOpened, setSseOpened] = useState(false);
   const [fileDragHover, setFileDragHover] = useState(false);
@@ -90,12 +88,13 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [sessionHash, setSessionHash] = useState();
   
   useEffect(() => {
-    if (props.pageNavigateArguments.length > 0 && props.pageNavigateArguments != "NEW") {
-      setSessionHash(props.pageNavigateArguments);
+    const navigate_args = props.pageNavigateArguments.split("-");
+    if (props.pageNavigateArguments.length > 0 && navigate_args[0] === "chatSession") {
+      setSessionHash(navigate_args[1]);
       const url = new URL("http://localhost:5000/api/fetch_session");
       url.searchParams.append("username", props.userData.username);
       url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-      url.searchParams.append("hash_id", props.pageNavigateArguments);
+      url.searchParams.append("hash_id", navigate_args[1]);
       fetch(url, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
@@ -114,7 +113,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             setNewChat(new_entries);
         });
       });
-    } else if ((sessionHash === undefined && props.pageNavigateArguments.length == 0) || props.pageNavigateArguments == "NEW") {
+    } else {
       setNewChat([]);
       const url = new URL("http://localhost:5000/api/create_chat_session");
       url.searchParams.append("username", props.userData.username);
@@ -276,23 +275,6 @@ export default function ChatWindow(props : ChatWindowProps) {
     });
 
     uploader.add(event.dataTransfer.files[0]);
-    // // fetch("http://localhost:5000/uploadfile", {method: "POST", body: formData});
-    // axios.request({
-    //   method: "post",
-    //   url: "http://localhost:5000/uploadfile",
-    //   data: formData,
-    //   onUploadProgress: (p) => {
-    //     console.log(p);
-    //     //this.setState({
-    //         //fileprogress: p.loaded / p.total
-    //     //})
-    //   }
-    // }).then (data => {
-    //     //this.setState({
-    //       //fileprogress: 1.0,
-    //     //})
-    //     console.log("Then hook called");
-    // })
   };
 
 
@@ -481,7 +463,6 @@ export default function ChatWindow(props : ChatWindowProps) {
                   onMessageSend={onMessageSend}
                 />
               )
-
             })}
             
             

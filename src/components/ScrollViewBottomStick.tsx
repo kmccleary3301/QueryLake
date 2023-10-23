@@ -8,9 +8,11 @@ type ScrollViewBottomStickProps = {
 };
 
 export default function ScrollViewBottomStick(props: ScrollViewBottomStickProps) {
-    const [userIsScrolling, setUserIsScrolling] = useState(false);
-    const [stickToBottom, setStickToBottom] = useState(true);
+    // const [userIsScrolling, setUserIsScrolling] = useState(false);
+    // const [stickToBottom, setStickToBottom] = useState(true);
+    let stickToBottom = true;
     const scrollViewRef = useRef();
+    let previousContentOffset = 0;
 
     return (
       <ScrollView 
@@ -22,17 +24,22 @@ export default function ScrollViewBottomStick(props: ScrollViewBottomStickProps)
         }}
         scrollEventThrottle={16}
         onScroll={(e) => {
-          console.log(e);
-          console.log(e.nativeEvent.contentOffset);
+          // console.log(e);
+          // console.log(e.nativeEvent.contentOffset);
           let current_y = e.nativeEvent.contentOffset.y;
           // console.log(current_y, bottomValue);
           let layoutHeight = e.nativeEvent.layoutMeasurement.height;
           let contentHeight = e.nativeEvent.contentSize.height;
-          if (stickToBottom && Math.abs(current_y + layoutHeight - contentHeight) > 20) {
+          if ((current_y - previousContentOffset) < 0) {
             // setStickToBottom(false);
+            stickToBottom = false;
           } else if (Math.abs(current_y + layoutHeight - contentHeight) <= 1) {
-            setStickToBottom(true);
+            // setStickToBottom(true);
+            stickToBottom = true;
           }
+
+          previousContentOffset = current_y;
+
         }}
         style={{
           flex: 5,

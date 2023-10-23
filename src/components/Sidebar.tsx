@@ -54,7 +54,6 @@ export default function Sidebar(props: SidebarProps) {
   // console.log(props);
 	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
 
-
 	
 
 
