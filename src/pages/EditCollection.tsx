@@ -220,6 +220,7 @@ export default function EditCollection(props : EditCollectionProps) {
       }
     }
     if (upload_count == 0) {
+      props.setRefreshSidePanel(["collections"]);
       if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
       if (props.navigation) { props.navigation.navigate("ChatWindow"); }
     }
@@ -525,26 +526,16 @@ export default function EditCollection(props : EditCollectionProps) {
               <Animated.View id="FileDrop" style={{
                 width: '100%',
                 backgroundColor: "#17181D",
+                borderStyle: 'dashed',
+                borderWidth: 2,
+                borderColor: '#E8E3E3',
                 borderRadius: 15,
                 padding: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: hoverOpacity
               }}>
-                <View style={{
-                  width: "98%",
-                  height: "97%",
-                  backgroundColor: "none",
-                  borderStyle: 'dashed',
-                  borderWidth: 2,
-                  borderColor: '#E8E3E3',
-                  borderRadius: 15,
-                  padding: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Feather name="file-plus" size={40} color={'#E8E3E3'} st/>
-                </View>
+                <Feather name="file-plus" size={40} color={'#E8E3E3'}/>
               </Animated.View>
             </div>
             {(publishStarted) && (

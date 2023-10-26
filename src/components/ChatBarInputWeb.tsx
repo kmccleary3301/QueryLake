@@ -49,7 +49,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
     }
   }, [inputText]);
 
-  
+
 	useEffect(() => {
     Animated.timing(inputBoxHeight, {
       toValue: (18*inputLineCount),
@@ -124,7 +124,7 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
             onContentSizeChange={e => {
               // setHeight(e.nativeEvent.contentSize.height);
               Animated.timing(inputBoxHeight, {
-                toValue: e.nativeEvent.contentSize.height,
+                toValue: Math.min(e.nativeEvent.contentSize.height, 18*4-5),
                 duration: 200,
                 easing: Easing.elastic(1),
                 useNativeDriver: false,

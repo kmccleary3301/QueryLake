@@ -10,113 +10,17 @@ import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./MarkdownTextSplitter";
 import MarkdownCodeBlock from "./MarkdownCodeBlock";
 import stringHash from "../hooks/stringHash";
-// import {KateX}
+import MarkdownTable from "./MarkdownTable";
 
-// marked.use({
-//   renderer: {
-//     codespan: (code) => {
-//       if (code[0] == '$') {
-//         return katex.renderToString(code.slice(1), {throwOnError: false})
-//       }
-
-//       return false
-//     }
-//   }
-// })
-
-// marked.use({
-//   tokenizer: {
-//     inlineText(src : string, inRawBlock) {
-//       const cap = src.match(/^([`$]+|[^`$])(?:[\s\S]*?(?:(?=[\\<!\[`$*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/);
-//         if (cap) {
-//           var text;
-//           if (inRawBlock) {
-//             text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : cap[0] : cap[0];
-//           } else {
-//             text = cap[0];
-//           }
-//           return {
-//             type: 'text',
-//             raw: cap[0],
-//             text: text
-//           };
-//        }
-//   }
-// }})
-
-// function inlineText(src, inRawBlock, smartypants) {
-//   const cap = src.match(/^([`$]+|[^`$])(?:[\s\S]*?(?:(?=[\\<!\[`$*]|\b_|$)|[^ ](?= {2,}\n))|(?= {2,}\n))/);
-//     if (cap) {
-//       var text;
-//       if (inRawBlock) {
-//         text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : cap[0] : cap[0];
-//       } else {
-//         text = (this.options.smartypants ? smartypants(cap[0]) : cap[0]);
-//       }
-//       return {
-//         type: 'text',
-//         raw: cap[0],
-//         text: text
-//       };
-//    }
-//See here: https://marked.js.org/using_pro#tokenizer
-// const tokenizer = {
-//   codespan(src : string) {
-//     const match = src.match(/^\$+([^\$\n]+?)\$+/);
-//     if (match) {
-//       return {
-//         type: 'codespan',
-//         raw: match[0],
-//         text: match[1].trim()
-//       };
-//     }
-
-//     // return false to use original codespan tokenizer
-//     return false;
-//   }
-// };
-
-// marked.use({ tokenizer });
-
-// Run marked
-// console.log(marked.parse('$ latex code $\n\n` other code `'));
-
-
-const example_scope_parsed = [
-  {
-    "type": "h1",
-    "content": {"type": "string", "data": "Introduction to Naive Bayes Classifier"}
-  },
-  {
-    "type": "p", //tag for text
-    "content": {"type": "string", "data": "The Naive Bayes classifier is a simple probabilistic classifier that is based on Bayes&#39; theorem. It is called &quot;naive&quot; because it assumes that the features are independent of each other, which is often not true in real-world datasets. Despite its simplicity, the Naive Bayes classifier has been shown to perform well in many applications, including text classification, image classification, and bioinformatics. In this set of notes, we will cover the basics of the Naive Bayes classifier, including how it works, how to train it, and how to use it for classification."},
-  },
-  {
-    "type": "h2",
-    "text": {"type": "string", "data": "How does Naive Bayes work?"}
-  },
-  {
-    "type": "p", //tag for text
-    "text": [
-      {"type": "string", "data": "blah blah blah"},
-      {"type": "latex_equation", "data": "P(y|x) = \\frac{P(x|y) \\cdot P(y)}{P(x)}"},
-      {"type": "string", "data": "blah blah blah"},
-    ]
-  },
-]
-
-function scopeParser(string_in: string) {
-
-}
-
-
-type ChatBubbleProps = {
+type MarkdownRendererProps = {
   input: string,
   transparentDisplay?: boolean,
 };
 
 type MarkdownMapComponentProps = {
   token: Token,
+  maxWidth: number,
+  bubbleWidth: number,
   key?: number,
   padLeft?: boolean,
 }
@@ -247,6 +151,22 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       //     </Text>
       //   );
       // }
+      if (token.raw[0] != "#") {
+        return (
+          <View style={{
+            flexDirection: 'row',
+            paddingLeft: (props.padLeft)?10:0,
+            paddingBottom: 5,
+          }}>
+            <MarkdownTextSplitter selectable={true} style={{
+              fontFamily: normalTextFont,
+              fontSize: defaultFontSize,
+              color: '#E8E3E3'
+              }} text={token.text}/>
+          </View>
+        );
+      }
+
       return (
         // <Text selectable={true} style={{
         //   fontFamily: "YingHei5",
@@ -263,7 +183,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         }} text={token.text}/>
       );
     case 'table':
-      return (null);
+      return (<MarkdownTable bubbleWidth={props.bubbleWidth} maxWidth={props.maxWidth} header={token.header} rows={token.rows}/>);
     case 'hr':
       return (null);
     case 'blockquote':
@@ -274,7 +194,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           paddingLeft: 3
         }}>
           {token.items.map((v : Tokens.ListItem, k : number) => (
-            <MarkdownMapComponent key={k} token={v}/>
+            <MarkdownMapComponent bubbleWidth={props.bubbleWidth} maxWidth={props.maxWidth} key={k} token={v}/>
           ))}
         </View>
       );
@@ -327,10 +247,12 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 
 }
 
-export default function MarkdownRenderer(props: ChatBubbleProps) {
+export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const normalTextFont = "Inter-Regular";
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
+  const [maxWidth, setMaxWidth] = useState(40);
+  const [bubbleWidth, setBubbleWidth] = useState(10);
   
   const { input } = props;
   const transparentDisplay = (props.transparentDisplay)?props.transparentDisplay:false;
@@ -361,6 +283,8 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
     }
     if (markdownTokens.length === 0) {
       let lexed_input = lexer.lex(input);
+      console.log("LEXING");
+      console.log(input);
       console.log(lexed_input)
       setMarkdownTokens(lexed_input);
       old_string_hash = stringHash(input);
@@ -381,6 +305,8 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
       // let new_string_hash = stringHash(input);
       let lexed_input = lexer.lex(input);
       console.log("LEXING");
+      console.log(input);
+      console.log(lexed_input);
       setMarkdownTokens(lexed_input);
       textUpdating = false;
       oldTextLength = input.length;
@@ -395,28 +321,42 @@ export default function MarkdownRenderer(props: ChatBubbleProps) {
   // }
 
   return (
-    <View style={{
-      maxWidth: "100%",
-      minWidth: 40,
-      minHeight: 40,
-      // width: "80svw",
-      paddingRight: 50
-    }}>
+    <View
+      style={{
+        width: '100%'
+      }}
+      onLayout={(event) => {
+        setMaxWidth(event.nativeEvent.layout.width);
+      }}
+    >
       <View style={{
-        flexDirection: "column",
-        paddingHorizontal: 14,
-        paddingVertical: transparentDisplay?0:6,
-        backgroundColor: transparentDisplay?"none":"#39393C",
-        // backgroundColor: "#1E1E1E",
-        borderRadius: 10,
-        alignSelf: "center",
-        justifyContent: transparentDisplay?"center":"flex-start",
-        width: "100%",
+        maxWidth: "100%",
+        minWidth: 40,
         minHeight: 40,
+        // width: "80svw",
+        paddingRight: 50
       }}>
-        {markdownTokens.map((v : Token, k : number) => (
-          <MarkdownMapComponent key={k} token={v}/>
-        ))}
+        <View 
+          style={{
+            flexDirection: "column",
+            paddingHorizontal: 14,
+            paddingVertical: transparentDisplay?0:6,
+            backgroundColor: transparentDisplay?"none":"#39393C",
+            // backgroundColor: "#1E1E1E",
+            borderRadius: 10,
+            alignSelf: "center",
+            justifyContent: transparentDisplay?"center":"flex-start",
+            width: "100%",
+            minHeight: 40,
+          }}
+          onLayout={(event) => {
+            setBubbleWidth(event.nativeEvent.layout.width);
+          }}
+        >
+          {markdownTokens.map((v : Token, k : number) => (
+            <MarkdownMapComponent bubbleWidth={bubbleWidth} maxWidth={maxWidth} key={k} token={v}/>
+          ))}
+        </View>
       </View>
     </View>
   );

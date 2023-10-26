@@ -128,6 +128,7 @@ function AppWebPage(props : AppWebPageProps) {
           setPageNavigate={props.setPageNavigate} 
           userData={props.userData} 
           pageNavigateArguments={props.pageNavigateArguments}
+          setRefreshSidePanel={props.setRefreshSidePanel}
         />
       );
     case 'MarkdownTestPage':
@@ -152,6 +153,7 @@ function AppWebPage(props : AppWebPageProps) {
           userData={props.userData}
           toggleSideBar={props.toggleSideBarOpened} 
           sidebarOpened={props.sidebarOpened}
+          setRefreshSidePanel={props.setRefreshSidePanel}
         />
       );
     case 'EditCollection':

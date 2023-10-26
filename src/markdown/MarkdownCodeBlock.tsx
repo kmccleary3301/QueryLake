@@ -45,8 +45,8 @@ function parseScopeTreeText(hljs_html : string) {
    * Let's not discuss this lmao.
    */
 
-  console.log("HLJS HTML");
-  console.log(hljs_html);
+  // console.log("HLJS HTML");
+  // console.log(hljs_html);
   let match = hljs_html.match(/(\<.*?\>)/);
   let current_scope : string[] = [];
   let index = 0;
@@ -59,11 +59,11 @@ function parseScopeTreeText(hljs_html : string) {
       });
   }
   while (match !== null) {
-    console.log("match:", match[0]);
+    // console.log("match:", match[0]);
     if (match.index > 0) {
       let text = hljs_html.slice(index, index+match.index).split("\n");
-      console.log("Text");
-      console.log(text);
+      // console.log("Text");
+      // console.log(text);
       for (let i = 0; i < text.length; i++) {
         let decoded = decode_html(text[i]);
         if (decoded.length > 0) {
@@ -91,8 +91,8 @@ function parseScopeTreeText(hljs_html : string) {
     let new_match = hljs_html.slice(new_index).match(/(\<.*?\>)/);
     if (new_match === null && new_index < hljs_html.length) {
       let text = hljs_html.slice(new_index).split("\n");
-      console.log("Text");
-      console.log(text);
+      // console.log("Text");
+      // console.log(text);
       for (let i = 0; i < text.length; i++) {
         let decoded = decode_html(text[i]);
         if (decoded.length > 0) {
@@ -158,7 +158,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
     if (textUpdating) {
       let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(props.text);
       let scope_tree = parseScopeTreeText(highlights_get.value);
-      console.log("HIGHLIGHTING");
+      // console.log("HIGHLIGHTING");
       setHighlights(scope_tree);
       oldTextLength = props.text.length;
       textUpdating = false;

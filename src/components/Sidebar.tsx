@@ -9,13 +9,15 @@ import TestUploadBox from './TestUploadBox';
 // import SwitchSelector from "react-native-switch-selector";
 import SwitchSelector from '../lib/react-native-switch-selector';
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import SidebarColectionSelect from './SidebarCollectionSelect';
 import AnimatedPressable from './AnimatedPressable';
 import SidebarChatHistory from './SidebarChatHistory';
+import getChatHistory from '../hooks/getChatHistory';
+import getUserCollections from '../hooks/getUserCollections';
 
 type selectedState = [
 	selected: boolean,
@@ -43,8 +45,8 @@ type SidebarProps = {
   setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
-  refreshSidePanel: boolean,
-  setRefreshSidePanel: React.Dispatch<React.SetStateAction<boolean>>
+  refreshSidePanel: string[],
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
   // sidebarOpened?: boolean,
 }
 
@@ -53,9 +55,46 @@ type panelModeType = "collections" | "history" | "tools";
 export default function Sidebar(props: SidebarProps) {
   // console.log(props);
 	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
+  const [chatHistory, setChatHistory] = useState([]);
+	const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
-	
+  const timeWindows = [
+    {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
+    {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
+    {title: "Past Week", cutoff: 7*24*3600, entries: []},
+    {title: "Past Month", cutoff: 30*24*3600, entries: []},
+  ];
 
+  useEffect(() => {
+    let refresh = false;
+    if (chatHistory.length === 0) {
+      refresh = true;
+    } else {
+      for (let i = 0; i < props.refreshSidePanel.length; i++) {
+        if (props.refreshSidePanel[i] === "chat-history") {
+          refresh = true;
+          break;
+        }
+      }
+    }
+    if (refresh) {
+      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+    }
+    refresh = false;
+    if (collectionGroups.length == 0) {
+      refresh = true;
+    } else {
+      for (let i = 0; i < props.refreshSidePanel.length; i++) {
+        if (props.refreshSidePanel[i] === "collections") {
+          refresh = true;
+          break;
+        }
+      }
+    }
+    if (refresh) {
+      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+    }
+  }, [props.refreshSidePanel]);
 
   const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
     if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
@@ -148,6 +187,8 @@ export default function Sidebar(props: SidebarProps) {
               navigation={props.navigation}
               refreshSidePanel={props.refreshSidePanel}
               setPageNavigateArguments={props.setPageNavigateArguments}
+              collectionGroups={collectionGroups}
+              setCollectionGroups={setCollectionGroups}
             />
           )}
           {(panelMode == "history") && (
@@ -156,6 +197,8 @@ export default function Sidebar(props: SidebarProps) {
               setPageNavigateArguments={props.setPageNavigateArguments} 
               setPageNavigate={props.setPageNavigate}
               refreshSidePanel={props.refreshSidePanel}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
             />
           )}
         </View>

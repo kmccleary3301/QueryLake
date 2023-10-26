@@ -57,6 +57,7 @@ type ChatWindowProps = {
   sidebarOpened: boolean,
   userData: userDataType,
   pageNavigateArguments: any,
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 function hexToUtf8(s : string)
@@ -149,6 +150,9 @@ export default function ChatWindow(props : ChatWindowProps) {
       return;
     }
 
+    let refresh_chat_history = (newChat.length === 0);
+    
+
     const url = new URL("http://localhost:5000/api/async/chat");
     url.searchParams.append("session_hash", sessionHash);
     url.searchParams.append("query", message);
@@ -194,6 +198,9 @@ export default function ChatWindow(props : ChatWindowProps) {
         console.log("Completed response:");
         console.log(genString);
         es.close();
+        if (refresh_chat_history) {
+          props.setRefreshSidePanel(["chat-history"]);
+        }
       } else {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);

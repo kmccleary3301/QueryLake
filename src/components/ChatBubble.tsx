@@ -28,45 +28,47 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const queryLakeIcon = require("../../assets/favicon.png");
 
   return (
-    <View style={{
-      flexDirection: Platform.select({web: "row", default: "column"}),
-      width: "100%",
-      paddingBottom: 20,
-      paddingRight: 10
-    }}>
+    <View 
+      style={{
+        flexDirection: Platform.select({web: "row", default: "column"}),
+        width: "100%",
+        paddingBottom: 20,
+        paddingRight: 10
+      }}
+    >
       {(props.origin === "user")?(
         <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
-        <View style={{
-          width: 40,
-          height:40,
-          borderRadius: 25,
-          backgroundColor: "#E8E3E3",
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
           <View style={{
-            justifyContent: 'center',
-            alignSelf: 'center'
-          }}>
-            <Text style={{
-              fontFamily: normalTextFont,
-              fontSize: 24,
-            }}>
-              {"K"}
-            </Text>
-          </View>
-        </View>
-        </View>
-      ):(
-        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
-        <Image 
-          style={{
             width: 40,
             height:40,
             borderRadius: 25,
-          }}
-          source={queryLakeIcon}
-        />
+            backgroundColor: "#E8E3E3",
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <View style={{
+              justifyContent: 'center',
+              alignSelf: 'center'
+            }}>
+              <Text style={{
+                fontFamily: normalTextFont,
+                fontSize: 24,
+              }}>
+                {"K"}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ):(
+        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+          <Image 
+            style={{
+              width: 40,
+              height:40,
+              borderRadius: 25,
+            }}
+            source={queryLakeIcon}
+          />
         </View>
       )}
       {/* {props.input && props.input.length > 0 && (

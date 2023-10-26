@@ -49,7 +49,7 @@ export default function getUserCollections(username : string, password_prehash: 
           })
         }
         collection_groups_fetch.push(personal_collections);
-      } catch {}
+      } catch { return; }
       try {
         let global_collections : collectionGroup = {
           title: "Global Collections",
@@ -64,7 +64,7 @@ export default function getUserCollections(username : string, password_prehash: 
           })
         }
         collection_groups_fetch.push(global_collections);
-      } catch {}
+      } catch { return; }
       try {
         let organization_ids = Object.keys(retrieved_data.result.organization_collections)
         for (let j = 0; j < organization_ids.length; j++) {
@@ -83,10 +83,12 @@ export default function getUserCollections(username : string, password_prehash: 
               })
             }
             collection_groups_fetch.push(organization_specific_collections)
-          } catch {}
+          } catch { return; }
         }
-      } catch {}
+      } catch { return; }
+      console.log("Start");
       set_value(collection_groups_fetch);
+      console.log("End");
     });
   });
   // return collection_groups_fetch;

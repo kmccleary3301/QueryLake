@@ -43,34 +43,36 @@ type SidebarCollectionSelectProps = {
   navigation?: any,
   refreshSidePanel: string[]
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
+  collectionGroups: collectionGroup[],
+  setCollectionGroups: React.Dispatch<React.SetStateAction<collectionGroup[]>>,
 }
 
 export default function SidebarColectionSelect(props: SidebarCollectionSelectProps) {
-  const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
+  // const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
-  useEffect(() => {
-    let refresh = false;
-    if (collectionGroups.length == 0) {
-      refresh = true;
-    } else {
-      for (let i = 0; i < props.refreshSidePanel.length; i++) {
-        if (props.refreshSidePanel[i] === "collections") {
-          refresh = true;
-          break;
-        }
-      }
-    }
-    if (refresh) {
-      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
-    }
-  }, [props.refreshSidePanel]);
+  // useEffect(() => {
+  //   let refresh = false;
+  //   if (props.collectionGroups.length == 0) {
+  //     refresh = true;
+  //   } else {
+  //     for (let i = 0; i < props.refreshSidePanel.length; i++) {
+  //       if (props.refreshSidePanel[i] === "collections") {
+  //         refresh = true;
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   if (refresh) {
+  //     getUserCollections(props.userData.username, props.userData.password_pre_hash, props.setCollectionGroups);
+  //   }
+  // }, [props.refreshSidePanel]);
 
   // 
 
   const toggleMyCollections = (selected: boolean, group_key: number) => {
       // if (selected) {
-      for (let i = 0; i < collectionGroups[group_key].collections.length; i++) {
-          collectionGroups[group_key].toggleSelections[i][1](selected);
+      for (let i = 0; i < props.collectionGroups[group_key].collections.length; i++) {
+          props.collectionGroups[group_key].toggleSelections[i][1](selected);
       }
       // }
   };
@@ -115,7 +117,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
       }}
       showsVerticalScrollIndicator={false}
       >
-        {collectionGroups.map((v, k) => (
+        {props.collectionGroups.map((v, k) => (
           <View key={k} style={{
             paddingVertical: 5
           }}>
@@ -124,7 +126,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
               // onToggleCollapse={() => {console.log("Toggle collapse upper");}} 
               onToggleSelected={(selected: boolean) => {
                 toggleMyCollections(selected, k);
-                if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
+                if (props.onChangeCollections) { props.onChangeCollections(props.collectionGroups); }
               }}
               collections={v.collections}
               setPageNavigate={props.setPageNavigate}

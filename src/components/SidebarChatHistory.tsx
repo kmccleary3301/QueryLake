@@ -49,36 +49,20 @@ type SidebarChatHistoryProps = {
   navigation?: any,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
+  chatHistory: timeWindowType[],
+  setChatHistory: React.Dispatch<React.SetStateAction<timeWindowType[]>>,
 }
   
 export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
 
-  const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
+  // const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
 
-  const timeWindows : timeWindowType[] = [
-    {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
-    {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
-    {title: "Past Week", cutoff: 7*24*3600, entries: []},
-    {title: "Past Month", cutoff: 30*24*3600, entries: []},
-  ];
-
-
-  useEffect(() => {
-    let refresh = false;
-    if (chatHistory.length == 0) {
-      refresh = true;
-    } else {
-      for (let i = 0; i < props.refreshSidePanel.length; i++) {
-        if (props.refreshSidePanel[i] === "chat-history") {
-          refresh = true;
-          break;
-        }
-      }
-    }
-    if (refresh) {
-      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
-    }
-  }, [props.refreshSidePanel]);
+  // const timeWindows : timeWindowType[] = [
+  //   {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
+  //   {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
+  //   {title: "Past Week", cutoff: 7*24*3600, entries: []},
+  //   {title: "Past Month", cutoff: 30*24*3600, entries: []},
+  // ];
 
   const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
     const url = new URL("http://localhost:5000/api/hide_chat_session");
@@ -93,11 +77,11 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
         }
       })
     });
-    let chat_history_tmp = chatHistory.slice();
+    let chat_history_tmp = props.chatHistory.slice();
     // chat_history_tmp[chat_history_window_index].entries = chat_history_tmp[chat_history_window_index].entries.splice(window_entry_index-1, 1);
     let entries_tmp = chat_history_tmp[chat_history_window_index].entries;
     chat_history_tmp[chat_history_window_index].entries = [...entries_tmp.slice(0, window_entry_index), ...entries_tmp.slice(window_entry_index+1, entries_tmp.length)];
-    setChatHistory(chat_history_tmp);
+    props.setChatHistory(chat_history_tmp);
   };
   
   return (
@@ -120,8 +104,8 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
             alignItems: 'center',
             justifyContent: 'center'}}
             onPress={() => {
-              // props.setPageNavigateArguments("NEW");
               props.setPageNavigateArguments("");
+              props.setPageNavigateArguments("NEW");
               if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
               if (props.navigation) { props.navigation.navigate("ChatWindow"); }
             }}>
@@ -140,7 +124,7 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
               </View>
           </AnimatedPressable>
         </View>
-        {chatHistory.map((chat_history_window : timeWindowType, chat_history_index : number) => (
+        {props.chatHistory.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <View key={chat_history_index}>
             {(chat_history_window.entries.length > 0) && (
               <>

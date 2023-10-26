@@ -35,23 +35,20 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	// const [viewScrollable, setViewScrollable] = useState(false);
 	
 	const [selected, setSelected] = useState(false);
+  const [mixedSelection, setMixedSelection] = useState(false);
 	const {children, title} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
 	const boxHeight = useRef(new Animated.Value(42));
-  let selected_values : [boolean, React.Dispatch<React.SetStateAction<boolean>>][] = [];
-
-  for (let i = 0; i < props.collections.length; i++) {
-    selected_values.push(useState(false));
-  }
+  
   // useEffect(() => {
   // }, [props.collections]);
 
-  useEffect(() => {
-    if (boxHeight > 42) {
-      setViewScrollable(true);
-    }
-  }, [boxHeight]);
+//   useEffect(() => {
+//     // if (boxHeight > 42) {
+//     //   setViewScrollable(true);
+//     // }
+//   }, [boxHeight]);
 
   let direct_opened_state = false;
 	useEffect(() => {
@@ -72,7 +69,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
     //   // setTimeout(() => {
     //   // }, 300)
     // }
-  }, [opened]);
+  }, [opened, props.collections]);
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
@@ -81,11 +78,11 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			easing: Easing.elastic(1),
       useNativeDriver: false,
     }).start();
-    if (selected) {
-      for (let i = 0; i < selected_values.length; i++) {
-        selected_values[i][1](true);
-      }
-    }
+    // if (selected) {
+    //   for (let i = 0; i < selected_values.length; i++) {
+    //     selected_values[i][1](true);
+    //   }
+    // }
   }, [selected]);
 
   // useEffect(() => {
@@ -128,11 +125,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						// paddingLeft: 1,
 					}}
 					onPress={() => {
-            if (selected == true) {
-              for (let i = 0; i < selected_values.length; i++) {
-                selected_values[i][1](false);
-              }
-            }
+            setMixedSelection(false);
 						setSelected(selected => !selected);
             
 						// if (props.onToggleSelected) { props.onToggleSelected(!selected); }
@@ -191,7 +184,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			  }}
 			  showsVerticalScrollIndicator={false}
 			>
-			  {(props.collections.length === selected_values.length) && props.collections.map((value : collectionType, index: number) => (
+			  {props.collections.map((value : collectionType, index: number) => (
           <View style={{paddingBottom: 5}} key={index}>
             <CollectionPreview
               title={value.title} 
@@ -199,11 +192,14 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
               onToggleSelected={(collection_selected: boolean) => {
                 if (selected && !collection_selected) {
                   // selected_values[index][1](false);
+                  setMixedSelection(true);
                   setSelected(false);
+                  
                 }
                 // if (props.onChangeCollections) { props.onChangeCollections(CollectionGroups); }
               }}
-              selectedState={{selected: selected_values[index][0], setSelected: selected_values[index][1]}}
+              parentSelected={selected}
+              parentMixedSelection={mixedSelection}
               onPress={() => {
                 props.setPageNavigateArguments("collection-"+value.type+"-"+value.hash_id);
                 props.setPageNavigate("EditCollection");

@@ -34,6 +34,7 @@ type CreateCollectionPageProps = {
   userData: userDataType,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export default function CreateCollectionPage(props : CreateCollectionPageProps) {
@@ -156,6 +157,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
       console.log(`item ${item.id} response:`, item.uploadResponse);
       finished_uploads += 1;
       if (finished_uploads >= uploadFiles.length) {
+        props.setRefreshSidePanel(["collections"]);
         if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
         if (props.navigation) { props.navigation.navigate("ChatWindow"); }
       }
@@ -167,6 +169,13 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
       console.log(uploadFiles[i]);
     }
     setPublishStarted(true);
+
+    if (uploadFiles.length === 0) {
+      props.setRefreshSidePanel(["collections"]);
+      if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
+      if (props.navigation) { props.navigation.navigate("ChatWindow"); }
+    }
+
   };
 
   const translateSidebarButton = useRef(new Animated.Value(0)).current;
@@ -498,26 +507,16 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
               <Animated.View id="FileDrop" style={{
                 width: '100%',
                 backgroundColor: "#17181D",
+                borderStyle: 'dashed',
+                borderWidth: 2,
+                borderColor: '#E8E3E3',
                 borderRadius: 15,
                 padding: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
                 opacity: hoverOpacity
               }}>
-                <View style={{
-                  width: "98%",
-                  height: "97%",
-                  backgroundColor: "none",
-                  borderStyle: 'dashed',
-                  borderWidth: 2,
-                  borderColor: '#E8E3E3',
-                  borderRadius: 15,
-                  padding: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <Feather name="file-plus" size={40} color={'#E8E3E3'} st/>
-                </View>
+                <Feather name="file-plus" size={40} color={'#E8E3E3'}/>
               </Animated.View>
             </div>
             {(publishStarted) && (
