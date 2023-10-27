@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
+import craftUrl from "../hooks/craftUrl";
 
 // type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
@@ -39,9 +40,10 @@ export default function LoginPage(props : LoginPageProps) {
   const login = () => {
     // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
     //   response.json().then((data) => { console.log(data)})});
-    const url = new URL("http://localhost:5000/api/login");
-    url.searchParams.append("username", usernameText);
-    url.searchParams.append("password", password);
+    const url = craftUrl("http://localhost:5000/api/login", {
+      "username": usernameText,
+      "password": password
+    });
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
@@ -69,9 +71,10 @@ export default function LoginPage(props : LoginPageProps) {
   };
 
   const signup = () => {
-    const url = new URL("http://localhost:5000/api/add_user");
-    url.searchParams.append("username", usernameText);
-    url.searchParams.append("password", password);
+    const url = craftUrl("http://localhost:5000/api/add_user", {
+      "username": usernameText,
+      "password": password
+    });
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);

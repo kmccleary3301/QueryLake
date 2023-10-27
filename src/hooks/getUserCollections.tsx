@@ -1,3 +1,5 @@
+import craftUrl from "./craftUrl";
+
 type selectedState = [
   selected: boolean,
   setSelected: React.Dispatch<React.SetStateAction<boolean>>,
@@ -18,9 +20,10 @@ type collectionGroup = {
 };
 
 export default function getUserCollections(username : string, password_prehash: string, set_value: React.Dispatch<React.SetStateAction<any>>) {
-  const url = new URL("http://localhost:5000/api/fetch_all_collections");
-  url.searchParams.append("username", username);
-  url.searchParams.append("password_prehash", password_prehash);
+  const url = craftUrl("http://localhost:5000/api/fetch_all_collections", {
+    "username": username,
+    "password_prehash": password_prehash
+  });
   let collection_groups_fetch : collectionGroup[] = [];
 
   let retrieved_data = {};

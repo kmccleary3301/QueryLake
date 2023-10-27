@@ -1,3 +1,5 @@
+import craftUrl from "./craftUrl";
+
 type timeWindowType = {
   title: string,
   cutoff: number,
@@ -6,9 +8,10 @@ type timeWindowType = {
 
 export default function getChatHistory(username : string, password_prehash: string, time_windows : timeWindowType[], set_value: React.Dispatch<React.SetStateAction<any>>) {
   const currentTime = Date.now()/1000;
-  const url = new URL("http://localhost:5000/api/fetch_chat_sessions");
-  url.searchParams.append("username", username);
-  url.searchParams.append("password_prehash", password_prehash);
+  const url = craftUrl("http://localhost:5000/api/fetch_chat_sessions", {
+    "username": username,
+    "password_prehash": password_prehash
+  });
   let chat_history_tmp : timeWindowType[] = time_windows.slice();
 
   fetch(url, {method: "POST"}).then((response) => {

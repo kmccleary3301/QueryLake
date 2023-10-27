@@ -12,6 +12,7 @@ import CollectionPreview from './CollectionPreview';
 import AnimatedPressable from './AnimatedPressable';
 import HoverDocumentEntry from './HoverDocumentEntry';
 import getChatHistory from '../hooks/getChatHistory';
+import craftUrl from '../hooks/craftUrl';
 
 type selectedState = [
     selected: boolean,
@@ -65,10 +66,11 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
   // ];
 
   const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
-    const url = new URL("http://localhost:5000/api/hide_chat_session");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("hash_id", hash_id);
+    const url = craftUrl("http://localhost:5000/api/hide_chat_session", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "hash_id": hash_id
+    });
     fetch(url, {method: "POST"}).then((response) => {
       response.json().then((data) => {
         if (!data.success) {

@@ -11,9 +11,11 @@ import MarkdownTextSplitter from "./MarkdownTextSplitter";
 import MarkdownCodeBlock from "./MarkdownCodeBlock";
 import stringHash from "../hooks/stringHash";
 import MarkdownTable from "./MarkdownTable";
+import sanitizeMarkdown from "../hooks/sanitizeMarkdown";
 
 type MarkdownRendererProps = {
   input: string,
+  maxWidth: number,
   transparentDisplay?: boolean,
 };
 
@@ -238,7 +240,19 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
     case 'html':
       return (null);
     case 'text':
-      return (null);
+      return (
+        <View style={{
+          flexDirection: 'row',
+          paddingLeft: (props.padLeft)?10:0,
+          paddingBottom: 5,
+        }}>
+          <MarkdownTextSplitter selectable={true} style={{
+            fontFamily: normalTextFont,
+            fontSize: defaultFontSize,
+            color: '#E8E3E3'
+            }} text={token.text}/>
+        </View>
+      );
     default:
       return (
         <MarkdownMapComponentError type={token.type}/>
@@ -251,7 +265,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const normalTextFont = "Inter-Regular";
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
-  const [maxWidth, setMaxWidth] = useState(40);
+  // const [maxWidth, setMaxWidth] = useState(40);
   const [bubbleWidth, setBubbleWidth] = useState(10);
   
   const { input } = props;
@@ -264,9 +278,10 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const lexer = new marked.Lexer();
 
 
-  // useEffect(() => {
-
-  // }, [input]);
+  useEffect(() => {
+    console.log("Bubble width:", bubbleWidth);
+    console.log("MaxWidth:", props.maxWidth);
+  }, [bubbleWidth, props.maxWidth]);
 
   useEffect(() => {
     // if (input.length === oldTextLength) {
@@ -282,10 +297,11 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
       return;
     }
     if (markdownTokens.length === 0) {
-      let lexed_input = lexer.lex(input);
-      console.log("LEXING");
-      console.log(input);
-      console.log(lexed_input)
+      let lexed_input = lexer.lex(sanitizeMarkdown(input));
+      // console.log("LEXING");
+      // console.log(input);
+      // console.log(sanitizeMarkdown(input));
+      // console.log(lexed_input)
       setMarkdownTokens(lexed_input);
       old_string_hash = stringHash(input);
     } else {
@@ -303,10 +319,10 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   setInterval(() => {
     if (textUpdating) {
       // let new_string_hash = stringHash(input);
-      let lexed_input = lexer.lex(input);
-      console.log("LEXING");
-      console.log(input);
-      console.log(lexed_input);
+      let lexed_input = lexer.lex(sanitizeMarkdown(input));
+      // console.log("LEXING");
+      // console.log(input);
+      // console.log(lexed_input);
       setMarkdownTokens(lexed_input);
       textUpdating = false;
       oldTextLength = input.length;
@@ -322,15 +338,9 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
 
   return (
     <View
-      style={{
-        width: '100%'
-      }}
-      onLayout={(event) => {
-        setMaxWidth(event.nativeEvent.layout.width);
-      }}
     >
       <View style={{
-        maxWidth: "100%",
+        maxWidth: "60vw",
         minWidth: 40,
         minHeight: 40,
         // width: "80svw",
@@ -346,7 +356,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
             borderRadius: 10,
             alignSelf: "center",
             justifyContent: transparentDisplay?"center":"flex-start",
-            width: "100%",
+            maxWidth: "100%",
             minHeight: 40,
           }}
           onLayout={(event) => {
@@ -354,7 +364,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
           }}
         >
           {markdownTokens.map((v : Token, k : number) => (
-            <MarkdownMapComponent bubbleWidth={bubbleWidth} maxWidth={maxWidth} key={k} token={v}/>
+            <MarkdownMapComponent bubbleWidth={bubbleWidth} maxWidth={props.maxWidth} key={k} token={v}/>
           ))}
         </View>
       </View>

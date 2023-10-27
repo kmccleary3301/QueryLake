@@ -28,6 +28,7 @@ import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
+import craftUrl from "../hooks/craftUrl";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -92,10 +93,11 @@ export default function ChatWindow(props : ChatWindowProps) {
     const navigate_args = props.pageNavigateArguments.split("-");
     if (props.pageNavigateArguments.length > 0 && navigate_args[0] === "chatSession") {
       setSessionHash(navigate_args[1]);
-      const url = new URL("http://localhost:5000/api/fetch_session");
-      url.searchParams.append("username", props.userData.username);
-      url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-      url.searchParams.append("hash_id", navigate_args[1]);
+      const url = craftUrl("http://localhost:5000/api/fetch_session", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+        "hash_id": navigate_args[1],
+      });
       fetch(url, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
@@ -116,9 +118,10 @@ export default function ChatWindow(props : ChatWindowProps) {
       });
     } else {
       setNewChat([]);
-      const url = new URL("http://localhost:5000/api/create_chat_session");
-      url.searchParams.append("username", props.userData.username);
-      url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+      const url = craftUrl("http://localhost:5000/api/create_chat_session", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+      });
       fetch(url, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
@@ -153,11 +156,12 @@ export default function ChatWindow(props : ChatWindowProps) {
     let refresh_chat_history = (newChat.length === 0);
     
 
-    const url = new URL("http://localhost:5000/api/async/chat");
-    url.searchParams.append("session_hash", sessionHash);
-    url.searchParams.append("query", message);
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+    const url = craftUrl("http://localhost:5000/api/async/chat", {
+      "session_hash": sessionHash,
+      "query": message,
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash
+    });
 
     let user_entry : ChatEntry = {
       origin: "user",
@@ -249,9 +253,10 @@ export default function ChatWindow(props : ChatWindowProps) {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
   const handleDrop = (event: any) => {
-    const url = new URL("http://localhost:5000/api/uploadfile");
-    url.searchParams.append("name", props.userData.username);
-    url.searchParams.append("password_prehashed", props.userData.password_pre_hash);
+    const url = craftUrl("http://localhost:5000/api/uploadfile", {
+      "name": props.userData.username,
+      "password_prehashed": props.userData.password_pre_hash
+    });
     setFileDragHover(false);
     event.preventDefault();
     setFilesPrepared(event.dataTransfer.files);

@@ -23,6 +23,7 @@ type ChatBubbleProps = {
 export default function ChatBubble(props: ChatBubbleProps) {
   const normalTextFont = "Inter-Regular";
   const codeFont = "Consolas";
+  const [maxWidth, setMaxWidth] = useState(40);
 
 
   const queryLakeIcon = require("../../assets/favicon.png");
@@ -31,7 +32,8 @@ export default function ChatBubble(props: ChatBubbleProps) {
     <View 
       style={{
         flexDirection: Platform.select({web: "row", default: "column"}),
-        width: "100%",
+        width: "60vw",
+        justifyContent: 'flex-start',
         paddingBottom: 20,
         paddingRight: 10
       }}
@@ -71,69 +73,20 @@ export default function ChatBubble(props: ChatBubbleProps) {
           />
         </View>
       )}
-      {/* {props.input && props.input.length > 0 && (
-        <MarkdownRenderer input={props.input} transparentDisplay={(props.origin === "user")}/>
-      )} */}
-      {props.input && props.input.length > 0 && (
-        <MarkdownRenderer input={props.input} transparentDisplay={(props.origin === "user")}/>
-        // <Text>
-        //   {props.input}
-        // </Text>
-      )}
-      {/* <View style={{
-        paddingRight: 10, 
-        flexDirection: "row", 
-        width: "100%",
-        // backgroundColor: "#3939FF",
-        borderRadius: 10,
-      }}>
-        <View 
-          style={{
-            
-            maxWidth: "100%",
-            minWidth: 40,
-            minHeight: 40,
-            // width: "80svw",
-            paddingRight: 50
-          }}
-        >
-          
-          <Text 
-            style={{
-              fontFamily: normalTextFont,
-              backgroundColor: "#39393C",
-              borderRadius: 15,
-              padding: 10,
-            }}
-            selectable={true}
-          >
-          {props.entry.content.map((v : ChatContentExcerpt, k : number) => (typeof v === 'string')?(
-
-            <Text 
-              key={k} 
-              style={{
-                fontFamily: normalTextFont,
-              // backgroundColor: "#00FF00"
-              }}
-            >
-              <Text style={{color: '#E8E3E3', fontFamily: normalTextFont,}}>{v}</Text>
-            </Text>
-          ):( //Code Segment
-            <View style={{
-              // backgroundColor: "#0000FF"
-            }}>
-              <Text style={{fontFamily: codeFont,}}>
-                {v.map((v_2 : CodeSegmentExcerpt, k_2 : number) => (
-                  <Text style={{color: v_2.color, fontFamily: codeFont,}}>
-                    {v_2.text}
-                  </Text>
-                ))}
-              </Text>
-            </View>
-          ))}
-          </Text>
-        </View>
-      </View> */}
+      <View 
+        style={{
+          // flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'flex-start'
+        }}
+        onLayout={(event) => {
+          setMaxWidth(event.nativeEvent.layout.width);
+        }}
+      >
+        {props.input && props.input.length > 0 && (
+          <MarkdownRenderer maxWidth={maxWidth} input={props.input} transparentDisplay={(props.origin === "user")}/>
+        )}
+      </View>
     </View>
   );
 }

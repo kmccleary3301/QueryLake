@@ -27,17 +27,8 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
 
   const invert = (props.invert)?props.invert:false;
 
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/api/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
-
-	// const selectionCircleSize = new Animated.Value(0);
-
 	const hoverOpacity = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
-	// const collapseIconRotation = useRef(new Animated.Value(0)).current;
-
+	
   useEffect(() => {
     Animated.timing(hoverOpacity, {
       toValue: (invert)?(pressed?0.3:(hover?0.2:0)):(pressed?0.3:(hover?0.5:1)),

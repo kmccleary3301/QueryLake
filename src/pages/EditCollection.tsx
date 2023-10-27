@@ -15,6 +15,7 @@ import { Dropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
 import HoverDocumentEntry from "../components/HoverDocumentEntry";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
+import craftUrl from "../hooks/craftUrl";
 
 type documentRetrieved = {
   title: string,
@@ -74,11 +75,12 @@ export default function EditCollection(props : EditCollectionProps) {
     if (nav_args[0] !== "collection") { return; }
     setCollectionType(nav_args[1]);
     setHashId(nav_args[2]);
-    const url = new URL("http://localhost:5000/api/fetch_collection");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("collection_type", nav_args[1]);
-    url.searchParams.append("collection_hash_id", nav_args[2]);
+    const url = craftUrl("http://localhost:5000/api/fetch_collection", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "collection_type": nav_args[1],
+      "collection_hash_id": nav_args[2]
+    });
 
     fetch(url, {method: "POST"}).then((response) => {
       // console.log(response);
@@ -147,19 +149,21 @@ export default function EditCollection(props : EditCollectionProps) {
   };
 
   const start_save = () => {
-    const url = new URL("http://localhost:5000/api/modify_document_collection");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("title", name);
-    url.searchParams.append("description", description);
-    url.searchParams.append("collection_hash_id", hashId);
+    const url = craftUrl("http://localhost:5000/api/modify_document_collection", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "title": name,
+      "description": description,
+      "collection_hash_id": hashId
+    });
     let collection_id = -1;
 
     for (let i = 0; i < documentsToDelete.length; i++) {
-      const url_delete_document = new URL("http://localhost:5000/api/delete_document");
-      url_delete_document.searchParams.append("username", props.userData.username);
-      url_delete_document.searchParams.append("password_prehash", props.userData.password_pre_hash);
-      url_delete_document.searchParams.append("hash_id", documentsToDelete[i]);
+      const url_delete_document = craftUrl("http://localhost:5000/api/delete_document", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+        "hash_id": documentsToDelete[i],
+      });
       fetch(url_delete_document, {method: "POST"});
     }
 
@@ -174,11 +178,12 @@ export default function EditCollection(props : EditCollectionProps) {
       });
     });
     // If organization specified, set that to author.
-    let url_2 = new URL("http://localhost:5000/api/async/upload_document");
-    url_2.searchParams.append("username", props.userData.username);
-    url_2.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url_2.searchParams.append("collection_hash_id", hashId);
-    url_2.searchParams.append("collection_type", collectionType);
+    let url_2 = craftUrl("http://localhost:5000/api/async/upload_document", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "collection_hash_id": hashId,
+      "collection_type": collectionType
+    });
 
     const uploader = createUploader({
       destination: {
@@ -229,10 +234,11 @@ export default function EditCollection(props : EditCollectionProps) {
   };
 
   const deleteDocumentFromServer = (hash_id : string) => {
-    const url = new URL("http://localhost:5000/api/delete_document");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("hash_id", hash_id);
+    const url = craftUrl("http://localhost:5000/api/delete_document", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "hash_id": hash_id
+    });
 
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
@@ -247,10 +253,11 @@ export default function EditCollection(props : EditCollectionProps) {
   };
 
   const openDocument = (hash_id : string) => {
-    const url = new URL("http://localhost:5000/api/async/fetch_document");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("hash_id", hash_id);
+    const url = craftUrl("http://localhost:5000/api/async/fetch_document", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "hash_id": hash_id
+    });
     Linking.openURL(url.toString());
   }
 

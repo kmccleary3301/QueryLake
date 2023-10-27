@@ -20,6 +20,7 @@ import { Dropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
 import HoverDocumentEntry from "../components/HoverDocumentEntry";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
+import craftUrl from "../hooks/craftUrl";
 
 type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
@@ -103,11 +104,12 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
   };
 
   const start_publish = () => {
-    const url = new URL("http://localhost:5000/api/create_document_collection");
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url.searchParams.append("name", name);
-    url.searchParams.append("description", description);
+    const url = craftUrl("http://localhost:5000/api/create_document_collection", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "name": name,
+      "description": description
+    });
     // let collection_id = -1;
 
     fetch(url, {method: "POST"}).then((response) => {
@@ -128,10 +130,11 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
   };
 
   const start_document_uploads = (collection_hash_id : string) => {
-    let url_2 = new URL("http://localhost:5000/api/async/upload_document");
-    url_2.searchParams.append("username", props.userData.username);
-    url_2.searchParams.append("password_prehash", props.userData.password_pre_hash);
-    url_2.searchParams.append("collection_hash_id", collection_hash_id);
+    let url_2 = craftUrl("http://localhost:5000/api/async/upload_document", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "collection_hash_id": collection_hash_id
+    });
     
     const uploader = createUploader({
       destination: {
