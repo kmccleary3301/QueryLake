@@ -17,12 +17,15 @@ import {
 import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
 import craftUrl from "../hooks/craftUrl";
+import getUserMemberships from "../hooks/getUserMemberships";
 
 // type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships?: object[],
+  is_admin?: boolean
 };
 
 type LoginPageProps = {
@@ -36,6 +39,34 @@ export default function LoginPage(props : LoginPageProps) {
   const [usernameText, setUsernameText] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [retrievedUserData, setRetrievedUserData] = useState<userDataType | null>(null);
+  const [retrievedUserMemberships, setRetrievedUserMemberships] = useState([]);
+  const [membershipCallMade, setMembershipCallMade] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (retrievedUserData === null) { 
+      console.log("Case 1");
+      return; 
+    } else if (!membershipCallMade) { 
+      console.log("Case 2");
+      getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
+      setMembershipCallMade(true);
+    } else {
+      console.log("Case 3");
+      props.setUserData({
+        username: retrievedUserData["username"],
+        password_pre_hash: retrievedUserData["password_pre_hash"],
+        memberships: retrievedUserMemberships,
+        is_admin: userIsAdmin
+      });
+      if (props.setPageNavigate) {
+        props.setPageNavigate("ChatWindow");
+      }
+    }
+    
+  }, [retrievedUserData, membershipCallMade]);
 
   const login = () => {
     // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
@@ -53,10 +84,15 @@ export default function LoginPage(props : LoginPageProps) {
           try {
             if (result["successful"]) {
               // setErrorMessage("Login Successful");
-              props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
-              if (props.setPageNavigate) {
-                props.setPageNavigate("ChatWindow");
-              }
+              setRetrievedUserData({
+                username: usernameText, 
+                password_pre_hash: result["password_single_hash"]
+              });
+
+              console.log({
+                username: usernameText, 
+                password_pre_hash: result["password_single_hash"]
+              });
             } else {
               setErrorMessage(result["note"]);
             }

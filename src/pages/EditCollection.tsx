@@ -11,10 +11,11 @@ import {
 } from "react-native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
-import { Dropdown } from "react-native-element-dropdown";
+// import { Dropdown } from "react-native-element-dropdown";
 import { ScrollView } from "react-native-gesture-handler";
 import HoverDocumentEntry from "../components/HoverDocumentEntry";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
+import DropDownSelection from "../components/DropDownSelection";
 import craftUrl from "../hooks/craftUrl";
 
 type documentRetrieved = {
@@ -364,74 +365,10 @@ export default function EditCollection(props : EditCollectionProps) {
                   flexDirection: 'row',
                   justifyContent: 'space-between'
                 }}>
-                  <Dropdown
-                    placeholderStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      color: '#E8E3E3'
-                    }}
-                    selectedTextStyle={{
-                      fontSize: 14,
-                      backgroundColor: 'none',
-                      color: '#E8E3E3'
-                    }}
-                    itemContainerStyle={{
-                      flexShrink: 1,
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      alignItems: 'center'
-                    }}
-                    itemTextStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    selectedStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    containerStyle={{
-                      // backgroundColor: 'none',
-                      // borderWidth: 0,
-                      // elevation: 0,
-                      // shadowOpacity: 0
-                    }}
-                    iconStyle={{
-                      width: 20,
-                      height: 20,
-                    }}
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    // placeholder={!isFocus ? 'Select item' : '...'}
-                    value={collectionIsPublic}
-                    // onFocus={() => setIsFocus(true)}
-                    // onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                      setCollectionIsPublic(item);
-                      // setIsFocus(false);
-                    }}
-                    data={visibility_selections}
-                    style={{
-                      margin: 16,
-                      // height: 50,
-                      width: 80,
-                      backgroundColor: 'none',
-                      // borderRadius: 12,
-                      // padding: 12,
-                      // shadowOpacity: 0.2,
-                      // shadowRadius: 1.41,
-                
-                      // elevation: 2,
-                    }}
-                    placeholder={"Hello"}
+                  <DropDownSelection
+                    values={visibility_selections}
+                    defaultValue={collectionIsPublic}
+                    setSelection={setCollectionIsPublic}
                   />
                   <View style={{flexDirection: 'row'}}>
                     <Text style={{

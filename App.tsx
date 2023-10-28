@@ -41,6 +41,7 @@ import MarkdownTestPage from './src/markdown/MarkdownTestPage';
 import LoginPage from './src/pages/LoginPage';
 import CreateCollectionPage from './src/pages/CreateCollectionPage';
 import EditCollection from './src/pages/EditCollection';
+import OrganizationManager from './src/pages/OrganizationManager';
 
 function HomeScreen({ navigation }) {
   return (
@@ -97,11 +98,13 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage" | "EditCollection";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage" | "EditCollection" | "OrganizationManager";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships: object[],
+  is_admin: boolean
 };
 
 type AppWebPageProps = {
@@ -149,6 +152,7 @@ function AppWebPage(props : AppWebPageProps) {
     case 'CreateCollectionPage':
       return (
         <CreateCollectionPage 
+          pageNavigateArguments={props.pageNavigateArguments}
           setPageNavigate={props.setPageNavigate} 
           userData={props.userData}
           toggleSideBar={props.toggleSideBarOpened} 
@@ -158,13 +162,20 @@ function AppWebPage(props : AppWebPageProps) {
       );
     case 'EditCollection':
       return (
-        <EditCollection 
+        <EditCollection
           setPageNavigate={props.setPageNavigate} 
           userData={props.userData} 
           pageNavigateArguments={props.pageNavigateArguments}
           toggleSideBar={props.toggleSideBarOpened} 
           sidebarOpened={props.sidebarOpened}
           setRefreshSidePanel={props.setRefreshSidePanel}
+        />
+      );
+    case 'OrganizationManager':
+      return (
+        <OrganizationManager
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
         />
       );
 

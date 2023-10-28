@@ -36,6 +36,8 @@ type collectionGroup = {
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships: object[],
+  is_admin: boolean
 };
 
 type SidebarProps = {
@@ -66,35 +68,26 @@ export default function Sidebar(props: SidebarProps) {
   ];
 
   useEffect(() => {
-    let refresh = false;
-    if (chatHistory.length === 0) {
-      refresh = true;
-    } else {
-      for (let i = 0; i < props.refreshSidePanel.length; i++) {
-        if (props.refreshSidePanel[i] === "chat-history") {
-          refresh = true;
-          break;
-        }
-      }
-    }
-    if (refresh) {
+    let chat_history_grabbed = false;
+    let collections_grabbed = false;
+    if (chatHistory.length == 0) {
       getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+      chat_history_grabbed = true;
     }
-    refresh = false;
     if (collectionGroups.length == 0) {
-      refresh = true;
-    } else {
-      for (let i = 0; i < props.refreshSidePanel.length; i++) {
-        if (props.refreshSidePanel[i] === "collections") {
-          refresh = true;
-          break;
-        }
+      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+      collections_grabbed = true;
+    }
+    for (let i = 0; i < props.refreshSidePanel.length; i++) {
+      if (!chat_history_grabbed && props.refreshSidePanel[i] === "chat-history") {
+        getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+        chat_history_grabbed = true;
+      } else if (!collections_grabbed && props.refreshSidePanel[i] === "collections") {
+        getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+        collections_grabbed = true;
       }
     }
-    if (refresh) {
-      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
-    }
-  }, [props.refreshSidePanel]);
+  }, [props.refreshSidePanel, props.userData]);
 
   const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
     if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
@@ -218,12 +211,14 @@ export default function Sidebar(props: SidebarProps) {
               {"Model Settings"}
             </Text>
           </AnimatedPressable>
-          <AnimatedPressable>
+          <AnimatedPressable onPress={() => {
+            if (props.setPageNavigate) { props.setPageNavigate("OrganizationManager"); }
+          }}>
             <Text style={{
               fontSize: 16,
               color: "#E8E3E3",
             }}>
-              {"Manage Collections"}
+              {"Organizations"}
             </Text>
           </AnimatedPressable>
         </View>

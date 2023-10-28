@@ -212,7 +212,7 @@ function MarkdownTable(props : MarkdownTableProps){
                   <MarkdownTextSplitter
                     text={value.text}
                     style={{
-                      fontFamily: "Inter-Regular", 
+                      fontFamily: (row_index === 0)?"Inter-Bold":"Inter-Regular", 
                       fontSize: fontSize,
                       textAlign: 'left',
                       color: '#E8E3E3',

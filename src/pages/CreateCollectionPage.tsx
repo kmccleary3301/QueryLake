@@ -21,12 +21,15 @@ import { ScrollView } from "react-native-gesture-handler";
 import HoverDocumentEntry from "../components/HoverDocumentEntry";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import craftUrl from "../hooks/craftUrl";
+import DropDownSelection from "../components/DropDownSelection";
 
 type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships: object[],
+  is_admin: boolean
 };
 
 type CreateCollectionPageProps = {
@@ -35,6 +38,7 @@ type CreateCollectionPageProps = {
   userData: userDataType,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
+  pageNavigateArguments: any,
   setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
@@ -58,6 +62,9 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
 
 
   useEffect(() => {
+    console.log("User memberships", props.userData.memberships);
+    console.log("User is admin", props.userData.is_admin);
+
     const url = new URL("http://localhost:5000/api/random_hash");
 
     fetch(url, {method: "POST"}).then((response) => {
@@ -280,74 +287,10 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
                   flexDirection: 'row',
                   justifyContent: 'space-between'
                 }}>
-                  <Dropdown
-                    placeholderStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      color: '#E8E3E3'
-                    }}
-                    selectedTextStyle={{
-                      fontSize: 14,
-                      backgroundColor: 'none',
-                      color: '#E8E3E3'
-                    }}
-                    itemContainerStyle={{
-                      flexShrink: 1,
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      alignItems: 'center'
-                    }}
-                    itemTextStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    selectedStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    containerStyle={{
-                      // backgroundColor: 'none',
-                      // borderWidth: 0,
-                      // elevation: 0,
-                      // shadowOpacity: 0
-                    }}
-                    iconStyle={{
-                      width: 20,
-                      height: 20,
-                    }}
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    // placeholder={!isFocus ? 'Select item' : '...'}
-                    value={collectionIsPublic}
-                    // onFocus={() => setIsFocus(true)}
-                    // onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                      setCollectionIsPublic(item);
-                      // setIsFocus(false);
-                    }}
-                    data={visibility_selections}
-                    style={{
-                      margin: 16,
-                      // height: 50,
-                      width: 80,
-                      backgroundColor: 'none',
-                      // borderRadius: 12,
-                      // padding: 12,
-                      // shadowOpacity: 0.2,
-                      // shadowRadius: 1.41,
-                
-                      // elevation: 2,
-                    }}
-                    placeholder={"Hello"}
+                  <DropDownSelection
+                    values={visibility_selections}
+                    defaultValue={collectionIsPublic}
+                    setSelection={setCollectionIsPublic}
                   />
                   <View style={{flexDirection: 'row'}}>
                     <Text style={{
@@ -357,75 +300,11 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
                       color: '#E8E3E3',
                       alignSelf: 'center',
                     }}>{"Owner"}</Text>
-                    <Dropdown
-                    placeholderStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      color: '#E8E3E3'
-                    }}
-                    selectedTextStyle={{
-                      fontSize: 14,
-                      backgroundColor: 'none',
-                      color: '#E8E3E3'
-                    }}
-                    itemContainerStyle={{
-                      flexShrink: 1,
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0,
-                      alignItems: 'center'
-                    }}
-                    itemTextStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    selectedStyle={{
-                      backgroundColor: 'none',
-                      borderWidth: 0,
-                      elevation: 0,
-                      shadowOpacity: 0
-                    }}
-                    containerStyle={{
-                      // backgroundColor: 'none',
-                      // borderWidth: 0,
-                      // elevation: 0,
-                      // shadowOpacity: 0
-                    }}
-                    iconStyle={{
-                      width: 20,
-                      height: 20,
-                    }}
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    // placeholder={!isFocus ? 'Select item' : '...'}
-                    value={collectionOwner}
-                    // onFocus={() => setIsFocus(true)}
-                    // onBlur={() => setIsFocus(false)}
-                    onChange={item => {
-                      setCollectionOwner(item);
-                      // setIsFocus(false);
-                    }}
-                    data={owner_selections}
-                    style={{
-                      margin: 16,
-                      // height: 50,
-                      width: 80,
-                      backgroundColor: 'none',
-                      // borderRadius: 12,
-                      // padding: 12,
-                      // shadowOpacity: 0.2,
-                      // shadowRadius: 1.41,
-                
-                      // elevation: 2,
-                    }}
-                    placeholder={"Hello"}
-                  />
+                    <DropDownSelection
+                      values={owner_selections}
+                      defaultValue={collectionOwner}
+                      setSelection={setCollectionOwner}
+                    />
                   </View>
                 </View>
                 <View style={{paddingBottom: 10}}>
