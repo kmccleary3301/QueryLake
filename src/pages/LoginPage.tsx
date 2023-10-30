@@ -16,16 +16,20 @@ import {
 } from "react-native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
+import craftUrl from "../hooks/craftUrl";
+import getUserMemberships from "../hooks/getUserMemberships";
 
-type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
+// type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships?: object[],
+  is_admin?: boolean
 };
 
 type LoginPageProps = {
-  setPageNavigate?: React.Dispatch<React.SetStateAction<pageID>>,
+  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>
 }
@@ -36,10 +40,41 @@ export default function LoginPage(props : LoginPageProps) {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const [retrievedUserData, setRetrievedUserData] = useState<userDataType | null>(null);
+  const [retrievedUserMemberships, setRetrievedUserMemberships] = useState([]);
+  const [membershipCallMade, setMembershipCallMade] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (retrievedUserData === null) { 
+      console.log("Case 1");
+      return; 
+    } else if (!membershipCallMade) { 
+      console.log("Case 2");
+      getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
+      setMembershipCallMade(true);
+    } else {
+      console.log("Case 3");
+      props.setUserData({
+        username: retrievedUserData["username"],
+        password_pre_hash: retrievedUserData["password_pre_hash"],
+        memberships: retrievedUserMemberships,
+        is_admin: userIsAdmin
+      });
+      if (props.setPageNavigate) {
+        props.setPageNavigate("ChatWindow");
+      }
+    }
+    
+  }, [retrievedUserData, membershipCallMade]);
+
   const login = () => {
-    const url = new URL("http://localhost:5000/login");
-    url.searchParams.append("name", usernameText);
-    url.searchParams.append("password", password);
+    // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
+    //   response.json().then((data) => { console.log(data)})});
+    const url = craftUrl("http://localhost:5000/api/login", {
+      "username": usernameText,
+      "password": password
+    });
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
@@ -47,12 +82,17 @@ export default function LoginPage(props : LoginPageProps) {
           result = data;
           console.log(result);
           try {
-            if (result["login_successful"]) {
+            if (result["successful"]) {
               // setErrorMessage("Login Successful");
-              props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
-              if (props.setPageNavigate) {
-                props.setPageNavigate("ChatWindow");
-              }
+              setRetrievedUserData({
+                username: usernameText, 
+                password_pre_hash: result["password_single_hash"]
+              });
+
+              console.log({
+                username: usernameText, 
+                password_pre_hash: result["password_single_hash"]
+              });
             } else {
               setErrorMessage(result["note"]);
             }
@@ -67,9 +107,10 @@ export default function LoginPage(props : LoginPageProps) {
   };
 
   const signup = () => {
-    const url = new URL("http://localhost:5000/create_account");
-    url.searchParams.append("name", usernameText);
-    url.searchParams.append("password", password);
+    const url = craftUrl("http://localhost:5000/api/add_user", {
+      "username": usernameText,
+      "password": password
+    });
     let result = {};
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);

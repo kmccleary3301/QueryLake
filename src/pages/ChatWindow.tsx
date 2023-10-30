@@ -28,6 +28,9 @@ import ChatBubble from "../components/ChatBubble";
 import { DrawerActions } from "@react-navigation/native";
 import AnimatedPressable from "../components/AnimatedPressable";
 import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
+import craftUrl from "../hooks/craftUrl";
+import ChatWindowSuggestions from "../components/ChatWindowSuggestions";
+
 type CodeSegmentExcerpt = {
   text: string,
   color: string,
@@ -54,7 +57,9 @@ type ChatWindowProps = {
   navigation?: any,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
-  userData: userDataType
+  userData: userDataType,
+  pageNavigateArguments: any,
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 function hexToUtf8(s : string)
@@ -65,61 +70,69 @@ function hexToUtf8(s : string)
   );
 }
 
-
-function utf8ToHex(s : string)
-{
-  const utf8encoder = new TextEncoder();
-  const rb = utf8encoder.encode(s);
-  let r = '';
-  for (const b of rb) {
-    r += ('0' + b.toString(16)).slice(-2);
-  }
-  return r;
-}
-
 export default function ChatWindow(props : ChatWindowProps) {
-
-
-  // props.navigation.navigate("HomeScreen")
-  const scrollViewRef = useRef();
-  const inputTwo = useRef("");
-  const [inputText, setInputText] = useState(
-    "Write a detailed set of notes on the Naive Bayes Classifier. Format your response in Markdown, and elaborate as much as possible."
-  );
+  const [inputText, setInputText] = useState("");
   const [isEnabled, setIsEnabled] = useState(false);
-  const [chat, setChat] = useState("Sure! Here's a Python function that calculates the Fibonacci sequence up to a given number n:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHello");
   const [sseOpened, setSseOpened] = useState(false);
-  const [fileDragHover, setFileDragHover] = useState(false);
-  const [filesPrepared, setFilesPrepared] = useState<File[]>([]);
-  const [filesProgress, setFilesProgress] = useState<Number[]>([]);
   const [submitInput, setSubmitInput] = useState(false);
-  
   const [newChat, setNewChat] = useState<ChatEntry[]>([]);
-  
-  const [temporaryBotEntry, setTemporaryBotEntry] = useState<ChatEntry | null>(null);
-
   const [inputLineCount, setInputLineCount] = useState(1);
-  const [activeBotEntryIndex, setActiveBotEntryIndex] = useState(1);
-
   const [sessionHash, setSessionHash] = useState();
+  const [displaySuggestions, setDisplaySuggestions] = useState(true);
+  const [displaySuggestionsDelayed, setDisplaySuggestionsDelayed] = useState(true);
+  const [animateScroll, setAnimateScroll] = useState(false);
   
   useEffect(() => {
-    if (sessionHash === undefined) {
-      const url = new URL("http://localhost:5000/create_session");
-      url.searchParams.append("username", props.userData.username);
-      url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+    console.log("PageNavigateChanged");
+    const navigate_args = props.pageNavigateArguments.split("-");
+    if (props.pageNavigateArguments.length > 0 && navigate_args[0] === "chatSession") {
+      setAnimateScroll(false);
+      setNewChat([]);
+      setDisplaySuggestions(false);
+      setDisplaySuggestionsDelayed(false);
+      setSessionHash(navigate_args[1]);
+      const url = craftUrl("http://localhost:5000/api/fetch_session", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+        "hash_id": navigate_args[1],
+      });
+      fetch(url, {method: "POST"}).then((response) => {
+        console.log(response);
+        response.json().then((data) => {
+            if (!data["success"]) {
+              console.error("Failed to retrieve session");
+              return;
+            }
+            console.log(data);
+            let new_entries : ChatEntry[] = [];
+            for (let i = 0; i < data.result.length; i++) {
+              new_entries.push({
+                content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                origin: (data.result[i].type === "user")?"user":"server"
+              });
+            }
+            setNewChat(new_entries);
+        });
+      });
+    } else {
+      setDisplaySuggestions(true);
+      setNewChat([]);
+      const url = craftUrl("http://localhost:5000/api/create_chat_session", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+      });
       fetch(url, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
             if (data["success"]) {
               setSessionHash(data["session_hash"]);
             } else {
-              console.error("Session hash failed");
+              console.error("Session hash failed", data["note"]);
             }
         });
       });
     }
-  }, []);
+  }, [props.pageNavigateArguments]);
 
   // const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -127,17 +140,11 @@ export default function ChatWindow(props : ChatWindowProps) {
 
 
   let genString = "";
-  let termLet: string[] = [];
-
-  const copyToClipboard = () => {
-    Clipboard.setString(inputText);
-  };
-
-  const copyChatToClipboard = () => {
-    Clipboard.setString(chat);
-  };
+  // let termLet: string[] = [];
 
   const sse_fetch = async function (message : string) {
+    setDisplaySuggestions(false);
+    // setAnimateScroll(true);
     if (sseOpened === true) {
       return;
     }
@@ -147,11 +154,15 @@ export default function ChatWindow(props : ChatWindowProps) {
       return;
     }
 
-    const url = new URL("http://localhost:5000/chat");
-    url.searchParams.append("session_hash", sessionHash);
-    url.searchParams.append("query", message);
-    url.searchParams.append("username", props.userData.username);
-    url.searchParams.append("password_prehash", props.userData.password_pre_hash);
+    let refresh_chat_history = (newChat.length === 0);
+    
+
+    const url = craftUrl("http://localhost:5000/api/async/chat", {
+      "session_hash": sessionHash,
+      "query": message,
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash
+    });
 
     let user_entry : ChatEntry = {
       origin: "user",
@@ -164,8 +175,8 @@ export default function ChatWindow(props : ChatWindowProps) {
       content_raw_string: "",
     }
     
-    setActiveBotEntryIndex(newChat.length+1);
-    let active_bot_entry_index = newChat.length+1;
+    // setActiveBotEntryIndex(newChat.length+1);
+    // let active_bot_entry_index = newChat.length+1;
     setNewChat(newChat => [...newChat, user_entry, bot_entry])
     // setTemporaryBotEntry(bot_entry);
     // setInputText("");
@@ -192,6 +203,9 @@ export default function ChatWindow(props : ChatWindowProps) {
         console.log("Completed response:");
         console.log(genString);
         es.close();
+        if (refresh_chat_history) {
+          props.setRefreshSidePanel(["chat-history"]);
+        }
       } else {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);
@@ -202,7 +216,7 @@ export default function ChatWindow(props : ChatWindowProps) {
           decoded = decoded.replace(/(?<=^\s*)\s/gm, ""); //Strip leading whitespace
         }
         genString += decoded;
-        setChat(genString);
+        // setChat(genString);
         // bot_entry["content"][0] = genString; //Needs to be cahnged for syntax highlighting.
       
         // bot_entry["content_raw_string"] = genString;
@@ -240,9 +254,10 @@ export default function ChatWindow(props : ChatWindowProps) {
   const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
 
   const handleDrop = (event: any) => {
-    const url = new URL("http://localhost:5000/uploadfile");
-    url.searchParams.append("name", props.userData.username);
-    url.searchParams.append("password_prehashed", props.userData.password_pre_hash);
+    const url = craftUrl("http://localhost:5000/api/uploadfile", {
+      "name": props.userData.username,
+      "password_prehashed": props.userData.password_pre_hash
+    });
     setFileDragHover(false);
     event.preventDefault();
     setFilesPrepared(event.dataTransfer.files);
@@ -255,7 +270,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         url: url,
         filesParamName: "file",
       },
-      autoUpload: true,
+      autoUpload: false,
       grouped: true,
       //...
     });
@@ -273,23 +288,6 @@ export default function ChatWindow(props : ChatWindowProps) {
     });
 
     uploader.add(event.dataTransfer.files[0]);
-    // // fetch("http://localhost:5000/uploadfile", {method: "POST", body: formData});
-    // axios.request({
-    //   method: "post",
-    //   url: "http://localhost:5000/uploadfile",
-    //   data: formData,
-    //   onUploadProgress: (p) => {
-    //     console.log(p);
-    //     //this.setState({
-    //         //fileprogress: p.loaded / p.total
-    //     //})
-    //   }
-    // }).then (data => {
-    //     //this.setState({
-    //       //fileprogress: 1.0,
-    //     //})
-    //     console.log("Then hook called");
-    // })
   };
 
 
@@ -329,6 +327,8 @@ export default function ChatWindow(props : ChatWindowProps) {
 
   const translateSidebarButton = useRef(new Animated.Value(0)).current;
   const opacitySidebarButton = useRef(new Animated.Value(0)).current;
+  const opacityChatWindow = useRef(new Animated.Value(0)).current;
+  const opacitySuggestions = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     console.log("Change detected in sidebar:", props.sidebarOpened);
@@ -349,6 +349,30 @@ export default function ChatWindow(props : ChatWindowProps) {
       }).start();
     }, props.sidebarOpened?0:300);
   }, [props.sidebarOpened]);
+
+  useEffect(() => {
+    
+    setTimeout(() => {
+      Animated.timing(opacityChatWindow, {
+        toValue: displaySuggestions?0:1,
+        // toValue: opened?Math.min(300,(children.length*50+60)):50,
+        duration: 150,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }, displaySuggestions?0:150);
+    setTimeout(() => {
+      Animated.timing(opacitySuggestions, {
+        toValue: displaySuggestions?1:0,
+        // toValue: opened?Math.min(300,(children.length*50+60)):50,
+        duration: 150,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }, displaySuggestions?150:0);
+    setTimeout(() => { setDisplaySuggestionsDelayed(displaySuggestions)}, 150);
+  }, [displaySuggestions]);
+
 
   return (
     <View style={{
@@ -395,22 +419,46 @@ export default function ChatWindow(props : ChatWindowProps) {
           paddingHorizontal: 0,
           // paddingVertical: 24,
         }}>
-          <ScrollViewBottomStick
-            // ref={scrollViewRef}
-            // onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-            // style={{
-            //   flex: 5,
-            // }}
-            showsVerticalScrollIndicator={false}
-          >
-            {newChat.map((v_2 : ChatEntry, k_2 : number) => (
-              <ChatBubble key={k_2} origin={v_2.origin} input={v_2.content_raw_string}/>
-            ))}
-            {/* {temporaryBotEntry && (
-              <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
-            )} */}
-          </ScrollViewBottomStick>
+          {(!displaySuggestionsDelayed) && (
 
+            <Animated.View style={{
+              flex: 5,
+              opacity: opacityChatWindow
+            }}>
+              <ScrollViewBottomStick
+                showsVerticalScrollIndicator={false}
+                animateScroll={animateScroll}
+              >
+                {newChat.map((v_2 : ChatEntry, k_2 : number) => (
+                  <ChatBubble key={k_2} origin={v_2.origin} input={v_2.content_raw_string}/>
+                ))}
+                {/* {temporaryBotEntry && (
+                  <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
+                )} */}
+              </ScrollViewBottomStick>
+            </Animated.View>
+          )}
+          {(displaySuggestionsDelayed) && (
+            <Animated.View style={{
+              flex: 5,
+              opacity: opacitySuggestions
+            }}>
+              <View style={{
+                height: '100%',
+                width: '100%',
+                flexDirection: 'column',
+                justifyContent: 'flex-end'
+              }}>
+                <ChatWindowSuggestions
+                  onSelectSuggestion={(newInput : string) => {
+                    setDisplaySuggestions(false);
+                    sse_fetch(newInput);
+                    // setDefaultInput(newInput);
+                  }}
+                />
+              </View>
+            </Animated.View>
+          )}
           
 
           <View id="InputBox" style={{
@@ -478,7 +526,6 @@ export default function ChatWindow(props : ChatWindowProps) {
                   onMessageSend={onMessageSend}
                 />
               )
-
             })}
             
             
@@ -502,8 +549,6 @@ export default function ChatWindow(props : ChatWindowProps) {
               </Text>
             )}
           </View> 
-              
-            
         </View>
       </View>
       <StatusBar style="auto" />

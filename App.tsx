@@ -39,7 +39,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import testTextMate from './src/tests/testTextMate';
 import MarkdownTestPage from './src/markdown/MarkdownTestPage';
 import LoginPage from './src/pages/LoginPage';
-
+import CreateCollectionPage from './src/pages/CreateCollectionPage';
+import EditCollection from './src/pages/EditCollection';
+import OrganizationManager from './src/pages/OrganizationManager';
 
 function HomeScreen({ navigation }) {
   return (
@@ -96,11 +98,13 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
+type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage" | "EditCollection" | "OrganizationManager";
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  memberships: object[],
+  is_admin: boolean
 };
 
 type AppWebPageProps = {
@@ -111,22 +115,70 @@ type AppWebPageProps = {
   setPageNavigate: React.Dispatch<React.SetStateAction<pageID>>,
   userData: userDataType,
   setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
+  pageNavigateArguments: any,
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
+  refreshSidePanel: string[],
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 function AppWebPage(props : AppWebPageProps) {
   switch(props.page) {
     case 'ChatWindow':
       return (
-        <ChatWindow toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate} userData={props.userData}/>
+        <ChatWindow 
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened} 
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData} 
+          pageNavigateArguments={props.pageNavigateArguments}
+          setRefreshSidePanel={props.setRefreshSidePanel}
+        />
       );
     case 'MarkdownTestPage':
       return (
-        <MarkdownTestPage toggleSideBar={props.toggleSideBarOpened} sidebarOpened={props.sidebarOpened} setPageNavigate={props.setPageNavigate}/>
+        <MarkdownTestPage 
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened} 
+          setPageNavigate={props.setPageNavigate}
+        />
       );
     case 'LoginPage':
       return (
-        <LoginPage setPageNavigate={props.setPageNavigate} setUserData={props.setUserData}/>
+        <LoginPage 
+          setPageNavigate={props.setPageNavigate} 
+          setUserData={props.setUserData}
+        />
       );
+    case 'CreateCollectionPage':
+      return (
+        <CreateCollectionPage 
+          pageNavigateArguments={props.pageNavigateArguments}
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData}
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
+          setRefreshSidePanel={props.setRefreshSidePanel}
+        />
+      );
+    case 'EditCollection':
+      return (
+        <EditCollection
+          setPageNavigate={props.setPageNavigate} 
+          userData={props.userData} 
+          pageNavigateArguments={props.pageNavigateArguments}
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
+          setRefreshSidePanel={props.setRefreshSidePanel}
+        />
+      );
+    case 'OrganizationManager':
+      return (
+        <OrganizationManager
+          toggleSideBar={props.toggleSideBarOpened} 
+          sidebarOpened={props.sidebarOpened}
+        />
+      );
+
   }
 }
 
@@ -136,10 +188,11 @@ function AppWeb() {
   const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
   const [userData, setUserData] = useState<userDataType>();
   const transitionOpacity = useRef(new Animated.Value(1)).current;
-  
   const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
-  
+  const [pageNavigateArguments, setPageNavigateArguments] = useState("");
+  const [refreshSidePanel, setRefreshSidePanel] = useState([]);
+
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
   const toggle_sidebar = () => {
     setSidebarOpened(sidebarOpened => !sidebarOpened);
@@ -194,20 +247,29 @@ function AppWeb() {
         height: "100vh",
         backgroundColor: "#23232D",
       }}>
-        <Animated.View style={{elevation: sidebarOpened?1:0,}}>
-          <Animated.View
-            style={{
-              width: sidebarWidth,
-            }}
-            >
-            {(sidebarWidth) && (
-              <View style={{width: 320}}>
-                <Sidebar toggleSideBar={toggle_sidebar}/>
-              </View>
-
-            )}
+        {(userData !== undefined) && (
+          <Animated.View style={{elevation: sidebarOpened?1:0,}}>
+            <Animated.View
+              style={{
+                width: sidebarWidth,
+              }}
+              >
+              {(sidebarWidth) && (
+                <View style={{width: 320}}>
+                  <Sidebar 
+                    toggleSideBar={toggle_sidebar} 
+                    userData={userData} 
+                    setPageNavigate={setPageNavigate} 
+                    setPageNavigateArguments={setPageNavigateArguments}
+                    refreshSidePanel={refreshSidePanel}
+                    setRefreshSidePanel={setRefreshSidePanel}
+                    pageNavigateArguments={pageNavigateArguments}
+                  />
+                </View>
+              )}
+            </Animated.View>
           </Animated.View>
-        </Animated.View>
+        )}
 
         <View style={{flex: 1, height: "100vh", backgroundColor: '#23232D'}}>
           <Animated.View style={{height: '100%', width: '100%', opacity: transitionOpacity}}>
@@ -219,6 +281,9 @@ function AppWeb() {
               setPageNavigate={setPageNavigate}
               setUserData={setUserData}
               userData={userData}
+              pageNavigateArguments={pageNavigateArguments}
+              setPageNavigateArguments={setPageNavigateArguments}
+              setRefreshSidePanel={setRefreshSidePanel}
             />
           </Animated.View>
         </View>

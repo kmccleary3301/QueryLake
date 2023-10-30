@@ -16,6 +16,8 @@ type AnimatedPressableProps = {
   children: ReactNode,
 	hoverColor?: string,
   pressColor?: string,
+  onHover?: (hovering : boolean) => void,
+  invert?: boolean,
 }
 
 export default function AnimatedPressable(props: AnimatedPressableProps) {
@@ -23,20 +25,13 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
   const [pressed, setPressed] = useState(false);
   // const anim = useMemo(() => new Animated.Value(0), [color]);
 
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
-
-	// const selectionCircleSize = new Animated.Value(0);
+  const invert = (props.invert)?props.invert:false;
 
 	const hoverOpacity = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
-	// const collapseIconRotation = useRef(new Animated.Value(0)).current;
-
+	
   useEffect(() => {
     Animated.timing(hoverOpacity, {
-      toValue: pressed?0.3:(hover?0.5:1),
+      toValue: (invert)?(pressed?0.3:(hover?0.2:0)):(pressed?0.3:(hover?0.5:1)),
       duration: 100,
 			easing: Easing.elastic(0),
       useNativeDriver: false,
@@ -46,7 +41,7 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
 
   useEffect(() => {
     Animated.timing(hoverOpacity, {
-      toValue: hover?0.5:1,
+      toValue: (invert)?(hover?0.2:0):(hover?0.5:1),
       duration: 100,
 			easing: Easing.elastic(0),
       useNativeDriver: false,
@@ -56,11 +51,13 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
   const handleDragOver = (event: any) => {
     setHover(true);
     event.preventDefault();
+    if (props.onHover) { props.onHover(true); }
   };
 
   const handleDragEnd = (event: any) => {
     setHover(false);
     event.preventDefault();
+    if (props.onHover) { props.onHover(false); }
   };
 
 	return (

@@ -9,12 +9,15 @@ import TestUploadBox from './TestUploadBox';
 // import SwitchSelector from "react-native-switch-selector";
 import SwitchSelector from '../lib/react-native-switch-selector';
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import SidebarColectionSelect from './SidebarCollectionSelect';
 import AnimatedPressable from './AnimatedPressable';
+import SidebarChatHistory from './SidebarChatHistory';
+import getChatHistory from '../hooks/getChatHistory';
+import getUserCollections from '../hooks/getUserCollections';
 
 type selectedState = [
 	selected: boolean,
@@ -30,52 +33,23 @@ type collectionGroup = {
 
 
 
-const test_collections = [
-	{
-		"title": "Test Collectionsajdhfkshdkfhskd",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 55
-	},
-	{
-		"title": "Test Collection",
-		"items": 555
-	},
-	{
-		"title": "Test Collection sdfasdfasdfsf",
-		"items": 5555
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-	{
-		"title": "Test Collection",
-		"items": 5
-	},
-];
+type userDataType = {
+  username: string,
+  password_pre_hash: string,
+  memberships: object[],
+  is_admin: boolean
+};
 
 type SidebarProps = {
   toggleSideBar?: () => void,
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void, 
+  userData: userDataType,
+  setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
+  navigation?: any,
+  pageNavigateArguments: string,
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
+  refreshSidePanel: string[],
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
   // sidebarOpened?: boolean,
 }
 
@@ -84,49 +58,41 @@ type panelModeType = "collections" | "history" | "tools";
 export default function Sidebar(props: SidebarProps) {
   // console.log(props);
 	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
+  const [chatHistory, setChatHistory] = useState([]);
+	const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
-	let toggleSelections: selectedState[] = [];
-	for (let i = 0; i < test_collections.length; i++) {
-		toggleSelections.push(useState(false));
-	}
+  const timeWindows = [
+    {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
+    {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
+    {title: "Past Week", cutoff: 7*24*3600, entries: []},
+    {title: "Past Month", cutoff: 30*24*3600, entries: []},
+  ];
 
-	let CollectionGroups : collectionGroup[] = [
-		{
-			title: "My Collections",
-			toggleSelections: [],
-			selected: useState(false),
-			collections: test_collections,
-		},
-		{
-			title: "Added Collections",
-			toggleSelections: [],
-			selected: useState(false),
-			collections: test_collections,
-		}
-	];
-
-	const reloadCollectionGroup = (group_key : number) => {
-		CollectionGroups[group_key].toggleSelections = [];
-		for (let i = 0; i < CollectionGroups[group_key].collections.length; i++) {
-			CollectionGroups[group_key].toggleSelections.push(useState(false));
-		} 
-	};
-
-	for (let i = 0; i < CollectionGroups.length; i++) {
-		reloadCollectionGroup(i);
-	}
-
-	const [myCollectionsSelected, setMyCollectionsSelected] = useState(false);
+  useEffect(() => {
+    let chat_history_grabbed = false;
+    let collections_grabbed = false;
+    if (chatHistory.length == 0) {
+      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+      chat_history_grabbed = true;
+    }
+    if (collectionGroups.length == 0) {
+      getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+      collections_grabbed = true;
+    }
+    for (let i = 0; i < props.refreshSidePanel.length; i++) {
+      if (!chat_history_grabbed && props.refreshSidePanel[i] === "chat-history") {
+        getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+        chat_history_grabbed = true;
+      } else if (!collections_grabbed && props.refreshSidePanel[i] === "collections") {
+        getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
+        collections_grabbed = true;
+      }
+    }
+  }, [props.refreshSidePanel, props.userData]);
 
   const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
     if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
   };
-
-	const changePanelMode = (new_mode : string) => {
-		setPanelMode(new_mode);
-		// Fill this out with fetch functionality for
-		// user collections, user history, and toolchains.
-	};
 
 	const icons = {
 		aperture: require('../../assets/aperture.svg'),
@@ -182,6 +148,7 @@ export default function Sidebar(props: SidebarProps) {
               width={"100%"}
               onPress={(value : string) => {
                 setPanelMode(value);
+                props.setRefreshSidePanel(!props.refreshSidePanel);
                 console.log(value);
               }}
               textColor={'#000000'} //'#7a44cf'
@@ -206,7 +173,29 @@ export default function Sidebar(props: SidebarProps) {
               accessibilityLabel="gender-switch-selector"
             />
           </View>
-          <SidebarColectionSelect onChangeCollections={onChangeCollectionsHook}/>
+          {(panelMode == "collections") && (
+            <SidebarColectionSelect 
+              onChangeCollections={onChangeCollectionsHook} 
+              userData={props.userData} 
+              setPageNavigate={props.setPageNavigate} 
+              navigation={props.navigation}
+              refreshSidePanel={props.refreshSidePanel}
+              setPageNavigateArguments={props.setPageNavigateArguments}
+              collectionGroups={collectionGroups}
+              setCollectionGroups={setCollectionGroups}
+            />
+          )}
+          {(panelMode == "history") && (
+            <SidebarChatHistory 
+              userData={props.userData} 
+              setPageNavigateArguments={props.setPageNavigateArguments} 
+              setPageNavigate={props.setPageNavigate}
+              refreshSidePanel={props.refreshSidePanel}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
+              pageNavigateArguments={props.pageNavigateArguments}
+            />
+          )}
         </View>
         <View style={{
           flexDirection: "column", 
@@ -224,12 +213,14 @@ export default function Sidebar(props: SidebarProps) {
               {"Model Settings"}
             </Text>
           </AnimatedPressable>
-          <AnimatedPressable>
+          <AnimatedPressable onPress={() => {
+            if (props.setPageNavigate) { props.setPageNavigate("OrganizationManager"); }
+          }}>
             <Text style={{
               fontSize: 16,
               color: "#E8E3E3",
             }}>
-              {"Manage Collections"}
+              {"Organizations"}
             </Text>
           </AnimatedPressable>
         </View>

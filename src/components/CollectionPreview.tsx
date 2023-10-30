@@ -9,44 +9,24 @@ import {
 // import SwitchSelector from "react-native-switch-selector";
 import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
+import AnimatedPressable from './AnimatedPressable';
 
 type CollectionPreviewProps = {
+  selectedPrior?: boolean,
 	style?: React.CSSProperties,
 	onToggleSelected?: (selected: boolean) => void,
-	selectedState: {
-		selected: boolean,
-		setSelected: React.Dispatch<React.SetStateAction<boolean>>,
-	},
 	title: string,
 	documentCount: number;
+  onPress: () => void,
+  parentSelected: boolean,
+  parentMixedSelection: boolean,
 }
 
 export default function CollectionPreview(props: CollectionPreviewProps) {
-	const [panelMode, setPanelMode] = useState("");
-	// const [opened, setOpened] = useState(true);
-	// const [selected, setSelected] = useState(false);
-	const {selectedState: {selected, setSelected}, title, documentCount} = props;
+  const [selected, setSelected] = useState((props.selectedPrior)?props.selectedPrior:false);
+	const {title, documentCount} = props;
 
-	function changePanelMode(new_mode: string) {
-		setPanelMode(new_mode);
-		// Fill this out with fetch functionality for
-		// user collections, user history, and toolchains.
-	}
-
-	// const AnimatedFeather = Animated.createAnimatedComponent(Feather);
-
-
-	const test_url_pointer = () => {
-		const url = new URL("http://localhost:5000/uploadfile");
-		url.searchParams.append("query", "test test test");
-		return url.toString();
-	};
-
-	// const selectionCircleSize = new Animated.Value(0);
-
-	const selectionCircleSize = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
-	// const collapseIconRotation = useRef(new Animated.Value(0)).current;
-
+	const selectionCircleSize = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(selectionCircleSize, {
@@ -56,6 +36,14 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
       useNativeDriver: false,
     }).start();
   }, [selected]);
+
+  useEffect(() => {
+    if (props.parentSelected) {
+      setSelected(true);
+    } else if (!props.parentMixedSelection) {
+      setSelected(false);
+    }
+  }, [props.parentSelected]);
 
 	return (
 		<View style={{
@@ -67,7 +55,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 			paddingHorizontal: 4,
 			// alignSelf: 'center',
 		}}>
-			<View style={{
+			<AnimatedPressable style={{
 				height: 40,
 				borderRadius: 20,
 				backgroundColor: '#23232D',
@@ -76,24 +64,23 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 				paddingRight: -10,
 				// alignItems: 'center',
 				// justifyContent: 'space-around',
-			}}>
+			}} onPress={props.onPress}>
         <View style={{flex:1, flexDirection: 'row'}}>
           <View style={{flexDirection: 'column', justifyContent: 'center'}}>
             <Pressable style={{
-              width: 21,
-              height: 21,
-              borderRadius: 12,
-              backgroundColor: '#7968D9',
-              alignItems: 'center',
-              justifyContent: 'center',
-              // flexDirection: 'column',
-              // paddingLeft: 1,
-            }}
-            onPress={() => {
-              if (props.onToggleSelected) { props.onToggleSelected(!selected); }
-              setSelected(selected => !selected);
-            }}
-            >
+                width: 21,
+                height: 21,
+                borderRadius: 12,
+                backgroundColor: '#7968D9',
+                alignItems: 'center',
+                justifyContent: 'center',
+                // flexDirection: 'column',
+                // paddingLeft: 1,
+              }}
+              onPress={() => {
+                if (props.onToggleSelected) { props.onToggleSelected(!selected); }
+                setSelected(selected => !selected);
+            }}>
               {/* {selected && ( */}
                 <Animated.View style={{
                   backgroundColor: '#23232D',
@@ -159,7 +146,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 						</View>
 					</View>
 				</View>
-			</View>
+			</AnimatedPressable>
 		</View>
 	);
 }

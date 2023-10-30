@@ -80,7 +80,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   }, [props.sidebarOpened]);
 
   const test_auth_login = () => {
-    const url = new URL("http://localhost:5000/login");
+    const url = new URL("http://localhost:5000/api/login");
     url.searchParams.append("name", "John_5817263");
     url.searchParams.append("password", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
@@ -92,7 +92,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   };
 
   const test_auth_add_account = () => {
-    const url = new URL("http://localhost:5000/create_account");
+    const url = new URL("http://localhost:5000/api/create_account");
     url.searchParams.append("name", "John_5817263");
     url.searchParams.append("password", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
@@ -104,7 +104,7 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
   };
 
   const test_auth_hash = () => {
-    const url = new URL("http://localhost:5000/auth");
+    const url = new URL("http://localhost:5000/api/auth");
     url.searchParams.append("input", "John_5817263");
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
@@ -188,6 +188,40 @@ export default function MarkdownTestPage(props : MarkdownTestPageProps) {
 }
 
 const MARKDOWN_TEST_MESSAGE = `
+# Markdown Table
+
+| Rank | Name of Trust Fund | Value (in billions) | Beneficiaries |
+| --- | --- | --- | --- |
+| 1 | Walton Family Trust | $215 | Walmart heirs |
+| 2 | Koch Family Trust | $120 | Koch Industries heirs |
+| 3 | Mars Family Trust | $100 | Mars candy company heirs |
+| 4 | Cox Enterprises Trust | $90 | Cox Communications, auto dealerships, and media heirs |
+| 5 | Johnson Family Trust | $80 | Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs |
+| 6 | Procter & Gamble Trust | $70 | Procter & Gamble heirs |
+| 7 | Hearst Corporation Trust | $60 | William Randolph Hearst III and family heirs |
+| 8 | Pritzker Family Trust | $55 | Hyatt Hotels, TransUnion, Collier Trophy, and other assets heirs |
+| 9 | Ford Motor Company Trust | $50 | Ford Motor Company heirs |
+| 10 | Getty Family Trust | $45 | J. Paul Getty descendants and beneficiaries |
+`;
+
+const MARKDOWN_TEST_MESSAGE_ALL = `
+# Markdown Table
+
+| Rank | Name of Trust Fund | Value (in billions) | Beneficiaries |
+| --- | --- | --- | --- |
+| 1 | Walton Family Trust | $215 | Walmart heirs |
+| 2 | Koch Family Trust | $120 | Koch Industries heirs |
+| 3 | Mars Family Trust | $100 | Mars candy company heirs |
+| 4 | Cox Enterprises Trust | $90 | Cox Communications, auto dealerships, and media heirs |
+| 5 | Johnson Family Trust | $80 | Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs Fidelity Investments, FMR Corp., and Abigail Johnson heirs |
+| 6 | Procter & Gamble Trust | $70 | Procter & Gamble heirs |
+| 7 | Hearst Corporation Trust | $60 | William Randolph Hearst III and family heirs |
+| 8 | Pritzker Family Trust | $55 | Hyatt Hotels, TransUnion, Collier Trophy, and other assets heirs |
+| 9 | Ford Motor Company Trust | $50 | Ford Motor Company heirs |
+| 10 | Getty Family Trust | $45 | J. Paul Getty descendants and beneficiaries |
+
+
+
 # Heading level 1
 
 This is the first paragraph.
@@ -266,21 +300,6 @@ This is a table:
 | Green Beans | Long, slender pods that are low in calories and rich in vitamins. They can be steamed, stir-fried, or used in casseroles and salads. |
 | Potato | A starchy vegetable available in various varieties. It can be boiled, baked, mashed, or used in soups, fries, and many other dishes. |
 
-This is a mermaid diagram:
-
-\`\`\`mermaid
-gitGraph
-    commit
-    commit
-    branch develop
-    checkout develop
-    commit
-    commit
-    checkout main
-    merge develop
-    commit
-    commit
-\`\`\`
 
 \`\`\`latex
 \\[F(x) = \\int_{a}^{b} f(x) \\, dx\\]
@@ -404,6 +423,8 @@ from langchain import PromptTemplate, LLMChain
 import threading
 import copy
 
+print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
 class LLMEnsemble:
     def __init__(self, default_config, model_class) -> None:
         self.max_instances = 1
@@ -429,5 +450,6 @@ int main()
   return 0;
 }
 \`\`\`
+
 
 `;
