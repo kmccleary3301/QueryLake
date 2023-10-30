@@ -20,6 +20,7 @@ type MarkdownTableProps = {
   rows: textSegment[][],
   bubbleWidth: number,
   maxWidth: number,
+  unProcessedText?: string,
   fontSize?: number,
 }
 
@@ -106,6 +107,8 @@ function MarkdownTable(props : MarkdownTableProps){
   let oldBubbleWidth = 40;
 
   useEffect(() => {
+    let rows_combined_tmp = [props.header, ...props.rows];
+    if (props.unProcessedText) { rows_combined_tmp[rows_combined_tmp.length - 1][rows_combined_tmp[0].length - 1].text += props.unProcessedText; }
     setRowsCombined([props.header, ...props.rows]);
     // console.log("Setting width margins to ", 0.92*props.bubbleWidth/props.header.length);
     columnWidthMarginsDirect = Array(props.header.length).fill(0.92*props.bubbleWidth/props.header.length);

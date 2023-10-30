@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
 
 type ScrollViewBottomStickProps = {
+  animateScroll: boolean,
   showsVerticalScrollIndicator?: boolean,
   style?: object,
   children?: any
@@ -19,7 +20,7 @@ export default function ScrollViewBottomStick(props: ScrollViewBottomStickProps)
         ref={scrollViewRef}
         onContentSizeChange={(contentWidth, contentHeight) => {
           if (stickToBottom) {
-            scrollViewRef.current.scrollTo({y: contentHeight, animated: true});
+            scrollViewRef.current.scrollTo({y: contentHeight, animated: props.animateScroll});
           }
         }}
         scrollEventThrottle={16}

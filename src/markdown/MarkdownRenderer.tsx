@@ -23,6 +23,7 @@ type MarkdownMapComponentProps = {
   token: Token,
   maxWidth: number,
   bubbleWidth: number,
+  unProcessedText: string,
   key?: number,
   padLeft?: boolean,
 }
@@ -132,7 +133,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'code':
       return (
-        <MarkdownCodeBlock text={token.text} lang={token.lang}/>
+        <MarkdownCodeBlock text={token.text} lang={token.lang} unProcessedText={props.unProcessedText}/>
       );
     case 'heading':
       let fontSizeGet = 30 - 3*token.depth;
@@ -164,7 +165,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
               fontFamily: normalTextFont,
               fontSize: defaultFontSize,
               color: '#E8E3E3'
-              }} text={token.text}/>
+              }} text={token.text + props.unProcessedText}/>
           </View>
         );
       }
@@ -182,10 +183,18 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           fontFamily: headingFont,
           fontSize: fontSizeGet,
           color: '#E8E3E3'
-        }} text={token.text}/>
+        }} text={token.text + props.unProcessedText}/>
       );
     case 'table':
-      return (<MarkdownTable bubbleWidth={props.bubbleWidth} maxWidth={props.maxWidth} header={token.header} rows={token.rows}/>);
+      return (
+        <MarkdownTable 
+          bubbleWidth={props.bubbleWidth} 
+          maxWidth={props.maxWidth} 
+          header={token.header} 
+          rows={token.rows}
+          unProcessedText={props.unProcessedText}
+        />
+      );
     case 'hr':
       return (null);
     case 'blockquote':
@@ -196,7 +205,13 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           paddingLeft: 3
         }}>
           {token.items.map((v : Tokens.ListItem, k : number) => (
-            <MarkdownMapComponent bubbleWidth={props.bubbleWidth} maxWidth={props.maxWidth} key={k} token={v}/>
+            <MarkdownMapComponent 
+              bubbleWidth={props.bubbleWidth} 
+              maxWidth={props.maxWidth} 
+              key={k} 
+              token={v}
+              unProcessedText={(k === token.items.length-1)?props.unProcessedText:""}
+            />
           ))}
         </View>
       );
@@ -220,7 +235,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
-            }} text={token.text}/>
+            }} text={token.text + props.unProcessedText}/>
         </View>
       );
     case 'paragraph':
@@ -234,7 +249,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
-            }} text={token.text}/>
+            }} text={token.text + props.unProcessedText}/>
         </View>
       );
     case 'html':
@@ -250,7 +265,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
-            }} text={token.text}/>
+            }} text={token.text + props.unProcessedText}/>
         </View>
       );
     default:
@@ -267,16 +282,22 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
   // const [maxWidth, setMaxWidth] = useState(40);
   const [bubbleWidth, setBubbleWidth] = useState(10);
+  // const [oldTextLength, setOldTextLength] = useState(0);
+  const [unprocessedText, setUnprocessedText] = useState("");
+  const [oldInputLength, setOldInputLength] = useState(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
+
   
   const { input } = props;
   const transparentDisplay = (props.transparentDisplay)?props.transparentDisplay:false;
   let oldTextLength = 0;
   let textIndexActiveMarkdownSegment = 0;
   let markdownSegmentAddresses = [];
-  let textUpdating = false;
+  let textUpdating = true;
   let old_string_hash = 0;
   const lexer = new marked.Lexer();
 
+  const reRenderInterval = 250; // 250 milliseconds
 
   useEffect(() => {
     console.log("Bubble width:", bubbleWidth);
@@ -287,6 +308,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
     // if (input.length === oldTextLength) {
     //   return;
     // }
+    // textUpdating = true;
     
     // let lexed_input = lexer.lex(input);
     // // console.log(lexed_input);
@@ -296,38 +318,57 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
       textUpdating = false;
       return;
     }
-    if (markdownTokens.length === 0) {
+    if (markdownTokens.length === 0 || (textUpdating && (Date.now() - lastUpdateTime > reRenderInterval))) {
       let lexed_input = lexer.lex(sanitizeMarkdown(input));
       // console.log("LEXING");
       // console.log(input);
       // console.log(sanitizeMarkdown(input));
       // console.log(lexed_input)
       setMarkdownTokens(lexed_input);
+      let lastTokenContentGrab = "";
+      if (lexed_input[lexed_input.length - 1].hasOwnProperty('text')) { lastTokenContentGrab = lexed_input[lexed_input.length - 1].text; }
+      else { lastTokenContentGrab = lexed_input[lexed_input.length - 1].raw; }
       old_string_hash = stringHash(input);
+      setLastUpdateTime(Date.now());
+      setOldInputLength(input.length);
+      setUnprocessedText("");
     } else {
       textUpdating = true;
-      let lexed_input = markdownTokens;
-      if (lexed_input[lexed_input.length-1].text) {
-        lexed_input[lexed_input.length-1].text += input.slice(oldTextLength, input.length);
-      } else {
-        lexed_input[lexed_input.length-1].raw += input.slice(oldTextLength, input.length);
-      }
-      setMarkdownTokens(lexed_input);
+      setUnprocessedText(input.slice(oldInputLength));
     }
   }, [input]);
 
-  setInterval(() => {
-    if (textUpdating) {
-      // let new_string_hash = stringHash(input);
-      let lexed_input = lexer.lex(sanitizeMarkdown(input));
-      // console.log("LEXING");
-      // console.log(input);
-      // console.log(lexed_input);
-      setMarkdownTokens(lexed_input);
-      textUpdating = false;
-      oldTextLength = input.length;
-    }
-  }, 250);
+  // if (!intervalIsSet) {
+
+  //   setIntervalIsSet(true);
+  // }
+  // const refreshMarkdown = () => {
+  //   if (textUpdating) {
+  //     // let new_string_hash = stringHash(input);
+  //     console.log("Update");
+  //     let lexed_input = lexer.lex(sanitizeMarkdown(input));
+  //     // console.log("LEXING");
+  //     // console.log(input);
+  //     // console.log(lexed_input);
+  //     setMarkdownTokens(lexed_input);
+  //     textUpdating = false;
+  //     // oldTextLength = input.length;
+  //     // setLastToken(undefined);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   console.log("Setting Interval");
+
+  //   setInterval(() => {
+  //     console.log("Interval called");
+  //     refreshMarkdown();
+  //   }, 250);
+  // }, []);
+
+  // useEffect(() => {
+  //   console.log("Change detected:", markdownTokens[markdownTokens.length-1]);
+  // }, markdownTokens);
 
 
   // const getMarkdownText = (input_text : string) => {
@@ -337,8 +378,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   // }
 
   return (
-    <View
-    >
+    <View>
       <View style={{
         maxWidth: "60vw",
         minWidth: 40,
@@ -364,7 +404,12 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
           }}
         >
           {markdownTokens.map((v : Token, k : number) => (
-            <MarkdownMapComponent bubbleWidth={bubbleWidth} maxWidth={props.maxWidth} key={k} token={v}/>
+            <MarkdownMapComponent 
+              key={k} 
+              bubbleWidth={bubbleWidth} 
+              maxWidth={props.maxWidth} 
+              token={v} 
+              unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}/>
           ))}
         </View>
       </View>

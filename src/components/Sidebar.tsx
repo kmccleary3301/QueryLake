@@ -46,6 +46,7 @@ type SidebarProps = {
   userData: userDataType,
   setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
+  pageNavigateArguments: string,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
   setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
@@ -192,6 +193,7 @@ export default function Sidebar(props: SidebarProps) {
               refreshSidePanel={props.refreshSidePanel}
               chatHistory={chatHistory}
               setChatHistory={setChatHistory}
+              pageNavigateArguments={props.pageNavigateArguments}
             />
           )}
         </View>

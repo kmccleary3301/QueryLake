@@ -263,6 +263,7 @@ function AppWeb() {
                     setPageNavigateArguments={setPageNavigateArguments}
                     refreshSidePanel={refreshSidePanel}
                     setRefreshSidePanel={setRefreshSidePanel}
+                    pageNavigateArguments={pageNavigateArguments}
                   />
                 </View>
               )}

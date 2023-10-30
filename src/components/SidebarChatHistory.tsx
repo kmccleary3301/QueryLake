@@ -48,6 +48,7 @@ type SidebarChatHistoryProps = {
   userData: userDataType,
   setPageNavigate?: React.Dispatch<React.SetStateAction<string>>,
   navigation?: any,
+  pageNavigateArguments: string,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
   chatHistory: timeWindowType[],
@@ -106,8 +107,11 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
             alignItems: 'center',
             justifyContent: 'center'}}
             onPress={() => {
-              props.setPageNavigateArguments("");
-              props.setPageNavigateArguments("NEW");
+              if (props.pageNavigateArguments === "NEW") {
+                props.setPageNavigateArguments(" NEW");
+              } else {
+                props.setPageNavigateArguments("NEW");
+              }
               if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
               if (props.navigation) { props.navigation.navigate("ChatWindow"); }
             }}>

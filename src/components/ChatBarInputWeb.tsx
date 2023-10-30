@@ -28,6 +28,9 @@ export default function ChatBarInputWeb(props: ChatBarInputProps) {
 
   const [inputLineCount, setInputLineCount] = useState(1);
   
+  // useEffect(() => {
+  //   setInputText(props.defaultString);
+  // }, [props.defaultString]);
 
   const log_key_press = (e: {
     nativeEvent: { key: string; shiftKey: boolean };

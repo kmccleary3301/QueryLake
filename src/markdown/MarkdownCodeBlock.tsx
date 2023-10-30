@@ -10,6 +10,7 @@ import { defaultHTMLElementModels, RenderHTML } from "react-native-render-html";
 
 type MarkdownCodeBlockProps = {
   text : string,
+  unProcessedText: string,
   lang?: string,
 }
 
@@ -145,26 +146,49 @@ const code_styling={
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   const fontSize = 14;
   const [highlights, setHighlights] = useState<scoped_text[][]>([]);
-  let textUpdating = false;
-  let oldTextLength = 0;
-  let [unprocessedText, setUnprocessedText] = useState([""]);
+  // let textUpdating = false;
+  // let oldTextLength = 0;
+  const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
+  const [oldInputLength, setOldInputLength] = useState(0);
+  const [rawCode, setRawCode] = useState(props.text+props.unProcessedText);
+  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
+
+  const refreshInterval = 250; // In milliseconds
 
   useEffect(() => {
-    setUnprocessedText(props.text.slice(oldTextLength).split("\n"));
-    textUpdating = true;
-  }, [props.text]);
+    let raw_code = props.text+props.unProcessedText;
+    setRawCode(raw_code);
+    let unprocessed_text = raw_code.slice(oldInputLength);
+    
+    // setUnprocessedText(props.text.slice(oldTextLength).split("\n"));
+    // textUpdating = true;
+    
+    if (oldInputLength === 0 || (Date.now() - lastRefreshTime) > refreshInterval) {
+      
+      
 
-  setInterval(() => {
-    if (textUpdating) {
-      let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(props.text);
+      let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code);
       let scope_tree = parseScopeTreeText(highlights_get.value);
       // console.log("HIGHLIGHTING");
       setHighlights(scope_tree);
-      oldTextLength = props.text.length;
-      textUpdating = false;
-      setUnprocessedText([]);
+      setLastRefreshTime(Date.now());
+      setOldInputLength(raw_code.length);
+    } else {
+      setUnprocessedText(unprocessed_text.split("\n"));
     }
-  }, 500);
+  }, [props.text, props.unProcessedText]);
+
+  // setInterval(() => {
+  //   if (textUpdating) {
+  //     let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(props.text);
+  //     let scope_tree = parseScopeTreeText(highlights_get.value);
+  //     // console.log("HIGHLIGHTING");
+  //     setHighlights(scope_tree);
+  //     oldTextLength = props.text.length;
+  //     textUpdating = false;
+  //     setUnprocessedText([]);
+  //   }
+  // }, 500);
 
   return (
     <View style={{paddingVertical: 20, paddingHorizontal: 10}}>
@@ -207,7 +231,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           ))}
         </View>
       ))}
-      {unprocessedText.slice(0, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
+      {unprocessedText.slice(1, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
         <View key={line_number} style={{
           flexDirection: 'row',
           flexShrink: 1,

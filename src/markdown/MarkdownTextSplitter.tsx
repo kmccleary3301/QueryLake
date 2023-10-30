@@ -102,34 +102,10 @@ type textSegment = {
 
 export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
   const [textSplit, setTextSplit] = useState<textSegment[]>([]);
-  let textUpdating = false;
-  let oldTextLength = 0;
-  let [unprocessedText, setUnprocessedText] = useState("");
   useEffect(() => {
     let string_segments = parseText(props.text);
     setTextSplit(string_segments);
   }, [props.text]);
-
-  // useEffect(() => {
-  //   if (textSplit.length === 0) {
-  //     let string_segments = parseText(props.text);
-  //     setTextSplit(string_segments);
-  //   } else {
-  //     setUnprocessedText(props.text.slice(oldTextLength));
-  //     textUpdating = true;
-  //   }
-  // }, [props.text]);
-
-  // setInterval(() => {
-  //   if (textUpdating) {
-  //     let string_segments = parseText(props.text);
-  //     setTextSplit(string_segments);
-  //     oldTextLength = props.text.length;
-  //     textUpdating = false;
-  //     setUnprocessedText("");
-  //   }
-  // }, 250);
-
   return (
     <Text selectable={true} style={(props.style)?props.style:{}}>
       {textSplit.map((v : textSegment, k : number) => (
