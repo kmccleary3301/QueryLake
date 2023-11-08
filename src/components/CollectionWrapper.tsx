@@ -26,7 +26,9 @@ type CollectionWrapperProps = {
 	title: string,
   collections: collectionType[],
   setPageNavigate: React.Dispatch<React.SetStateAction<string>>,
-  setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>
+  setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
+  setCollectionSelected: (collection_hash_id : string, value : boolean) => void,
+  collectionSelected: object
 }
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
@@ -35,7 +37,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	// const [viewScrollable, setViewScrollable] = useState(false);
 	
 	const [selected, setSelected] = useState(false);
-  const [mixedSelection, setMixedSelection] = useState(false);
+  const [mixedSelection, setMixedSelection] = useState(true);
 	const {children, title} = props;
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
@@ -126,8 +128,10 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					}}
 					onPress={() => {
             setMixedSelection(false);
+            for (let i = 0; i < props.collections.length; i++) {
+              props.setCollectionSelected(props.collections[i].hash_id, !selected);
+            }
 						setSelected(selected => !selected);
-            
 						// if (props.onToggleSelected) { props.onToggleSelected(!selected); }
 					}}
 					>
@@ -190,6 +194,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
               title={value.title} 
               documentCount={value.items} 
               onToggleSelected={(collection_selected: boolean) => {
+                props.setCollectionSelected(value.hash_id, collection_selected);
                 if (selected && !collection_selected) {
                   // selected_values[index][1](false);
                   setMixedSelection(true);
@@ -204,6 +209,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
                 props.setPageNavigateArguments("collection-"+value.type+"-"+value.hash_id);
                 props.setPageNavigate("EditCollection");
               }}
+              selectedPrior={props.collectionSelected[value.hash_id]}
             />
           </View>
         ))}

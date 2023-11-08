@@ -173,6 +173,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       setHighlights(scope_tree);
       setLastRefreshTime(Date.now());
       setOldInputLength(raw_code.length);
+      setUnprocessedText([]);
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
@@ -218,7 +219,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
                 {token_seg.content}
               </Text>
 
-              {(line_number === highlights.length-1 && token_number === line.length -1) && (
+              {(line_number === highlights.length-1 && token_number === line.length -1 && unprocessedText.length > 0) && (
                 <Text style={{
                   color: code_styling["default"],
                   fontFamily: 'Consolas',

@@ -45,9 +45,11 @@ type SidebarCollectionSelectProps = {
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
   collectionGroups: collectionGroup[],
   setCollectionGroups: React.Dispatch<React.SetStateAction<collectionGroup[]>>,
+  setCollectionSelected: (collection_hash_id : string, value : boolean) => void,
+  selectedCollections: object
 }
 
-export default function SidebarColectionSelect(props: SidebarCollectionSelectProps) {
+export default function SidebarCollectionSelect(props: SidebarCollectionSelectProps) {
   // const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
   // useEffect(() => {
@@ -83,7 +85,7 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
         width: '100%',
         // paddingVertical: 10,
         paddingHorizontal: 22,
-        paddingTop: 10,
+        paddingTop: 0,
         paddingBottom: 10,
         
       }}>
@@ -131,6 +133,8 @@ export default function SidebarColectionSelect(props: SidebarCollectionSelectPro
               collections={v.collections}
               setPageNavigate={props.setPageNavigate}
               setPageNavigateArguments={props.setPageNavigateArguments}
+              setCollectionSelected={props.setCollectionSelected}
+              collectionSelected={props.selectedCollections}
             >
               {/* {CollectionGroups[k].collections.map((v_2, k_2) => (
                 <CollectionPreview key={k_2}

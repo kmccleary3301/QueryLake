@@ -24,6 +24,12 @@ type CollectionPreviewProps = {
 
 export default function CollectionPreview(props: CollectionPreviewProps) {
   const [selected, setSelected] = useState((props.selectedPrior)?props.selectedPrior:false);
+
+
+  useEffect(()=>{
+    if (props.selectedPrior)
+      setSelected(props.selectedPrior);
+  }, [props.selectedPrior])
 	const {title, documentCount} = props;
 
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
@@ -40,7 +46,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
   useEffect(() => {
     if (props.parentSelected) {
       setSelected(true);
-    } else if (!props.parentMixedSelection) {
+    } else if (!props.parentMixedSelection && !props.parentMixedSelection) {
       setSelected(false);
     }
   }, [props.parentSelected]);

@@ -92,11 +92,11 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
       <ScrollView style={{
           width: '100%',
           paddingHorizontal: 22,
-          paddingTop: 10,
+          paddingTop: 0,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{paddingVertical: 10}}>
+        <View style={{paddingBottom: 10}}>
           <AnimatedPressable style={{
             width: '100%',
             backgroundColor: '#39393C',

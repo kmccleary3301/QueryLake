@@ -13,7 +13,7 @@ import { useState, useEffect } from 'react';
 import CollectionWrapper from './CollectionWrapper';
 import CollectionPreview from './CollectionPreview';
 import { useDrawerStatus } from '@react-navigation/drawer';
-import SidebarColectionSelect from './SidebarCollectionSelect';
+import SidebarCollectionSelect from './SidebarCollectionSelect';
 import AnimatedPressable from './AnimatedPressable';
 import SidebarChatHistory from './SidebarChatHistory';
 import getChatHistory from '../hooks/getChatHistory';
@@ -49,7 +49,9 @@ type SidebarProps = {
   pageNavigateArguments: string,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
-  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>,
+  setSelectedCollections: React.Dispatch<React.SetStateAction<object>>,
+  selectedCollections: object
   // sidebarOpened?: boolean,
 }
 
@@ -90,6 +92,16 @@ export default function Sidebar(props: SidebarProps) {
     }
   }, [props.refreshSidePanel, props.userData]);
 
+  useEffect(() => {
+    let new_selections_state = {};
+    for (let i = 0; i < collectionGroups.length; i++) {
+      for (let j = 0; j < collectionGroups[i].collections.length; j++) {
+        new_selections_state[collectionGroups[i].collections[j]["hash_id"]] = false; //Change to false
+      }
+    }
+    props.setSelectedCollections(new_selections_state);
+  }, [collectionGroups]);
+
   const onChangeCollectionsHook = (collectionGroups: collectionGroup[]) => {
     if (props.onChangeCollections) { props.onChangeCollections(collectionGroups); }
   };
@@ -100,7 +112,10 @@ export default function Sidebar(props: SidebarProps) {
 		folder: require('../../assets/folder.svg')
 	};
 
-	
+	const setCollectionSelected = (collection_hash_id : string, value : boolean) => {
+    props.setSelectedCollections((prevState) => ({ ...prevState, [collection_hash_id]: value}));
+    console.log(props.selectedCollections);
+  };
 
 	return (
     <View {...props} style={{height: '100vh'}}>
@@ -142,6 +157,7 @@ export default function Sidebar(props: SidebarProps) {
             width: '100%',
             paddingHorizontal: 22,
             // alignSelf: 'center'
+            paddingBottom: 10,
           }}>
             <SwitchSelector
               initial={0}
@@ -174,7 +190,7 @@ export default function Sidebar(props: SidebarProps) {
             />
           </View>
           {(panelMode == "collections") && (
-            <SidebarColectionSelect 
+            <SidebarCollectionSelect 
               onChangeCollections={onChangeCollectionsHook} 
               userData={props.userData} 
               setPageNavigate={props.setPageNavigate} 
@@ -183,6 +199,9 @@ export default function Sidebar(props: SidebarProps) {
               setPageNavigateArguments={props.setPageNavigateArguments}
               collectionGroups={collectionGroups}
               setCollectionGroups={setCollectionGroups}
+              setCollectionSelected={setCollectionSelected}
+              selectedCollections={props.selectedCollections
+              }
             />
           )}
           {(panelMode == "history") && (

@@ -254,12 +254,33 @@ export default function EditCollection(props : EditCollectionProps) {
   };
 
   const openDocument = (hash_id : string) => {
-    const url = craftUrl("http://localhost:5000/api/async/fetch_document", {
+
+    const url_doc_access = craftUrl("http://localhost:5000/api/craft_document_access_token", {
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "hash_id": hash_id
     });
-    Linking.openURL(url.toString());
+    fetch(url_doc_access, {method: "POST"}).then((response) => {
+      console.log(response);
+      response.json().then((data) => {
+        if (data["success"] == false) {
+          console.error("Document Delete Failed", data["note"]);
+          return;
+        }
+        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data["result"][0], {
+          "auth_access": data["result"][1]
+        })
+        Linking.openURL(url_actual.toString());
+        // setUploadFiles([...uploadFiles.slice(0, upload_file_index), ...uploadFiles.slice(upload_file_index+1, uploadFiles.length)]);
+      });
+    });
+
+    // const url = craftUrl("http://localhost:5000/api/async/fetch_document", {
+    //   "username": props.userData.username,
+    //   "password_prehash": props.userData.password_pre_hash,
+    //   "hash_id": hash_id
+    // });
+    // Linking.openURL(url.toString());
   }
 
   const translateSidebarButton = useRef(new Animated.Value(0)).current;

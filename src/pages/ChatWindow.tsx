@@ -30,6 +30,7 @@ import AnimatedPressable from "../components/AnimatedPressable";
 import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
 import craftUrl from "../hooks/craftUrl";
 import ChatWindowSuggestions from "../components/ChatWindowSuggestions";
+import generateSearchQuery from "../hooks/generateSearchQuery";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -42,10 +43,29 @@ type ChatContentExcerpt = string | CodeSegment;
 
 type ChatContent = ChatContentExcerpt[];
 
+type sourceMetadata = {
+  metadata: {
+    "type": "pdf"
+    "collection_type": "user" | "organization" | "global",
+    "document_id": string,
+    "document": string,
+    "document_name": string,
+    "location_link_chrome": string,
+    "location_link_firefox": string,
+  } | {
+    "type": "web"
+    "url": string, 
+    "document": string,
+    "document_name": string
+  },
+  img?: any
+};
+
 type ChatEntry = {
   origin: ("user" | "server"),
   // content_392098: ChatContent,
   content_raw_string: string,
+  sources?: sourceMetadata[],
 };
 
 type userDataType = {
@@ -59,7 +79,8 @@ type ChatWindowProps = {
   sidebarOpened: boolean,
   userData: userDataType,
   pageNavigateArguments: any,
-  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>,
+  selectedCollections: object
 }
 
 function hexToUtf8(s : string)
@@ -86,19 +107,28 @@ export default function ChatWindow(props : ChatWindowProps) {
     console.log("PageNavigateChanged");
     const navigate_args = props.pageNavigateArguments.split("-");
     if (props.pageNavigateArguments.length > 0 && navigate_args[0] === "chatSession") {
-      setAnimateScroll(false);
-      setNewChat([]);
       setDisplaySuggestions(false);
       setDisplaySuggestionsDelayed(false);
-      setSessionHash(navigate_args[1]);
-      const url = craftUrl("http://localhost:5000/api/fetch_session", {
-        "username": props.userData.username,
-        "password_prehash": props.userData.password_pre_hash,
-        "hash_id": navigate_args[1],
-      });
-      fetch(url, {method: "POST"}).then((response) => {
-        console.log(response);
-        response.json().then((data) => {
+      Animated.timing(opacityChatWindow, {
+        toValue: 0,
+        // toValue: opened?Math.min(300,(children.length*50+60)):50,
+        duration: 150,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+      
+      setTimeout(() => {
+        setAnimateScroll(false);
+        setNewChat([]);
+        setSessionHash(navigate_args[1]);
+        const url = craftUrl("http://localhost:5000/api/fetch_session", {
+          "username": props.userData.username,
+          "password_prehash": props.userData.password_pre_hash,
+          "hash_id": navigate_args[1],
+        });
+        fetch(url, {method: "POST"}).then((response) => {
+          console.log(response);
+          response.json().then((data) => {
             if (!data["success"]) {
               console.error("Failed to retrieve session");
               return;
@@ -106,17 +136,41 @@ export default function ChatWindow(props : ChatWindowProps) {
             console.log(data);
             let new_entries : ChatEntry[] = [];
             for (let i = 0; i < data.result.length; i++) {
-              new_entries.push({
-                content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
-                origin: (data.result[i].type === "user")?"user":"server"
-              });
+              console.log("Pushing response", data.result[i]);
+              if (data.result[i].sources) {
+                // let sources_tmp = data.result[i].sources.map((value) => { metadata: value});
+                console.log("Got sources:", data.result[i].sources);
+                new_entries.push({
+                  content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                  origin: (data.result[i].type === "user")?"user":"server",
+                  sources: data.result[i].sources
+                }); //Add sources if they were provided
+              } else {
+                new_entries.push({
+                  content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                  origin: (data.result[i].type === "user")?"user":"server"
+                }); //Add sources if they were provided
+              }
             }
             setNewChat(new_entries);
+            setTimeout(() => {
+              Animated.timing(opacityChatWindow, {
+                toValue: 1,
+                // toValue: opened?Math.min(300,(children.length*50+60)):50,
+                duration: 150,
+                easing: Easing.elastic(0),
+                useNativeDriver: false,
+              }).start();
+            }, 100);
+          });
         });
-      });
-    } else {
-      setDisplaySuggestions(true);
-      setNewChat([]);
+      }, 150);
+      // setTimeout(() => {
+        
+      // }, 250)
+      } else {
+        setDisplaySuggestions(true);
+        setNewChat([]);
       const url = craftUrl("http://localhost:5000/api/create_chat_session", {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
@@ -142,8 +196,66 @@ export default function ChatWindow(props : ChatWindowProps) {
   let genString = "";
   // let termLet: string[] = [];
 
-  const sse_fetch = async function (message : string) {
+  const sse_fetch = async function(message : string) {
+    let user_entry : ChatEntry = {
+      origin: "user",
+      content_raw_string: message,
+    };
+    
+    let bot_entry : ChatEntry = {
+      origin: "server",
+      // content_392098: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
+      content_raw_string: "",
+      sources: []
+    }
+
+    generateSearchQuery(props.userData, [...newChat, user_entry], () => {return;});
+    setNewChat(newChat => [...newChat, user_entry, bot_entry]);
+
+
     setDisplaySuggestions(false);
+    let collection_hash_ids = [];
+    let col_keys = Object.keys(props.selectedCollections);
+    for (let i = 0; i < col_keys.length; i++) {
+      if (props.selectedCollections[col_keys[i]] === true) {
+        collection_hash_ids.push(col_keys[i]);
+      }
+    }
+
+    let bot_response_sources : sourceMetadata[] = [];
+
+    const url_vector_query = craftUrl("http://localhost:5000/api/query_vector_db", {
+      "username": props.userData.username,
+      "password_prehash": props.userData.password_pre_hash,
+      "query": message,
+      "collection_hash_ids": collection_hash_ids,
+      "k": 10,
+      "use_rerank": true
+    });
+    fetch(url_vector_query, {method: "POST"}).then((response) => {
+      console.log(response);
+      response.json().then((data) => {
+          if (data["success"]) {
+            console.log("Vector db recieved");
+            console.log(data["results"]);
+            for (let i = 0; i < data["results"].length; i++) {
+              try {
+                bot_response_sources.push({
+                  metadata: {...data["results"][i]["metadata"], "document": data["results"][i]["document"], "type" : "pdf"}
+                })
+              } catch {}
+            }
+            initiate_chat_response(message, bot_response_sources);
+          } else {
+            console.error("Session hash failed", data["note"]);
+            initiate_chat_response(message, []);
+          }
+      });
+    });
+  };
+
+  const initiate_chat_response = async function (message : string, bot_response_sources : sourceMetadata[]) {
+    
     // setAnimateScroll(true);
     if (sseOpened === true) {
       return;
@@ -156,28 +268,35 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     let refresh_chat_history = (newChat.length === 0);
     
+    setNewChat(prevChat => [...prevChat.slice(0, prevChat.length-1), {...prevChat[prevChat.length-1], "sources": bot_response_sources}]);
+
+    console.log("New sources:", bot_response_sources);
 
     const url = craftUrl("http://localhost:5000/api/async/chat", {
       "session_hash": sessionHash,
       "query": message,
       "username": props.userData.username,
-      "password_prehash": props.userData.password_pre_hash
+      "password_prehash": props.userData.password_pre_hash,
+      "sources": bot_response_sources.map((value : sourceMetadata) => value.metadata)
     });
 
-    let user_entry : ChatEntry = {
-      origin: "user",
-      content_raw_string: message,
-    };
+    console.log("new url:", url.toString())
+
+    // let user_entry : ChatEntry = {
+    //   origin: "user",
+    //   content_raw_string: message,
+    // };
     
-    let bot_entry : ChatEntry = {
-      origin: "server",
-      // content_392098: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
-      content_raw_string: "",
-    }
+    // let bot_entry : ChatEntry = {
+    //   origin: "server",
+    //   // content_392098: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
+    //   content_raw_string: "",
+    //   sources: bot_response_sources
+    // }
     
     // setActiveBotEntryIndex(newChat.length+1);
     // let active_bot_entry_index = newChat.length+1;
-    setNewChat(newChat => [...newChat, user_entry, bot_entry])
+    // setNewChat(newChat => [...newChat, user_entry, bot_entry]);
     // setTemporaryBotEntry(bot_entry);
     // setInputText("");
 
@@ -196,6 +315,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       if (event === undefined || event.data === undefined) return;
       let decoded = event.data.toString();
       decoded = hexToUtf8(decoded);
+      // console.log("Decoded SSE String:", [decoded]);
       // decoded = decoded.replace("�", "");
       if (decoded == "-DONE-") {
         // setNewChat(newChat => [...newChat, bot_entry])
@@ -206,6 +326,9 @@ export default function ChatWindow(props : ChatWindowProps) {
         if (refresh_chat_history) {
           props.setRefreshSidePanel(["chat-history"]);
         }
+      } else if (decoded == "<<<FAILURE>>> | Model Context Length Exceeded") {
+        console.error("Maximum Context Length Exceeded");
+        es.close();
       } else {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);
@@ -221,8 +344,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       
         // bot_entry["content_raw_string"] = genString;
         setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
-          "origin": newChat[newChat.length-1].origin,
-          // "content_392098": newChat[newChat.length-1].content_392098,
+          ...newChat[newChat.length-1],
           "content_raw_string": genString
         }])
         // setTemporaryBotEntry(bot_entry);
@@ -430,7 +552,13 @@ export default function ChatWindow(props : ChatWindowProps) {
                 animateScroll={animateScroll}
               >
                 {newChat.map((v_2 : ChatEntry, k_2 : number) => (
-                  <ChatBubble key={k_2} origin={v_2.origin} input={v_2.content_raw_string}/>
+                  <ChatBubble 
+                    key={k_2} 
+                    origin={v_2.origin} 
+                    input={v_2.content_raw_string}
+                    userData={props.userData}
+                    sources={(v_2.sources)?v_2.sources:[]}
+                  />
                 ))}
                 {/* {temporaryBotEntry && (
                   <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>

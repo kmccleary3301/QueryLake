@@ -16,6 +16,7 @@ import sanitizeMarkdown from "../hooks/sanitizeMarkdown";
 type MarkdownRendererProps = {
   input: string,
   maxWidth: number,
+  bubbleWidth: number,
   transparentDisplay?: boolean,
 };
 
@@ -159,7 +160,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           <View style={{
             flexDirection: 'row',
             paddingLeft: (props.padLeft)?10:0,
-            paddingBottom: 5,
+            paddingTop: 20,
           }}>
             <MarkdownTextSplitter selectable={true} style={{
               fontFamily: normalTextFont,
@@ -178,12 +179,16 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         // }}>
         //   {token.text}
         // </Text>
-        <MarkdownTextSplitter selectable={true} style={{
-          paddingTop: 8,
-          fontFamily: headingFont,
-          fontSize: fontSizeGet,
-          color: '#E8E3E3'
-        }} text={token.text + props.unProcessedText}/>
+        <View style={{
+          paddingTop: 20,
+        }}>
+          <MarkdownTextSplitter selectable={true} style={{
+            paddingTop: 8,
+            fontFamily: headingFont,
+            fontSize: fontSizeGet,
+            color: '#E8E3E3'
+          }} text={token.text + props.unProcessedText}/>
+        </View>
       );
     case 'table':
       return (
@@ -218,18 +223,30 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
     case 'list_item':
       return (
         <View style={{
-          flexDirection: 'row'
+          flexDirection: 'row',
+          alignItems: "flex-start",
+          paddingVertical: 4
         }}>
           <View style={{
-            flexDirection: 'column'
+            flexDirection: 'column',
+            paddingTop: 6,
+            paddingHorizontal: 6
           }}>
-            <Text selectable={true} style={{
+            <View style={{
+              borderRadius: 3,
+              width: 6,
+              height: 6,
+              // paddingTop: 8,
+              // paddingHorizontal: 5,
+              backgroundColor: '#E8E3E3'
+            }}/>
+            {/* <Text selectable={true} style={{
               fontFamily: normalTextFont, 
               fontSize: 16,
               width: 20,
               textAlign: 'center',
-              color: '#E8E3E3'
-              }}>·</Text>
+              color: '#74748B'
+              }}>·</Text> */}
           </View>
           <MarkdownTextSplitter selectable={true} style={{
             fontFamily: normalTextFont,
@@ -281,7 +298,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
   // const [maxWidth, setMaxWidth] = useState(40);
-  const [bubbleWidth, setBubbleWidth] = useState(10);
+  
   // const [oldTextLength, setOldTextLength] = useState(0);
   const [unprocessedText, setUnprocessedText] = useState("");
   const [oldInputLength, setOldInputLength] = useState(0);
@@ -289,7 +306,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
 
   
   const { input } = props;
-  const transparentDisplay = (props.transparentDisplay)?props.transparentDisplay:false;
+  
   let oldTextLength = 0;
   let textIndexActiveMarkdownSegment = 0;
   let markdownSegmentAddresses = [];
@@ -299,10 +316,10 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
 
   const reRenderInterval = 250; // 250 milliseconds
 
-  useEffect(() => {
-    console.log("Bubble width:", bubbleWidth);
-    console.log("MaxWidth:", props.maxWidth);
-  }, [bubbleWidth, props.maxWidth]);
+  // useEffect(() => {
+  //   console.log("Bubble width:", bubbleWidth);
+  //   console.log("MaxWidth:", props.maxWidth);
+  // }, [bubbleWidth, props.maxWidth]);
 
   useEffect(() => {
     // if (input.length === oldTextLength) {
@@ -378,42 +395,19 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   // }
 
   return (
-    <View>
-      <View style={{
-        maxWidth: "60vw",
-        minWidth: 40,
-        minHeight: 40,
-        // width: "80svw",
-        paddingRight: 50
-      }}>
-        <View 
-          style={{
-            flexDirection: "column",
-            paddingHorizontal: 14,
-            paddingVertical: transparentDisplay?0:6,
-            backgroundColor: transparentDisplay?"none":"#39393C",
-            // backgroundColor: "#1E1E1E",
-            borderRadius: 10,
-            alignSelf: "center",
-            justifyContent: transparentDisplay?"center":"flex-start",
-            maxWidth: "100%",
-            minHeight: 40,
-          }}
-          onLayout={(event) => {
-            setBubbleWidth(event.nativeEvent.layout.width);
-          }}
-        >
+    <>
           {markdownTokens.map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
-              bubbleWidth={bubbleWidth} 
+              bubbleWidth={props.bubbleWidth} 
               maxWidth={props.maxWidth} 
               token={v} 
               unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}/>
           ))}
-        </View>
-      </View>
-    </View>
+    </>
+    //     </View>
+    //   </View>
+    // </View>
   );
 }
 

@@ -118,7 +118,8 @@ type AppWebPageProps = {
   pageNavigateArguments: any,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
-  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>
+  setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>,
+  selectedCollections: object
 }
 
 function AppWebPage(props : AppWebPageProps) {
@@ -132,6 +133,7 @@ function AppWebPage(props : AppWebPageProps) {
           userData={props.userData} 
           pageNavigateArguments={props.pageNavigateArguments}
           setRefreshSidePanel={props.setRefreshSidePanel}
+          selectedCollections={props.selectedCollections}
         />
       );
     case 'MarkdownTestPage':
@@ -192,6 +194,7 @@ function AppWeb() {
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
   const [pageNavigateArguments, setPageNavigateArguments] = useState("");
   const [refreshSidePanel, setRefreshSidePanel] = useState([]);
+  const [selectedCollections, setSelectedCollections] = useState({});
 
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
   const toggle_sidebar = () => {
@@ -264,6 +267,8 @@ function AppWeb() {
                     refreshSidePanel={refreshSidePanel}
                     setRefreshSidePanel={setRefreshSidePanel}
                     pageNavigateArguments={pageNavigateArguments}
+                    setSelectedCollections={setSelectedCollections}
+                    selectedCollections={selectedCollections}
                   />
                 </View>
               )}
@@ -284,6 +289,7 @@ function AppWeb() {
               pageNavigateArguments={pageNavigateArguments}
               setPageNavigateArguments={setPageNavigateArguments}
               setRefreshSidePanel={setRefreshSidePanel}
+              selectedCollections={selectedCollections}
             />
           </Animated.View>
         </View>
