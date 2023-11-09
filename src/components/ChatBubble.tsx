@@ -58,6 +58,17 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const sourcesDividerColor = "#969696";
 
   useEffect(() => {
+    if (props.sources.length > 0) {
+      Animated.timing(sourceBarWidth, {
+        toValue: 400,
+        duration: 100,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [props.sources])
+
+  useEffect(() => {
     Animated.timing(bubbleHeight, {
       toValue: targetBubbleHeight+10,
       duration: 50,
@@ -147,16 +158,21 @@ export default function ChatBubble(props: ChatBubbleProps) {
               alignSelf: "center",
               minHeight: 40,
               flexDirection: 'column',
+              justifyContent: 'center',
               maxWidth: '100%'
             }} onLayout={(event) => {setCurrentWidth(event.nativeEvent.layout.width)}}>
               <Animated.ScrollView style={{
                 height: bubbleHeight,
                 maxWidth: "100%",
+                // justifyContent: transparentDisplay?"center":"flex-start",
+                // alignContent: 'center'
               }} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} scrollEnabled={false}>
                 <View 
                   style={{
                     flexDirection: "column",
                     justifyContent: transparentDisplay?"center":"flex-start",
+                    alignContent: 'center',
+                    minHeight: 40,
                   }}
                   onLayout={(event) => {
                     setBubbleWidth(event.nativeEvent.layout.width);
@@ -216,12 +232,13 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </View>
                   )}
                   <ScrollView style={{
-                    width: '100%'
+                    width: sourceBarWidth
                   }} showsHorizontalScrollIndicator={false} horizontal={true}>
                     <View style={{
                       maxWidth: '100%',
                       flexDirection: 'row',
-                      // flexWrap: 'wrap'
+                      flexWrap: 'wrap',
+                      justifyContent: 'center'
                     }}>
                       {props.sources.map((value : { metadata: sourceMetadata, img?: any }, index : number) => (
                         <ChatBubbleSource

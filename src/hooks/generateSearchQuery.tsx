@@ -13,9 +13,11 @@ type userDataType = {
 
 const system_instruction = `You will be provided with a chat history between a user and assistant, 
 as well as new question.
-Respond to the instructions with an appropriate query to answer the new question with a google search. You should not say more than query. You should not say any words except the query. For the context, today is {{currentDate}}.
+Respond to the instructions with a long query to answer the new question with a lexical/sentence search. You should not say more than the query. You should not say any words except the query. For the context, today is {{currentDate}}.
 The query can be multiple sentences, and should include any relevant details.
-However, your response should only consist of the generated google query.
+The query should emulate what desired reference materials might ideally contain.
+However, your response should only consist of the generated google query, with no additional words, symbols, or quotations.
+Do not begin your response with an introduction, assurance, or otherwise.
 `;
 
 export default function generateSearchQuery(userData : userDataType, context : ChatEntry[], onFinish : (result : string) => void) {
@@ -35,7 +37,7 @@ export default function generateSearchQuery(userData : userDataType, context : C
 		chat_history += origin_string+context[i].content_raw_string+"\n\n";
 	}
 	chat_history += "</HISTORY>\n" +
-	"Given the above history, craft a google query to answer the following question:\n" +
+	"Given the above history, craft a lexical query to answer the following question, and do not write anything else except for the query:\n" +
 	"USER: " + context[context.length - 1].content_raw_string;
 
 	console.log("Crafting system instruction");
@@ -51,12 +53,19 @@ export default function generateSearchQuery(userData : userDataType, context : C
 	fetch(url, {method: "POST"}).then((response) => {
 		console.log(response);
 		response.json().then((data) => {
+      console.log(data);
 			if (!data["success"]) {
-				console.error("Failed to retrieve session");
+        console.error("Failed to retrieve session");
 				return;
 			}
-			console.log(data);
-			onFinish(data["result"]);
+      let query = data.result
+        .replace(/^[\s]*(Sure)[\!]?[^\n]*\n/, "")
+        
+        // .replace(/(?i)(sure)/, "")
+        .replace(/^[\s]*[\"|\'|\`]*/, "")
+        .replace(/[\"|\'|\`]*[\s]*$/, "");
+      console.log([query]);
+			onFinish(query);
 		});
 	});
 }

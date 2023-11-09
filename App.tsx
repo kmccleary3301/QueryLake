@@ -193,7 +193,7 @@ function AppWeb() {
   const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
   const [sidebarOpened, setSidebarOpened] = useState((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1));
   const [pageNavigateArguments, setPageNavigateArguments] = useState("");
-  const [refreshSidePanel, setRefreshSidePanel] = useState([]);
+  const [refreshSidePanel, setRefreshSidePanel] = useState<string[]>([]);
   const [selectedCollections, setSelectedCollections] = useState({});
 
   const sidebarWidth = useRef(new Animated.Value((pagesWithSidebarDisabled.indexOf(pageNavigate) === -1)?320:0)).current;
@@ -204,6 +204,10 @@ function AppWeb() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    setRefreshSidePanel(["chat-history", "collections"]);
+  }, [userData]);
 
   useEffect(() => {
     Animated.timing(sidebarWidth, {

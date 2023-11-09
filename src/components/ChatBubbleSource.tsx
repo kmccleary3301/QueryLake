@@ -25,12 +25,14 @@ type ChatBubbleSourceProps = {
     "document_name": string,
     "location_link_chrome": string,
     "location_link_firefox": string,
-    "page": number
+    "page": number,
+    "rerank_score"?: number
   } | {
     "type": "web"
     "url": string, 
     "document": string,
-    "document_name": string
+    "document_name": string,
+    "rerank_score"?: number
   },
 };
 
@@ -43,17 +45,20 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
   const [firstLineHeight, setFirstLineHeight] = useState(19);
   const [firstLineWidth, setFirstLineWidth] = useState(30);
 
+  const content_reformat = props.metadata.document.replaceAll(/(-[\s]*\n)/g, "").replaceAll(/([\s]*\n)/g, " ");
+  const opacity = (props.metadata.rerank_score !== undefined)?(Math.min(255, Math.floor(255*(Math.sqrt(props.metadata.rerank_score)*0.8 + 0.2))).toString(16).toUpperCase()):"FF";
+
   useEffect(() => {
-    console.log("Set expanded to:", expanded, (expanded)?trueContentWidth:140);
-    console.log("Firstlineheight:", firstLineHeight);
+    // console.log("Set expanded to:", expanded, (expanded)?trueContentWidth:140);
+    // console.log("Firstlineheight:", firstLineHeight);
     Animated.timing(maxWidth, {
-      toValue: 6+((expanded)?trueContentWidth:140),
+      toValue: 6+((expanded)?Math.min(trueContentWidth, 400):140),
       duration: 250,
       easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
     Animated.timing(maxHeight, {
-      toValue: 10+((expanded)?trueContentHeight:firstLineHeight),
+      toValue: 10+((expanded)?trueContentHeight:19),
       duration: 250,
       easing: Easing.elastic(0),
       useNativeDriver: false,
@@ -69,7 +74,7 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
           style={{
             borderRadius: 10,
             borderWidth: 2,
-            borderColor: (props.metadata.type === "pdf")?"#E50914":"#88C285",
+            borderColor: (props.metadata.type === "pdf")?"#E50914"+opacity:"#88C285"+opacity,
             backgroundColor: "#17181D",
             width: maxWidth,
             height: maxHeight,
@@ -95,9 +100,9 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
                   color: "#E8E3E3",
                   paddingHorizontal: 6,
                   paddingVertical: 2,
-                  maxWidth: (expanded)?'auto':'100%'
+                  maxWidth: 400
                 }}
-                numberOfLines={1}
+                numberOfLines={expanded?0:1}
               >
                 {props.metadata.document_name}
               </Text>
@@ -109,14 +114,27 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
                   color: "#E8E3E3",
                   paddingHorizontal: 6,
                   paddingVertical: 2,
-                  maxWidth: (expanded)?'auto':'100%'
+                  maxWidth: 400
+                }}
+                numberOfLines={1}
+              >
+                {"Relevance Score: "+((props.metadata.rerank_score !== undefined)?(props.metadata.rerank_score.toString().slice(0, 5)):"N/A")}
+              </Text>
+            <Text 
+                style={{
+                  fontFamily: "Inter-Regular",
+                  fontSize: 12,
+                  color: "#E8E3E3",
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  maxWidth: 400
                 }}
                 numberOfLines={1}
               >
                 {"Content"}
               </Text>
               <AnimatedPressable onPress={() => {openDocumentSecure(props.userData, props.metadata)}}>
-                <Text 
+                <Animated.Text 
                   style={{
                     fontFamily: "Inter-Thin",
                     fontStyle: 'italic',
@@ -124,12 +142,13 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
                     color: "#E8E3E3",
                     paddingHorizontal: 6,
                     paddingVertical: 2,
-                    width: 800,
+                    maxWidth: 400,
+                    textAlign: 'center'
                     // flexGrow: 1
                   }}
                 >
-                  {props.metadata.document}
-                </Text>
+                  {content_reformat}
+                </Animated.Text>
               </AnimatedPressable>
           </View>
         </Animated.ScrollView>

@@ -26,7 +26,7 @@ export default function getChatHistory(username : string, password_prehash: stri
           title: data.result[i].title,
           hash_id: data.result[i].hash_id,
         };
-        console.log((currentTime - entry.time));
+        // console.log((currentTime - entry.time));
         for (let j = 0; j < chat_history_tmp.length; j++) {
           if ((currentTime - entry.time) < chat_history_tmp[j].cutoff) { 
             // chat_history_tmp_today.push(entry); 

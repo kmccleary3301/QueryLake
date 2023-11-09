@@ -208,12 +208,9 @@ export default function ChatWindow(props : ChatWindowProps) {
       content_raw_string: "",
       sources: []
     }
-
-    generateSearchQuery(props.userData, [...newChat, user_entry], () => {return;});
+    let new_chat = [...newChat, user_entry];
     setNewChat(newChat => [...newChat, user_entry, bot_entry]);
-
-
-    setDisplaySuggestions(false);
+    
     let collection_hash_ids = [];
     let col_keys = Object.keys(props.selectedCollections);
     for (let i = 0; i < col_keys.length; i++) {
@@ -221,35 +218,43 @@ export default function ChatWindow(props : ChatWindowProps) {
         collection_hash_ids.push(col_keys[i]);
       }
     }
+    if (collection_hash_ids.length === 0) {
 
-    let bot_response_sources : sourceMetadata[] = [];
-
-    const url_vector_query = craftUrl("http://localhost:5000/api/query_vector_db", {
-      "username": props.userData.username,
-      "password_prehash": props.userData.password_pre_hash,
-      "query": message,
-      "collection_hash_ids": collection_hash_ids,
-      "k": 10,
-      "use_rerank": true
-    });
-    fetch(url_vector_query, {method: "POST"}).then((response) => {
-      console.log(response);
-      response.json().then((data) => {
-          if (data["success"]) {
-            console.log("Vector db recieved");
-            console.log(data["results"]);
-            for (let i = 0; i < data["results"].length; i++) {
-              try {
-                bot_response_sources.push({
-                  metadata: {...data["results"][i]["metadata"], "document": data["results"][i]["document"], "type" : "pdf"}
-                })
-              } catch {}
+      initiate_chat_response(message, []);
+      return;
+    }
+    generateSearchQuery(props.userData, new_chat, (query : string) => {
+      setDisplaySuggestions(false);
+  
+      let bot_response_sources : sourceMetadata[] = [];
+  
+      const url_vector_query = craftUrl("http://localhost:5000/api/query_vector_db", {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+        "query": message,
+        "collection_hash_ids": collection_hash_ids,
+        "k": 10,
+        "use_rerank": true
+      });
+      fetch(url_vector_query, {method: "POST"}).then((response) => {
+        console.log(response);
+        response.json().then((data) => {
+            if (data["success"]) {
+              console.log("Vector db recieved");
+              console.log(data["results"]);
+              for (let i = 0; i < data["results"].length; i++) {
+                try {
+                  bot_response_sources.push({
+                    metadata: {...data["results"][i]["metadata"], "document": data["results"][i]["document"], "type" : "pdf"}
+                  })
+                } catch {}
+              }
+              initiate_chat_response(message, bot_response_sources);
+            } else {
+              console.error("Session hash failed", data["note"]);
+              initiate_chat_response(message, []);
             }
-            initiate_chat_response(message, bot_response_sources);
-          } else {
-            console.error("Session hash failed", data["note"]);
-            initiate_chat_response(message, []);
-          }
+        });
       });
     });
   };

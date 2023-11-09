@@ -359,6 +359,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
               }} showsVerticalScrollIndicator={false}>
                 {uploadFiles.map((value : {name : string}, index : number) => (
                   <HoverDocumentEntry
+                    key={index}
                     title={value.name}
                     deleteIndex={() => {
                       // let new_uploads = uploadFiles;

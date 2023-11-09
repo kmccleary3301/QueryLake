@@ -223,7 +223,16 @@ export default function Sidebar(props: SidebarProps) {
           paddingBottom: 10,
           paddingTop: 10,
         }}>
-          
+          <AnimatedPressable onPress={() => {
+            if (props.setPageNavigate) { props.setPageNavigate("LoginPage"); }
+          }}>
+            <Text style={{
+              fontSize: 16,
+              color: "#E8E3E3",
+            }}>
+              {"Logout"}
+            </Text>
+          </AnimatedPressable>
           <AnimatedPressable>
             <Text style={{
               fontSize: 16,
