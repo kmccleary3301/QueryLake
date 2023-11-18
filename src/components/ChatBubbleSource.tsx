@@ -63,7 +63,7 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
       easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
-  }, [expanded, firstLineHeight]);
+  }, [expanded, firstLineHeight, trueContentWidth, trueContentHeight]);
 
   return (
     <View style={{
@@ -107,49 +107,53 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
                 {props.metadata.document_name}
               </Text>
             </View>
-            <Text 
-                style={{
-                  fontFamily: "Inter-Regular",
-                  fontSize: 12,
-                  color: "#E8E3E3",
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  maxWidth: 400
-                }}
-                numberOfLines={1}
-              >
-                {"Relevance Score: "+((props.metadata.rerank_score !== undefined)?(props.metadata.rerank_score.toString().slice(0, 5)):"N/A")}
-              </Text>
-            <Text 
-                style={{
-                  fontFamily: "Inter-Regular",
-                  fontSize: 12,
-                  color: "#E8E3E3",
-                  paddingHorizontal: 6,
-                  paddingVertical: 2,
-                  maxWidth: 400
-                }}
-                numberOfLines={1}
-              >
-                {"Content"}
-              </Text>
-              <AnimatedPressable onPress={() => {openDocumentSecure(props.userData, props.metadata)}}>
-                <Animated.Text 
+            {(expanded) && (
+              <View>
+                <Text 
                   style={{
-                    fontFamily: "Inter-Thin",
-                    fontStyle: 'italic',
+                    fontFamily: "Inter-Regular",
                     fontSize: 12,
                     color: "#E8E3E3",
                     paddingHorizontal: 6,
                     paddingVertical: 2,
-                    maxWidth: 400,
-                    textAlign: 'center'
-                    // flexGrow: 1
+                    maxWidth: 400
                   }}
+                  numberOfLines={1}
                 >
-                  {content_reformat}
-                </Animated.Text>
-              </AnimatedPressable>
+                  {"Relevance Score: "+((props.metadata.rerank_score !== undefined)?(props.metadata.rerank_score.toString().slice(0, 5)):"N/A")}
+                </Text>
+                <Text 
+                  style={{
+                    fontFamily: "Inter-Regular",
+                    fontSize: 12,
+                    color: "#E8E3E3",
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                    maxWidth: 400
+                  }}
+                  numberOfLines={1}
+                >
+                  {"Content"}
+                </Text>
+                <AnimatedPressable onPress={() => {openDocumentSecure(props.userData, props.metadata)}}>
+                  <Animated.Text 
+                    style={{
+                      fontFamily: "Inter-Thin",
+                      fontStyle: 'italic',
+                      fontSize: 12,
+                      color: "#E8E3E3",
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      maxWidth: 400,
+                      textAlign: 'center'
+                      // flexGrow: 1
+                    }}
+                  >
+                    {content_reformat}
+                  </Animated.Text>
+                </AnimatedPressable>
+              </View>
+            )}
           </View>
         </Animated.ScrollView>
       </Pressable>

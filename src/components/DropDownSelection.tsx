@@ -97,7 +97,7 @@ export default function DropDownSelection(props : DropDownSelectionProps) {
   
         // elevation: 2,
       }}
-      placeholder={"Hello"}
+      placeholder={"None Selected"}
     />
   );
 }

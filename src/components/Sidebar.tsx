@@ -114,7 +114,7 @@ export default function Sidebar(props: SidebarProps) {
 
 	const setCollectionSelected = (collection_hash_id : string, value : boolean) => {
     props.setSelectedCollections((prevState) => ({ ...prevState, [collection_hash_id]: value}));
-    console.log(props.selectedCollections);
+    // console.log(props.selectedCollections);
   };
 
 	return (
@@ -165,7 +165,7 @@ export default function Sidebar(props: SidebarProps) {
               onPress={(value : string) => {
                 setPanelMode(value);
                 props.setRefreshSidePanel(!props.refreshSidePanel);
-                console.log(value);
+                // console.log(value);
               }}
               textColor={'#000000'} //'#7a44cf'
               selectedColor={'#000000'}
@@ -249,6 +249,16 @@ export default function Sidebar(props: SidebarProps) {
               color: "#E8E3E3",
             }}>
               {"Organizations"}
+            </Text>
+          </AnimatedPressable>
+          <AnimatedPressable onPress={() => {
+            if (props.setPageNavigate) { props.setPageNavigate("UserSettings"); }
+          }}>
+            <Text style={{
+              fontSize: 16,
+              color: "#E8E3E3",
+            }}>
+              {"User Settings"}
             </Text>
           </AnimatedPressable>
         </View>

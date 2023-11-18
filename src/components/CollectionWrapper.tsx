@@ -11,6 +11,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
 import CollectionPreview from './CollectionPreview';
+import globalStyleSettings from '../../globalStyleSettings';
 
 type collectionType = {
   title: string,
@@ -97,7 +98,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	return (
 		<Animated.ScrollView style={{
 			width: '100%',
-			backgroundColor: '#39393C',
+			backgroundColor: globalStyleSettings.collectionWrapperBackgroundColor,
 			flexDirection: 'column',
 			borderRadius: 20,
 			// justifyContent: 'space-around',
@@ -120,7 +121,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						width: 21,
 						height: 21,
 						borderRadius: 12,
-						backgroundColor: '#7968D9',
+						backgroundColor: globalStyleSettings.collectionSelectCircleEmptyColor,
 						alignItems: 'center',
 						justifyContent: 'center',
 						// flexDirection: 'column',
@@ -137,7 +138,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 					>
 						{/* {selected && ( */}
 							<Animated.View style={{
-								backgroundColor: '#23232D',
+								backgroundColor: globalStyleSettings.collectionSelectCircleFillColor,
 								height: selectionCircleSize,
 								borderRadius: '50%',
 								width: selectionCircleSize,
@@ -154,7 +155,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 				}}>
 					<Text style={{
 						fontSize: 16,
-						color: '#E8E3E3',
+						color: globalStyleSettings.colorText,
 						textAlign: 'left',
 						textAlignVertical: 'center',
             height: 25,
@@ -174,7 +175,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 						<Feather 
 							name="chevron-down" 
 							size={24} 
-							color="#E8E3E3"
+							color={globalStyleSettings.colorText}
 							style={{
 								transform: opened?"rotate(0deg)":"rotate(90deg)"
 							}}

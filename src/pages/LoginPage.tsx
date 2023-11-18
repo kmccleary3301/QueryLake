@@ -18,6 +18,7 @@ import AnimatedPressable from "../components/AnimatedPressable";
 import { Feather } from "@expo/vector-icons";
 import craftUrl from "../hooks/craftUrl";
 import getUserMemberships from "../hooks/getUserMemberships";
+import getAvailableModels from "../hooks/getAvailableModels";
 
 // type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
@@ -25,7 +26,7 @@ type userDataType = {
   username: string,
   password_pre_hash: string,
   memberships?: object[],
-  is_admin?: boolean
+  is_admin?: boolean,
 };
 
 type LoginPageProps = {
@@ -44,26 +45,33 @@ export default function LoginPage(props : LoginPageProps) {
   const [retrievedUserMemberships, setRetrievedUserMemberships] = useState([]);
   const [membershipCallMade, setMembershipCallMade] = useState(false);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [availableModels, setAvailableModels] = useState({})
+
+  // const set_user_data = (username : string, password_prehash : string, memberships : object[], is_admin : boolean) => {
+  //   const url = craftUrl("http://localhost:5000/api/login", {
+  //     "username": username,
+  //     "password_prehash": password_prehash,
+  //   });
+  // };
 
   useEffect(() => {
     if (retrievedUserData === null) { 
-      console.log("Case 1");
       return; 
     } else if (!membershipCallMade) { 
-      console.log("Case 2");
       getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
       setMembershipCallMade(true);
     } else {
-      console.log("Case 3");
-      props.setUserData({
-        username: retrievedUserData["username"],
-        password_pre_hash: retrievedUserData["password_pre_hash"],
-        memberships: retrievedUserMemberships,
-        is_admin: userIsAdmin
-      });
-      if (props.setPageNavigate) {
-        props.setPageNavigate("ChatWindow");
-      }
+      getAvailableModels(retrievedUserData, (result : object) => {
+        props.setUserData({...{
+          username: retrievedUserData["username"],
+          password_pre_hash: retrievedUserData["password_pre_hash"],
+          memberships: retrievedUserMemberships,
+          is_admin: userIsAdmin
+        }, ...{available_models : result}});
+        if (props.setPageNavigate) {
+          props.setPageNavigate("ChatWindow");
+        }
+      })
     }
     
   }, [retrievedUserData, membershipCallMade]);
@@ -157,7 +165,7 @@ export default function LoginPage(props : LoginPageProps) {
             alignItems: 'center',
             justifyContent: 'center',
             flexDirection: 'column',
-            borderRadius: 30,
+            borderRadius: 15,
             // height: 400,
             backgroundColor: '#39393C',
             padding: 30,

@@ -46,8 +46,8 @@ function parseScopeTreeText(hljs_html : string) {
    * Let's not discuss this lmao.
    */
 
-  // console.log("HLJS HTML");
-  // console.log(hljs_html);
+  console.log("HLJS HTML");
+  console.log(hljs_html);
   let match = hljs_html.match(/(\<.*?\>)/);
   let current_scope : string[] = [];
   let index = 0;
@@ -77,8 +77,8 @@ function parseScopeTreeText(hljs_html : string) {
               content: decoded
             })
           }
-        } else {
-          string_segments.push("\n")
+        } else if (i != 0) {
+          string_segments.push("\n");
         }
       }
     }
@@ -98,14 +98,14 @@ function parseScopeTreeText(hljs_html : string) {
         let decoded = decode_html(text[i]);
         if (decoded.length > 0) {
           if (i != 0) { 
-            string_segments.push("\n")   
+            string_segments.push("\n");
           }
           string_segments.push({
             scope: current_scope.slice(),
             content: decode_html(text[i])
           })
-        } else {
-          string_segments.push("\n")
+        } else if (i != 0) {
+          string_segments.push("\n");
         }
       }
     } 
@@ -146,50 +146,52 @@ const code_styling={
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   const fontSize = 14;
   const [highlights, setHighlights] = useState<scoped_text[][]>([]);
+  const [lineOffsets, setLineOffsets] = useState<number[]>([]);
   // let textUpdating = false;
   // let oldTextLength = 0;
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
   const [oldInputLength, setOldInputLength] = useState(0);
-  const [rawCode, setRawCode] = useState(props.text+props.unProcessedText);
+  // const [rawCode, setRawCode] = useState(props.text+props.unProcessedText);
   const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
 
   const refreshInterval = 250; // In milliseconds
 
   useEffect(() => {
     let raw_code = props.text+props.unProcessedText;
-    setRawCode(raw_code);
+    // setRawCode(raw_code);
     let unprocessed_text = raw_code.slice(oldInputLength);
-    
-    // setUnprocessedText(props.text.slice(oldTextLength).split("\n"));
-    // textUpdating = true;
-    
+    setLineOffsets(getLineOffsets(raw_code));
     if (oldInputLength === 0 || (Date.now() - lastRefreshTime) > refreshInterval) {
-      
-      
-
-      let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code);
+      let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
       let scope_tree = parseScopeTreeText(highlights_get.value);
-      // console.log("HIGHLIGHTING");
       setHighlights(scope_tree);
       setLastRefreshTime(Date.now());
       setOldInputLength(raw_code.length);
-      setUnprocessedText([]);
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
   }, [props.text, props.unProcessedText]);
 
-  // setInterval(() => {
-  //   if (textUpdating) {
-  //     let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(props.text);
-  //     let scope_tree = parseScopeTreeText(highlights_get.value);
-  //     // console.log("HIGHLIGHTING");
-  //     setHighlights(scope_tree);
-  //     oldTextLength = props.text.length;
-  //     textUpdating = false;
-  //     setUnprocessedText([]);
-  //   }
-  // }, 500);
+  const getLineOffsets = (string_in : string) => {
+    let lines = string_in.split("\n");
+    let lineOffsets = [];
+    console.log("Splitting lines:", [string_in], lines);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      let beginning_match = line.match(/^[\s]*/);
+      if (beginning_match === null) {
+        lineOffsets.push(0);
+        continue;
+      }
+      let tab_count = beginning_match[0].split("\t").length - 1;
+      let space_count = beginning_match[0].split(" ").length - 1;
+      console.log([beginning_match[0]])
+      console.log("Line", [line], "match:", [beginning_match[0]], [tab_count, space_count]);
+      lineOffsets.push(2*tab_count + space_count);
+    }
+    console.log("Total offsets:", lineOffsets);
+    return lineOffsets;
+  };
 
   return (
     <View style={{paddingVertical: 20, paddingHorizontal: 10}}>
@@ -207,6 +209,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           flexDirection: 'row',
           flexShrink: 1,
           paddingVertical: 1,
+          paddingLeft: lineOffsets[line_number] * 10,
           minHeight: 20, //Empty Line Height
         }}>
           {line.map((token_seg : scoped_text, token_number : number) => (
@@ -237,6 +240,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           flexDirection: 'row',
           flexShrink: 1,
           paddingVertical: 1,
+          paddingLeft: lineOffsets[line_number + highlights.length] * 10,
           minHeight: 20, //Empty Line Height
         }}>
           <Text style={{

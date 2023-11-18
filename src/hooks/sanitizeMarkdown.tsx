@@ -1,8 +1,30 @@
 
 
 export default function sanitizeMarkdown(input_string : string) {
+  
   let ret = input_string;
-  let input_split = input_string.split("\n");
+  // ret = ret.replace(/^[\s]*/, "");
+
+  // console.log("Latex newline replacement");
+  // // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$|\n)])/);
+  // // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$|\n)])/);
+  // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$)]+\$\$)/);
+  // console.log(match_latex_newlines);
+  // while (match_latex_newlines !== null) {
+  //   console.log("Newline latex match");
+  //   console.log(match_latex_newlines[0]);
+  //   let new_replacement : string = match_latex_newlines[0].replaceAll(/(\\\\[\s]*\n)/g, " ").replaceAll("\n", " ");
+  //   console.log("Replacement");
+  //   console.log([new_replacement]);
+  //   ret = ret.replace(match_latex_newlines[0], new_replacement);
+  //   match_latex_newlines = ret.match(/(\n\$\$[^(\$\$)]+\$\$)/);
+  //   console.log(match_latex_newlines);
+  // }
+  // console.log("New string:");
+  // console.log(ret);
+
+
+  let input_split = ret.split("\n");
   let line_is_table_row = Array(input_split.length).fill(false);
   let line_is_whitespace = Array(input_split.length).fill(false);
 
@@ -61,6 +83,6 @@ export default function sanitizeMarkdown(input_string : string) {
   ret = input_split.join("\n");
 
   // console.log(ret);
-  
+  console.log("Input", [input_string], "Output", [ret]);
   return ret;
 }

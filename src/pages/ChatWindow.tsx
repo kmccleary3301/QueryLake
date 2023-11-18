@@ -31,6 +31,8 @@ import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
 import craftUrl from "../hooks/craftUrl";
 import ChatWindowSuggestions from "../components/ChatWindowSuggestions";
 import generateSearchQuery from "../hooks/generateSearchQuery";
+import searchGoogle from "../hooks/searchGoogle";
+import DropDownSelection from "../components/DropDownSelection";
 
 type CodeSegmentExcerpt = {
   text: string,
@@ -65,12 +67,19 @@ type ChatEntry = {
   origin: ("user" | "server"),
   // content_392098: ChatContent,
   content_raw_string: string,
+  status?: ("generating_query" | "searching_google" | "typing"),
   sources?: sourceMetadata[],
 };
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
+  serp_key?: string,
+  available_models?: {
+    default_model: string,
+    local_models: string[],
+    external_models: object
+  }
 };
 
 type ChatWindowProps = {
@@ -93,7 +102,7 @@ function hexToUtf8(s : string)
 
 export default function ChatWindow(props : ChatWindowProps) {
   const [inputText, setInputText] = useState("");
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [webSearchIsEnabled, setWebSearchIsEnabled] = useState(false);
   const [sseOpened, setSseOpened] = useState(false);
   const [submitInput, setSubmitInput] = useState(false);
   const [newChat, setNewChat] = useState<ChatEntry[]>([]);
@@ -102,7 +111,37 @@ export default function ChatWindow(props : ChatWindowProps) {
   const [displaySuggestions, setDisplaySuggestions] = useState(true);
   const [displaySuggestionsDelayed, setDisplaySuggestionsDelayed] = useState(true);
   const [animateScroll, setAnimateScroll] = useState(false);
-  
+  const [modelInUse, setModelInUse] = useState({label: "Default", value: "Default"});
+  const [availableModels, setAvailableModels] = useState(undefined);
+
+  useEffect(() => {
+    if (props.userData.available_models && props.userData.available_models !== undefined) {
+      let modelSelections = [];
+      for (let i = 0; i < props.userData.available_models.local_models.length; i++) {
+        modelSelections.push({
+          label: props.userData.available_models.local_models[i],
+          value: props.userData.available_models.local_models[i]
+        });
+      }
+      for (const [key, value] of Object.entries(props.userData.available_models.external_models)) {
+
+        // console.log(`${key}: ${value}`);
+        for (let i = 0; i < props.userData.available_models.external_models[key].length; i++) {
+          modelSelections.push({
+            label: key+"/"+props.userData.available_models.external_models[key][i],
+            value: [key, props.userData.available_models.external_models[key][i]]
+          });
+        }
+      }
+      setAvailableModels(modelSelections);
+      setModelInUse({
+        label: props.userData.available_models.default_model, 
+        value: props.userData.available_models.default_model
+      });
+    }
+  }, [props.userData]);
+
+
   useEffect(() => {
     console.log("PageNavigateChanged");
     const navigate_args = props.pageNavigateArguments.split("-");
@@ -141,13 +180,13 @@ export default function ChatWindow(props : ChatWindowProps) {
                 // let sources_tmp = data.result[i].sources.map((value) => { metadata: value});
                 console.log("Got sources:", data.result[i].sources);
                 new_entries.push({
-                  content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                  content_raw_string: hexToUtf8(data.result[i].content),
                   origin: (data.result[i].type === "user")?"user":"server",
                   sources: data.result[i].sources
                 }); //Add sources if they were provided
               } else {
                 new_entries.push({
-                  content_raw_string: hexToUtf8(data.result[i].content).replace(/(?<=^\s*)\s/gm, ""),
+                  content_raw_string: hexToUtf8(data.result[i].content),
                   origin: (data.result[i].type === "user")?"user":"server"
                 }); //Add sources if they were provided
               }
@@ -211,7 +250,7 @@ export default function ChatWindow(props : ChatWindowProps) {
     let new_chat = [...newChat, user_entry];
     setNewChat(newChat => [...newChat, user_entry, bot_entry]);
     
-    let collection_hash_ids = [];
+    let collection_hash_ids : string[] = [];
     let col_keys = Object.keys(props.selectedCollections);
     for (let i = 0; i < col_keys.length; i++) {
       if (props.selectedCollections[col_keys[i]] === true) {
@@ -231,11 +270,12 @@ export default function ChatWindow(props : ChatWindowProps) {
       const url_vector_query = craftUrl("http://localhost:5000/api/query_vector_db", {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
-        "query": message,
+        "query": query+". "+message,
         "collection_hash_ids": collection_hash_ids,
         "k": 10,
         "use_rerank": true
       });
+
       fetch(url_vector_query, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
@@ -282,28 +322,9 @@ export default function ChatWindow(props : ChatWindowProps) {
       "query": message,
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
-      "sources": bot_response_sources.map((value : sourceMetadata) => value.metadata)
+      "context": bot_response_sources.map((value : sourceMetadata) => value.metadata),
+      "model_choice": modelInUse.value
     });
-
-    console.log("new url:", url.toString())
-
-    // let user_entry : ChatEntry = {
-    //   origin: "user",
-    //   content_raw_string: message,
-    // };
-    
-    // let bot_entry : ChatEntry = {
-    //   origin: "server",
-    //   // content_392098: [""] //This needs to be changed, currenty only suits the plaintext returns from server.
-    //   content_raw_string: "",
-    //   sources: bot_response_sources
-    // }
-    
-    // setActiveBotEntryIndex(newChat.length+1);
-    // let active_bot_entry_index = newChat.length+1;
-    // setNewChat(newChat => [...newChat, user_entry, bot_entry]);
-    // setTemporaryBotEntry(bot_entry);
-    // setInputText("");
 
     console.log(url.toString());
     const es = new EventSource(url, {
@@ -372,13 +393,8 @@ export default function ChatWindow(props : ChatWindowProps) {
     });
   };
 
-  const handleSwitch = (event: any) => {
-    setIsEnabled(true);
-    event.preventDefault();
-    console.log("switch on");
-  };
 
-  const toggleSwitch = () => setIsEnabled((previousState) => !previousState);
+  const toggleSwitch = () => {console.log("toggled switch to:", !webSearchIsEnabled); setWebSearchIsEnabled((previousState) => !previousState); };
 
   const handleDrop = (event: any) => {
     const url = craftUrl("http://localhost:5000/api/uploadfile", {
@@ -518,10 +534,12 @@ export default function ChatWindow(props : ChatWindowProps) {
           height: 40,
           backgroundColor: "#23232D",
           flexDirection: 'row',
+          justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <Animated.View style={{
             paddingLeft: 10,
+            width: 200,
             transform: [{ translateX: translateSidebarButton,},],
             elevation: -1,
             zIndex: -1,
@@ -535,6 +553,21 @@ export default function ChatWindow(props : ChatWindowProps) {
               </AnimatedPressable> 
             )}
           </Animated.View>
+          <View style={{alignSelf: 'center'}}>
+            {(availableModels !== undefined) && (
+              <DropDownSelection
+                values={availableModels}
+                defaultValue={modelInUse}
+                setSelection={setModelInUse}
+                width={400}
+              />
+            )}
+          </View>
+          <View
+            style={{
+              width: 200
+            }}
+          />
           {/* Decide what to put here */}
         </View>
         <View style={{
@@ -623,7 +656,7 @@ export default function ChatWindow(props : ChatWindowProps) {
                     
                     
                     onValueChange={toggleSwitch}
-                    value={isEnabled}
+                    value={webSearchIsEnabled}
                   />
                 </View>
                 <Text

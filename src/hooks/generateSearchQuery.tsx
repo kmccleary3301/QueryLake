@@ -13,7 +13,8 @@ type userDataType = {
 
 const system_instruction = `You will be provided with a chat history between a user and assistant, 
 as well as new question.
-Respond to the instructions with a long query to answer the new question with a lexical/sentence search. You should not say more than the query. You should not say any words except the query. For the context, today is {{currentDate}}.
+Respond to the instructions with a long query which states the question clearly without additional context required. 
+You should not say more than the query. You should not say any words except the query. For the context, today is {{currentDate}}.
 The query can be multiple sentences, and should include any relevant details.
 The query should emulate what desired reference materials might ideally contain.
 However, your response should only consist of the generated google query, with no additional words, symbols, or quotations.

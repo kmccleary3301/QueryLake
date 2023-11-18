@@ -43,6 +43,7 @@ type ChatBubbleProps = {
     metadata: sourceMetadata,
     img?: any
   }[],
+  state: "finished" | "searching_web" | "searching_vector_database" | "crafting_query" | "writing" | undefined,
 };
 
 export default function ChatBubble(props: ChatBubbleProps) {
@@ -56,6 +57,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const sourceBarWidth = useRef(new Animated.Value(10)).current;
   const [targetBubbleHeight, setTargetBubbleHeight] = useState(40);
   const sourcesDividerColor = "#969696";
+  const bubbleState = (props.state === undefined)?"finished":props.state
 
   useEffect(() => {
     if (props.sources.length > 0) {
@@ -161,95 +163,98 @@ export default function ChatBubble(props: ChatBubbleProps) {
               justifyContent: 'center',
               maxWidth: '100%'
             }} onLayout={(event) => {setCurrentWidth(event.nativeEvent.layout.width)}}>
-              <Animated.ScrollView style={{
-                height: bubbleHeight,
-                maxWidth: "100%",
-                // justifyContent: transparentDisplay?"center":"flex-start",
-                // alignContent: 'center'
-              }} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} scrollEnabled={false}>
-                <View 
-                  style={{
-                    flexDirection: "column",
-                    justifyContent: transparentDisplay?"center":"flex-start",
-                    alignContent: 'center',
-                    minHeight: 40,
-                  }}
-                  onLayout={(event) => {
-                    setBubbleWidth(event.nativeEvent.layout.width);
-                    setTargetBubbleHeight(event.nativeEvent.layout.height);
-                  }}
-                >
-                  
-                  {props.input && props.input.length > 0 && (
-                    <MarkdownRenderer 
-                      maxWidth={maxWidth} 
-                      input={props.input} 
-                      bubbleWidth={bubbleWidth}
-                    />
-                  )}
-                  
-                  
-                </View>
-              </Animated.ScrollView>
-              {(props.sources.length > 0 && props.origin === "server") && (
-                <Animated.View style={{
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  width: sourceBarWidth,
-                }}>
-                  {(currentWidth > 100) && (
-                    <View style={{
-                      flexDirection: 'row',
-                      maxWidth: '100%'
-                    }}>
-                      <View style={{height: 20, flex: 1, flexDirection: 'column', justifyContent: 'center'}}>
-                        <View style={{
-                          backgroundColor: sourcesDividerColor,
-                          borderRadius: 1,
-                          height: 2,
-                          width: '100%'
-                        }}/>
-                      </View>
-                      
-                      <Text style={{
-                        fontFamily: 'Inter-Light',
-                        fontSize: 14,
-                        color: sourcesDividerColor,
-                        textAlignVertical: 'center',
-                        fontStyle: 'italic',
-                        paddingHorizontal: 10
-                      }}>
-                        {"Sources"}
-                      </Text>
-                      <View style={{height: 20, flex: 1, flexDirection: 'column', justifyContent: 'center'}}>
-                        <View style={{
-                          backgroundColor: sourcesDividerColor,
-                          borderRadius: 1,
-                          height: 2,
-                          width: '100%'
-                        }}/>
-                      </View>
-                    </View>
-                  )}
-                  <ScrollView style={{
-                    width: sourceBarWidth
-                  }} showsHorizontalScrollIndicator={false} horizontal={true}>
-                    <View style={{
-                      maxWidth: '100%',
-                      flexDirection: 'row',
-                      flexWrap: 'wrap',
-                      justifyContent: 'center'
-                    }}>
-                      {props.sources.map((value : { metadata: sourceMetadata, img?: any }, index : number) => (
-                        <ChatBubbleSource
-                          key={index}
-                          userData={props.userData}
-                          metadata={value.metadata}
+              {}
+              {(bubbleState === "finished" || bubbleState === "writing") && (
+                <>
+                  <Animated.ScrollView style={{
+                    height: bubbleHeight,
+                    maxWidth: "100%",
+                    // justifyContent: transparentDisplay?"center":"flex-start",
+                    // alignContent: 'center'
+                  }} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} scrollEnabled={false}>
+                    <View 
+                      style={{
+                        flexDirection: "column",
+                        justifyContent: transparentDisplay?"center":"flex-start",
+                        alignContent: 'center',
+                        minHeight: 40,
+                      }}
+                      onLayout={(event) => {
+                        setBubbleWidth(event.nativeEvent.layout.width);
+                        setTargetBubbleHeight(event.nativeEvent.layout.height);
+                      }}
+                    >
+                      {props.input && props.input.length > 0 && (
+                        <MarkdownRenderer 
+                          maxWidth={maxWidth} 
+                          input={props.input} 
+                          bubbleWidth={bubbleWidth}
+                          disableRender={(props.origin === "user")}
                         />
-                      ))}
+                      )}
                     </View>
-                  </ScrollView>
-                </Animated.View>
+                  </Animated.ScrollView>
+                  {(props.sources.length > 0 && props.origin === "server" && bubbleState === "finished") && (
+                    <Animated.View style={{
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      width: sourceBarWidth,
+                    }}>
+                      {(currentWidth > 100) && (
+                        <View style={{
+                          flexDirection: 'row',
+                          maxWidth: '100%'
+                        }}>
+                          <View style={{height: 20, flex: 1, flexDirection: 'column', justifyContent: 'center'}}>
+                            <View style={{
+                              backgroundColor: sourcesDividerColor,
+                              borderRadius: 1,
+                              height: 2,
+                              width: '100%'
+                            }}/>
+                          </View>
+                          
+                          <Text style={{
+                            fontFamily: 'Inter-Light',
+                            fontSize: 14,
+                            color: sourcesDividerColor,
+                            textAlignVertical: 'center',
+                            fontStyle: 'italic',
+                            paddingHorizontal: 10
+                          }}>
+                            {"Sources"}
+                          </Text>
+                          <View style={{height: 20, flex: 1, flexDirection: 'column', justifyContent: 'center'}}>
+                            <View style={{
+                              backgroundColor: sourcesDividerColor,
+                              borderRadius: 1,
+                              height: 2,
+                              width: '100%'
+                            }}/>
+                          </View>
+                        </View>
+                      )}
+                      <ScrollView style={{
+                        width: sourceBarWidth
+                      }} showsHorizontalScrollIndicator={false} horizontal={true}>
+                        <View style={{
+                          maxWidth: '100%',
+                          flexDirection: 'row',
+                          flexWrap: 'wrap',
+                          justifyContent: 'center'
+                        }}>
+                          {props.sources.map((value : { metadata: sourceMetadata, img?: any }, index : number) => (
+                            <ChatBubbleSource
+                              key={index}
+                              userData={props.userData}
+                              metadata={value.metadata}
+                            />
+                          ))}
+                        </View>
+                      </ScrollView>
+                    </Animated.View>
+                  )}
+                </>
               )}
             </View>
           </View>

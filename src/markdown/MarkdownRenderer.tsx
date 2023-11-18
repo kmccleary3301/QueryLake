@@ -12,12 +12,24 @@ import MarkdownCodeBlock from "./MarkdownCodeBlock";
 import stringHash from "../hooks/stringHash";
 import MarkdownTable from "./MarkdownTable";
 import sanitizeMarkdown from "../hooks/sanitizeMarkdown";
+import globalStyleSettings from "../../globalStyleSettings";
+
+// monkey patch for marked 0.3.3 to preserve non-breaking spaces
+// marked.Lexer.prototype.lex = function(src) {
+//   src = src
+//     .replace(/\r\n|\r/g, '\n')
+//     .replace(/\t/g, '    ')
+//     .replace(/\u2424/g, '\n');
+
+//   return this.token(src, true);
+// };
 
 type MarkdownRendererProps = {
   input: string,
   maxWidth: number,
   bubbleWidth: number,
   transparentDisplay?: boolean,
+  disableRender?: boolean,
 };
 
 type MarkdownMapComponentProps = {
@@ -294,11 +306,11 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 }
 
 export default function MarkdownRenderer(props: MarkdownRendererProps) {
-  const normalTextFont = "Inter-Regular";
-  const codeFont = "Consolas";
+  // const normalTextFont = "Inter-Regular";
+  // const codeFont = "Consolas";
   const [markdownTokens, setMarkdownTokens] = useState<TokensList>([]);
   // const [maxWidth, setMaxWidth] = useState(40);
-  
+  const disableRender = (props.disableRender)?props.disableRender:false;
   // const [oldTextLength, setOldTextLength] = useState(0);
   const [unprocessedText, setUnprocessedText] = useState("");
   const [oldInputLength, setOldInputLength] = useState(0);
@@ -307,29 +319,18 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   
   const { input } = props;
   
-  let oldTextLength = 0;
-  let textIndexActiveMarkdownSegment = 0;
-  let markdownSegmentAddresses = [];
+  // let oldTextLength = 0;
+  // let textIndexActiveMarkdownSegment = 0;
+  // let markdownSegmentAddresses = [];
   let textUpdating = true;
   let old_string_hash = 0;
+
+  
   const lexer = new marked.Lexer();
 
-  const reRenderInterval = 250; // 250 milliseconds
-
-  // useEffect(() => {
-  //   console.log("Bubble width:", bubbleWidth);
-  //   console.log("MaxWidth:", props.maxWidth);
-  // }, [bubbleWidth, props.maxWidth]);
+  const reRenderInterval = 250;
 
   useEffect(() => {
-    // if (input.length === oldTextLength) {
-    //   return;
-    // }
-    // textUpdating = true;
-    
-    // let lexed_input = lexer.lex(input);
-    // // console.log(lexed_input);
-    // setMarkdownTokens(lexed_input);
     let new_string_hash = stringHash(input);
     if (new_string_hash === old_string_hash) {
       textUpdating = false;
@@ -337,11 +338,8 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
     }
     if (markdownTokens.length === 0 || (textUpdating && (Date.now() - lastUpdateTime > reRenderInterval))) {
       let lexed_input = lexer.lex(sanitizeMarkdown(input));
-      // console.log("LEXING");
-      // console.log(input);
-      // console.log(sanitizeMarkdown(input));
-      // console.log(lexed_input)
       setMarkdownTokens(lexed_input);
+      console.log("LEXED", lexed_input);
       let lastTokenContentGrab = "";
       if (lexed_input[lexed_input.length - 1].hasOwnProperty('text')) { lastTokenContentGrab = lexed_input[lexed_input.length - 1].text; }
       else { lastTokenContentGrab = lexed_input[lexed_input.length - 1].raw; }
@@ -355,55 +353,30 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
     }
   }, [input]);
 
-  // if (!intervalIsSet) {
-
-  //   setIntervalIsSet(true);
-  // }
-  // const refreshMarkdown = () => {
-  //   if (textUpdating) {
-  //     // let new_string_hash = stringHash(input);
-  //     console.log("Update");
-  //     let lexed_input = lexer.lex(sanitizeMarkdown(input));
-  //     // console.log("LEXING");
-  //     // console.log(input);
-  //     // console.log(lexed_input);
-  //     setMarkdownTokens(lexed_input);
-  //     textUpdating = false;
-  //     // oldTextLength = input.length;
-  //     // setLastToken(undefined);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   console.log("Setting Interval");
-
-  //   setInterval(() => {
-  //     console.log("Interval called");
-  //     refreshMarkdown();
-  //   }, 250);
-  // }, []);
-
-  // useEffect(() => {
-  //   console.log("Change detected:", markdownTokens[markdownTokens.length-1]);
-  // }, markdownTokens);
-
-
-  // const getMarkdownText = (input_text : string) => {
-  //   var rawMarkup = marked.parse(input_text);
-  //   // console.log(rawMarkup);
-  //   return { __html: rawMarkup };
-  // }
-
   return (
     <>
+      {(disableRender)?(
+        <Text style={{
+          fontFamily: globalStyleSettings.chatRegularFont,
+          fontSize: globalStyleSettings.chatDefaultFontSize,
+          color: globalStyleSettings.colorText,
+          maxWidth: props.maxWidth
+        }}>
+          {props.input}
+        </Text>
+      ):(
+        <>
           {markdownTokens.map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
               bubbleWidth={props.bubbleWidth} 
               maxWidth={props.maxWidth} 
               token={v} 
-              unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}/>
+              unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}
+            />
           ))}
+        </>
+      )}
     </>
     //     </View>
     //   </View>
@@ -411,8 +384,8 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   );
 }
 
-const markdownStyles = StyleSheet.create({
-  h1: {
+// const markdownStyles = StyleSheet.create({
+//   h1: {
     
-  }
-});
+//   }
+// });

@@ -10,6 +10,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { Feather } from '@expo/vector-icons';
 import AnimatedPressable from './AnimatedPressable';
+import globalStyleSettings from '../../globalStyleSettings';
 
 type CollectionPreviewProps = {
   selectedPrior?: boolean,
@@ -64,7 +65,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 			<AnimatedPressable style={{
 				height: 40,
 				borderRadius: 20,
-				backgroundColor: '#23232D',
+				backgroundColor: globalStyleSettings.collectionPreviewBackgroundColor,
 				flexDirection: 'row',
 				paddingLeft: 8,
 				paddingRight: -10,
@@ -77,7 +78,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
                 width: 21,
                 height: 21,
                 borderRadius: 12,
-                backgroundColor: '#7968D9',
+                backgroundColor: globalStyleSettings.collectionSelectCircleEmptyColor,
                 alignItems: 'center',
                 justifyContent: 'center',
                 // flexDirection: 'column',
@@ -89,7 +90,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
             }}>
               {/* {selected && ( */}
                 <Animated.View style={{
-                  backgroundColor: '#23232D',
+                  backgroundColor: globalStyleSettings.collectionSelectCircleFillColor,
                   height: selectionCircleSize,
                   borderRadius: "50%",
                   width: selectionCircleSize,
@@ -108,7 +109,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
             <View style={{width: '83%'}}>
               <Text style={{
                 fontSize: 16,
-                color: '#E8E3E3',
+                color: globalStyleSettings.colorText,
                 textAlign: 'left',
                 textAlignVertical: 'center',
                 paddingBottom: 3,
@@ -137,8 +138,8 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 						}}>
 							<Text style={{
                 fontFamily: 'Inter-Light',
-								backgroundColor: '#D9D9D9',
-								color: '#000000',
+								backgroundColor: globalStyleSettings.collectionPreviewCountBubbleColor,
+								color: globalStyleSettings.collectionPreviewCountTextColor,
 								fontSize: 11,
 								textAlign: 'center',
 								alignSelf: 'flex-end',

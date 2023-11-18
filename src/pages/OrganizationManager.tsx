@@ -28,10 +28,15 @@ type OrganizationManagerProps = {
   userData: userDataType,
   toggleSideBar?: () => void,
   sidebarOpened: boolean,
+  setUserData: React.Dispatch<React.SetStateAction<userDataType>>
 };
 
 export default function OrganizationManager(props : OrganizationManagerProps) {
+  const [acceptedMemberships, setAcceptedMemberships] = useState()
 
+  useEffect(() => {
+
+  }, [props.userData]);
 
   const translateSidebarButton = useRef(new Animated.Value(0)).current;
   const opacitySidebarButton = useRef(new Animated.Value(0)).current;

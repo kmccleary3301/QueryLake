@@ -66,6 +66,7 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
         <Text style={{
           fontFamily: 'Consolas',
           fontStyle: 'italic',
+          paddingRight: 3,
         }} selectable={true}>
           {props.textSeg.text}
         </Text>
