@@ -12,6 +12,7 @@ type MarkdownCodeBlockProps = {
   text : string,
   unProcessedText: string,
   lang?: string,
+  finished: boolean
 }
 
 const tagsStyles = {
@@ -157,9 +158,13 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   const refreshInterval = 250; // In milliseconds
 
   useEffect(() => {
-    let raw_code = props.text+props.unProcessedText;
     // setRawCode(raw_code);
+    let raw_code = props.text+props.unProcessedText;
     let unprocessed_text = raw_code.slice(oldInputLength);
+    if (props.finished) {
+      raw_code = props.text;
+    }
+    console.log("Highlighting raw code:", raw_code)
     setLineOffsets(getLineOffsets(raw_code));
     if (oldInputLength === 0 || (Date.now() - lastRefreshTime) > refreshInterval) {
       let highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
@@ -170,12 +175,12 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
-  }, [props.text, props.unProcessedText]);
+  }, [props.text, props.unProcessedText, props.finished]);
 
   const getLineOffsets = (string_in : string) => {
     let lines = string_in.split("\n");
     let lineOffsets = [];
-    console.log("Splitting lines:", [string_in], lines);
+    // console.log("Splitting lines:", [string_in], lines);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       let beginning_match = line.match(/^[\s]*/);
@@ -185,11 +190,11 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       }
       let tab_count = beginning_match[0].split("\t").length - 1;
       let space_count = beginning_match[0].split(" ").length - 1;
-      console.log([beginning_match[0]])
-      console.log("Line", [line], "match:", [beginning_match[0]], [tab_count, space_count]);
+      // console.log([beginning_match[0]])
+      // console.log("Line", [line], "match:", [beginning_match[0]], [tab_count, space_count]);
       lineOffsets.push(2*tab_count + space_count);
     }
-    console.log("Total offsets:", lineOffsets);
+    // console.log("Total offsets:", lineOffsets);
     return lineOffsets;
   };
 
@@ -222,7 +227,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
                 {token_seg.content}
               </Text>
 
-              {(line_number === highlights.length-1 && token_number === line.length -1 && unprocessedText.length > 0) && (
+              {(line_number === highlights.length-1 && token_number === line.length -1 && unprocessedText.length > 0 && !props.finished) && (
                 <Text style={{
                   color: code_styling["default"],
                   fontFamily: 'Consolas',
@@ -235,24 +240,28 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
           ))}
         </View>
       ))}
-      {unprocessedText.slice(1, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
-        <View key={line_number} style={{
-          flexDirection: 'row',
-          flexShrink: 1,
-          paddingVertical: 1,
-          paddingLeft: lineOffsets[line_number + highlights.length] * 10,
-          minHeight: 20, //Empty Line Height
-        }}>
-          <Text style={{
-            color: code_styling["default"],
-            fontFamily: 'Consolas',
-            fontSize: fontSize,
+      {(!props.finished) && (
+        <>
+        {unprocessedText.slice(1, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
+          <View key={line_number} style={{
+            flexDirection: 'row',
+            flexShrink: 1,
+            paddingVertical: 1,
+            paddingLeft: lineOffsets[line_number + highlights.length] * 10,
+            minHeight: 20, //Empty Line Height
           }}>
-            {line}
-          </Text>
+            <Text style={{
+              color: code_styling["default"],
+              fontFamily: 'Consolas',
+              fontSize: fontSize,
+            }}>
+              {line}
+            </Text>
 
-        </View>
-      ))}
+          </View>
+        ))}
+        </>
+      )}
       </View>
         {/* <pre
           class="scrollbar-custom overflow-auto px-5 scrollbar-thumb-gray-500 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20"><code

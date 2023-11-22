@@ -185,6 +185,8 @@ function AppWebPage(props : AppWebPageProps) {
         <OrganizationManager
           toggleSideBar={props.toggleSideBarOpened} 
           sidebarOpened={props.sidebarOpened}
+          userData={props.userData}
+          setUserData={props.setUserData}
         />
       );
     case 'UserSettings':

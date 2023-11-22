@@ -14,6 +14,7 @@ import Markdown from "@ronradtke/react-native-markdown-display";
 import MarkdownRenderer from "../markdown/MarkdownRenderer";
 import ChatBubbleSource from "./ChatBubbleSource";
 import { ScrollView } from "react-native-gesture-handler";
+import globalStyleSettings from "../../globalStyleSettings";
 
 type userDataType = {
   username: string,
@@ -37,6 +38,7 @@ type sourceMetadata = {
 
 type ChatBubbleProps = {
   origin: ("user" | "server"),
+  displayCharacter?: string,
   input: string,
   userData: userDataType,
   sources: {
@@ -116,7 +118,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                 fontFamily: normalTextFont,
                 fontSize: 24,
               }}>
-                {"K"}
+                {(props.displayCharacter && props.displayCharacter.length > 0)?props.displayCharacter[0].toUpperCase():"U"}
               </Text>
             </View>
           </View>
@@ -163,8 +165,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
               justifyContent: 'center',
               maxWidth: '100%'
             }} onLayout={(event) => {setCurrentWidth(event.nativeEvent.layout.width)}}>
-              {}
-              {(bubbleState === "finished" || bubbleState === "writing") && (
+              {(props.state === "finished" || props.state === "writing" || props.state === undefined)?(
                 <>
                   <Animated.ScrollView style={{
                     height: bubbleHeight,
@@ -186,6 +187,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     >
                       {props.input && props.input.length > 0 && (
                         <MarkdownRenderer 
+                          finished={(props.state === "finished")}
                           maxWidth={maxWidth} 
                           input={props.input} 
                           bubbleWidth={bubbleWidth}
@@ -255,6 +257,41 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     </Animated.View>
                   )}
                 </>
+              ):(
+                (props.state === "crafting_query")?(
+                  <View>
+                    <Text style={{
+                      fontFamily: globalStyleSettings.chatRegularFont,
+                      fontSize: globalStyleSettings.chatDefaultFontSize,
+                      color: globalStyleSettings.colorText
+                    }}>
+                      {"Crafting Google Query"}
+                    </Text>
+                  </View>
+                ):(
+                  (props.state === "searching_web")?(
+                    <View>
+                      <Text style={{
+                        fontFamily: globalStyleSettings.chatRegularFont,
+                        fontSize: globalStyleSettings.chatDefaultFontSize,
+                        color: globalStyleSettings.colorText
+                      }}>
+                        {"Searching The Web"}
+                      </Text>
+                    </View>
+                  ):(
+                    <View>
+                      <Text style={{
+                        fontFamily: globalStyleSettings.chatRegularFont,
+                        fontSize: globalStyleSettings.chatDefaultFontSize,
+                        color: globalStyleSettings.colorText
+                      }}>
+                        {"Searching Vector Database"}
+                      </Text>
+                    </View>
+                  )
+                )
+
               )}
             </View>
           </View>

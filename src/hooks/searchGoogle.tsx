@@ -85,13 +85,35 @@ export default function searchGoogle(query : string, userData : userDataType, or
     "query": query
   }, ...(org_specified?{"organization_hash_id": organization_hash_id}:{})};
 
-  const url = craftUrl("http://localhost:5000/api/perform_search_query", params);
+  const url = craftUrl("http://localhost:5000/api/search_google", params);
 
   fetch(url, {method: "POST"}).then((response) => {
     response.json().then((data) => {
       console.log(data);
       if (!data["success"]) {
         console.error("Google Search Failed:", data.note);
+        onFinish(undefined);
+        return;
+      }
+      onFinish(data.result);
+    });
+  });
+}
+
+
+export function embedUrls(urls : string[], userData : userDataType, onFinish : (result : object | undefined) => void) {
+  
+  const url = craftUrl("http://localhost:5000/api/embed_urls", {
+    "username": userData.username,
+    "password_prehash": userData.password_pre_hash,
+    "urls": urls
+  });
+
+  fetch(url, {method: "POST"}).then((response) => {
+    response.json().then((data) => {
+      console.log(data);
+      if (!data["success"]) {
+        console.error("Embed URLS failed:", data.note);
         onFinish(undefined);
         return;
       }

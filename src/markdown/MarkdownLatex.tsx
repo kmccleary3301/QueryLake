@@ -5,6 +5,10 @@ import {
 import katex from "../katex/dist/katex";
 import RenderHTML from "react-native-render-html";
 
+// katex.__setFontMetrics("custom-Regular", {});
+// katex.__setFontMetrics("Math-Italic", {}); // makeOrd turns all mathematics into "Math-Italic" regardless of requested font
+// katex.__setFontMetrics("AMS-Regular", {});
+
 type MarkdownLatexProps = {
   textSeg : {text: string},
   type: "inline" | "newline",

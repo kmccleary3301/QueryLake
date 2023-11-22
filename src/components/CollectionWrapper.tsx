@@ -43,35 +43,17 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 	
 	const selectionCircleSize = useRef(new Animated.Value(0)).current;
 	const boxHeight = useRef(new Animated.Value(42));
-  
-  // useEffect(() => {
-  // }, [props.collections]);
-
-//   useEffect(() => {
-//     // if (boxHeight > 42) {
-//     //   setViewScrollable(true);
-//     // }
-//   }, [boxHeight]);
 
   let direct_opened_state = false;
 	useEffect(() => {
     direct_opened_state = opened;
-    let tmp_cmp = opened;
+    // let tmp_cmp = opened;
     Animated.timing(boxHeight.current, {
       toValue: (opened && props.collections.length > 0)?(props.collections.length*45+48):42,
-      // toValue: opened?Math.min(300,(children.length*50+60)):50,
       duration: 400,
 			easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
-		// setTimeout(() => {
-		// 	setViewScrollable(direct_opened_state);
-		// }, 300)
-    // if (opened) {
-    //   // setViewScrollable(opened);
-    //   // setTimeout(() => {
-    //   // }, 300)
-    // }
   }, [opened, props.collections]);
 
   useEffect(() => {
@@ -81,19 +63,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 			easing: Easing.elastic(1),
       useNativeDriver: false,
     }).start();
-    // if (selected) {
-    //   for (let i = 0; i < selected_values.length; i++) {
-    //     selected_values[i][1](true);
-    //   }
-    // }
   }, [selected]);
-
-  // useEffect(() => {
-  //   selected_values = [];
-  //   for (let i = 0; i < props.collections.length; i++) {
-  //     selected_values.push(useState(false));
-  //   }
-  // }, [props.collections]);
 
 	return (
 		<Animated.ScrollView style={{

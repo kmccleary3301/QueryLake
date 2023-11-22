@@ -15,6 +15,7 @@ import craftUrl from "../hooks/craftUrl";
 import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
 import setSerpKey from "../hooks/setSerpKey";
 import searchGoogle from "../hooks/searchGoogle";
+import { embedUrls } from "../hooks/searchGoogle";
 import parseSearchResults from "../hooks/parseSearchResults";
 import setOpenAIAPIKey from "../hooks/setOpenAIAPIKey";
 
@@ -336,8 +337,34 @@ export default function UserSettings(props : UserSettingsProps) {
             <AnimatedPressable 
               id="SendButton"
               onPress={() => {
-                // searchGoogle("Google");
-                parseSearchResults(props.userData, ["https://www.freecodecamp.org/news/python-map-explained-with-examples/", "https://www.statsmodels.org/devel/generated/statsmodels.nonparametric.kernel_regression.KernelReg.html"])
+                searchGoogle("chain of density prompting", props.userData, undefined, (result) => {
+                  console.log("Google results");
+                  console.log(result);
+                });
+
+                // parseSearchResults(props.userData, ["https://www.freecodecamp.org/news/python-map-explained-with-examples/", "https://www.statsmodels.org/devel/generated/statsmodels.nonparametric.kernel_regression.KernelReg.html"])
+                // send_serp_key();
+              }}
+              style={{
+              // padding: 10,
+              height: 24,
+              width: 24,
+              backgroundColor: "#7968D9",
+              borderRadius: 12,
+              alignItems: 'center',
+              justifyContent: 'center'
+              }}
+            >
+              <Feather name="send" size={15} color="#000000" />
+            </AnimatedPressable>
+            <AnimatedPressable
+              onPress={() => {
+                embedUrls(['https://arxiv.org/abs/2309.04269', 'https://medium.com/aimonks/chain-of-density-the-latest-prompting-technique-on-the-block-183fe87fa9a6', 'https://www.ssw.com.au/rules/chain-of-density/', 'https://www.forbes.com/sites/lanceeliot/2023/09/20/prompt-engineering-new-chain-of-density-technique-prompts-generative-ai-toward-smartly-jampacking-crucial-content/', 'https://the-decoder.com/chain-of-density-prompt-improves-ai-summaries-by-packing-more-info-into-fewer-words/', 'https://www.reddit.com/r/ChatGPT/comments/16l403w/chain_of_density_cod_a_new_prompt_by_mit_and/', 'https://www.linkedin.com/pulse/art-science-summarization-unpacking-chain-density-rajaratnam', 'https://advanced-stack.com/resources/how-to-summarize-using-chain-of-density-prompting.html', 'https://www.chatgptpromptshub.com/the-power-of-the-chain-of-density-prompt-a-comprehensive-guide'], props.userData, (result) => {
+                  console.log("embed results");
+                  console.log(result);
+                });
+                
+                // parseSearchResults(props.userData, ["https://www.freecodecamp.org/news/python-map-explained-with-examples/", "https://www.statsmodels.org/devel/generated/statsmodels.nonparametric.kernel_regression.KernelReg.html"])
                 // send_serp_key();
               }}
               style={{

@@ -30,6 +30,7 @@ type MarkdownRendererProps = {
   bubbleWidth: number,
   transparentDisplay?: boolean,
   disableRender?: boolean,
+  finished: boolean,
 };
 
 type MarkdownMapComponentProps = {
@@ -39,6 +40,8 @@ type MarkdownMapComponentProps = {
   unProcessedText: string,
   key?: number,
   padLeft?: boolean,
+  disableHeadingPaddingTop?: boolean,
+  finished: boolean,
 }
 
 type MarkdownMapComponentErrorProps = {
@@ -146,7 +149,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'code':
       return (
-        <MarkdownCodeBlock text={token.text} lang={token.lang} unProcessedText={props.unProcessedText}/>
+        <MarkdownCodeBlock finished={props.finished} text={token.text} lang={token.lang} unProcessedText={props.unProcessedText}/>
       );
     case 'heading':
       let fontSizeGet = 30 - 3*token.depth;
@@ -172,7 +175,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           <View style={{
             flexDirection: 'row',
             paddingLeft: (props.padLeft)?10:0,
-            paddingTop: 20,
+            paddingTop: (props.disableHeadingPaddingTop)?0:30,
           }}>
             <MarkdownTextSplitter selectable={true} style={{
               fontFamily: normalTextFont,
@@ -192,7 +195,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         //   {token.text}
         // </Text>
         <View style={{
-          paddingTop: 20,
+          paddingTop: (props.disableHeadingPaddingTop)?0:30,
         }}>
           <MarkdownTextSplitter selectable={true} style={{
             paddingTop: 8,
@@ -223,6 +226,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         }}>
           {token.items.map((v : Tokens.ListItem, k : number) => (
             <MarkdownMapComponent 
+              finished={props.finished}
               bubbleWidth={props.bubbleWidth} 
               maxWidth={props.maxWidth} 
               key={k} 
@@ -361,7 +365,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
           fontSize: globalStyleSettings.chatDefaultFontSize,
           color: globalStyleSettings.colorText,
           maxWidth: props.maxWidth
-        }}>
+        }} selectable={true}>
           {props.input}
         </Text>
       ):(
@@ -369,10 +373,12 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
           {markdownTokens.map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
+              finished={props.finished}
               bubbleWidth={props.bubbleWidth} 
               maxWidth={props.maxWidth} 
               token={v} 
               unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}
+              disableHeadingPaddingTop={(k === 0)}
             />
           ))}
         </>

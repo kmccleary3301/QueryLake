@@ -42,7 +42,7 @@ export default function LoginPage(props : LoginPageProps) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [retrievedUserData, setRetrievedUserData] = useState<userDataType | null>(null);
-  const [retrievedUserMemberships, setRetrievedUserMemberships] = useState([]);
+  const [retrievedUserMemberships, setRetrievedUserMemberships] = useState<object[] | null>(null);
   const [membershipCallMade, setMembershipCallMade] = useState(false);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [availableModels, setAvailableModels] = useState({})
@@ -60,7 +60,7 @@ export default function LoginPage(props : LoginPageProps) {
     } else if (!membershipCallMade) { 
       getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
       setMembershipCallMade(true);
-    } else {
+    } else if (retrievedUserMemberships !== null) {
       getAvailableModels(retrievedUserData, (result : object) => {
         props.setUserData({...{
           username: retrievedUserData["username"],
@@ -74,7 +74,7 @@ export default function LoginPage(props : LoginPageProps) {
       })
     }
     
-  }, [retrievedUserData, membershipCallMade]);
+  }, [retrievedUserData, membershipCallMade, retrievedUserMemberships]);
 
   const login = () => {
     // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
@@ -128,7 +128,12 @@ export default function LoginPage(props : LoginPageProps) {
           try {
             if (result["account_made"]) {
               // setErrorMessage("Signup Successful");
-              props.setUserData({username: usernameText, password_pre_hash: result["password_single_hash"]});
+              props.setUserData({
+                username: usernameText, 
+                password_pre_hash: result["password_single_hash"],
+                is_admin: false,
+                memberships: [],
+              });
               if (props.setPageNavigate) {
                 props.setPageNavigate("ChatWindow");
               }

@@ -67,8 +67,9 @@ type ChatEntry = {
   origin: ("user" | "server"),
   // content_392098: ChatContent,
   content_raw_string: string,
-  status?: ("generating_query" | "searching_google" | "typing"),
+  // status?: ("generating_query" | "searching_google" | "typing"),
   sources?: sourceMetadata[],
+  state?: "finished" | "searching_web" | "searching_vector_database" | "crafting_query" | "writing" | undefined
 };
 
 type userDataType = {
@@ -273,7 +274,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         "query": query+". "+message,
         "collection_hash_ids": collection_hash_ids,
         "k": 10,
-        "use_rerank": true
+        "use_rerank": true,
       });
 
       fetch(url_vector_query, {method: "POST"}).then((response) => {
@@ -313,18 +314,34 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     let refresh_chat_history = (newChat.length === 0);
     
-    setNewChat(prevChat => [...prevChat.slice(0, prevChat.length-1), {...prevChat[prevChat.length-1], "sources": bot_response_sources}]);
+    // let chat_history_all = newChat.map((x) => {
+    //   role: (x.origin === "user")?"user":"assistant", 
+    //   content: x.content_raw_string
+    // });
 
-    console.log("New sources:", bot_response_sources);
+    let chat_history_all = [...newChat].map((value) => ({ 
+      role: (value.origin === "user")?"user":"assistant", 
+      content: value.content_raw_string
+    }));
+    chat_history_all.push({
+      role: "user",
+      content: message
+    });
 
-    const url = craftUrl("http://localhost:5000/api/async/chat", {
+    console.log("Chat history all:", chat_history_all);
+
+    const url = craftUrl("http://localhost:5000/api/async/llm_call_chat_session", {
       "session_hash": sessionHash,
-      "query": message,
+      "history": chat_history_all,
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "context": bot_response_sources.map((value : sourceMetadata) => value.metadata),
       "model_choice": modelInUse.value
     });
+    setNewChat(prevChat => [...prevChat.slice(0, prevChat.length-1), {...prevChat[prevChat.length-1], "sources": bot_response_sources, state: 'writing'}]);
+
+    console.log("New sources:", bot_response_sources);
+    
 
     console.log(url.toString());
     const es = new EventSource(url, {
@@ -355,6 +372,10 @@ export default function ChatWindow(props : ChatWindowProps) {
       } else if (decoded == "<<<FAILURE>>> | Model Context Length Exceeded") {
         console.error("Maximum Context Length Exceeded");
         es.close();
+        setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
+          ...newChat[newChat.length-1],
+          state: 'finished'
+        }])
       } else {
         // for (let key in Object.keys(uri_decode_map)) {
         //   decoded = decoded.replace(key, uri_decode_map[key]);
@@ -371,7 +392,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         // bot_entry["content_raw_string"] = genString;
         setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
           ...newChat[newChat.length-1],
-          "content_raw_string": genString
+          "content_raw_string": genString,
         }])
         // setTemporaryBotEntry(bot_entry);
       }
@@ -390,6 +411,10 @@ export default function ChatWindow(props : ChatWindowProps) {
     es.addEventListener("close", (event) => {
       console.log("Close SSE connection.");
       setSseOpened(false);
+      setNewChat(newChat => [...newChat.slice(0, newChat.length-1), {
+        ...newChat[newChat.length-1],
+        state: 'finished'
+      }])
     });
   };
 
@@ -548,7 +573,7 @@ export default function ChatWindow(props : ChatWindowProps) {
             {props.sidebarOpened?(
               <Feather name="sidebar" size={24} color="#E8E3E3" />
             ):(
-              <AnimatedPressable style={{padding: 0}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
+              <AnimatedPressable style={{padding: 0, width: 30}} onPress={() => {if (props.toggleSideBar) { props.toggleSideBar(); }}}>
                 <Feather name="sidebar" size={24} color="#E8E3E3" />
               </AnimatedPressable> 
             )}
@@ -590,7 +615,9 @@ export default function ChatWindow(props : ChatWindowProps) {
                 animateScroll={animateScroll}
               >
                 {newChat.map((v_2 : ChatEntry, k_2 : number) => (
-                  <ChatBubble 
+                  <ChatBubble
+                    displayCharacter={props.userData.username[0]}
+                    state={v_2.state}
                     key={k_2} 
                     origin={v_2.origin} 
                     input={v_2.content_raw_string}

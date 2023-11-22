@@ -32,24 +32,35 @@ export default function generateSearchQuery(userData : userDataType, context : C
 	
 	let system_instruction_new = system_instruction.replace("{{currentDate}}", currentDate);
 
+	let history_to_send = [{role: "system", content: system_instruction_new}]
+
 	let chat_history = "Chat History:\n\n<HISTORY>\n\n";
-	for (let i = Math.max(0, context.length - 4); i < context.length - 1; i++) {
+	for (let i = 0; i < context.length - 1; i++) {
 		let origin_string = (context[i].origin === "user")?"USER: ":"ASSISTANT: "
 		chat_history += origin_string+context[i].content_raw_string+"\n\n";
+		history_to_send.push({
+			role: (context[i].origin === "user")?"user":"assistant",
+			content: context[i].content_raw_string
+		})
 	}
 	chat_history += "</HISTORY>\n" +
-	"Given the above history, craft a lexical query to answer the following question, and do not write anything else except for the query:\n" +
+	"Given the previous chat history, craft a lexical query to answer the following question, and do not write anything else except for the query.\n" +
+	"Do not search for visual data, such as images or videos, as these will be completely useless.\n" +
 	"USER: " + context[context.length - 1].content_raw_string;
+
+	history_to_send.push({
+		role: "user",
+		content: chat_history
+	})
 
 	console.log("Crafting system instruction");
 	console.log(system_instruction_new);
 	console.log(chat_history)
 
-	const url = craftUrl("http://localhost:5000/api/chat", {
+	const url = craftUrl("http://localhost:5000/api/llm_call_model_synchronous", {
 		"username": userData.username,
 		"password_prehash": userData.password_pre_hash,
-		"question": chat_history,
-		"system_instruction": system_instruction_new,
+		"history": history_to_send
 	});
 	fetch(url, {method: "POST"}).then((response) => {
 		console.log(response);
