@@ -1,21 +1,43 @@
 
 
 export default function sanitizeMarkdown(input_string : string) {
+  
   let ret = input_string;
-  let input_split = input_string.split("\n");
-  let line_is_table_row = Array(input_split.length).fill(false);
-  let line_is_whitespace = Array(input_split.length).fill(false);
+  ret = ret.replace(/^[\s]*/, "");
 
-  let line_action = Array(input_split.length).fill(0); //0 for nothing, 1 for newline, 2 for deletion, 3 for header line insertion, 4 for both 3 and 2.
+  // console.log("Latex newline replacement");
+  // // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$|\n)])/);
+  // // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$|\n)])/);
+  // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$)]+\$\$)/);
+  // console.log(match_latex_newlines);
+  // while (match_latex_newlines !== null) {
+  //   console.log("Newline latex match");
+  //   console.log(match_latex_newlines[0]);
+  //   let new_replacement : string = match_latex_newlines[0].replaceAll(/(\\\\[\s]*\n)/g, " ").replaceAll("\n", " ");
+  //   console.log("Replacement");
+  //   console.log([new_replacement]);
+  //   ret = ret.replace(match_latex_newlines[0], new_replacement);
+  //   match_latex_newlines = ret.match(/(\n\$\$[^(\$\$)]+\$\$)/);
+  //   console.log(match_latex_newlines);
+  // }
+  // console.log("New string:");
+  // console.log(ret);
 
-  let table_column_counts = [];
+
+  let input_split = ret.split("\n");
+  const line_is_table_row = Array(input_split.length).fill(false);
+  const line_is_whitespace = Array(input_split.length).fill(false);
+
+  const line_action = Array(input_split.length).fill(0); //0 for nothing, 1 for newline, 2 for deletion, 3 for header line insertion, 4 for both 3 and 2.
+
+  const table_column_counts = [];
 
   // console.log("Matching test divider");
   // console.log("| --- | --- |".match(/^([\s]*(\|[\s]*[-]+[\s]*)+\|[\s]*)$/));
 
   for (let i = 0; i < input_split.length; i++) {
-    let table_match = input_split[i].match(/^([\s]*\|([^\n])+\|[\s]*)$/);
-    let whitespace_match = input_split[i].match(/^([\s]*)$/);
+    const table_match = input_split[i].match(/^([\s]*\|([^\n])+\|[\s]*)$/);
+    const whitespace_match = input_split[i].match(/^([\s]*)$/);
     if (whitespace_match !== null) { line_is_whitespace[i] = true; }
     if (table_match !== null) {
       if (i > 1 && line_is_table_row[i-1] && !line_is_table_row[i-2]) {
@@ -61,6 +83,6 @@ export default function sanitizeMarkdown(input_string : string) {
   ret = input_split.join("\n");
 
   // console.log(ret);
-  
+  console.log("Input", [input_string], "Output", [ret]);
   return ret;
 }

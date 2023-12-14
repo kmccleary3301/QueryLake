@@ -1,5 +1,6 @@
-export default function craftUrl(host : string, parameters : Object) {
+export default function craftUrl(host : string, parameters : object) {
   const url = new URL(host);
-  url.searchParams.append("parameters", JSON.stringify(parameters));
+  const stringed_json = JSON.stringify(parameters);
+  url.searchParams.append("parameters", stringed_json);
   return url.toString();
 }
