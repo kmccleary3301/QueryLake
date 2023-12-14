@@ -1,10 +1,5 @@
 import craftUrl from "./craftUrl";
-
-type ChatEntry = {
-  origin: ("user" | "server"),
-  // content_392098: ChatContent,
-  content_raw_string: string
-};
+import { ChatEntry } from "@/globalTypes";
 
 type userDataType = {
   username: string,
@@ -22,31 +17,31 @@ Do not begin your response with an introduction, assurance, or otherwise.
 `;
 
 export default function generateSearchQuery(userData : userDataType, context : ChatEntry[], onFinish : (result : string) => void) {
-	let today = new Date();
-	let dd = String(today.getDate()).padStart(2, '0');
-	let mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-	let yyyy = today.getFullYear();
+	const today = new Date();
+	const dd = String(today.getDate()).padStart(2, '0');
+	const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+	const yyyy = today.getFullYear();
 
-	let currentDate = mm + '/' + dd + '/' + yyyy;
+	const currentDate = mm + '/' + dd + '/' + yyyy;
 	// document.write(today);
 	
-	let system_instruction_new = system_instruction.replace("{{currentDate}}", currentDate);
+	const system_instruction_new = system_instruction.replace("{{currentDate}}", currentDate);
 
-	let history_to_send = [{role: "system", content: system_instruction_new}]
+	const history_to_send = [{role: "system", content: system_instruction_new}]
 
 	let chat_history = "Chat History:\n\n<HISTORY>\n\n";
 	for (let i = 0; i < context.length - 1; i++) {
-		let origin_string = (context[i].origin === "user")?"USER: ":"ASSISTANT: "
-		chat_history += origin_string+context[i].content_raw_string+"\n\n";
+		const origin_string = (context[i].origin === "user")?"USER: ":"ASSISTANT: "
+		chat_history += origin_string+context[i].content+"\n\n";
 		history_to_send.push({
 			role: (context[i].origin === "user")?"user":"assistant",
-			content: context[i].content_raw_string
+			content: context[i].content
 		})
 	}
 	chat_history += "</HISTORY>\n" +
 	"Given the previous chat history, craft a lexical query to answer the following question, and do not write anything else except for the query.\n" +
 	"Do not search for visual data, such as images or videos, as these will be completely useless.\n" +
-	"USER: " + context[context.length - 1].content_raw_string;
+	"USER: " + context[context.length - 1].content;
 
 	history_to_send.push({
 		role: "user",
@@ -70,12 +65,12 @@ export default function generateSearchQuery(userData : userDataType, context : C
         console.error("Failed to retrieve session");
 				return;
 			}
-      let query = data.result.model_response
-        .replace(/^[\s]*(Sure)[\!]?[^\n]*\n/, "")
+			const query = data.result.model_response
+        .replace(/^[\s]*(Sure)[!]?[^\n]*\n/, "")
         
         // .replace(/(?i)(sure)/, "")
-        .replace(/^[\s]*[\"|\'|\`]*/, "")
-        .replace(/[\"|\'|\`]*[\s]*$/, "");
+        .replace(/^[\s]*["|'|`]*/, "")
+        .replace(/["|'|`]*[\s]*$/, "");
       console.log([query]);
 			onFinish(query);
 		});

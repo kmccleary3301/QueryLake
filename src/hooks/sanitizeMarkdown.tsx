@@ -25,19 +25,19 @@ export default function sanitizeMarkdown(input_string : string) {
 
 
   let input_split = ret.split("\n");
-  let line_is_table_row = Array(input_split.length).fill(false);
-  let line_is_whitespace = Array(input_split.length).fill(false);
+  const line_is_table_row = Array(input_split.length).fill(false);
+  const line_is_whitespace = Array(input_split.length).fill(false);
 
-  let line_action = Array(input_split.length).fill(0); //0 for nothing, 1 for newline, 2 for deletion, 3 for header line insertion, 4 for both 3 and 2.
+  const line_action = Array(input_split.length).fill(0); //0 for nothing, 1 for newline, 2 for deletion, 3 for header line insertion, 4 for both 3 and 2.
 
-  let table_column_counts = [];
+  const table_column_counts = [];
 
   // console.log("Matching test divider");
   // console.log("| --- | --- |".match(/^([\s]*(\|[\s]*[-]+[\s]*)+\|[\s]*)$/));
 
   for (let i = 0; i < input_split.length; i++) {
-    let table_match = input_split[i].match(/^([\s]*\|([^\n])+\|[\s]*)$/);
-    let whitespace_match = input_split[i].match(/^([\s]*)$/);
+    const table_match = input_split[i].match(/^([\s]*\|([^\n])+\|[\s]*)$/);
+    const whitespace_match = input_split[i].match(/^([\s]*)$/);
     if (whitespace_match !== null) { line_is_whitespace[i] = true; }
     if (table_match !== null) {
       if (i > 1 && line_is_table_row[i-1] && !line_is_table_row[i-2]) {

@@ -58,7 +58,7 @@ export type EventSourceListener<E extends string = never> = (
   event: CustomEvent<E> | EventSourceEvent
 ) => void;
 
-declare class EventSource<E extends string = never> {
+declare class EventSourceClass<E extends string = never> {
   constructor(url: URL | string, options?: EventSourceOptions);
   open(): void;
   close(): void;
@@ -68,4 +68,4 @@ declare class EventSource<E extends string = never> {
   dispatch(type: E | EventType, data: E | EventSourceEvent): void;
 }
 
-export default EventSource;
+export default EventSourceClass;
