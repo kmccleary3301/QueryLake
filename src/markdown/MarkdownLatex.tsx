@@ -1,5 +1,6 @@
 import {
   Text,
+  View,
   Platform
 } from "react-native";
 import katex from "../katex/dist/katex";
@@ -12,6 +13,7 @@ import RenderHTML from "react-native-render-html";
 type MarkdownLatexProps = {
   textSeg : {text: string},
   type: "inline" | "newline",
+  bubbleWidth: number
 }
 
 export default function MarkdownLatex(props : MarkdownLatexProps){
@@ -42,11 +44,16 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
     } else {
       return (
         // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
-        <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
-          output: 'mathml',
-          throwOnError: throwOnError,
-          displayMode: true
-        })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
+        <View style={{
+          width: props.bubbleWidth-20,
+          alignSelf: 'center'
+        }}>
+          <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+            output: 'mathml',
+            throwOnError: throwOnError,
+            displayMode: true
+          })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
+        </View>
       );
     }
   } catch (error) {

@@ -22,7 +22,7 @@ export default function getSerpKey(userdata : userDataType, onFinish : (result :
 				onFinish("");
         return;
 			}
-			onFinish(data.result);
+			onFinish(data.result.serp_key);
 		});
 	});
 }

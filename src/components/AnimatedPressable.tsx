@@ -18,6 +18,7 @@ type AnimatedPressableProps = {
   pressColor?: string,
   onHover?: (hovering : boolean) => void,
   invert?: boolean,
+  disableOpacity?: boolean
 }
 
 export default function AnimatedPressable(props: AnimatedPressableProps) {
@@ -27,25 +28,29 @@ export default function AnimatedPressable(props: AnimatedPressableProps) {
 
   const invert = (props.invert)?props.invert:false;
 
-	const hoverOpacity = useRef(new Animated.Value(0)).current; // Initial value for opacity: 0
+	const hoverOpacity = useRef(new Animated.Value(1)).current; // Initial value for opacity: 0
 	
   useEffect(() => {
-    Animated.timing(hoverOpacity, {
-      toValue: (invert)?(pressed?0.3:(hover?0.2:0)):(pressed?0.3:(hover?0.5:1)),
-      duration: 100,
-			easing: Easing.elastic(0),
-      useNativeDriver: false,
-    }).start();
+    if (!props.disableOpacity) {
+      Animated.timing(hoverOpacity, {
+        toValue: (invert)?(pressed?0.3:(hover?0.2:0)):(pressed?0.3:(hover?0.5:1)),
+        duration: 100,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }
   }, [pressed]);
 
 
   useEffect(() => {
-    Animated.timing(hoverOpacity, {
-      toValue: (invert)?(hover?0.2:0):(hover?0.5:1),
-      duration: 100,
-			easing: Easing.elastic(0),
-      useNativeDriver: false,
-    }).start();
+    if (!props.disableOpacity) {
+      Animated.timing(hoverOpacity, {
+        toValue: (invert)?(hover?0.2:0):(hover?0.5:1),
+        duration: 100,
+        easing: Easing.elastic(0),
+        useNativeDriver: false,
+      }).start();
+    }
   }, [hover]);
 
   const handleDragOver = (event: any) => {

@@ -17,8 +17,8 @@ export default function getUserMemberships(username : string,
         console.error("Failed to retrieve memberships", [data.note]);
         return;
       }
-      if (set_admin) { set_admin(data.admin); }
-      set_value(data.memberships);
+      if (set_admin) { set_admin(data.result.admin); }
+      set_value(data.result.memberships);
     });
   });
 }

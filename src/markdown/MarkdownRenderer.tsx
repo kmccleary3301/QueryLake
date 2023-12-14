@@ -72,54 +72,54 @@ type MarkdownParagraphComponentProps = {
   token: Token,
 };
 
-function MarkdownParagraphComponent(props : MarkdownParagraphComponentProps) {
-  const normalTextFont = "YingHei3";
-  switch (props.token.type) {
-    case 'text': //Normal Case
-      return (
-        <MarkdownTextSplitter selectable={true} style={{
-          fontFamily: normalTextFont,
-          fontSize: 16,
-          color: '#E8E3E3'
-          }} text={props.token.text}/>
-      );
-    case 'strong': //Bold case
-      return (
-        <Text style={{
-          fontFamily: 'YingHei4',
-          fontSize: 16,
-          color: '#E8E3E3'
-        }}>
-          {props.token.text}
-        </Text>
-      );
-    case 'em': //Bold case
-      return (
-        <Text style={{
-          fontFamily: normalTextFont,
-          fontSize: 16,
-          color: '#E8E3E3',
-          fontStyle: 'italic'
-        }}>
-          {props.token.text}
-        </Text>
-      );
-    case 'codespan': //Bold case
-      return (
-        <Text style={{
-          fontFamily: 'Consolas',
-          fontSize: 16,
-          color: '#E8E3E3',
-          fontStyle: 'italic',
-          // backgroundColor: '#17181D',
-          borderRadius: 3,
-          paddingHorizontal: 2,
-        }}>
-          {props.token.raw}
-        </Text>
-      );
-  }
-}
+// function MarkdownParagraphComponent(props : MarkdownParagraphComponentProps) {
+//   const normalTextFont = "YingHei3";
+//   switch (props.token.type) {
+//     case 'text': //Normal Case
+//       return (
+//         <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
+//           fontFamily: normalTextFont,
+//           fontSize: 16,
+//           color: '#E8E3E3'
+//           }} text={props.token.text}/>
+//       );
+//     case 'strong': //Bold case
+//       return (
+//         <Text style={{
+//           fontFamily: 'YingHei4',
+//           fontSize: 16,
+//           color: '#E8E3E3'
+//         }}>
+//           {props.token.text}
+//         </Text>
+//       );
+//     case 'em': //Bold case
+//       return (
+//         <Text style={{
+//           fontFamily: normalTextFont,
+//           fontSize: 16,
+//           color: '#E8E3E3',
+//           fontStyle: 'italic'
+//         }}>
+//           {props.token.text}
+//         </Text>
+//       );
+//     case 'codespan': //Bold case
+//       return (
+//         <Text style={{
+//           fontFamily: 'Consolas',
+//           fontSize: 16,
+//           color: '#E8E3E3',
+//           fontStyle: 'italic',
+//           // backgroundColor: '#17181D',
+//           borderRadius: 3,
+//           paddingHorizontal: 2,
+//         }}>
+//           {props.token.raw}
+//         </Text>
+//       );
+//   }
+// }
 
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
   const normalTextFont = "Inter-Regular";
@@ -177,7 +177,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             paddingLeft: (props.padLeft)?10:0,
             paddingTop: (props.disableHeadingPaddingTop)?0:30,
           }}>
-            <MarkdownTextSplitter selectable={true} style={{
+            <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
               fontFamily: normalTextFont,
               fontSize: defaultFontSize,
               color: '#E8E3E3'
@@ -197,7 +197,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         <View style={{
           paddingTop: (props.disableHeadingPaddingTop)?0:30,
         }}>
-          <MarkdownTextSplitter selectable={true} style={{
+          <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
             paddingTop: 8,
             fontFamily: headingFont,
             fontSize: fontSizeGet,
@@ -264,7 +264,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
               color: '#74748B'
               }}>·</Text> */}
           </View>
-          <MarkdownTextSplitter selectable={true} style={{
+          <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
@@ -278,7 +278,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           paddingLeft: (props.padLeft)?10:0,
           paddingBottom: 5,
         }}>
-          <MarkdownTextSplitter selectable={true} style={{
+          <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
@@ -294,7 +294,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           paddingLeft: (props.padLeft)?10:0,
           paddingBottom: 5,
         }}>
-          <MarkdownTextSplitter selectable={true} style={{
+          <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
             fontFamily: normalTextFont,
             fontSize: defaultFontSize,
             color: '#E8E3E3'
@@ -373,7 +373,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
           {markdownTokens.map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
-              finished={props.finished}
+              finished={props.finished || k < (markdownTokens.length - 1)}
               bubbleWidth={props.bubbleWidth} 
               maxWidth={props.maxWidth} 
               token={v} 

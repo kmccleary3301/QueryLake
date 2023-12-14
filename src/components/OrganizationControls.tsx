@@ -302,7 +302,7 @@ export default function OrganizationControls(props : OrganizationControlsProps) 
             </View>
           </View>
         </View>
-        {(organizationMembers.length > 0) && (
+        {(organizationMembers !== undefined && organizationMembers.length > 0) && (
           <ScrollView style={{
             width: 320,
             maxHeight: 200,

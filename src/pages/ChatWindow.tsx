@@ -218,8 +218,9 @@ export default function ChatWindow(props : ChatWindowProps) {
       fetch(url, {method: "POST"}).then((response) => {
         console.log(response);
         response.json().then((data) => {
+          console.log("create_chat_session:", data);
             if (data["success"]) {
-              setSessionHash(data["session_hash"]);
+              setSessionHash(data.result);
             } else {
               console.error("Session hash failed", data["note"]);
             }
@@ -282,11 +283,11 @@ export default function ChatWindow(props : ChatWindowProps) {
         response.json().then((data) => {
             if (data["success"]) {
               console.log("Vector db recieved");
-              console.log(data["results"]);
-              for (let i = 0; i < data["results"].length; i++) {
+              console.log(data["result"]);
+              for (let i = 0; i < data["result"].length; i++) {
                 try {
                   bot_response_sources.push({
-                    metadata: {...data["results"][i]["metadata"], "document": data["results"][i]["document"], "type" : "pdf"}
+                    metadata: {...data["result"][i]["metadata"], "document": data["result"][i]["document"], "type" : "pdf"}
                   })
                 } catch {}
               }
@@ -360,7 +361,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       decoded = hexToUtf8(decoded);
       // console.log("Decoded SSE String:", [decoded]);
       // decoded = decoded.replace("�", "");
-      if (decoded == "-DONE-") {
+      if (decoded == "<<CLOSE>>") {
         // setNewChat(newChat => [...newChat, bot_entry])
         // setTemporaryBotEntry(null);
         console.log("Completed response:");
@@ -619,7 +620,7 @@ export default function ChatWindow(props : ChatWindowProps) {
                     displayCharacter={props.userData.username[0]}
                     state={v_2.state}
                     key={k_2} 
-                    origin={v_2.origin} 
+                    role={v_2.origin} 
                     input={v_2.content_raw_string}
                     userData={props.userData}
                     sources={(v_2.sources)?v_2.sources:[]}

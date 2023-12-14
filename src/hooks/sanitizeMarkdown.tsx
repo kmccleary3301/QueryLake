@@ -3,7 +3,7 @@
 export default function sanitizeMarkdown(input_string : string) {
   
   let ret = input_string;
-  // ret = ret.replace(/^[\s]*/, "");
+  ret = ret.replace(/^[\s]*/, "");
 
   // console.log("Latex newline replacement");
   // // let match_latex_newlines = ret.match(/(\n\$\$[^(\$\$|\n)])/);

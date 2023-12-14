@@ -19,6 +19,7 @@ import { Feather } from "@expo/vector-icons";
 import craftUrl from "../hooks/craftUrl";
 import getUserMemberships from "../hooks/getUserMemberships";
 import getAvailableModels from "../hooks/getAvailableModels";
+import getAvailableToolchains from "../hooks/getAvailableToolchains";
 
 // type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage";
 
@@ -27,6 +28,14 @@ type userDataType = {
   password_pre_hash: string,
   memberships?: object[],
   is_admin?: boolean,
+  serp_key?: string,
+  available_models?: {
+    default_model: string,
+    local_models: string[],
+    external_models: object
+  },
+  available_toolchains: object[],
+  selected_toolchain: string
 };
 
 type LoginPageProps = {
@@ -54,55 +63,96 @@ export default function LoginPage(props : LoginPageProps) {
   //   });
   // };
 
-  useEffect(() => {
-    if (retrievedUserData === null) { 
-      return; 
-    } else if (!membershipCallMade) { 
-      getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
-      setMembershipCallMade(true);
-    } else if (retrievedUserMemberships !== null) {
-      getAvailableModels(retrievedUserData, (result : object) => {
-        props.setUserData({...{
-          username: retrievedUserData["username"],
-          password_pre_hash: retrievedUserData["password_pre_hash"],
-          memberships: retrievedUserMemberships,
-          is_admin: userIsAdmin
-        }, ...{available_models : result}});
-        if (props.setPageNavigate) {
-          props.setPageNavigate("ChatWindow");
-        }
-      })
-    }
+  // useEffect(() => {
+  //   if (retrievedUserData === null) { 
+  //     return; 
+  //   } else if (!membershipCallMade) { 
+  //     getUserMemberships(retrievedUserData["username"], retrievedUserData["password_pre_hash"], "all", setRetrievedUserMemberships, setUserIsAdmin);
+  //     setMembershipCallMade(true);
+  //   } else if (retrievedUserMemberships !== null) {
+  //     getAvailableModels(retrievedUserData, (result : object) => {
+  //       getAvailableToolchains(retrievedUserData, (result_tools : object) => {
+  //         console.log("Got toolchains:", result_tools);
+
+  //         props.setUserData({...{
+  //           username: retrievedUserData["username"],
+  //           password_pre_hash: retrievedUserData["password_pre_hash"],
+  //           memberships: retrievedUserMemberships,
+  //           is_admin: userIsAdmin,
+  //           available_toolchains: result_tools.result.toolchains,
+  //           selected_toolchain: result_tools.result.default
+  //         }, ...{available_models : result}});
+  //         if (props.setPageNavigate) {
+  //           props.setPageNavigate("ChatWindow");
+  //         }
+  //       })
+  //     })
+  //   }
     
-  }, [retrievedUserData, membershipCallMade, retrievedUserMemberships]);
+  // }, [retrievedUserData, membershipCallMade, retrievedUserMemberships]);
 
   const login = () => {
     // fetch('http://localhost:5000/api/help', {method: "POST"}).then((response) => {
-    //   response.json().then((data) => { console.log(data)})});
+      //   response.json().then((data) => { console.log(data)})});
     const url = craftUrl("http://localhost:5000/api/login", {
       "username": usernameText,
       "password": password
     });
-    let result = {};
+    // let result = {};
+    console.log("Calling Server");
     fetch(url, {method: "POST"}).then((response) => {
+      console.log("Fetching");
       console.log(response);
       response.json().then((data) => {
-          result = data;
-          console.log(result);
+          // result = data;
+          console.log(data);
           try {
-            if (result["successful"]) {
+            if (data.success) {
               // setErrorMessage("Login Successful");
-              setRetrievedUserData({
-                username: usernameText, 
-                password_pre_hash: result["password_single_hash"]
-              });
-
+              // const retrieved_user_data = {
+              //   username: usernameText, 
+              //   password_pre_hash: data.result.password_single_hash,
+              //   aval
+              // };
+              // getUserMemberships(usernameText, data.result.password_single_hash, "all", (memberships) => {
+              //   props.setUserData({
+              //     username: usernameText, 
+              //     password_pre_hash: data.result.password_single_hash,
+              //     available_toolchains: data.result.available_toolchains,
+              //     selected_toolchain: data.result.default_toolchain,
+              //     available_models: data.result.available_models,
+              //     is_admin: data.result.admin,
+              //     memberships: memberships
+              //   });
+  
+              //   if (props.setPageNavigate) {
+              //     props.setPageNavigate("ChatWindow");
+              //   }
+              // }, setUserIsAdmin);
+              getUserMemberships(usernameText, data.result.password_single_hash, "all", (memberships) => {
+                getAvailableToolchains({username: usernameText, password_pre_hash: data.result.password_single_hash}, (result_tools : object) => {
+                  props.setUserData({
+                    username: usernameText, 
+                    password_pre_hash: data.result.password_single_hash,
+                    available_toolchains: result_tools.toolchains,
+                    selected_toolchain: result_tools.default,
+                    available_models: data.result.available_models,
+                    is_admin: data.result.admin,
+                    memberships: memberships
+                  });
+    
+                  if (props.setPageNavigate) {
+                    props.setPageNavigate("ChatWindow");
+                  }
+                });
+              }, setUserIsAdmin);
+              
               console.log({
                 username: usernameText, 
-                password_pre_hash: result["password_single_hash"]
+                password_pre_hash: data.result.password_single_hash
               });
             } else {
-              setErrorMessage(result["note"]);
+              setErrorMessage(data.note);
             }
           } catch (error) {
             console.log(error);
@@ -123,23 +173,42 @@ export default function LoginPage(props : LoginPageProps) {
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
       response.json().then((data) => {
-          result = data;
-          console.log(result);
+          console.log(data);
           try {
-            if (result["account_made"]) {
+            if (data.success && data.result.account_made) {
               // setErrorMessage("Signup Successful");
-              props.setUserData({
-                username: usernameText, 
-                password_pre_hash: result["password_single_hash"],
-                is_admin: false,
-                memberships: [],
-              });
-              if (props.setPageNavigate) {
-                props.setPageNavigate("ChatWindow");
-              }
+              // props.setUserData({
+              //   username: usernameText, 
+              //   password_pre_hash: data.result.password_single_hash,
+              //   is_admin: false,
+              //   memberships: [],
+              // });
+              // if (props.setPageNavigate) {
+              //   props.setPageNavigate("ChatWindow");
+              // }
+              getUserMemberships(usernameText, data.result.password_single_hash, "all", (memberships) => {
+                getAvailableToolchains({username: usernameText, password_pre_hash: data.result.password_single_hash}, (result_tools : object) => {
+                  
+                  console.log("Result_tools:", result_tools);
+                  props.setUserData({
+                    username: usernameText, 
+                    password_pre_hash: data.result.password_single_hash,
+                    available_toolchains: result_tools.toolchains,
+                    selected_toolchain: result_tools.default,
+                    available_models: data.result.available_models,
+                    is_admin: data.result.admin,
+                    memberships: memberships
+                  });
+    
+                  if (props.setPageNavigate) {
+                    props.setPageNavigate("ChatWindow");
+                  }
+                });
+              }, setUserIsAdmin);
+
               //Sign-up Successful
             } else {
-              setErrorMessage(result["note"]);
+              setErrorMessage(data.note);
             }
           } catch (error) {
             console.log(error);

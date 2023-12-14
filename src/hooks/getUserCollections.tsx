@@ -32,7 +32,7 @@ export default function getUserCollections(username : string, password_prehash: 
     // console.log(response);
     response.json().then((data) => {
       // console.log(data);
-      retrieved_data = data;
+      const retrieved = data.result.collections;
       if (data["success"] == false) {
         console.error("Collection error:", data["note"]);
         return;
@@ -42,13 +42,13 @@ export default function getUserCollections(username : string, password_prehash: 
           title: "My Collections",
           collections: [],
         };
-        for (let i = 0; i < data.result.user_collections.length; i++) {
-          console.log(data.result.user_collections[i]);
+        for (let i = 0; i < retrieved.user_collections.length; i++) {
+          console.log(retrieved.user_collections[i]);
           personal_collections.collections.push({
-            "title": data.result.user_collections[i]["name"],
-            "hash_id": data.result.user_collections[i]["hash_id"],
-            "items": data.result.user_collections[i]["document_count"],
-            "type": data.result.user_collections[i]["type"]
+            "title": retrieved.user_collections[i]["name"],
+            "hash_id": retrieved.user_collections[i]["hash_id"],
+            "items": retrieved.user_collections[i]["document_count"],
+            "type": retrieved.user_collections[i]["type"]
           })
         }
         collection_groups_fetch.push(personal_collections);
@@ -58,31 +58,31 @@ export default function getUserCollections(username : string, password_prehash: 
           title: "Global Collections",
           collections: [],
         };
-        for (let i = 0; i < data["result"]["global_collections"].length; i++) {
+        for (let i = 0; i < retrieved.global_collections.length; i++) {
           global_collections.collections.push({
-            "title": data["result"]["global_collections"][i]["name"],
-            "hash_id": data["result"]["global_collections"][i]["hash_id"],
-            "items": data["result"]["global_collections"][i]["document_count"],
-            "type": data["result"]["global_collections"][i]["type"]
+            "title": retrieved.global_collections[i]["name"],
+            "hash_id": retrieved.global_collections[i]["hash_id"],
+            "items": retrieved.global_collections[i]["document_count"],
+            "type": retrieved.global_collections[i]["type"]
           })
         }
         collection_groups_fetch.push(global_collections);
       } catch { return; }
       try {
-        let organization_ids = Object.keys(retrieved_data.result.organization_collections)
+        let organization_ids = Object.keys(retrieved.organization_collections)
         for (let j = 0; j < organization_ids.length; j++) {
           try {
             let org_id = organization_ids[j];
             let organization_specific_collections : collectionGroup = {
-              title: retrieved_data.result.organization_collections[org_id].name,
+              title: retrieved.organization_collections[org_id].name,
               collections: [],
             };
-            for (let i = 0; i < retrieved_data.result.organization_collections[org_id].collections.length; i++) {
+            for (let i = 0; i < retrieved.organization_collections[org_id].collections.length; i++) {
               organization_specific_collections.collections.push({
-                "title": retrieved_data.result.organization_collections[org_id].collections[i].name,
-                "hash_id": retrieved_data.result.organization_collections[org_id].collections[i].hash_id,
-                "items": retrieved_data.result.organization_collections[org_id].collections[i].document_count,
-                "type": retrieved_data.result.organization_collections[org_id].collections[i].type,
+                "title": retrieved.organization_collections[org_id].collections[i].name,
+                "hash_id": retrieved.organization_collections[org_id].collections[i].hash_id,
+                "items": retrieved.organization_collections[org_id].collections[i].document_count,
+                "type": retrieved.organization_collections[org_id].collections[i].type,
               })
             }
             collection_groups_fetch.push(organization_specific_collections)

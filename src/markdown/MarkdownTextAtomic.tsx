@@ -28,7 +28,8 @@ type textSegment = {
   
 // }
 type MarkdownTextAtomicProps = {
-  textSeg : textSegment
+  textSeg : textSegment,
+  bubbleWidth: number,
 }
 
 export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
@@ -37,12 +38,12 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
   switch(props.textSeg.type) {
     case "mathjax_newline":
       return (
-        <MarkdownLatex textSeg={props.textSeg} type={"newline"}/>
+        <MarkdownLatex textSeg={props.textSeg} type={"newline"} bubbleWidth={props.bubbleWidth}/>
       );
     case "mathjax_inline":
       return (
         <Text style={{fontWeight: 'bold'}}>
-          <MarkdownLatex textSeg={props.textSeg} type={"inline"}/>
+          <MarkdownLatex textSeg={props.textSeg} type={"inline"} bubbleWidth={props.bubbleWidth}/>
         </Text>
       );
     case "bold":

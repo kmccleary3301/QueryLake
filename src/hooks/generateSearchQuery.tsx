@@ -70,7 +70,7 @@ export default function generateSearchQuery(userData : userDataType, context : C
         console.error("Failed to retrieve session");
 				return;
 			}
-      let query = data.result
+      let query = data.result.model_response
         .replace(/^[\s]*(Sure)[\!]?[^\n]*\n/, "")
         
         // .replace(/(?i)(sure)/, "")

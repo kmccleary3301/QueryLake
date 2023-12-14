@@ -43,6 +43,7 @@ import CreateCollectionPage from './src/pages/CreateCollectionPage';
 import EditCollection from './src/pages/EditCollection';
 import OrganizationManager from './src/pages/OrganizationManager';
 import UserSettings from './src/pages/UserSettings';
+import ChatWindowToolchain from './src/pages/ChatWindowToolchain';
 
 function HomeScreen({ navigation }) {
   return (
@@ -101,6 +102,18 @@ function CustomDrawerContent(props: any) {
 
 type pageID = "ChatWindow" | "MarkdownTestPage" | "LoginPage" | "CreateCollectionPage" | "EditCollection" | "OrganizationManager" | "UserSettings";
 
+type toolchainEntry = {
+  name: string,
+  id: string,
+  category: string
+  chat_window_settings: object
+};
+
+type toolchainCategory = {
+  category: string,
+  entries: toolchainEntry[]
+};
+
 type userDataType = {
   username: string,
   password_pre_hash: string,
@@ -111,8 +124,21 @@ type userDataType = {
     default_model: string,
     local_models: string[],
     external_models: object
-  }
+  },
+  available_toolchains: toolchainCategory[],
+  selected_toolchain: toolchainEntry
 };
+
+type sessionEntry = {
+  time: number,
+  title: string,
+  hash_id: string
+}
+type timeWindowType = {
+  title: string,
+  cutoff: number,
+  entries: sessionEntry[]
+}
 
 type AppWebPageProps = {
   page : pageID, 
@@ -126,14 +152,17 @@ type AppWebPageProps = {
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<any>>,
   refreshSidePanel: string[],
   setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>,
-  selectedCollections: object
+  selectedCollections: object,
+  setChatHistory: React.Dispatch<React.SetStateAction<timeWindowType[]>>,
+  chatHistory: timeWindowType[]
 }
 
 function AppWebPage(props : AppWebPageProps) {
   switch(props.page) {
     case 'ChatWindow':
       return (
-        <ChatWindow 
+        // <ChatWindow 
+        <ChatWindowToolchain
           toggleSideBar={props.toggleSideBarOpened} 
           sidebarOpened={props.sidebarOpened} 
           setPageNavigate={props.setPageNavigate} 
@@ -204,7 +233,7 @@ function AppWebPage(props : AppWebPageProps) {
 
 function AppWeb() {
   const pagesWithSidebarDisabled = ["LoginPage"];
-
+  const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
   const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
   const [userData, setUserData] = useState<userDataType>();
   const transitionOpacity = useRef(new Animated.Value(1)).current;
@@ -291,6 +320,9 @@ function AppWeb() {
                     pageNavigateArguments={pageNavigateArguments}
                     setSelectedCollections={setSelectedCollections}
                     selectedCollections={selectedCollections}
+                    setUserData={setUserData}
+                    chatHistory={chatHistory}
+                    setChatHistory={setChatHistory}
                   />
                 </View>
               )}
@@ -312,6 +344,8 @@ function AppWeb() {
               setPageNavigateArguments={setPageNavigateArguments}
               setRefreshSidePanel={setRefreshSidePanel}
               selectedCollections={selectedCollections}
+              chatHistory={chatHistory}
+              setChatHistory={setChatHistory}
             />
           </Animated.View>
         </View>

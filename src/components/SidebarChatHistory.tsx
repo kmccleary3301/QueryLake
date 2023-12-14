@@ -146,7 +146,7 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
                 {chat_history_window.title}
               </Text>
               {chat_history_window.entries.map((value, index : number) => (
-                <View style={{paddingVertical: 5}} key={index}>
+                <View style={{paddingVertical: 0}} key={index}>
                   <HoverDocumentEntry
                     key={index}
                     title={(value.title !== null)?value.title:"Test"}

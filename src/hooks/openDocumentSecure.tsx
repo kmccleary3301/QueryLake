@@ -24,7 +24,7 @@ type metadataType = {
 
 
 export default function openDocumentSecure(userData : userDataType, metadata: metadataType) {
-  if (metadata.type === "pdf") {
+  if (metadata.document_name) {
     const url_doc_access = craftUrl("http://localhost:5000/api/craft_document_access_token", {
       "username": userData.username,
       "password_prehash": userData.password_pre_hash,
@@ -37,8 +37,8 @@ export default function openDocumentSecure(userData : userDataType, metadata: me
           console.error("Document Delete Failed", data["note"]);
           return;
         }
-        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data["result"][0], {
-          "auth_access": data["result"][1]
+        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data.result.file_name, {
+          "auth_access": data.result.access_encrypted
         })
         Linking.openURL(url_actual.toString()+metadata.location_link_chrome);
       });

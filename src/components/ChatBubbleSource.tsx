@@ -17,6 +17,7 @@ type userDataType = {
 type ChatBubbleSourceProps = {
   icon?: any,
   userData: userDataType,
+  document : string,
   metadata: {
     "type": "pdf"
     "collection_type": "user" | "organization" | "global",
@@ -38,6 +39,7 @@ type ChatBubbleSourceProps = {
 
 export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
   const [expanded, setExpanded] = useState(false);
+  const [delayedExpanded, setDelayedExpanded] = useState(false);
   const maxWidth = useRef(new Animated.Value(140)).current;
   const maxHeight = useRef(new Animated.Value(19)).current
   const [trueContentWidth, setTrueContentWidth] = useState(140);
@@ -45,7 +47,7 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
   const [firstLineHeight, setFirstLineHeight] = useState(19);
   const [firstLineWidth, setFirstLineWidth] = useState(30);
 
-  const content_reformat = props.metadata.document.replaceAll(/(-[\s]*\n)/g, "").replaceAll(/([\s]*\n)/g, " ");
+  const content_reformat = props.document.replaceAll(/(-[\s]*\n)/g, "").replaceAll(/([\s]*\n)/g, " ");
   const opacity = (props.metadata.rerank_score !== undefined)?(Math.min(255, Math.floor(255*(Math.sqrt(props.metadata.rerank_score)*0.8 + 0.2))).toString(16).toUpperCase()):"FF";
 
   useEffect(() => {
@@ -63,6 +65,9 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
       easing: Easing.elastic(0),
       useNativeDriver: false,
     }).start();
+    setTimeout(() => {
+      setDelayedExpanded(expanded);
+    }, expanded?0:250);
   }, [expanded, firstLineHeight, trueContentWidth, trueContentHeight]);
 
   return (
@@ -74,7 +79,7 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
           style={{
             borderRadius: 10,
             borderWidth: 2,
-            borderColor: (props.metadata.type === "pdf")?"#E50914"+opacity:"#88C285"+opacity,
+            borderColor: (props.metadata.document_name)?"#E50914"+opacity:"#88C285"+opacity,
             backgroundColor: "#17181D",
             width: maxWidth,
             height: maxHeight,
@@ -107,7 +112,7 @@ export default function ChatBubbleSource(props: ChatBubbleSourceProps) {
                 {props.metadata.document_name}
               </Text>
             </View>
-            {(expanded) && (
+            {(delayedExpanded) && (
               <View>
                 <Text 
                   style={{

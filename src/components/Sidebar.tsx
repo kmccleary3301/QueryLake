@@ -18,6 +18,7 @@ import AnimatedPressable from './AnimatedPressable';
 import SidebarChatHistory from './SidebarChatHistory';
 import getChatHistory from '../hooks/getChatHistory';
 import getUserCollections from '../hooks/getUserCollections';
+import SidebarToolchains from './SidebarToolchains';
 
 type selectedState = [
 	selected: boolean,
@@ -31,13 +32,26 @@ type collectionGroup = {
 	collections: any,
 };
 
+type toolchainEntry = {
+  name: string,
+  id: string,
+  category: string
+  chat_window_settings: object
+};
+
+type toolchainCategory = {
+  category: string,
+  entries: toolchainEntry[]
+};
 
 
 type userDataType = {
   username: string,
   password_pre_hash: string,
   memberships: object[],
-  is_admin: boolean
+  is_admin: boolean,
+  available_toolchains: toolchainCategory[],
+  selected_toolchain: toolchainEntry
 };
 
 type SidebarProps = {
@@ -51,8 +65,23 @@ type SidebarProps = {
   refreshSidePanel: string[],
   setRefreshSidePanel: React.Dispatch<React.SetStateAction<string[]>>,
   setSelectedCollections: React.Dispatch<React.SetStateAction<object>>,
-  selectedCollections: object
+  selectedCollections: object,
+  setUserData: React.Dispatch<React.SetStateAction<userDataType>>,
+  setChatHistory: React.Dispatch<React.SetStateAction<timeWindowType[]>>,
+  chatHistory: timeWindowType[]
   // sidebarOpened?: boolean,
+}
+
+type sessionEntry = {
+  time: number,
+  title: string,
+  hash_id: string
+}
+
+type timeWindowType = {
+  title: string,
+  cutoff: number,
+  entries: sessionEntry[]
 }
 
 type panelModeType = "collections" | "history" | "tools";
@@ -60,7 +89,7 @@ type panelModeType = "collections" | "history" | "tools";
 export default function Sidebar(props: SidebarProps) {
   // console.log(props);
 	const [panelMode, setPanelMode] = useState<panelModeType>("collections");
-  const [chatHistory, setChatHistory] = useState([]);
+  // const [chatHistory, setChatHistory] = useState<sessionEntry[]>([]);
 	const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 
   const timeWindows = [
@@ -71,10 +100,11 @@ export default function Sidebar(props: SidebarProps) {
   ];
 
   useEffect(() => {
+    console.log("userdata:", props.userData);
     let chat_history_grabbed = false;
     let collections_grabbed = false;
-    if (chatHistory.length == 0) {
-      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+    if (props.chatHistory.length == 0) {
+      getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), props.setChatHistory);
       chat_history_grabbed = true;
     }
     if (collectionGroups.length == 0) {
@@ -83,7 +113,7 @@ export default function Sidebar(props: SidebarProps) {
     }
     for (let i = 0; i < props.refreshSidePanel.length; i++) {
       if (!chat_history_grabbed && props.refreshSidePanel[i] === "chat-history") {
-        getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), setChatHistory);
+        getChatHistory(props.userData.username, props.userData.password_pre_hash, timeWindows.slice(), props.setChatHistory);
         chat_history_grabbed = true;
       } else if (!collections_grabbed && props.refreshSidePanel[i] === "collections") {
         getUserCollections(props.userData.username, props.userData.password_pre_hash, setCollectionGroups);
@@ -93,6 +123,7 @@ export default function Sidebar(props: SidebarProps) {
   }, [props.refreshSidePanel, props.userData]);
 
   useEffect(() => {
+    console.log("Collection Groups:", collectionGroups);
     let new_selections_state = {};
     for (let i = 0; i < collectionGroups.length; i++) {
       for (let j = 0; j < collectionGroups[i].collections.length; j++) {
@@ -210,9 +241,15 @@ export default function Sidebar(props: SidebarProps) {
               setPageNavigateArguments={props.setPageNavigateArguments} 
               setPageNavigate={props.setPageNavigate}
               refreshSidePanel={props.refreshSidePanel}
-              chatHistory={chatHistory}
-              setChatHistory={setChatHistory}
+              chatHistory={props.chatHistory}
+              setChatHistory={props.setChatHistory}
               pageNavigateArguments={props.pageNavigateArguments}
+            />
+          )}
+          {(panelMode == "tools") && (
+            <SidebarToolchains
+              userData={props.userData}
+              setUserData={props.setUserData}
             />
           )}
         </View>

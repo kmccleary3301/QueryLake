@@ -267,8 +267,8 @@ export default function EditCollection(props : EditCollectionProps) {
           console.error("Document Delete Failed", data["note"]);
           return;
         }
-        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data["result"][0], {
-          "auth_access": data["result"][1]
+        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data.result.file_name, {
+          "auth_access": data.result.access_encrypted
         })
         Linking.openURL(url_actual.toString());
         // setUploadFiles([...uploadFiles.slice(0, upload_file_index), ...uploadFiles.slice(upload_file_index+1, uploadFiles.length)]);

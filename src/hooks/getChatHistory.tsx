@@ -8,7 +8,7 @@ type timeWindowType = {
 
 export default function getChatHistory(username : string, password_prehash: string, time_windows : timeWindowType[], set_value: React.Dispatch<React.SetStateAction<any>>) {
   const currentTime = Date.now()/1000;
-  const url = craftUrl("http://localhost:5000/api/fetch_chat_sessions", {
+  const url = craftUrl("http://localhost:5000/api/fetch_toolchain_sessions", {
     "username": username,
     "password_prehash": password_prehash
   });
@@ -16,16 +16,14 @@ export default function getChatHistory(username : string, password_prehash: stri
 
   fetch(url, {method: "POST"}).then((response) => {
     response.json().then((data) => {
+      console.log("Fetched session history:", data);
       if (!data.success) {
         console.error("Failed to retrieve sessions", data.note);
         return;
       }
-      for (let i = 0; i < data.result.length; i++) {
-        let entry = {
-          time: data.result[i].time,
-          title: data.result[i].title,
-          hash_id: data.result[i].hash_id,
-        };
+      const sessions = data.result.sessions;
+      for (let i = 0; i < sessions.length; i++) {
+        let entry = sessions[i];
         // console.log((currentTime - entry.time));
         for (let j = 0; j < chat_history_tmp.length; j++) {
           if ((currentTime - entry.time) < chat_history_tmp[j].cutoff) { 

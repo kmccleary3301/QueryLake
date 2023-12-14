@@ -37,11 +37,12 @@ type sourceMetadata = {
 };
 
 type ChatBubbleProps = {
-  origin: ("user" | "server"),
+  role: "user" | "assistant" | "display",
   displayCharacter?: string,
   input: string,
   userData: userDataType,
   sources: {
+    document: string,
     metadata: sourceMetadata,
     img?: any
   }[],
@@ -53,13 +54,16 @@ export default function ChatBubble(props: ChatBubbleProps) {
   const [maxWidth, setMaxWidth] = useState(40);
   const [currentWidth, setCurrentWidth] = useState(40);
   const [bubbleWidth, setBubbleWidth] = useState(10);
-  const transparentDisplay = (props.origin === "user");
+  const transparentDisplay = (props.role === "user" || props.role === "display");
   const queryLakeIcon = require("../../assets/favicon.png");
   const bubbleHeight = useRef(new Animated.Value(40)).current;
   const sourceBarWidth = useRef(new Animated.Value(10)).current;
   const [targetBubbleHeight, setTargetBubbleHeight] = useState(40);
   const sourcesDividerColor = "#969696";
   const bubbleState = (props.state === undefined)?"finished":props.state
+  // useEffect(() => {
+  //   console.log("sources:", props.sources);
+  // }, [props.sources]);
 
   useEffect(() => {
     if (props.sources.length > 0) {
@@ -100,40 +104,44 @@ export default function ChatBubble(props: ChatBubbleProps) {
         paddingRight: 10
       }}
     >
-      {(props.origin === "user")?(
-        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
-          <View style={{
-            width: 40,
-            height:40,
-            borderRadius: 25,
-            backgroundColor: "#E8E3E3",
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <View style={{
-              justifyContent: 'center',
-              alignSelf: 'center'
-            }}>
-              <Text style={{
-                fontFamily: normalTextFont,
-                fontSize: 24,
+      {(props.role !== "display") && (
+        <>
+          {(props.role === "user")?(
+            <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+              <View style={{
+                width: 40,
+                height:40,
+                borderRadius: 25,
+                backgroundColor: "#E8E3E3",
+                justifyContent: 'center',
+                alignItems: 'center'
               }}>
-                {(props.displayCharacter && props.displayCharacter.length > 0)?props.displayCharacter[0].toUpperCase():"U"}
-              </Text>
+                <View style={{
+                  justifyContent: 'center',
+                  alignSelf: 'center'
+                }}>
+                  <Text style={{
+                    fontFamily: normalTextFont,
+                    fontSize: 24,
+                  }}>
+                    {(props.displayCharacter && props.displayCharacter.length > 0)?props.displayCharacter[0].toUpperCase():"U"}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      ):(
-        <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
-          <Image 
-            style={{
-              width: 40,
-              height:40,
-              borderRadius: 25,
-            }}
-            source={queryLakeIcon}
-          />
-        </View>
+          ):(
+            <View style={Platform.select({web: {paddingRight: 10}, default: {paddingBottom: 10}})}>
+              <Image 
+                style={{
+                  width: 40,
+                  height:40,
+                  borderRadius: 25,
+                }}
+                source={queryLakeIcon}
+              />
+            </View>
+          )}
+        </>
       )}
       <View 
         style={{
@@ -167,12 +175,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
             }} onLayout={(event) => {setCurrentWidth(event.nativeEvent.layout.width)}}>
               {(props.state === "finished" || props.state === "writing" || props.state === undefined)?(
                 <>
-                  <Animated.ScrollView style={{
+                  <Animated.ScrollView style={{...{
                     height: bubbleHeight,
-                    maxWidth: "100%",
                     // justifyContent: transparentDisplay?"center":"flex-start",
                     // alignContent: 'center'
-                  }} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} scrollEnabled={false}>
+                  }, ...(transparentDisplay)?{width: "60vw"}:{maxWidth: "100%"}}} showsVerticalScrollIndicator={false} showsHorizontalScrollIndicator={false} scrollEnabled={false}>
                     <View 
                       style={{
                         flexDirection: "column",
@@ -191,12 +198,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
                           maxWidth={maxWidth} 
                           input={props.input} 
                           bubbleWidth={bubbleWidth}
-                          disableRender={(props.origin === "user")}
+                          disableRender={(props.role === "user")}
                         />
                       )}
                     </View>
                   </Animated.ScrollView>
-                  {(props.sources.length > 0 && props.origin === "server" && bubbleState === "finished") && (
+                  {(props.sources.length > 0 && props.role === "assistant" && bubbleState === "finished") && (
                     <Animated.View style={{
                       flexDirection: 'column',
                       justifyContent: 'center',
@@ -245,11 +252,12 @@ export default function ChatBubble(props: ChatBubbleProps) {
                           flexWrap: 'wrap',
                           justifyContent: 'center'
                         }}>
-                          {props.sources.map((value : { metadata: sourceMetadata, img?: any }, index : number) => (
+                          {props.sources.map((value, index : number) => (
                             <ChatBubbleSource
                               key={index}
                               userData={props.userData}
                               metadata={value.metadata}
+                              document={value.document}
                             />
                           ))}
                         </View>

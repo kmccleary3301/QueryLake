@@ -92,6 +92,7 @@ type MarkdownTextSplitterProps = {
     selectable?: boolean,
     style?: React.CSSProperties,
     text: string,
+    bubbleWidth: number,
 }
 
 type textSegment = {
@@ -109,7 +110,7 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
   return (
     <Text selectable={true} style={(props.style)?props.style:{}}>
       {textSplit.map((v : textSegment, k : number) => (
-        <MarkdownTextAtomic key={k} textSeg={v}/>
+        <MarkdownTextAtomic key={k} textSeg={v} bubbleWidth={props.bubbleWidth}/>
       ))}
     </Text>
   );

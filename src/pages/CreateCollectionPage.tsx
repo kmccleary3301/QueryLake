@@ -107,7 +107,7 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
 
   const handleDrop = (event: any) => {
     let new_files = [...uploadFiles, ...event.dataTransfer.files];
-    setUploadFiles(new_files)
+    setUploadFiles(new_files);
   };
 
   const start_publish = () => {
@@ -126,8 +126,8 @@ export default function CreateCollectionPage(props : CreateCollectionPageProps) 
           console.error("Collection Publish Failed");
           return;
         }
-        console.log("Got Collection ID: ", data["hash_id"]);
-        start_document_uploads(data["hash_id"]);
+        console.log("Got Collection ID: ", data.result.hash_id);
+        start_document_uploads(data.result.hash_id);
         // collection_id = data["collection_id"];
 
       });

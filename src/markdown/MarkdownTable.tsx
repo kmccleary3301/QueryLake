@@ -213,6 +213,7 @@ function MarkdownTable(props : MarkdownTableProps){
                   }}
                 >
                   <MarkdownTextSplitter
+                    bubbleWidth={props.bubbleWidth} 
                     text={value.text}
                     style={{
                       fontFamily: (row_index === 0)?"Inter-Bold":"Inter-Regular", 

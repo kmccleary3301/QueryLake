@@ -334,7 +334,7 @@ export default function UserSettings(props : UserSettingsProps) {
                 </View>
               </View>
             </View>
-            <AnimatedPressable 
+            {/* <AnimatedPressable 
               id="SendButton"
               onPress={() => {
                 searchGoogle("chain of density prompting", props.userData, undefined, (result) => {
@@ -378,7 +378,7 @@ export default function UserSettings(props : UserSettingsProps) {
               }}
             >
               <Feather name="send" size={15} color="#000000" />
-            </AnimatedPressable>
+            </AnimatedPressable> */}
           </ScrollViewBottomStick>
         </View>
       </View>

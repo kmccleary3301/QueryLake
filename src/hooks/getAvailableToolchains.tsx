@@ -5,8 +5,8 @@ type userDataType = {
   password_pre_hash: string,
 };
 
-export default function getAvailableModels(userdata : userDataType, onFinish : (result : object) => void) {
-  const url = craftUrl("http://localhost:5000/api/get_available_models", {
+export default function getAvailableToolchains(userdata : userDataType, onFinish : (result : object) => void) {
+  const url = craftUrl("http://localhost:5000/api/get_available_toolchains", {
     "username": userdata.username,
     "password_prehash": userdata.password_pre_hash
   });
@@ -20,8 +20,8 @@ export default function getAvailableModels(userdata : userDataType, onFinish : (
 				onFinish({});
         return;
 			}
-      console.log("Available models:", data.result.available_models);
-			onFinish(data.result.available_models);
+      // console.log("Available models:", data.result);
+			onFinish(data.result);
 		});
 	});
 }
