@@ -30,7 +30,7 @@ type MarkdownTableProps = {
 function MarkdownTable(props : MarkdownTableProps){
 
   return (
-    <Table>
+    <Table style={{minWidth: "100%"}}>
       <TableHeader>
         <TableRow>
           {(props.header).map((header : textSegment, index : number) => (

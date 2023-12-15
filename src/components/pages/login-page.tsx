@@ -334,8 +334,8 @@ export default function LoginPage(props : LoginPageProps) {
 							</p>
 						</Button>
 					</div>
-					<Button variant={"secondary"} onClick={() => {navigate("/test_page_1");}}>
-						<p>{"Test Page 1"}</p>
+					<Button variant={"secondary"} onClick={() => {navigate("/test_websocket");}}>
+						<p>{"Test Websocket"}</p>
 					</Button>
         </div>
       </div>

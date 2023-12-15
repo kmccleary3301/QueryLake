@@ -136,7 +136,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
               display: "flex",
               flexDirection: 'column',
               justifyContent: 'center',
-              maxWidth: '100%'
+              ...(props.role === "display")?{width: "60vw"}:{maxWidth: "100%"}
             }}>
               {(props.state === "finished" || props.state === "writing" || props.state === undefined)?(
                 <>

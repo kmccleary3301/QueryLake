@@ -113,7 +113,7 @@ export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
     setTextSplit(string_segments);
   }, [props.text]);
   return (
-    <div style={(props.style)?props.style:{}}>
+    <div id="MARKDOWN" style={{flexShrink: 1, textAlign: "left", ...(props.style)?props.style:{}}}>
       {textSplit.map((v : textSegment, k : number) => (
         <MarkdownTextAtomic key={k} textSeg={v}/>
       ))}

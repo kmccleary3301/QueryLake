@@ -1,6 +1,4 @@
-"use client"
- 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons"
  
 import { cn } from "@/lib/utils"
@@ -17,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+// import { use } from "marked"
 
 export type formValueType = string | string[];
 
@@ -35,6 +34,10 @@ type DropDownSelectionProps = {
 export function DropDownSelection(props : DropDownSelectionProps) {
   const [open, setOpen] = useState(false);
   // const [value, setValue] = useState<formValueType>(props.defaultValue.value);
+
+  useEffect(() => {
+    console.log("SELECTION CHANGED", props.selection);
+  }, [props.selection]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,12 +59,13 @@ export function DropDownSelection(props : DropDownSelectionProps) {
           <CommandInput placeholder="Search framework..." className="h-9" />
           <CommandEmpty>No framework found.</CommandEmpty>
           <CommandGroup>
-            {props.values.map((framework : formEntryType) => (
+            {props.values.map((framework : formEntryType, index : number) => (
               <CommandItem
-                key={framework.value}
-                value={framework.value}
+                key={index}
+                value={framework.label}
                 onSelect={() => {
                   // setValue(framework.value === props.selection.value ? "" : framework.value);
+                  console.log("SETTING VALUE", framework);
                   props.setSelection(framework);
                   setOpen(false)
                 }}

@@ -34,15 +34,11 @@ export default function uploadDocsToSession(args : uploadDocsToSessionArgs) {
 		},
 		autoUpload: true,
 	});
-	// const upload_files : File[]	= [];
 
-	args.setUploadFiles([]);
-	// let finished_uploads = 0;
+	// args.setUploadFiles([]);
 
 	uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
-		console.log(`item ${item.id} started uploading`);
-		// setFinishedUploads(finishedUploads => finishedUploads+1);
-		// setCurrentUploadProgress(0);
+		console.log(`item ${item.id} started uploading: ${JSON.stringify(item)}`);
 	});
 
 	uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
@@ -50,37 +46,20 @@ export default function uploadDocsToSession(args : uploadDocsToSessionArgs) {
 		// setCurrentUploadProgress(item.completed);
 	});
 
+	let files_remaining = args.uploadFiles.length;
+
 	uploader.on(UPLOADER_EVENTS.ITEM_FINISH, (item) => {
 		console.log(`item ${item.id} response:`, item.uploadResponse);
-
-		// finished_uploads += 1;
-
-		// if (uploadFiles.length === 1) {
-		//   on_finish();
-		//   setUploadFiles([]);
-		// } else {
-		//   setUploadFiles(uploadFiles.slice(1, uploadFiles.length));
-		// }
-		
-		// if (uploadFiles.length) {
-			// setUploadFiles([]);
-		//   props.setRefreshSidePanel(["collections"]);
-		//   if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
-		//   if (props.navigation) { props.navigation.navigate("ChatWindow"); }
-		// }
+		files_remaining -= 1;
+		if (files_remaining <= 0) {
+			if (args.on_finish) args.on_finish();
+		}
 	});
-	// let formData = new FormData();
+
 	for (let i = 0; i < args.uploadFiles.length; i++) {
-		// formData.append("file", event.dataTransfer.files[i]);
 		uploader.add(args.uploadFiles[i]);
 		console.log(args.uploadFiles[i]);
 	}
-	// setPublishStarted(true);
 
-	if (args.uploadFiles.length === 0) {
-		// props.setRefreshSidePanel(["collections"]);
-		// if (props.setPageNavigate) { props.setPageNavigate("ChatWindow"); }
-		// if (props.navigation) { props.navigation.navigate("ChatWindow"); }
-	}
 	if (args.setEventActive) args.setEventActive("file_upload");
 }

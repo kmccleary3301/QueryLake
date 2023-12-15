@@ -15,6 +15,11 @@ import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
 import TestFramerAnimation from '@/components/pages/test-framer-animation'
 import Sidebar from '@/components/sidebar/sidebar'
 import ChatWindowToolchain from './components/pages/chat-window-toolchains'
+import TestWebSockets from './components/pages/test-websocket'
+import AnimatedPressable from './components/manual_components/animated-pressable'
+import * as Icon from 'react-feather';
+import { Button } from './components/ui/button'
+import UserSettings from './components/pages/user-settings'
 
 // type userDataType = {
 //   username: string,
@@ -66,7 +71,6 @@ function MainContent() {
 
   useEffect(() => {
     console.log("userdata:", userData)
-    
   }, [userData]);
 
   const controlsSidebarWidth = useAnimation();
@@ -89,48 +93,138 @@ function MainContent() {
 		});
 	}, [controlsSidebarWidth, sidebarOpened, userData, isSidebarDisabled]);
 
+  
+	const controlSidebarButtonOffset = useAnimation();
+
+  useEffect(() => {
+    controlSidebarButtonOffset.set({
+      zIndex: 2,
+      opacity: 1
+    });
+  }, [controlSidebarButtonOffset]);
+
+  useEffect(() => {
+		controlSidebarButtonOffset.start({
+			// translateX: sidebarOpened?-320:0,
+      opacity: sidebarOpened?0:1,
+			transition: { delay: sidebarOpened?0:0.4, duration: sidebarOpened?0:0.6 }
+		});
+  }, [sidebarOpened, controlSidebarButtonOffset]);
+
+
   return (
     <div style={{
       width: "100%", 
       height: "100%", 
       display: "flex", 
-      flexDirection: "row"
+      flexDirection: "row",
+      backgroundColor: "#23232D",
+      zIndex: 0,
+      position: "relative"
       }}>
       {(userData !== undefined) && (
-        <motion.div animate={controlsSidebarWidth} >
+        <>
+        <motion.div id="SIDEBARBUTTON" style={{paddingTop: 4, paddingLeft: 10,
+          position: "absolute",
+          width: 30,
+          height: 30,
+          zIndex: sidebarOpened?-2:2,
+          // backgroundColor: "#FF0000",
+          translateX: 0
+        }} 
+        animate={controlSidebarButtonOffset}
+        >
+          <Button variant={"ghost"} style={{padding: 2, borderRadius: 5, paddingLeft: 8, paddingRight: 8}} onClick={toggle_sidebar}>
+            <Icon.Sidebar size={24} color="#E8E3E3" />
+          </Button> 
+
+        </motion.div>
+        {/* <motion.div id="Hellooooo" style={{zIndex: 3}} animate={controlsSidebarWidth} > */}
+        <motion.div style={{}} animate={controlsSidebarWidth} >
           <div style={{
             width: 320,
             height: "100vh",
-            position: "absolute",
-            zIndex: 0
+            // position: "relative",
+            // zIndex: 2
           }}>
-            <Sidebar
-              // userData={userData}
-              // pageNavigateArguments={pageNavigateArguments}
-              // setPageNavigateArguments={setPageNavigateArguments}
-              toggle_sideBar={toggle_sidebar} 
-              user_data={userData}
-              set_page_navigate={setPageNavigate} 
-              set_page_navigate_arguments={setPageNavigateArguments}
-              refresh_side_panel={refreshSidePanel}
-              set_refresh_side_panel={setRefreshSidePanel}
-              page_navigate_arguments={pageNavigateArguments}
-              set_selected_collections={setSelectedCollections}
-              selected_collections={selectedCollections}
-              set_user_data={setUserData}
-              chat_history={chatHistory}
-              set_chat_history={setChatHistory}
-            />
+            <div style={{
+              // zIndex: 2,
+              backgroundColor: "#FF0000",
+            }}>
+              <Sidebar
+                // userData={userData}
+                // pageNavigateArguments={pageNavigateArguments}
+                // setPageNavigateArguments={setPageNavigateArguments}
+                toggle_sideBar={toggle_sidebar} 
+                user_data={userData}
+                set_page_navigate={setPageNavigate} 
+                set_page_navigate_arguments={setPageNavigateArguments}
+                refresh_side_panel={refreshSidePanel}
+                set_refresh_side_panel={setRefreshSidePanel}
+                page_navigate_arguments={pageNavigateArguments}
+                set_selected_collections={setSelectedCollections}
+                selected_collections={selectedCollections}
+                set_user_data={setUserData}
+                chat_history={chatHistory}
+                set_chat_history={setChatHistory}
+              />
+            </div>
+            {/* <div
+              style={{
+                translate: 320,
+                position: "absolute",
+                width: 30,
+                height: 30,
+                backgroundColor: "#FF0000",
+                zIndex: 5,
+              }}
+            /> */}
+            {/* <motion.div id="SIDEBARBUTTON" style={{paddingTop: 4, paddingLeft: 10, zIndex: 5,
+              position: "absolute",
+              width: 30,
+              height: 30,
+              backgroundColor: "#FF0000",
+              translateX: 320
+            }} 
+            // animate={controlSidebarButtonOffset}
+            >
+              <Button variant={"ghost"} style={{padding: 2, borderRadius: 5, paddingLeft: 8, paddingRight: 8}} onClick={toggle_sidebar}>
+                <div style={{}}>
+                <Icon.Sidebar size={24} style={{}} color="#E8E3E3" />
+                </div>
+              </Button> 
+
+            </motion.div> */}
           </div>
         </motion.div>
+        {/* </motion.div> */}
+        </>
       )}
       <div style={{zIndex: 1, flex: 1, display: "flex", height: "100vh"}} className='bg-background'>
+        
+        {/* <motion.div style={{backgroundColor: "#FF0000", position: "absolute", paddingTop: 4, paddingLeft: 10, zIndex: 5}} animate={controlSidebarButtonOffset}>
+          <Button variant={"ghost"} style={{padding: 2, borderRadius: 5, paddingLeft: 8, paddingRight: 8, zIndex: 5}} onClick={toggle_sidebar}>
+            <Icon.Sidebar size={24} style={{zIndex: 5}} color="#E8E3E300" />
+          </Button> 
+        </motion.div> */}
         <Routes location={location} key={location.pathname}>
           <Route index element={<LoginPage setUserData={setUserData}/>}/>
           <Route path="/login_page" element={<LoginPage setUserData={setUserData}/>}/>
           <Route path="/test_page_1" element={<TestPage1/>}/>
           <Route path="/test_page_2" element={<TestPage2/>}/>
           <Route path="/test_scroll_page" element={<TestScrollPage1/>}/>
+          <Route path="/test_websocket" element={<TestWebSockets/>}/>
+          <Route path="/user_settings" element={
+           <>
+           {(userData !== undefined) && (
+
+             <UserSettings
+                userData={userData}
+                setUserData={setUserData}
+             />
+           )}
+         </>
+          }/>
           <Route path="/test_animation" element={<TestFramerAnimation/>}/>
           {/* <Route path="/chat" element={
             <>

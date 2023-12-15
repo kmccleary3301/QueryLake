@@ -155,7 +155,7 @@ export default function Sidebar(props: SidebarProps) {
           <div style={{
 						display: "flex",
             flexDirection: 'row',
-            paddingTop: 7.5,
+            paddingTop: 4,
 						paddingBottom: 7.5,
             paddingLeft: 30,
             paddingRight: 30,
