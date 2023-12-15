@@ -20,6 +20,7 @@ import AnimatedPressable from './components/manual_components/animated-pressable
 import * as Icon from 'react-feather';
 import { Button } from './components/ui/button'
 import UserSettings from './components/pages/user-settings'
+import HuggingFaceRemodel from './components/pages/test-huggingface-remodel'
 
 // type userDataType = {
 //   username: string,
@@ -214,6 +215,7 @@ function MainContent() {
           <Route path="/test_page_2" element={<TestPage2/>}/>
           <Route path="/test_scroll_page" element={<TestScrollPage1/>}/>
           <Route path="/test_websocket" element={<TestWebSockets/>}/>
+          <Route path="/hf_test" element={<HuggingFaceRemodel/>}/>
           <Route path="/user_settings" element={
            <>
            {(userData !== undefined) && (

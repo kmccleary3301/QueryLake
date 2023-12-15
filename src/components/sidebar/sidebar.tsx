@@ -184,14 +184,19 @@ export default function Sidebar(props: SidebarProps) {
           }}>
 						
 						<Tabs defaultValue={"collections"}>
-							<TabsList className="bg-[#7968D9] grid w-full h-10 grid-cols-3 bottom-2" style={{paddingBottom: 2}}>
-								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3]" value="collections">
+							<TabsList className="bg-[#7968D9] grid w-full h-auto grid-cols-3 bottom" style={{
+                paddingBottom: 0,
+                paddingTop: 0,
+                paddingLeft: 0,
+                paddingRight: 0,
+              }}>
+								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="collections">
 									<Icon.Folder size={24} color="#17181D" />
 								</TabsTrigger>
-								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3]" value="history">
+								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="history">
 									<Icon.Clock size={24} color="#17181D" />
 								</TabsTrigger>
-								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3]" value="tools">
+								<TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="tools">
 									<Icon.Aperture size={24} color="#17181D" />
 								</TabsTrigger>
 							</TabsList>

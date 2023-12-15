@@ -488,18 +488,12 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
   ]);
 
   return (
-    <div style={{
-      flex: 1,
-			display: "flex",
-      flexDirection: "row",
-      // backgroundColor: "#23232D",
-      alignItems: "center",
-      justifyContent: "center",
-      // width: "80vw"
-      height: "100vh",
-      // width: "100%",
-    }}>
-      <div style={{display: "flex", flexDirection: 'column', height: '100%', width: '100%', alignItems: 'center'}}>
+    
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+      }}>
         <div id="ChatHeader" style={{
           width: "100%",
           height: 40,
@@ -514,7 +508,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
             width: 200,
             // transform: [{ translateX: translateSidebarButton,},],
             // elevation: -1,
-            zIndex: 0,
+            // zIndex: 0,
             // opacity: opacitySidebarButton,
           }}>
             {/* Decide what to put here */}
@@ -537,173 +531,197 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
           />
           {/* Decide what to put here */}
         </div>
-        <div style={{
-					display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          // height: "100%",
-          // width: "88%",
-          width: "60vw",
-          paddingLeft: 0,
-					paddingRight: 0,
-          // paddingVertical: 24,
+        {/* <div id="Chat Window Scrollable" className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
+          // margin: 1,
+          width: "100%",
+          height: "full",
+          overflowY: "auto",
         }}>
-
-          <div style={{
-            flex: 5,
-            opacity: 1
+          <div className="mx-auto flex h-full max-w-3xl flex-col gap-6 px-5 pt-6 sm:gap-8 xl:max-w-4xl" style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            flex: 1,
           }}>
-            {(displayChat !== undefined) && (
-              <ScrollViewBottomStick
-								height_string=""
-								animateScroll={false}
-                // showsVerticalScrollIndicator={false}
-                // animateScroll={animateScroll}
-              >
-                {displayChat.map((v_2 : ChatEntry, k_2 : number) => (
-                  <div key={k_2}>
-                    {(v_2 !== undefined) && (
-                      <ChatBubble
-                        displayCharacter={props.userData.username[0]}
-                        state={(v_2.state)?v_2.state:"finished"}
-                        key={k_2} 
-                        role={v_2.role} 
-                        input={v_2.content}
-                        userData={props.userData}
-                        sources={(v_2.sources)?v_2.sources.map((value : sourceMetadata) => ({document: value.metadata.document, metadata: value})):[]}
-                      />
-                    )}
-                  </div>
-                ))}
-                {/* {temporaryBotEntry && (
-                  <ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
-                )} */}
-                {(eventActive !== undefined) && (
-                  <div style={{width: "100%", flexDirection: "row", justifyContent: "center", paddingTop: 10, paddingBottom: 10}}>
-                    <div style={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                      {/* <ActivityIndicator size={20} color="#E8E3E3"/> */}
-											<ClipLoader size={20} color="#E8E3E3"/>
-                      <p style={{
-                        // fontFamily: 'Inter-Regular',
-                        color: "#E8E3E3",
-                        fontSize: 16,
-                        paddingLeft: 10,
-                        paddingRight: 10,
-                      }}>
-                        {"Running node: "+eventActive}
-                      </p>
+            <div className="group relative flex items-start justify-start gap-4 max-sm:text-sm" style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start"
+            }}> */}
+        <div className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
+          // margin: 1,
+          width: "100%",
+          // height: "full",
+          overflowY: "auto",
+        }}>
+          <ScrollViewBottomStick bottomMargin={chatBarHeightString+70}>
+            <div style={{
+              width: "60vw",
+              flexDirection: "column",
+              justifyContent: "center"
+            }}>
+              {(displayChat !== undefined) && (
+                // <ScrollViewBottomStick
+                // 	height_string=""
+                // 	animateScroll={false}
+                //   // showsVerticalScrollIndicator={false}
+                //   // animateScroll={animateScroll}
+                // >
+                <>
+                  {displayChat.map((v_2 : ChatEntry, k_2 : number) => (
+                      
+                    <div key={k_2}>
+                      
+                      {(v_2 !== undefined) && (
+                        <ChatBubble
+                          displayCharacter={props.userData.username[0]}
+                          state={(v_2.state)?v_2.state:"finished"}
+                          key={k_2}
+                          role={v_2.role} 
+                          input={v_2.content}
+                          userData={props.userData}
+                          sources={(v_2.sources)?v_2.sources.map((value : sourceMetadata) => ({document: value.metadata.document, metadata: value})):[]}
+                        />
+                      )}
                     </div>
-                  </div>
-                )}
-                {(buttonCallbacks.length > 0 && eventActive === undefined && entryFired) && (
-                  <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                    <div style={{maxWidth: "100%", display: "flex", flexDirection: "row", flexWrap: "wrap"}}>
-                    {buttonCallbacks.map((v_2 : buttonCallback, k_2 : number) => (
-                      <div style={{padding: 10}} key={k_2}>
-                        <AnimatedPressable style={{
-                          borderRadius: 10,
-                          borderColor: "#E8E3E3",
-                          borderWidth: 2,
-                          flexDirection: "row" 
-                        }} onPress={() => {
-                          testEventCall(v_2.input_argument, {}, (v_2.return_file_response)?v_2.return_file_response:false)
-                          // testEventCall()
+                  ))}
+                  {(eventActive !== undefined) && (
+                    <div style={{width: "100%", flexDirection: "row", justifyContent: "center", paddingTop: 10, paddingBottom: 10}}>
+                      <div style={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
+                        {/* <ActivityIndicator size={20} color="#E8E3E3"/> */}
+                        <ClipLoader size={20} color="#E8E3E3"/>
+                        <p style={{
+                          // fontFamily: 'Inter-Regular',
+                          color: "#E8E3E3",
+                          fontSize: 16,
+                          paddingLeft: 10,
+                          paddingRight: 10,
                         }}>
-                          <div style={{padding: 10, display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                            <Icon.Download size={16} color="#E8E3E3" />
-                            <p style={{
-                              // fontFamily: 'Inter-Regular',
-                              color: "#E8E3E3",
-                              fontSize: 16,
-                              paddingLeft: 10,
-                              paddingRight: 10,
-                            }}>
-                              {v_2.button_text}
-                            </p>
-                          </div>
-                        </AnimatedPressable>
+                          {"Running node: "+eventActive}
+                        </p>
                       </div>
-                    ))}
                     </div>
-                  </div>
-                )}
-								<div style={{height: chatBarHeightString + 77, width: 20}}/>
-              </ScrollViewBottomStick>
-            )}
-          </div>
-
+                  )}
+                  {(buttonCallbacks.length > 0 && eventActive === undefined && entryFired) && (
+                    <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
+                      <div style={{maxWidth: "100%", display: "flex", flexDirection: "row", flexWrap: "wrap"}}>
+                      {buttonCallbacks.map((v_2 : buttonCallback, k_2 : number) => (
+                        <div style={{padding: 10}} key={k_2}>
+                          <AnimatedPressable style={{
+                            borderRadius: 10,
+                            borderColor: "#E8E3E3",
+                            borderWidth: 2,
+                            flexDirection: "row" 
+                          }} onPress={() => {
+                            testEventCall(v_2.input_argument, {}, (v_2.return_file_response)?v_2.return_file_response:false)
+                            // testEventCall()
+                          }}>
+                            <div style={{padding: 10, display: "flex", flexDirection: "row", justifyContent: "center"}}>
+                              <Icon.Download size={16} color="#E8E3E3" />
+                              <p style={{
+                                // fontFamily: 'Inter-Regular',
+                                color: "#E8E3E3",
+                                fontSize: 16,
+                                paddingLeft: 10,
+                                paddingRight: 10,
+                              }}>
+                                {v_2.button_text}
+                              </p>
+                            </div>
+                          </AnimatedPressable>
+                        </div>
+                      ))}
+                      </div>
+                    </div>
+                  )}
+                
+                </>
+              )}
+            </div>
+          </ScrollViewBottomStick>
           <div id="InputBox" style={{
+            // position: "absolute",
+            // height: 0,
 						display: "flex",
             flexDirection: 'row',
             justifyContent: 'center',
             // flex: 1,
             // height: 200,
             width: '100%',
+            height: 0,
 						paddingBottom: 0,
+            // zIndex: 3,
           }}>
-						<div className="bg-background" style={{
-							display: "flex",
-							flexDirection: 'column',
-							justifyContent: 'space-around',
-							// flex: 1,
-							// height: 200,
-							paddingTop: 10,
-							paddingBottom: 0,
-							zIndex: 2,
-						}}>
-						
-							<div style={{paddingBottom: 0, paddingLeft: 12, display: "flex", flexDirection: "row"}}>
-								<div id="Switch" style={{
-									// width: 200,
-									// width: 140,
-									height: 28,
-									borderRadius: 14,
-									// backgroundColor: '#4D4D56',
-									display: "flex",
-									borderWidth: 1,
-									borderColor: '#4D4D56',
-									flexDirection: 'row',
-									justifyContent: 'center',
-									alignItems: 'center',
-								}}>
-									<div style={{paddingLeft: 10, paddingRight: 10}}>
-										{/* <Switch
-											trackColor={{ false: "#4D4D56", true: "#7968D9" }}
-											// thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
-											thumbColor={"#D9D9D9"}
-											
-											
-											onValueChange={toggleSwitch}
-											value={webSearchIsEnabled}
-										/> */}
-										<div className="flex items-center space-x-2">
-											<Switch id="airplane-mode" />
-											<Label htmlFor="airplane-mode">Search Web</Label>
-										</div>
-									</div>
-								</div>
-								<div style={{display: "flex", flex: 1}}>
+            <div style={{
+              position: "absolute",
+              height: 0,
+              display: "flex",
+              flexDirection: 'column',
+              justifyContent: "flex-end",
+              width: "60vw"
+            }}>
+              <div className="bg-background" style={{
+                display: "flex",
+                flexDirection: 'column',
+                justifyContent: 'space-around',
+                // flex: 1,
+                // height: 200,
+                paddingTop: 10,
+                paddingBottom: 0,
+                // zIndex: 2,
+              }}>
+              
+                <div style={{paddingBottom: 0, paddingLeft: 12, display: "flex", flexDirection: "row"}}>
+                  <div id="Switch" style={{
+                    // width: 200,
+                    // width: 140,
+                    height: 28,
+                    borderRadius: 14,
+                    // backgroundColor: '#4D4D56',
+                    display: "flex",
+                    borderWidth: 1,
+                    borderColor: '#4D4D56',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                    <div style={{paddingLeft: 10, paddingRight: 10}}>
+                      {/* <Switch
+                        trackColor={{ false: "#4D4D56", true: "#7968D9" }}
+                        // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
+                        thumbColor={"#D9D9D9"}
+                        
+                        
+                        onValueChange={toggleSwitch}
+                        value={webSearchIsEnabled}
+                      /> */}
+                      <div className="flex items-center space-x-2">
+                        <Switch id="airplane-mode" />
+                        <Label htmlFor="airplane-mode">Search Web</Label>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{display: "flex", flex: 1}}>
 
-								</div>
-							</div>
-							
-							
-							<ChatBarInput
-								onMessageSend={onMessageSend}
-                handleDrop={(files: File[]) => {
-                  setUploadFiles(files);
-                }}
-								onHeightChange={(height : number) => { 
-									// setChatBarHeight(height); 
-									setChatBarHeightString(height);
-								}}
-								// handleDrop={handleDrop}
-							/>
-						</div>
-          </div> 
+                  </div>
+                </div>
+                
+                
+                <ChatBarInput
+                  onMessageSend={onMessageSend}
+                  handleDrop={(files: File[]) => {
+                    setUploadFiles(files);
+                  }}
+                  onHeightChange={(height : number) => { 
+                    // setChatBarHeight(height); 
+                    setChatBarHeightString(height);
+                  }}
+                  // handleDrop={handleDrop}
+                />
+              </div>
+            </div> 
+          </div>
         </div>
       </div>
-      {/* <StatusBar style="auto" /> */}
-    </div>
   );
 }
