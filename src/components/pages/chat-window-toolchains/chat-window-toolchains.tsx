@@ -1,14 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import EventSource from "@/lib/react-native-server-sent-events";
 import toolchainEventCall from "@/hooks/chat-window-hooks.tsx/toolchain-event-call";
-import * as Icon from 'react-feather';
-import ChatBubble from "../manual_components/chat-bubble";
-import AnimatedPressable from "../manual_components/animated-pressable";
-import ScrollViewBottomStick from "../manual_components/scrollview-bottom-stick";
+// import ScrollViewBottomStickOuter from "../../manual_components/scrollable-bottom-stick/scrollable-bottom-stick-outer";
 import craftUrl from "@/hooks/craftUrl";
-import { DropDownSelection, formEntryType } from "../manual_components/dropdown-selection";
-import { 
-	sourceMetadata, 
+import { DropDownSelection, formEntryType } from "../../manual_components/dropdown-selection";
+import {
 	ChatEntry, 
 	selectedCollectionsType, 
 	userDataType, 
@@ -21,12 +17,11 @@ import {
 } from "@/globalTypes";
 // import { Loader2 } from 'lucide-react';
 import uploadDocsToSession from "@/hooks/chat-window-hooks.tsx/upload-docs-to-session";
-import ChatBarInput from "../manual_components/chat-input-bar";
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { MessageEvent, ErrorEvent } from "@/lib/react-native-server-sent-events";
 import getStreamNodeGenerator from "@/hooks/chat-window-hooks.tsx/get-stream-node-generator";
-import ClipLoader from "react-spinners/ClipLoader";
+// import { create } from "domain";
+import ChatWindowToolchainScrollSection from "./chat-window-scroll-section";
+
 
 type ChatWindowToolchainProps = {
   // navigation?: any,
@@ -68,7 +63,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
   const [sessionHash, setSessionHash] = useState<string | undefined>();
   const [displaySuggestions, setDisplaySuggestions] = useState(true);
   const [displaySuggestionsDelayed, setDisplaySuggestionsDelayed] = useState(true);
-  const [animateScroll, setAnimateScroll] = useState(false);
+  const [animateScroll, setAnimateScroll] = useState(true);
   const [modelInUseState, setModelInUse] = useState<formEntryType>({label: "Default", value: "Default"});
 	const modelInUse = useRef<formEntryType>({label: "Default", value: "Default"});
   const [availableModels, setAvailableModels] = useState<{label : string, value : string | string[]}[]>([]);
@@ -296,14 +291,6 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
       setEntryFired(true);
       setDisplaySuggestions(false);
       setDisplaySuggestionsDelayed(false);
-      // Animated.timing(opacityChatWindow, {
-      //   toValue: 0,
-      //   // toValue: opened?Math.min(300,(children.length*50+60)):50,
-      //   duration: 150,
-      //   easing: Easing.elastic(0),
-      //   useNativeDriver: false,
-      // }).start();
-      
       setTimeout(() => {
         setAnimateScroll(false);
         setDisplayChat([]);
@@ -333,22 +320,9 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
 
             setSessionState(newSessionState);
             get_session_global_generator(data.result.session_hash_id, {file_event: true, question_event: false});
-						
-            setTimeout(() => {
-              // Animated.timing(opacityChatWindow, {
-              //   toValue: 1,
-              //   // toValue: opened?Math.min(300,(children.length*50+60)):50,
-              //   duration: 150,
-              //   easing: Easing.elastic(0),
-              //   useNativeDriver: false,
-              // }).start();
-            }, 100);
           });
         });
       }, 150);
-      // setTimeout(() => {
-        
-      // }, 250)
     } else if (sessionHash === undefined) {
       setEntryFired(false);
       const hooks_enabled = configureChatWindowAccordingToToolchain(selectedToolchain);
@@ -422,8 +396,6 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
     }
   }, [uploadEventActive, uploadEventQueue, sessionHash, testEventCall]);
 
-	const [chatBarHeightString, setChatBarHeightString] = useState(40);
-
   useEffect(() => {
     console.log("uploadFiles Main:", uploadFiles)
   }, [uploadFiles]);
@@ -486,7 +458,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
     testEventCall,
     // hooksEnabled
   ]);
-
+  
   return (
     
       <div style={{
@@ -496,12 +468,14 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
       }}>
         <div id="ChatHeader" style={{
           width: "100%",
-          height: 40,
+          height: 50,
           // backgroundColor: "#23232D",
 					display: "flex",
           flexDirection: 'row',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          // paddingBottom: 20,
+          // paddingTop: 20,
         }}>
           <div style={{
             paddingLeft: 10,
@@ -531,197 +505,18 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
           />
           {/* Decide what to put here */}
         </div>
-        {/* <div id="Chat Window Scrollable" className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
-          // margin: 1,
-          width: "100%",
-          height: "full",
-          overflowY: "auto",
-        }}>
-          <div className="mx-auto flex h-full max-w-3xl flex-col gap-6 px-5 pt-6 sm:gap-8 xl:max-w-4xl" style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            flex: 1,
-          }}>
-            <div className="group relative flex items-start justify-start gap-4 max-sm:text-sm" style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start"
-            }}> */}
-        <div className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
-          // margin: 1,
-          width: "100%",
-          // height: "full",
-          overflowY: "auto",
-        }}>
-          <ScrollViewBottomStick bottomMargin={chatBarHeightString+70}>
-            <div style={{
-              width: "60vw",
-              flexDirection: "column",
-              justifyContent: "center"
-            }}>
-              {(displayChat !== undefined) && (
-                // <ScrollViewBottomStick
-                // 	height_string=""
-                // 	animateScroll={false}
-                //   // showsVerticalScrollIndicator={false}
-                //   // animateScroll={animateScroll}
-                // >
-                <>
-                  {displayChat.map((v_2 : ChatEntry, k_2 : number) => (
-                      
-                    <div key={k_2}>
-                      
-                      {(v_2 !== undefined) && (
-                        <ChatBubble
-                          displayCharacter={props.userData.username[0]}
-                          state={(v_2.state)?v_2.state:"finished"}
-                          key={k_2}
-                          role={v_2.role} 
-                          input={v_2.content}
-                          userData={props.userData}
-                          sources={(v_2.sources)?v_2.sources.map((value : sourceMetadata) => ({document: value.metadata.document, metadata: value})):[]}
-                        />
-                      )}
-                    </div>
-                  ))}
-                  {(eventActive !== undefined) && (
-                    <div style={{width: "100%", flexDirection: "row", justifyContent: "center", paddingTop: 10, paddingBottom: 10}}>
-                      <div style={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                        {/* <ActivityIndicator size={20} color="#E8E3E3"/> */}
-                        <ClipLoader size={20} color="#E8E3E3"/>
-                        <p style={{
-                          // fontFamily: 'Inter-Regular',
-                          color: "#E8E3E3",
-                          fontSize: 16,
-                          paddingLeft: 10,
-                          paddingRight: 10,
-                        }}>
-                          {"Running node: "+eventActive}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {(buttonCallbacks.length > 0 && eventActive === undefined && entryFired) && (
-                    <div style={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                      <div style={{maxWidth: "100%", display: "flex", flexDirection: "row", flexWrap: "wrap"}}>
-                      {buttonCallbacks.map((v_2 : buttonCallback, k_2 : number) => (
-                        <div style={{padding: 10}} key={k_2}>
-                          <AnimatedPressable style={{
-                            borderRadius: 10,
-                            borderColor: "#E8E3E3",
-                            borderWidth: 2,
-                            flexDirection: "row" 
-                          }} onPress={() => {
-                            testEventCall(v_2.input_argument, {}, (v_2.return_file_response)?v_2.return_file_response:false)
-                            // testEventCall()
-                          }}>
-                            <div style={{padding: 10, display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                              <Icon.Download size={16} color="#E8E3E3" />
-                              <p style={{
-                                // fontFamily: 'Inter-Regular',
-                                color: "#E8E3E3",
-                                fontSize: 16,
-                                paddingLeft: 10,
-                                paddingRight: 10,
-                              }}>
-                                {v_2.button_text}
-                              </p>
-                            </div>
-                          </AnimatedPressable>
-                        </div>
-                      ))}
-                      </div>
-                    </div>
-                  )}
-                
-                </>
-              )}
-            </div>
-          </ScrollViewBottomStick>
-          <div id="InputBox" style={{
-            // position: "absolute",
-            // height: 0,
-						display: "flex",
-            flexDirection: 'row',
-            justifyContent: 'center',
-            // flex: 1,
-            // height: 200,
-            width: '100%',
-            height: 0,
-						paddingBottom: 0,
-            // zIndex: 3,
-          }}>
-            <div style={{
-              position: "absolute",
-              height: 0,
-              display: "flex",
-              flexDirection: 'column',
-              justifyContent: "flex-end",
-              width: "60vw"
-            }}>
-              <div className="bg-background" style={{
-                display: "flex",
-                flexDirection: 'column',
-                justifyContent: 'space-around',
-                // flex: 1,
-                // height: 200,
-                paddingTop: 10,
-                paddingBottom: 0,
-                // zIndex: 2,
-              }}>
-              
-                <div style={{paddingBottom: 0, paddingLeft: 12, display: "flex", flexDirection: "row"}}>
-                  <div id="Switch" style={{
-                    // width: 200,
-                    // width: 140,
-                    height: 28,
-                    borderRadius: 14,
-                    // backgroundColor: '#4D4D56',
-                    display: "flex",
-                    borderWidth: 1,
-                    borderColor: '#4D4D56',
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                    <div style={{paddingLeft: 10, paddingRight: 10}}>
-                      {/* <Switch
-                        trackColor={{ false: "#4D4D56", true: "#7968D9" }}
-                        // thumbColor={isEnabled ? "#D9D9D9" : "#D9D9D9"}
-                        thumbColor={"#D9D9D9"}
-                        
-                        
-                        onValueChange={toggleSwitch}
-                        value={webSearchIsEnabled}
-                      /> */}
-                      <div className="flex items-center space-x-2">
-                        <Switch id="airplane-mode" />
-                        <Label htmlFor="airplane-mode">Search Web</Label>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{display: "flex", flex: 1}}>
-
-                  </div>
-                </div>
-                
-                
-                <ChatBarInput
-                  onMessageSend={onMessageSend}
-                  handleDrop={(files: File[]) => {
-                    setUploadFiles(files);
-                  }}
-                  onHeightChange={(height : number) => { 
-                    // setChatBarHeight(height); 
-                    setChatBarHeightString(height);
-                  }}
-                  // handleDrop={handleDrop}
-                />
-              </div>
-            </div> 
-          </div>
-        </div>
+        <ChatWindowToolchainScrollSection
+          userData={props.userData}
+          animateScroll={animateScroll}
+          setAnimateScroll={setAnimateScroll}
+          onMessageSend={onMessageSend}
+          buttonCallbacks={buttonCallbacks}
+          displayChat={displayChat}
+          eventActive={eventActive}
+          testEventCall={testEventCall}
+          setUploadFiles={setUploadFiles}
+          entryFired={entryFired}
+        />
       </div>
   );
 }

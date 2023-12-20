@@ -147,14 +147,17 @@ export default function ChatBubble(props: ChatBubbleProps) {
                     maxWidth: "100%",
                   }}>
                     <div
-                      style={{
+                      style={{...{
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: transparentDisplay?"center":"flex-start",
                         alignContent: 'center',
                         minHeight: 40,
-                        maxWidth: '100%',
-                      }}
+                      }, ...(props.role === "display" || props.role === "user")?{
+                        width: "60vw"
+                      }:{
+                        maxWidth: "100%"
+                      }}}
                     >
                       {props.input && props.input.length > 0 && (
                         <MarkdownRenderer 

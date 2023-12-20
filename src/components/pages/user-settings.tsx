@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ScrollViewBottomStick from "../manual_components/scrollview-bottom-stick";
+import ScrollViewBottomStickInner from "../manual_components/scrollable-bottom-stick/scrollview-bottom-stick-inner";
 import { setSerpKey } from "@/hooks/querylakeAPI";
 import * as Icon from 'react-feather';
 import { setOpenAIAPIKey } from "@/hooks/querylakeAPI";
@@ -69,7 +69,7 @@ export default function UserSettings(props : UserSettingsProps) {
           alignContent: 'center'
           // paddingVertical: 24,
         }}>
-          <ScrollViewBottomStick height_string="" animateScroll={false}>
+          <ScrollViewBottomStickInner height_string="" animateScroll={false}>
             <div style={{display: "flex", width: '100%', flexDirection: 'row', justifyContent: 'center'}}>
               <p style={{
                 // fontFamily: 'Inter-Regular',
@@ -248,7 +248,7 @@ export default function UserSettings(props : UserSettingsProps) {
                 </div>
               </div>
             </div>
-          </ScrollViewBottomStick>
+          </ScrollViewBottomStickInner>
         </div>
       </div>
     </div>

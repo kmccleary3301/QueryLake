@@ -4,7 +4,11 @@
 //   Platform
 // } from "react-native";
 // import katex from "../katex/dist/katex";
+// import * as katex from "katex";
+import katex from "katex/dist/katex.mjs";
 // import RenderHTML from "react-native-render-html";
+
+import { useEffect } from "react";
 
 // katex.__setFontMetrics("custom-Regular", {});
 // katex.__setFontMetrics("Math-Italic", {}); // makeOrd turns all mathematics into "Math-Italic" regardless of requested font
@@ -20,8 +24,11 @@ type MarkdownLatexProps = {
 }
 
 export default function MarkdownLatex(props : MarkdownLatexProps){
-  // const throwOnError = false;
-
+  const throwOnError = false;
+  
+  useEffect(() => {
+    console.log("Rendering to string:", katex.renderToString("x^2"))
+  }, []);
   // let latex_html = katex.renderToString(props.textSeg.text, {
   //   output: 'mathml',
   //   throwOnError: throwOnError,
@@ -29,38 +36,51 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
   // });
   // console.log(latex_html);
 
-	return (
-		<p>{props.textSeg.text}</p>
-	);
+  useEffect(() => {
+    console.log("MarkdownLatex got text:", props.textSeg.text);
+  }, [props.textSeg.text]);
 
-  // try {
-  //   if (props.type === "inline") {
-  //     return (
-  //       // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
-  //       <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
-  //         output: 'mathml',
-  //         throwOnError: throwOnError,
-  //         displayMode: false
-  //       })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
-  //     );
-  //   } else {
-  //     return (
-  //       // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
-  //       <div style={{
-  //         width: props.bubbleWidth-20,
-  //         alignSelf: 'center'
-  //       }}>
-  //         <div dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
-  //           output: 'mathml',
-  //           throwOnError: throwOnError,
-  //           displayMode: true
-  //         })}} style={{paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
-  //       </div>
-  //     );
-  //   }
-  // } catch (error) {
-  //   return (
-  //     <p>{props.textSeg.text}</p>
-  //   );
-  // }
+	// return (
+	// 	<span>{props.textSeg.text}</span>
+	// );
+
+  try {
+    if (props.type === "inline") {
+      return (
+        // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
+        <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+          output: 'mathml',
+          throwOnError: throwOnError,
+          displayMode: false
+        })}} style={{paddingLeft: 2, paddingRight: 2, paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
+      );
+    } else {
+      return (
+        // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
+        <div style={{
+          display: "flex",
+          flexGrow: 1,
+        }}>
+          <span>{"\n"}</span>
+          <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
+            output: 'mathml',
+            throwOnError: throwOnError,
+            displayMode: true
+          })}} style={{
+            paddingTop: 10, 
+            paddingBottom: 10, 
+            width: '100%', 
+            display: "inline-block", 
+            whiteSpace: "wrap",
+            clear: "both",
+            fontFamily: "Consolas"
+          }}/>
+        </div>
+      );
+    }
+  } catch (error) {
+    return (
+      <p>{props.textSeg.text}</p>
+    );
+  }
 }

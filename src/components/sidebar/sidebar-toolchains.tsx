@@ -24,7 +24,7 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
 
   return (
     <>
-      <ScrollArea className="h-[calc(100vh-275px)]" style={{
+      <ScrollArea className="h-[calc(100vh-262px)]" style={{
           width: '100%',
           paddingLeft: 22,
 					paddingRight: 22,

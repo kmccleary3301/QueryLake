@@ -17,7 +17,7 @@ export default function ChatBarInput(props : ChatBarInputProps) {
   const [userInput, setUserInput] = useState("");
   const [filesQueued, setFilesQueued] = useState(false);
 
-
+  
   const texteAreaRef = useRef<HTMLTextAreaElement>(null)
   useImperativeHandle(texteAreaRef, () => texteAreaRef.current!);
 
@@ -38,7 +38,7 @@ export default function ChatBarInput(props : ChatBarInputProps) {
       }}
     >
       <div style={{width: "60vw", display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-        <AdaptiveTextArea 
+        <AdaptiveTextArea
           {...passProps}
           value={userInput}
           setValue={setUserInput}
@@ -55,7 +55,7 @@ export default function ChatBarInput(props : ChatBarInputProps) {
           flexDirection: 'column',
           justifyContent: 'center'
         }}>
-          <Button variant="outline" type="submit" size="icon" disabled={(userInput.length < 1 && !filesQueued)} onClick={()=>{
+          <Button variant="secondary" type="submit" size="icon" disabled={(userInput.length < 1 && !filesQueued)} onClick={()=>{
             if (props.onMessageSend) props.onMessageSend(userInput);
             setUserInput("");
             setFilesQueued(false);

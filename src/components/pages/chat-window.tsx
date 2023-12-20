@@ -33,7 +33,7 @@ import ChatBubble from "../manual_components/chat-bubble";
 // import { DrawerActions } from "@react-navigation/native";
 // import AnimatedPressable from "../components/AnimatedPressable";
 // import ScrollViewBottomStick from "../components/ScrollViewBottomStick";
-import ScrollViewBottomStick from "../manual_components/scrollview-bottom-stick";
+import ScrollViewBottomStickInner from "../manual_components/scrollable-bottom-stick/scrollview-bottom-stick-inner";
 // import craftUrl from "@//hooks/craftUrl";
 import craftUrl from "@/hooks/craftUrl";
 // import ChatWindowSuggestions from "../components/ChatWindowSuggestions";
@@ -548,7 +548,7 @@ export default function ChatWindow(props : ChatWindowProps) {
           // paddingVertical: 24,
         }}>
           {(!displaySuggestionsDelayed) && (
-						<ScrollViewBottomStick
+						<ScrollViewBottomStickInner
 							showsVerticalScrollIndicator={false}
 							animateScroll={animateScroll}
 							height_string={"empty"}
@@ -582,7 +582,7 @@ export default function ChatWindow(props : ChatWindowProps) {
 									<ChatBubble origin={temporaryBotEntry.origin} input={temporaryBotEntry.content_raw_string}/>
 								)} */}
 							</div>
-						</ScrollViewBottomStick>
+						</ScrollViewBottomStickInner>
           )}
           {/* {(displaySuggestionsDelayed) && (
             <div style={{

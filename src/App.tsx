@@ -14,7 +14,7 @@ import ChatWindow from '@/components/pages/chat-window';
 import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
 import TestFramerAnimation from '@/components/pages/test-framer-animation'
 import Sidebar from '@/components/sidebar/sidebar'
-import ChatWindowToolchain from './components/pages/chat-window-toolchains'
+import ChatWindowToolchain from './components/pages/chat-window-toolchains/chat-window-toolchains'
 import TestWebSockets from './components/pages/test-websocket'
 import AnimatedPressable from './components/manual_components/animated-pressable'
 import * as Icon from 'react-feather';

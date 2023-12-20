@@ -167,6 +167,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       const highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
       const scope_tree = parseScopeTreeText(highlights_get.value);
       setHighlights(scope_tree);
+      // console.log("Highlights:", scope_tree);
       // setLastRefreshTime(Date.now());
       // setOldInputLength(raw_code.length);
 			lastRefreshTime.current = Date.now();
@@ -199,15 +200,44 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
 
   return (
     <div style={{
-			paddingTop: 20,
-			paddingBottom: 20,
+			paddingTop: 10,
+			paddingBottom: 10,
 			paddingLeft: 10,
-			paddingRight: 10
+			paddingRight: 10,
+      display: 'flex',
+      flexDirection: "row",
+      borderRadius: 10,
+      backgroundColor: '#17181D',
 		}}>
+      <div style={{display: "flex", flexDirection: "column"}}>
+      {Array(highlights.length + (props.finished?0:unprocessedText.slice(1, unprocessedText.length-1).length)).fill(20).map((e, line_number : number) => (
+        <span key={line_number} style={{
+					display: 'flex',
+          flexDirection: 'row',
+          flexShrink: 1,
+					paddingTop: 1,
+					paddingBottom: 1,
+          // paddingLeft: lineOffsets[line_number] * 4,
+          minHeight: e, //Empty Line Height, literally just using e to avoid the warning "e is unused".
+        }}>
+          <span style={{
+            userSelect: "none",
+            color: "#E8E3E3",
+            opacity: 0.5,
+            fontSize: fontSize,
+            whiteSpace: "pre",
+            width: 30,
+            height: 25,
+            paddingTop: 3,
+            textAlign: "right",
+            paddingLeft: 0,
+            paddingRight: 5,
+          }}>{line_number}</span></span>
+      ))}
+      </div>
       <ScrollArea style={{
-        padding: 20,
-        borderRadius: 10,
-        backgroundColor: '#17181D',
+        // padding: 20,
+        paddingBottom: 20,
 				display: 'flex',
         flexDirection: "column",
         // alignItems: 'baseline',
@@ -215,59 +245,74 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       }}>
       <div>
       {highlights.map((line: scoped_text[], line_number : number) => (//the value search command below finds index of first non whitespace character
-        <div key={line_number} style={{
+        <span key={line_number} style={{
 					display: 'flex',
           flexDirection: 'row',
           flexShrink: 1,
 					paddingTop: 1,
 					paddingBottom: 1,
-          paddingLeft: lineOffsets[line_number] * 10,
+          // paddingLeft: lineOffsets[line_number] * 4,
+          paddingLeft: 10,
           minHeight: 20, //Empty Line Height
         }}>
+          <span style={{
+            userSelect: "none",
+            color: "#E8E3E3",
+            opacity: 0.5,
+            fontSize: fontSize,
+            whiteSpace: "pre",
+            height: 25,
+            paddingTop: 3,
+          }}/>
+          {/* <span style={{whiteSpace: "pre"}}>{Array(lineOffsets[line_number]).fill(" ").join("")}</span> */}
           {line.map((token_seg : scoped_text, token_number : number) => (
-            <p key={token_number} style={{color: "#D4D4D4"}}>
-              <p style={{
+            <span key={token_number} style={{color: "#D4D4D4"}}>
+              <span style={{
                 color: (token_seg.scope.length > 0)?code_styling.get(token_seg.scope[token_seg.scope.length-1]):code_styling.get("default"),
                 fontFamily: 'Consolas',
                 fontSize: fontSize,
+                whiteSpace: "pre",
+                // paddingRight: 10,
               }}>
                 {token_seg.content}
-              </p>
+              </span>
 
               {(line_number === highlights.length-1 && token_number === line.length -1 && unprocessedText.length > 0 && !props.finished) && (
-                <p style={{
+                <span style={{
                   color: code_styling.get("default"),
                   fontFamily: 'Consolas',
                   fontSize: fontSize,
+                  whiteSpace: "pre",
                 }}>
                   {unprocessedText[0]}
-                </p>
+                </span>
               )}
-            </p>
+            </span>
           ))}
-        </div>
+        </span>
       ))}
       {(!props.finished) && (
         <>
         {unprocessedText.slice(1, unprocessedText.length-1).map((line: string, line_number : number) => (//the value search command below finds index of first non whitespace character
-          <div key={line_number} style={{
+          <span key={line_number} style={{
 						display: 'flex',
             flexDirection: 'row',
             flexShrink: 1,
+            textAlign: 'left',
 						paddingTop: 1,
 						paddingBottom: 1,
             paddingLeft: lineOffsets[line_number + highlights.length] * 10,
             minHeight: 20, //Empty Line Height
           }}>
-            <p style={{
+            <span style={{
               color: code_styling.get("default"),
               fontFamily: 'Consolas',
               fontSize: fontSize,
             }}>
               {line}
-            </p>
+            </span>
 
-          </div>
+          </span>
         ))}
         </>
       )}

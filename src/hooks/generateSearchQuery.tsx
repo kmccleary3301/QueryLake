@@ -31,10 +31,10 @@ export default function generateSearchQuery(userData : userDataType, context : C
 
 	let chat_history = "Chat History:\n\n<HISTORY>\n\n";
 	for (let i = 0; i < context.length - 1; i++) {
-		const origin_string = (context[i].origin === "user")?"USER: ":"ASSISTANT: "
+		const origin_string = (context[i].role === "user")?"USER: ":"ASSISTANT: "
 		chat_history += origin_string+context[i].content+"\n\n";
 		history_to_send.push({
-			role: (context[i].origin === "user")?"user":"assistant",
+			role: context[i].role,
 			content: context[i].content
 		})
 	}

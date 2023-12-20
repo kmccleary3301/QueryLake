@@ -87,19 +87,6 @@ export default function SidebarCollectionSelect(props: SidebarCollectionSelectPr
 					// paddingRight: 10,
           borderRadius: 10,
         }}>
-					{/* <div className="h-30" style={{
-						// width: "100%",
-						paddingLeft: 6,
-						paddingRight: 6,
-						display: "flex",
-						flexDirection: "column",
-						justifyContent: "center",
-						// borderWidth: 2,
-						// borderColor: "#FF0000"
-					}}>
-						<Icon.Search size={20} color="#E8E3E3"/>
-					</div> */}
-          {/* <div style={{width: '86%', height: "100%", paddingRight: 5}}> */}
             <Input
               style={{
                 color: '#E8E3E3',
@@ -111,12 +98,10 @@ export default function SidebarCollectionSelect(props: SidebarCollectionSelectPr
               spellCheck={false}
 							
               placeholder={'Search Public Collections'}
-              // placeholderTextColor={'#E8E3E3'}
             />
-          {/* </div> */}
         </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-332px)]" style={{
+      <ScrollArea className="h-[calc(100vh-308px)]" style={{
         width: '100%',
         paddingLeft: 0,
         paddingRight: 0,

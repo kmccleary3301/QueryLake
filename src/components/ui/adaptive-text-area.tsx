@@ -83,7 +83,7 @@ export default function AdaptiveTextArea(props : AdaptiveTextAreaProps) {
           
           // onDrop={handleDrop}
           // onDragOver={handleDragOver}
-          className={"min-h-[30px] resize-none"}
+          className={"min-h-[30px] resize-none bg-secondary"}
           id="review-text"
           onChange={handleChange}
           placeholder="Ask Anything"

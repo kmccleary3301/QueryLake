@@ -120,19 +120,7 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
 // }
 
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
-  // const normalTextFont = "Inter-Regular";
-  // const headingFont = "Inter-Bold";
   const defaultFontSize = 14;
-  // const codeFont = "Consolas";
-  // const headerFontSizes = {
-  //   1: 36,
-  //   2: 32,
-  //   3: 28,
-  //   4: 24,
-  //   5: 20,
-  //   6: 16,
-  // };
-  
   
   const { token } = props;
 
@@ -150,15 +138,16 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         <MarkdownCodeBlock finished={props.finished} text={token.text} lang={token.lang} unProcessedText={props.unProcessedText}/>
       );
     case 'heading':
-      
-      
       if (token.raw[0] != "#") {
         return (
-          <div style={{
+          <p style={{
 						display: "flex",
             flexDirection: 'row',
+            justifyContent: "left",
+            textAlign: "left",
             paddingLeft: (props.padLeft)?10:0,
-            paddingTop: (props.disableHeadingPaddingTop)?0:30,
+            paddingTop: (props.disableHeadingPaddingTop)?0:(30 - 3*token.depth)*0.75,
+            paddingBottom: (props.disableHeadingPaddingTop)?0:10
           }}>
             <MarkdownTextSplitter selectable={true} style={{
               // fontFamily: normalTextFont,
@@ -166,7 +155,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
               fontSize: defaultFontSize,
               color: '#E8E3E3'
               }} text={token.text + props.unProcessedText}/>
-          </div>
+          </p>
         );
       }
 
@@ -178,8 +167,10 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         // }}>
         //   {token.text}
         // </Text>
-        <div style={{
+        <span style={{
           paddingTop: (props.disableHeadingPaddingTop)?0:30,
+          textAlign: "left",
+          paddingLeft: 3*(token.depth-1),
         }}>
           <MarkdownTextSplitter selectable={true} style={{
             paddingTop: 8,
@@ -187,7 +178,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontSize: 30 - 3*token.depth,
             color: '#E8E3E3'
           }} text={token.text + props.unProcessedText}/>
-        </div>
+        </span>
       );
     case 'table':
       return (
@@ -205,16 +196,63 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (null);
     case 'list':
       return (
-        <div style={{
-          paddingLeft: 3
+        <div id="markdown-map-component-list" style={{
+          display: "flex",
+          flexDirection: 'column',
+          flexGrow: 1,
+          alignItems: "flex-start",
+          // textAlign: "left",
+          paddingLeft: 3,
         }}>
           {token.items.map((v : Tokens.ListItem, k : number) => (
-            <MarkdownMapComponent 
-              finished={props.finished}
-              key={k} 
-              token={v}
-              unProcessedText={(k === token.items.length-1)?props.unProcessedText:""}
-            />
+            <span key={k} id="markdown-map-component-list-item" style={{
+              textAlign: "left", 
+              display: "flex", 
+              flex: 1,
+              width: "100%",
+              // flexDirection: "row", 
+              paddingTop: 15,
+              flexGrow: 1,
+            }}>
+              {(token.ordered)?(
+                <span style={{
+                  textAlign: "left",
+                  userSelect: "none",
+                  paddingLeft: 3,
+                  color: "#E8E3E3",
+                  opacity: 0.5,
+                  width: 20,
+                }}>
+                  {k+1+". "}
+                </span>
+              ):(
+                <span style={{
+                  textAlign: "left",
+                  userSelect: "none",
+                  paddingLeft: 3,
+                  width: 20,
+                  opacity: 0.5
+                }}>
+                  <div style={{
+                    borderRadius: 3,
+                    width: 6,
+                    height: 6,
+                    // paddingTop: 8,
+                    // paddingHorizontal: 5,
+                    backgroundColor: '#E8E3E3'
+                  }}/>
+                </span>
+              )}
+              <MarkdownTextSplitter
+                style={{
+                  // display: "flex",
+                  flexGrow: 1,
+                  // flexDirection: "row",
+                }}
+                text={v.text}
+                key={k}
+              />
+            </span>
           ))}
         </div>
       );
@@ -227,29 +265,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
           paddingTop: 4,
 					paddingBottom: 4,
         }}>
-          <div style={{
-						display: "flex",
-            flexDirection: 'column',
-            paddingTop: 10,
-            paddingLeft: 6,
-						paddingRight: 6,
-          }}>
-            <div style={{
-              borderRadius: 3,
-              width: 6,
-              height: 6,
-              // paddingTop: 8,
-              // paddingHorizontal: 5,
-              backgroundColor: '#E8E3E3'
-            }}/>
-            {/* <Text selectable={true} style={{
-              fontFamily: normalTextFont, 
-              fontSize: 16,
-              width: 20,
-              textAlign: 'center',
-              color: '#74748B'
-              }}>·</Text> */}
-          </div>
+          
           <MarkdownTextSplitter selectable={true} style={{
             // fontFamily: normalTextFont,
 						textAlign: "left",
@@ -260,9 +276,10 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'paragraph':
       return (
-        <div style={{
-					display: "flex",
-          flexDirection: 'row',
+        <span style={{
+					// display: "flex",
+          // flexDirection: 'row',
+          textAlign: "left",
           paddingLeft: (props.padLeft)?10:0,
           paddingBottom: 5,
         }}>
@@ -272,15 +289,16 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontSize: defaultFontSize,
             color: '#E8E3E3'
             }} text={token.text + props.unProcessedText}/>
-        </div>
+        </span>
       );
     case 'html':
       return (null);
     case 'text':
       return (
-        <div style={{
-					display: "flex",
-          flexDirection: 'row',
+        <span style={{
+					// display: "flex",
+          // flexDirection: 'row',
+          textAlign: "left",
           paddingLeft: (props.padLeft)?10:0,
           paddingBottom: 5,
         }}>
@@ -290,7 +308,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
             fontSize: defaultFontSize,
             color: '#E8E3E3'
             }} text={token.text + props.unProcessedText}/>
-        </div>
+        </span>
       );
     default:
       return (
@@ -301,14 +319,8 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 }
 
 export default function MarkdownRenderer(props: MarkdownRendererProps) {
-  // const normalTextFont = "Inter-Regular";
-  // const codeFont = "Consolas";
-  // const [maxWidth, setMaxWidth] = useState(40);
   const disableRender = (props.disableRender)?props.disableRender:false;
-  // const [oldTextLength, setOldTextLength] = useState(0);
   const [unprocessedText, setUnprocessedText] = useState("");
-  // const [oldInputLength, setOldInputLength] = useState(0);
-  // const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
 	const lastUpdateTime = useRef(Date.now());
   const [markdownTokens, setMarkdownTokens] = useState<TokensList | Token[]>([]);
 	const oldInputLength = useRef(0);
@@ -317,17 +329,8 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   
   const { input } = props;
   
-  // let oldTextLength = 0;
-  // let textIndexActiveMarkdownSegment = 0;
-  // let markdownSegmentAddresses = [];
-  // let textUpdating = true;
   const [old_string_hash, set_old_string_hash] = useState(0);
 
-	// const options: marked.MarkedOptions = {
-	// 	...defaults,
-	// 	gfm: true,
-	// 	breaks: true,
-	// };
 
 	
 
@@ -335,7 +338,6 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
   const reRenderInterval = 250;
 
   useEffect(() => {
-		
 		const lexer = new marked.Lexer();
     const new_string_hash = stringHash(input);
     if (new_string_hash === old_string_hash) {
@@ -344,6 +346,7 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
     if (markdownTokenLength.current === 0 || (Date.now() - lastUpdateTime.current > reRenderInterval)) {
       const lexed_input = lexer.lex(sanitizeMarkdown(input));
       setMarkdownTokens(lexed_input);
+      console.log("LEXED INPUT:", lexed_input);
       set_old_string_hash(stringHash(input));
       lastUpdateTime.current = Date.now();
       oldInputLength.current = input.length;
@@ -358,13 +361,13 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
     <>
       {(disableRender)?(
         <p style={{
-          // fontFamily: globalStyleSettings.chatRegularFont,
-          // fontSize: globalStyleSettings.chatDefaultFontSize,
 					textAlign: "left",
 					fontSize: 16,
           color: "#E8E3E3",
-          maxWidth: 400,
+          // maxWidth: 400,
 					textWrap: "wrap",
+          display: "flex",
+          width: "100%"
         }}>
           {props.input}
         </p>
@@ -382,14 +385,5 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
         </>
       )}
     </>
-    //     </div>
-    //   </div>
-    // </div>
   );
 }
-
-// const markdownStyles = StyleSheet.create({
-//   h1: {
-    
-//   }
-// });
