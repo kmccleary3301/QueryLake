@@ -1,6 +1,6 @@
 // import { useState } from 'react'
 import './App.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, Dispatch, SetStateAction } from 'react'
 // import { Button } from './components/ui/button'
 import { ThemeProvider } from "@/components/theme-provider"
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
@@ -10,17 +10,19 @@ import LoginPage from '@/components/pages/login-page'
 // import TestTextArea from './components/pages/test-text-area'
 import { AnimatePresence, motion, useAnimation } from "framer-motion";
 import { userDataType, pageID, selectedCollectionsType, timeWindowType } from '@/globalTypes';
-import ChatWindow from '@/components/pages/chat-window';
+// import ChatWindow from '@/components/pages/chat-window';
 import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
-import TestFramerAnimation from '@/components/pages/test-framer-animation'
-import Sidebar from '@/components/sidebar/sidebar'
-import ChatWindowToolchain from './components/pages/chat-window-toolchains/chat-window-toolchains'
-import TestWebSockets from './components/pages/test-websocket'
-import AnimatedPressable from './components/manual_components/animated-pressable'
+import TestFramerAnimation from '@/components/pages/test-framer-animation';
+import Sidebar from '@/components/sidebar/sidebar';
+import ChatWindowToolchain from './components/pages/chat-window-toolchains/chat-window-toolchains';
+import TestWebSockets from './components/pages/test-websocket';
+// import AnimatedPressable from './components/manual_components/animated-pressable';
 import * as Icon from 'react-feather';
-import { Button } from './components/ui/button'
-import UserSettings from './components/pages/user-settings'
-import HuggingFaceRemodel from './components/pages/test-huggingface-remodel'
+import { Button } from './components/ui/button';
+import UserSettings from './components/pages/user-settings';
+import HuggingFaceRemodel from './components/pages/test-huggingface-remodel';
+// import OrganizationControls from './components/manual_components/organization-controls';
+import OrganizationManager from './components/pages/organization-manager'
 
 // type userDataType = {
 //   username: string,
@@ -216,16 +218,27 @@ function MainContent() {
           <Route path="/test_scroll_page" element={<TestScrollPage1/>}/>
           <Route path="/test_websocket" element={<TestWebSockets/>}/>
           <Route path="/hf_test" element={<HuggingFaceRemodel/>}/>
+          <Route path="/organization_manager" element={
+            <>
+              {(userData !== undefined) && (
+                <OrganizationManager
+                  // toggleSideBar={toggleSideBarOpened} 
+                  sidebarOpened={sidebarOpened}
+                  userData={userData}
+                  setUserData={setUserData as Dispatch<SetStateAction<userDataType>>}
+                />
+              )}
+            </>
+          }/>
           <Route path="/user_settings" element={
            <>
-           {(userData !== undefined) && (
-
-             <UserSettings
+            {(userData !== undefined) && (
+              <UserSettings
                 userData={userData}
                 setUserData={setUserData}
-             />
-           )}
-         </>
+              />
+            )}
+          </>
           }/>
           <Route path="/test_animation" element={<TestFramerAnimation/>}/>
           {/* <Route path="/chat" element={

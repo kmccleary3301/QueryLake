@@ -14,14 +14,6 @@ type ScrollViewBottomStickOuterProps = {
 };
 
 export default function ScrollViewBottomStickOuter(props: ScrollViewBottomStickOuterProps) {
-  // const scrollValue = useRef(0);
-
-  // const [autoScroll, setAutoScroll] = useState(false);
-
-	// const scrollDiv = useRef<HTMLDivElement>(null);
-  // const [animateScroll, setAnimateScroll] = useState(true);
-  // const oldScrollValue = useRef(0);
-  // const oldScrollHeight = useRef(0);
   return (
     <div className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
 			// margin: 1,

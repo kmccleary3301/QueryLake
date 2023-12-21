@@ -132,7 +132,7 @@ export default function ChatBubble(props: ChatBubbleProps) {
               // backgroundColor: "#1E1E1E",
               borderRadius: 10,
               alignSelf: "center",
-              minHeight: 40,
+              minHeight: (props.role === "assistant")?0:40,
               display: "flex",
               flexDirection: 'column',
               justifyContent: 'center',
@@ -152,11 +152,11 @@ export default function ChatBubble(props: ChatBubbleProps) {
                         flexDirection: "column",
                         justifyContent: transparentDisplay?"center":"flex-start",
                         alignContent: 'center',
-                        minHeight: 40,
                       }, ...(props.role === "display" || props.role === "user")?{
                         width: "60vw"
                       }:{
-                        maxWidth: "100%"
+                        maxWidth: "100%",
+                        minHeight: 40,
                       }}}
                     >
                       {props.input && props.input.length > 0 && (

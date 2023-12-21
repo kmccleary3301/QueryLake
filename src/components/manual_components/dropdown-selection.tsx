@@ -28,12 +28,16 @@ type DropDownSelectionProps = {
   values: formEntryType[],
   defaultValue: formEntryType,
   setSelection: (value : formEntryType) => void,
-  selection: formEntryType
+  selection: formEntryType,
+  width?: number,
+  display_values_name?: string
 };
 
 export function DropDownSelection(props : DropDownSelectionProps) {
   const [open, setOpen] = useState(false);
   // const [value, setValue] = useState<formValueType>(props.defaultValue.value);
+
+  const displayValueName = (props.display_values_name)?(" "+props.display_values_name):"";
 
   useEffect(() => {
     console.log("SELECTION CHANGED", props.selection);
@@ -46,17 +50,20 @@ export function DropDownSelection(props : DropDownSelectionProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[400px] justify-between"
+          className="justify-between"
+          style={{
+            width: (props.width) ? props.width : 400
+          }}
         >
           {props.selection
             ? props.values.find((framework) => framework.value === props.selection.value)?.label
-            : "Select framework..."}
+            : "Select"+displayValueName+"..."}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
+      <PopoverContent className="p-0" style={{width: (props.width) ? props.width : 400}}>
         <Command>
-          <CommandInput placeholder="Search framework..." className="h-9" />
+          <CommandInput placeholder={"Search"+displayValueName+"..."} className="h-9" />
           <CommandEmpty>No framework found.</CommandEmpty>
           <CommandGroup>
             {props.values.map((framework : formEntryType, index : number) => (

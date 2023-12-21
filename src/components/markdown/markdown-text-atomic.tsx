@@ -21,9 +21,15 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
   switch(props.textSeg.type) {
     case "mathjax_newline":
       return (
-        // <div id="text-atomic-mathjax-newline" style={{fontWeight: 'bold', display: "flex", flexGrow: 1,}}>
+        <div id="text-atomic-mathjax-newline" style={{
+          fontWeight: 'bold', 
+          display: "flex", 
+          flexGrow: 1, 
+          flexDirection: "row", 
+          justifyContent: "center"
+        }}>
           <MarkdownLatex textSeg={props.textSeg} type={"newline"}/>
-        // </div>
+        </div>
       );
     case "mathjax_inline":
       return (

@@ -4,16 +4,12 @@ import {
   collectionGroup, 
   userDataType, 
   metadataDocumentRaw,
-  availableToolchainsResult
+  availableToolchainsResult,
+  membershipType,
 } from "@/globalTypes";
 
 
-type membershipType = {
-	organization_id: string,
-	organization_name: string,
-	role: "owner" | "admin" | "member" | "viewer",
-	invite_still_open: boolean,
-}
+
 
 type getUserMembershipArgs = {
 	username : string, 

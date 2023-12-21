@@ -70,57 +70,8 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
   );
 }
 
-// function MarkdownParagraphComponent(props : MarkdownParagraphComponentProps) {
-//   const normalTextFont = "YingHei3";
-//   switch (props.token.type) {
-//     case 'text': //Normal Case
-//       return (
-//         <MarkdownTextSplitter bubbleWidth={props.bubbleWidth} selectable={true} style={{
-//           fontFamily: normalTextFont,
-//           fontSize: 16,
-//           color: '#E8E3E3'
-//           }} text={props.token.text}/>
-//       );
-//     case 'strong': //Bold case
-//       return (
-//         <Text style={{
-//           fontFamily: 'YingHei4',
-//           fontSize: 16,
-//           color: '#E8E3E3'
-//         }}>
-//           {props.token.text}
-//         </Text>
-//       );
-//     case 'em': //Bold case
-//       return (
-//         <Text style={{
-//           fontFamily: normalTextFont,
-//           fontSize: 16,
-//           color: '#E8E3E3',
-//           fontStyle: 'italic'
-//         }}>
-//           {props.token.text}
-//         </Text>
-//       );
-//     case 'codespan': //Bold case
-//       return (
-//         <Text style={{
-//           fontFamily: 'Consolas',
-//           fontSize: 16,
-//           color: '#E8E3E3',
-//           fontStyle: 'italic',
-//           // backgroundColor: '#17181D',
-//           borderRadius: 3,
-//           paddingHorizontal: 2,
-//         }}>
-//           {props.token.raw}
-//         </Text>
-//       );
-//   }
-// }
-
 function MarkdownMapComponent(props : MarkdownMapComponentProps) {
-  const defaultFontSize = 14;
+  const defaultFontSize = 16;
   
   const { token } = props;
 
@@ -160,13 +111,6 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       }
 
       return (
-        // <Text selectable={true} style={{
-        //   fontFamily: "YingHei5",
-        //   fontSize: fontSizeGet,
-        //   color: '#E8E3E3'
-        // }}>
-        //   {token.text}
-        // </Text>
         <span style={{
           paddingTop: (props.disableHeadingPaddingTop)?0:30,
           textAlign: "left",
@@ -219,6 +163,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
                   textAlign: "left",
                   userSelect: "none",
                   paddingLeft: 3,
+                  paddingTop: 4,
                   color: "#E8E3E3",
                   opacity: 0.5,
                   width: 20,
@@ -230,6 +175,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
                   textAlign: "left",
                   userSelect: "none",
                   paddingLeft: 3,
+                  paddingTop: 12,
                   width: 20,
                   opacity: 0.5
                 }}>
@@ -243,14 +189,11 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
                   }}/>
                 </span>
               )}
-              <MarkdownTextSplitter
-                style={{
-                  // display: "flex",
-                  flexGrow: 1,
-                  // flexDirection: "row",
-                }}
-                text={v.text}
+              <MarkdownMapComponent
+                finished={props.finished}
                 key={k}
+                unProcessedText={(k === token.items.length-1)?props.unProcessedText:""}
+                token={{...v, type: "list_item"}}
               />
             </span>
           ))}

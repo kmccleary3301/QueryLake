@@ -34,23 +34,7 @@ export type toolchainCategory = {
   entries: toolchainEntry[]
 };
 
-export type userDataType = {
-	username: string,
-	password_pre_hash: string,
-	memberships?: object[],
-	is_admin?: boolean,
-	serp_key?: string,
-	available_models?: {
-		default_model: string,
-		local_models: string[],
-		external_models: {
-      // openai?: string[]
-      [name: string]: string[]
-    }
-	},
-	available_toolchains: toolchainCategory[],
-  selected_toolchain: toolchainEntry
-};
+
 
 export type availableToolchainsResult = {
 	default: toolchainEntry,
@@ -146,3 +130,29 @@ export type timeWindowType = {
 export type genericArrayType = Array<string | boolean | number | object>;
 export type genericMapValueType = string | boolean | number | object | genericArrayType;
 export type sessionStateType = Map<string, string | boolean | number | object | genericArrayType>;
+
+
+export type membershipType = {
+	organization_id: string,
+	organization_name: string,
+	role: "owner" | "admin" | "member" | "viewer",
+	invite_still_open: boolean,
+};
+
+export type userDataType = {
+	username: string,
+	password_pre_hash: string,
+	memberships?: membershipType[],
+	is_admin?: boolean,
+	serp_key?: string,
+	available_models?: {
+		default_model: string,
+		local_models: string[],
+		external_models: {
+      // openai?: string[]
+      [name: string]: string[]
+    }
+	},
+	available_toolchains: toolchainCategory[],
+  selected_toolchain: toolchainEntry
+};

@@ -52,14 +52,14 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
           output: 'mathml',
           throwOnError: throwOnError,
           displayMode: false
-        })}} style={{paddingLeft: 2, paddingRight: 2, paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
+        })}} style={{paddingLeft: 0, paddingRight: 2, paddingTop: 10, paddingBottom: 10, width: '100%'}}/>
       );
     } else {
       return (
         // <RenderHTML contentWidth={20} source={{ html: latex_html}}/>
         <div style={{
           display: "flex",
-          flexGrow: 1,
+          // flexGrow: 1,
         }}>
           <span>{"\n"}</span>
           <span dangerouslySetInnerHTML={{ __html: katex.renderToString(props.textSeg.text, {
@@ -67,10 +67,11 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
             throwOnError: throwOnError,
             displayMode: true
           })}} style={{
-            paddingTop: 10, 
-            paddingBottom: 10, 
-            width: '100%', 
-            display: "inline-block", 
+            paddingTop: 35, 
+            paddingBottom: 35, 
+            // width: '100%', 
+            // display: "inline-block",
+            fontSize: 18, 
             whiteSpace: "wrap",
             clear: "both",
             fontFamily: "Consolas"
