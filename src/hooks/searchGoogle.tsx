@@ -1,5 +1,5 @@
 // import { SERPAPI_KEY, SERPER_API_KEY } from "$env/static/private";
-import getSerpKey from "./getSerpKey";
+// import getSerpKey from "./getSerpKey";
 import craftUrl from "./craftUrl";
 // import { getJson } from "serpapi";
 // import type { GoogleParameters } from "serpapi";
@@ -80,12 +80,14 @@ type userDataType = {
 export default function searchGoogle(query : string, userData : userDataType, organization_hash_id : undefined | string, onFinish : (result : object | undefined) => void) {
   const org_specified : boolean = (organization_hash_id !== undefined);
   const params = {...{
-    "username": userData.username,
-    "password_prehash": userData.password_pre_hash,
+    "auth": {
+      "username": userData.username,
+      "password_prehash": userData.password_pre_hash,
+    },
     "query": query
   }, ...(org_specified?{"organization_hash_id": organization_hash_id}:{})};
 
-  const url = craftUrl("http://localhost:5000/api/search_google", params);
+  const url = craftUrl(`/api/search_google`, params);
 
   fetch(url, {method: "POST"}).then((response) => {
     response.json().then((data) => {
@@ -103,9 +105,11 @@ export default function searchGoogle(query : string, userData : userDataType, or
 
 export function embedUrls(urls : string[], userData : userDataType, onFinish : (result : object | undefined) => void) {
   
-  const url = craftUrl("http://localhost:5000/api/embed_urls", {
-    "username": userData.username,
-    "password_prehash": userData.password_pre_hash,
+  const url = craftUrl(`/api/embed_urls`, {
+    "auth": {
+      "username": userData.username,
+      "password_prehash": userData.password_pre_hash,
+    },
     "urls": urls
   });
 

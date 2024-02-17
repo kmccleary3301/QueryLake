@@ -10,7 +10,7 @@ import { Input } from "../ui/input";
 import { 
 	userDataType,
 	membershipType,
-} from "@/globalTypes";
+} from "@/typing/globalTypes";
 import { ScrollArea } from "../ui/scroll-area";
 import { motion, useAnimation } from "framer-motion";
 import { Button } from "../ui/button";
@@ -89,9 +89,11 @@ export default function OrganizationManager(props : OrganizationManagerProps) {
   };
 
   const resolveInvite = (organization_id : number | string, choice : boolean) => {
-    const url = craftUrl("http://localhost:5000/api/resolve_organization_invitation", {
-      "username": props.userData.username,
-      "password_prehash": props.userData.password_pre_hash,
+    const url = craftUrl(`/api/resolve_organization_invitation`, {
+      "auth": {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+      },
       "organization_id": organization_id,
       "accept": choice
     });
@@ -109,7 +111,7 @@ export default function OrganizationManager(props : OrganizationManagerProps) {
   }
 
   const createOrganization = () => {
-    const url = craftUrl("http://localhost:5000/api/create_organization", {...{
+    const url = craftUrl(`/api/create_organization`, {...{
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "organization_name": createOrganizationName,

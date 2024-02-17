@@ -13,7 +13,7 @@ import { useState, useEffect } from 'react';
 import { getChatHistory, getUserCollections } from '@/hooks/querylakeAPI';
 // import getUserCollections from '../hooks/getUserCollections';
 // import SidebarToolchains from './SidebarToolchains';
-import { collectionGroup, timeWindowType, userDataType, pageID, selectedCollectionsType } from '@/globalTypes';
+import { collectionGroup, timeWindowType, userDataType, pageID, selectedCollectionsType } from '@/typing/globalTypes';
 import { Button } from '../ui/button';
 import {
 	TabsContent,

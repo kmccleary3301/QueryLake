@@ -1,5 +1,5 @@
 import craftUrl from "../craftUrl";
-import { userDataType, displayType, ChatEntry } from "@/globalTypes";
+import { userDataType, displayType, ChatEntry } from "@/typing/globalTypes";
 import hexToUtf8 from "./hex-to-utf8";
 import { SetStateAction, Dispatch } from "react";
 import EventSource from "@/lib/react-native-server-sent-events";

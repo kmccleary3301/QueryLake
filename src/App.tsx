@@ -9,7 +9,7 @@ import TestPage2 from '@/components/pages/test-page-2'
 import LoginPage from '@/components/pages/login-page'
 // import TestTextArea from './components/pages/test-text-area'
 import { AnimatePresence, motion, useAnimation } from "framer-motion";
-import { userDataType, pageID, selectedCollectionsType, timeWindowType } from '@/globalTypes';
+import { userDataType, pageID, selectedCollectionsType, timeWindowType } from '@/typing/globalTypes';
 // import ChatWindow from '@/components/pages/chat-window';
 import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
 import TestFramerAnimation from '@/components/pages/test-framer-animation';

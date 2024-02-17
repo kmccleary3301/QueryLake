@@ -8,7 +8,7 @@ import {
 	ChatEntry,
 	userDataType,
 	buttonCallback,
-} from "@/globalTypes";
+} from "@/typing/globalTypes";
 import ChatBarInput from "../../manual_components/chat-input-bar";
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"

@@ -6,10 +6,7 @@ import {
   metadataDocumentRaw,
   availableToolchainsResult,
   membershipType,
-} from "@/globalTypes";
-
-
-
+} from "@/typing/globalTypes";
 
 type getUserMembershipArgs = {
 	username : string, 
@@ -24,9 +21,11 @@ type getUserMembershipArgs = {
  * @param args - The arguments for retrieving user memberships.
  */
 export function getUserMemberships(args: getUserMembershipArgs) {
-  const url = craftUrl("http://localhost:5000/api/fetch_memberships", {
-    "username": args.username,
-    "password_prehash": args.password_prehash,
+  const url = craftUrl(`/api/fetch_memberships`, {
+    "auth": {
+      "username": args.username,
+      "password_prehash": args.password_prehash
+    },
     "return_subset": args.subset
   });
 
@@ -38,6 +37,7 @@ export function getUserMemberships(args: getUserMembershipArgs) {
       }
       if (args.set_admin) { args.set_admin(data.result.admin); }
       if (args.set_value) args.set_value(data.result.memberships);
+      console.log("Fetched memberships:", data.result.memberships);
     });
   });
 }
@@ -49,9 +49,11 @@ type getUserCollectionArgs = {
 }
 
 export function getUserCollections(args: getUserCollectionArgs) {
-  const url = craftUrl("http://localhost:5000/api/fetch_all_collections", {
-    "username": args.username,
-    "password_prehash": args.password_prehash
+  const url = craftUrl(`/api/fetch_all_collections`, {
+    "auth": {
+      "username": args.username,
+      "password_prehash": args.password_prehash
+    },
   });
   const collection_groups_fetch : collectionGroup[] = [];
 
@@ -172,9 +174,11 @@ type userDataAtomic = {
  */
 export function openDocumentSecure(args: openDocumentSecureArgs) {
   if (args.metadata.type === "pdf") {
-    const url_doc_access = craftUrl("http://localhost:5000/api/craft_document_access_token", {
-      "username": args.userData.username,
-      "password_prehash": args.userData.password_pre_hash,
+    const url_doc_access = craftUrl(`/api/craft_document_access_token`, {
+      "auth": {
+        "username": args.userData.username,
+        "password_prehash": args.userData.password_pre_hash,
+      },
       "hash_id": args.metadata.document_id
     });
     fetch(url_doc_access, {method: "POST"}).then((response) => {
@@ -183,7 +187,7 @@ export function openDocumentSecure(args: openDocumentSecureArgs) {
           console.error("Document Delete Failed", data["note"]);
           return;
         }
-        const url_actual = craftUrl("http://localhost:5000/api/async/fetch_document/"+data.result.file_name, {
+        const url_actual = craftUrl(`/api/async/fetch_document/`+data.result.file_name, {
           "auth_access": data.result.access_encrypted
         })
         if (args.metadata.type === "pdf") window.open(url_actual.toString()+args.metadata.location_link_chrome);
@@ -200,11 +204,13 @@ type getSerpKeyArgs = {
 
 export function getSerpKey(args : getSerpKeyArgs) {
 	const params = {...{
-    "username": args.userdata.username,
-    "password_prehash": args.userdata.password_pre_hash
+    "auth": {
+      "username": args.userdata.username,
+      "password_prehash": args.userdata.password_pre_hash
+    }
   }, ...((args.organization_hash_id)?{"organization_hash_id": args.organization_hash_id}:{})};
 
-  const url = craftUrl("http://localhost:5000/api/get_serp_key", params);
+  const url = craftUrl(`/api/get_serp_key`, params);
 
   fetch(url, {method: "POST"}).then((response) => {
 		response.json().then((data) => {
@@ -239,14 +245,16 @@ export function setSerpKey(args: setSerpKeyArgs) {
 
   const params = {
     ...{
-      "username": args.userdata.username,
-      "password_prehash": args.userdata.password_pre_hash,
+      "auth": {
+        "username": args.userdata.username,
+        "password_prehash": args.userdata.password_pre_hash,
+      },
       "serp_key": args.serp_key
     },
     ...(org_specified ? { "organization_hash_id": args.organization_hash_id } : {})
   };
 
-  const url = craftUrl("http://localhost:5000/api/" + (org_specified ? "set_organization_serp_key" : "set_user_serp_key"), params);
+  const url = craftUrl(`/api/` + (org_specified ? "set_organization_serp_key" : "set_user_serp_key"), params);
 
   fetch(url, { method: "POST" }).then((response) => {
     response.json().then((data) => {
@@ -270,9 +278,11 @@ type getChatHistoryArgs = {
 
 export function getChatHistory(args : getChatHistoryArgs) {
   const currentTime = Date.now()/1000;
-  const url = craftUrl("http://localhost:5000/api/fetch_toolchain_sessions", {
-    "username": args.username,
-    "password_prehash": args.password_prehash
+  const url = craftUrl(`/api/fetch_toolchain_sessions`, {
+    "auth": {
+      "username": args.username,
+      "password_prehash": args.password_prehash
+    }
   });
   const chat_history_tmp : timeWindowType[] = args.time_windows.slice();
 
@@ -314,9 +324,11 @@ type getAvailableModelsArgs = {
 };
 
 export function getAvailableModels(args : getAvailableModelsArgs) {
-  const url = craftUrl("http://localhost:5000/api/get_available_models", {
-    "username": args.userdata.username,
-    "password_prehash": args.userdata.password_pre_hash
+  const url = craftUrl(`/api/get_available_models`, {
+    "auth": {
+      "username": args.userdata.username,
+      "password_prehash": args.userdata.password_pre_hash
+    }
   });
 
   fetch(url, {method: "POST"}).then((response) => {
@@ -360,9 +372,11 @@ type getAvailableToolchainsArgs = {
 };
 
 export function getAvailableToolchains(args : getAvailableToolchainsArgs) {
-  const url = craftUrl("http://localhost:5000/api/get_available_toolchains", {
-    "username": args.userdata.username,
-    "password_prehash": args.userdata.password_pre_hash
+  const url = craftUrl(`/api/get_available_toolchains`, {
+    "auth": {
+      "username": args.userdata.username,
+      "password_prehash": args.userdata.password_pre_hash
+    }
   });
 
   fetch(url, {method: "POST"}).then((response) => {
@@ -390,8 +404,10 @@ export function setOpenAIAPIKey(args : setOpenAIAPIKeyArgs) {
 	const org_specified : boolean = (args.organization_hash_id)?true:false;
   
   const params = {...{
-    "username": args.userdata.username,
-    "password_prehash": args.userdata.password_pre_hash,
+    "auth": {
+      "username": args.userdata.username,
+      "password_prehash": args.userdata.password_pre_hash,
+    }
   }, ...(org_specified?{
     "openai_organization_id": args.api_key,
     "organization_hash_id": args.organization_hash_id
@@ -399,7 +415,7 @@ export function setOpenAIAPIKey(args : setOpenAIAPIKeyArgs) {
     "openai_api_key": args.api_key
   })};
 
-  const url = craftUrl("http://localhost:5000/api/"+(org_specified?"set_organization_openai_id":"set_user_openai_api_key"), params);
+  const url = craftUrl(`/api/`+(org_specified?"set_organization_openai_id":"set_user_openai_api_key"), params);
 
   fetch(url, {method: "POST"}).then((response) => {
 		response.json().then((data) => {

@@ -17,8 +17,8 @@
 // import globalStyleSettings from "../../globalStyleSettings";
 import ChatBubbleSource from "./chat-bubble-source";
 import queryLakeIcon from "@/assets/favicon.png";
-import { userDataType } from "@/globalTypes";
-import { sourceMetadata } from "@/globalTypes";
+import { userDataType } from "@/typing/globalTypes";
+import { sourceMetadata } from "@/typing/globalTypes";
 import {
   Avatar,
   AvatarFallback,

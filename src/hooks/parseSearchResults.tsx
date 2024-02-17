@@ -7,9 +7,11 @@ type userDataType = {
 
 export default function parseSearchResults(userdata : userDataType, urls : string[]) {
 
-  const url = craftUrl("http://localhost:5000/api/parse_urls", {
-    "username": userdata.username,
-    "password_prehash": userdata.password_pre_hash,
+  const url = craftUrl(`/api/parse_urls`, {
+    "auth": {
+      "username": userdata.username,
+      "password_prehash": userdata.password_pre_hash,
+    },
     "urls": urls
   });
 

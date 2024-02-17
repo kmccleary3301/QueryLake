@@ -11,7 +11,7 @@ import CollectionWrapper from '../manual_components/collection-wrapper';
 // import AnimatedPressable from './AnimatedPressable';
 // import getUserCollections from '../hooks/getUserCollections';
 // import { getUserCollections } from '@/hooks/querylakeAPI';
-import { collectionGroup, pageID, selectedCollectionsType, userDataType } from '@/globalTypes';
+import { collectionGroup, pageID, selectedCollectionsType, userDataType } from '@/typing/globalTypes';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from "react-router-dom";
 import * as Icon from 'react-feather';

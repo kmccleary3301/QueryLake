@@ -1,4 +1,4 @@
-import { userDataType } from "@/globalTypes";
+import { userDataType } from "@/typing/globalTypes";
 import craftUrl from "@/hooks/craftUrl";
 
 type toolchainEventCallArgs = {

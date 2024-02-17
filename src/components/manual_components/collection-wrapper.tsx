@@ -21,7 +21,7 @@ import { useEffect, useState, ReactNode } from 'react';
 //   AccordionTrigger,
 // } from "@/components/ui/accordion"
 // import { Checkbox } from "@/components/ui/checkbox"
-import { selectedCollectionsType } from '@/globalTypes';
+import { selectedCollectionsType } from '@/typing/globalTypes';
 // import { CheckedState } from '@radix-ui/react-checkbox';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';

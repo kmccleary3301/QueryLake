@@ -44,10 +44,11 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { DropDownSelection } from "@/components/manual_components/dropdown-selection";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
-import { userDataType } from "@/globalTypes";
-import { sourceMetadata, ChatEntry, selectedCollectionsType } from "@/globalTypes";
+import { userDataType } from "@/typing/globalTypes";
+import { sourceMetadata, ChatEntry, selectedCollectionsType } from "@/typing/globalTypes";
 import { formEntryType } from "@/components/manual_components/dropdown-selection";
 import { Button } from "../ui/button";
+
 
 type ChatWindowProps = {
   toggleSideBar?: () => void,
@@ -125,7 +126,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         setAnimateScroll(false);
         setNewChat([]);
         setSessionHash(navigate_args[1]);
-        const url = craftUrl("http://localhost:5000/api/fetch_session", {
+        const url = craftUrl(`/api/fetch_session`, {
           "username": props.userData.username,
           "password_prehash": props.userData.password_pre_hash,
           "hash_id": navigate_args[1],
@@ -175,7 +176,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       } else {
         setDisplaySuggestions(true);
         setNewChat([]);
-      const url = craftUrl("http://localhost:5000/api/create_chat_session", {
+      const url = craftUrl(`/api/create_chat_session`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
       });
@@ -233,7 +234,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   
       const bot_response_sources : sourceMetadata[] = [];
   
-      const url_vector_query = craftUrl("http://localhost:5000/api/query_vector_db", {
+      const url_vector_query = craftUrl(`/api/query_vector_db`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
         "query": query+". "+message,
@@ -297,7 +298,7 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     console.log("Chat history all:", chat_history_all);
 
-    const url = craftUrl("http://localhost:5000/api/async/llm_call_chat_session", {
+    const url = craftUrl(`/api/async/llm_call_chat_session`, {
       "session_hash": sessionHash,
       "history": chat_history_all,
       "username": props.userData.username,
@@ -365,45 +366,6 @@ export default function ChatWindow(props : ChatWindowProps) {
       }])
     });
   };
-
-
-  // const toggleSwitch = () => {console.log("toggled switch to:", !webSearchIsEnabled); setWebSearchIsEnabled((previousState) => !previousState); };
-
-  // const handleDrop = (event: CustomEvent & { dataTransfer: DataTransfer }) => {
-  //   const url = craftUrl("http://localhost:5000/api/uploadfile", {
-  //     "name": props.userData.username,
-  //     "password_prehashed": props.userData.password_pre_hash
-  //   });
-  //   event.preventDefault();
-  //   console.log("Set files to:", event.dataTransfer.files);
-  //   const formData = new FormData();
-  //   formData.append("file", event.dataTransfer.files[0]);
-  //   const uploader = createUploader({
-  //     destination: {
-  //       method: "POST",
-  //       url: url,
-  //       filesParamName: "file",
-  //     },
-  //     autoUpload: false,
-  //     grouped: true,
-  //     //...
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
-  //     console.log(`item ${item.id} started uploading`);
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
-  //     console.log(`item ${item.id} progress ${JSON.stringify(item)}`);
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_FINISH, (item) => {
-  //     console.log(`item ${item.id} response:`, item.uploadResponse);
-  //   });
-
-  //   uploader.add(event.dataTransfer.files[0]);
-  // };
-
 
   const onMessageSend = (message : string) => {
     sse_fetch(message);

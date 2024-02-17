@@ -26,7 +26,7 @@ export default function TestPage1() {
 
 
   const attempt_login = () => {
-    const url = craftUrl("http://localhost:5000/api/login", {
+    const url = craftUrl(`/api/login`, {
       "username": "w",
       "password": "w"
     });

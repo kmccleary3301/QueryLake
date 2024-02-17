@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 // import openDocumentSecure from "../hooks/openDocumentSecure";
 import { openDocumentSecure } from "@/hooks/querylakeAPI";
-import { userDataType, metadataDocumentRaw } from "@/globalTypes";
+import { userDataType, metadataDocumentRaw } from "@/typing/globalTypes";
 
 type ChatBubbleSourceProps = {
   icon?: string | ArrayBuffer | Blob,

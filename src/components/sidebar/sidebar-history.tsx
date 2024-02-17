@@ -7,7 +7,7 @@ import HoverDocumentEntry from '../manual_components/hover_document_entry';
 import craftUrl from '@/hooks/craftUrl';
 import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '../ui/button';
-import { userDataType, timeWindowType, collectionGroup } from '@/globalTypes';
+import { userDataType, timeWindowType, collectionGroup } from '@/typing/globalTypes';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -33,9 +33,11 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
   // ];
 
   const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
-    const url = craftUrl("http://localhost:5000/api/hide_chat_session", {
-      "username": props.userData.username,
-      "password_prehash": props.userData.password_pre_hash,
+    const url = craftUrl(`/api/hide_chat_session`, {
+      "auth": {
+        "username": props.userData.username,
+        "password_prehash": props.userData.password_pre_hash,
+      },
       "hash_id": hash_id
     });
     fetch(url, {method: "POST"}).then((response) => {

@@ -3,7 +3,7 @@
 // import { Feather } from '@expo/vector-icons';
 import { useEffect } from 'react';
 // import AnimatedPressable from './AnimatedPressable';
-import { userDataType, toolchainEntry, toolchainCategory } from '@/globalTypes';
+import { userDataType, toolchainEntry, toolchainCategory } from '@/typing/globalTypes';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Button } from '../ui/button';
 import * as Icon from 'react-feather';

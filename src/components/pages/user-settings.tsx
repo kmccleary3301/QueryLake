@@ -5,7 +5,7 @@ import * as Icon from 'react-feather';
 import { setOpenAIAPIKey } from "@/hooks/querylakeAPI";
 import { Button } from "../ui/button";
 // import AnimatedPressable from "../manual_components/animated-pressable";
-import { userDataType } from "@/globalTypes";
+import { userDataType } from "@/typing/globalTypes";
 import { Input } from "../ui/input";
 
 type UserSettingsProps = {

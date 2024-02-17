@@ -14,7 +14,7 @@ import {
 	buttonCallback,
 	genericArrayType,
 	genericMapValueType
-} from "@/globalTypes";
+} from "@/typing/globalTypes";
 // import { Loader2 } from 'lucide-react';
 import uploadDocsToSession from "@/hooks/chat-window-hooks.tsx/upload-docs-to-session";
 import { MessageEvent, ErrorEvent } from "@/lib/react-native-server-sent-events";
@@ -202,7 +202,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
   }, [props.userData, displayMappings]);
 
   const get_session_global_generator = useCallback(async function (session_id : string, hooks_enabled : {file_event : boolean, question_event : boolean}) {
-    const url = craftUrl("http://localhost:5000/api/async/get_session_global_generator", {
+    const url = craftUrl(`/api/async/get_session_global_generator`, {
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "session_id": session_id
@@ -295,7 +295,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
         setAnimateScroll(false);
         setDisplayChat([]);
         setSessionHash(navigate_args[1]);
-        const url = craftUrl("http://localhost:5000/api/fetch_toolchain_session", {
+        const url = craftUrl(`/api/fetch_toolchain_session`, {
           "username": props.userData.username,
           "password_prehash": props.userData.password_pre_hash,
           "session_id": navigate_args[1],
@@ -330,7 +330,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
 
       setDisplaySuggestions(true);
       setDisplayChat([]);
-      const url = craftUrl("http://localhost:5000/api/create_toolchain_session", {
+      const url = craftUrl(`/api/create_toolchain_session`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
         "toolchain_id": selectedToolchain.id

@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { userDataType, availableToolchainsResult } from "@/globalTypes";
+import { userDataType, availableToolchainsResult } from "@/typing/globalTypes";
  
 const formSchema = z.object({
   username: z.string().min(1, {
@@ -124,11 +124,11 @@ export default function LoginPage(props : LoginPageProps) {
   }
 
 	const login = (values: z.infer<typeof formSchema>) => {
-    const url = craftUrl("http://localhost:5000/api/login", {
+    const url = craftUrl(`http://localhost:5173/api/login`, {
       "username": values.username,
       "password": values.password
     });
-
+		
     fetch(url, {method: "POST"}).then((response) => {
       console.log("Fetching");
       console.log(response);
@@ -175,9 +175,9 @@ export default function LoginPage(props : LoginPageProps) {
   }
 
 	const signup = (values: z.infer<typeof formSchema>) => {
-    const url = craftUrl("http://localhost:5000/api/add_user", {
-      "username": values.username,
-      "password": values.password
+    const url = craftUrl(`/api/add_user`, {
+			"username": values.username,
+			"password": values.password
     });
     fetch(url, {method: "POST"}).then((response) => {
       console.log(response);
