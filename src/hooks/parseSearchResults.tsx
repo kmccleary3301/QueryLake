@@ -1,4 +1,5 @@
 import craftUrl from "./craftUrl";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type userDataType = {
   username: string,
@@ -7,7 +8,7 @@ type userDataType = {
 
 export default function parseSearchResults(userdata : userDataType, urls : string[]) {
 
-  const url = craftUrl(`/api/parse_urls`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/parse_urls`, {
     "auth": {
       "username": userdata.username,
       "password_prehash": userdata.password_pre_hash,

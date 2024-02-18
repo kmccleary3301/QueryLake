@@ -3,6 +3,7 @@
 import craftUrl from "./craftUrl";
 // import { getJson } from "serpapi";
 // import type { GoogleParameters } from "serpapi";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type userDataType = {
   username: string,
@@ -87,7 +88,7 @@ export default function searchGoogle(query : string, userData : userDataType, or
     "query": query
   }, ...(org_specified?{"organization_hash_id": organization_hash_id}:{})};
 
-  const url = craftUrl(`/api/search_google`, params);
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/search_google`, params);
 
   fetch(url, {method: "POST"}).then((response) => {
     response.json().then((data) => {
@@ -105,7 +106,7 @@ export default function searchGoogle(query : string, userData : userDataType, or
 
 export function embedUrls(urls : string[], userData : userDataType, onFinish : (result : object | undefined) => void) {
   
-  const url = craftUrl(`/api/embed_urls`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/embed_urls`, {
     "auth": {
       "username": userData.username,
       "password_prehash": userData.password_pre_hash,

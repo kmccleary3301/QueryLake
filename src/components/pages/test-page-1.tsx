@@ -18,6 +18,7 @@ import AdaptiveTextArea from '@/components/ui/adaptive-text-area'
 // const tags = Array.from({ length: 50 }).map(
 //   (_, i, a) => `v1.2.0-beta.${a.length - i}`
 // )
+import { SERVER_ADDR_HTTP } from '@/config_server_hostnames'
 
 export default function TestPage1() {
   const [userInput, setUserInput] = useState("");
@@ -26,7 +27,7 @@ export default function TestPage1() {
 
 
   const attempt_login = () => {
-    const url = craftUrl(`/api/login`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/login`, {
       "username": "w",
       "password": "w"
     });

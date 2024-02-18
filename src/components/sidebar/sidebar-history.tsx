@@ -9,6 +9,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '../ui/button';
 import { userDataType, timeWindowType, collectionGroup } from '@/typing/globalTypes';
 import { useNavigate } from 'react-router-dom';
+import { SERVER_ADDR_HTTP } from '@/config_server_hostnames';
 
 
 type SidebarChatHistoryProps = {
@@ -33,7 +34,7 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
   // ];
 
   const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
-    const url = craftUrl(`/api/hide_chat_session`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/hide_chat_session`, {
       "auth": {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,

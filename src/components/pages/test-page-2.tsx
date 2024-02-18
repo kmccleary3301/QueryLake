@@ -3,11 +3,12 @@ import '@/App.css'
 // import { Button } from './components/ui/button'
 import { Button } from '@/components/ui/button'
 import craftUrl from '@/hooks/craftUrl'
+import { SERVER_ADDR_HTTP } from '@/config_server_hostnames'
 
 export default function TestPage2() {
 
   const attempt_login = () => {
-    const url = craftUrl(`/api/login`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/login`, {
       "username": "w",
       "password": "w"
     });

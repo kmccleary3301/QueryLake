@@ -10,6 +10,7 @@ import * as Icon from 'react-feather';
 import { formEntryType } from "./dropdown-selection";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type organizationRoles = "owner" | "admin" | "member" | "viewer";
 
@@ -64,7 +65,7 @@ export default function OrganizationControls(props : OrganizationControlsProps) 
     }
     setAvailableInviteRoles(available_invite_roles);
 
-    const url = craftUrl(`/api/fetch_memberships_of_organization`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_memberships_of_organization`, {
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "organization_id": props.organization.organization_id,
@@ -95,7 +96,7 @@ export default function OrganizationControls(props : OrganizationControlsProps) 
   };
 
   const inviteUser = () => {
-    const url = craftUrl(`/api/invite_user_to_organization`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/invite_user_to_organization`, {
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "organization_id": props.organization.organization_id,

@@ -21,7 +21,8 @@ import { MessageEvent, ErrorEvent } from "@/lib/react-native-server-sent-events"
 import getStreamNodeGenerator from "@/hooks/chat-window-hooks.tsx/get-stream-node-generator";
 // import { create } from "domain";
 import ChatWindowToolchainScrollSection from "./chat-window-scroll-section";
-
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
+import ToolchainSession from "./toochain-session";
 
 type ChatWindowToolchainProps = {
   // navigation?: any,
@@ -71,6 +72,9 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
   const [availableEvents, setAvailableEvents] = useState<string[]>([]);
   const [enableRAG, setEnableRag] = useState(false);
   const [maxFiles, setMaxFiles] = useState(0);
+
+  const new_websocket = new ToolchainSession(() => {}, () => {});
+
   // const [hooksEnabled, setHooksEnabled] = useState<{[key : string] : boolean}>({});
   
   // const [displayFiles, setDisplayFiles] = useState<any[] | undefined>();
@@ -202,7 +206,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
   }, [props.userData, displayMappings]);
 
   const get_session_global_generator = useCallback(async function (session_id : string, hooks_enabled : {file_event : boolean, question_event : boolean}) {
-    const url = craftUrl(`/api/async/get_session_global_generator`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/async/get_session_global_generator`, {
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "session_id": session_id
@@ -295,7 +299,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
         setAnimateScroll(false);
         setDisplayChat([]);
         setSessionHash(navigate_args[1]);
-        const url = craftUrl(`/api/fetch_toolchain_session`, {
+        const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_toolchain_session`, {
           "username": props.userData.username,
           "password_prehash": props.userData.password_pre_hash,
           "session_id": navigate_args[1],
@@ -330,7 +334,7 @@ export default function ChatWindowToolchain(props : ChatWindowToolchainProps) {
 
       setDisplaySuggestions(true);
       setDisplayChat([]);
-      const url = craftUrl(`/api/create_toolchain_session`, {
+      const url = craftUrl(`${SERVER_ADDR_HTTP}/api/create_toolchain_session`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
         "toolchain_id": selectedToolchain.id

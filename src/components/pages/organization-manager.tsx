@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from "../ui/scroll-area";
 import { motion, useAnimation } from "framer-motion";
 import { Button } from "../ui/button";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 // type userDataType = {
 //   username: string,
@@ -89,7 +90,7 @@ export default function OrganizationManager(props : OrganizationManagerProps) {
   };
 
   const resolveInvite = (organization_id : number | string, choice : boolean) => {
-    const url = craftUrl(`/api/resolve_organization_invitation`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/resolve_organization_invitation`, {
       "auth": {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
@@ -111,7 +112,7 @@ export default function OrganizationManager(props : OrganizationManagerProps) {
   }
 
   const createOrganization = () => {
-    const url = craftUrl(`/api/create_organization`, {...{
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/create_organization`, {...{
       "username": props.userData.username,
       "password_prehash": props.userData.password_pre_hash,
       "organization_name": createOrganizationName,

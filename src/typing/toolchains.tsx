@@ -9,7 +9,9 @@
 // can be thought of as a file system which is being traversed and/or changed.
 // """
 
-export type substituteAny = string | number | boolean | null | Array<substituteAny> | object | Map<string, substituteAny>;
+export type substituteAny = string | number | boolean | null | undefined | Array<substituteAny> | {[key : string] : substituteAny} | Map<string, substituteAny>;
+export type compositionType = Array<substituteAny> | { [key: string]: substituteAny; } | Map<string, substituteAny>;
+export type compositionObjectType = { [key: string]: substituteAny; } | Map<string, substituteAny>;
 
 export interface staticValue {
     type?: "staticValue";

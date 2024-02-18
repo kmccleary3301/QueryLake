@@ -7,6 +7,7 @@ import {
   availableToolchainsResult,
   membershipType,
 } from "@/typing/globalTypes";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type getUserMembershipArgs = {
 	username : string, 
@@ -21,7 +22,7 @@ type getUserMembershipArgs = {
  * @param args - The arguments for retrieving user memberships.
  */
 export function getUserMemberships(args: getUserMembershipArgs) {
-  const url = craftUrl(`/api/fetch_memberships`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_memberships`, {
     "auth": {
       "username": args.username,
       "password_prehash": args.password_prehash
@@ -29,7 +30,7 @@ export function getUserMemberships(args: getUserMembershipArgs) {
     "return_subset": args.subset
   });
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
     response.json().then((data) => {
       if (!data.success) {
         console.error("Failed to retrieve memberships", [data.note]);
@@ -49,7 +50,7 @@ type getUserCollectionArgs = {
 }
 
 export function getUserCollections(args: getUserCollectionArgs) {
-  const url = craftUrl(`/api/fetch_all_collections`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_all_collections`, {
     "auth": {
       "username": args.username,
       "password_prehash": args.password_prehash
@@ -59,7 +60,7 @@ export function getUserCollections(args: getUserCollectionArgs) {
 
   // let retrieved_data = {};
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
     response.json().then((data) => {
       const retrieved = data.result.collections;
       if (data["success"] == false) {
@@ -174,20 +175,20 @@ type userDataAtomic = {
  */
 export function openDocumentSecure(args: openDocumentSecureArgs) {
   if (args.metadata.type === "pdf") {
-    const url_doc_access = craftUrl(`/api/craft_document_access_token`, {
+    const url_doc_access = craftUrl(`${SERVER_ADDR_HTTP}/api/craft_document_access_token`, {
       "auth": {
         "username": args.userData.username,
         "password_prehash": args.userData.password_pre_hash,
       },
       "hash_id": args.metadata.document_id
     });
-    fetch(url_doc_access, {method: "POST"}).then((response) => {
+    fetch(url_doc_access).then((response) => {
       response.json().then((data) => {
         if (data["success"] == false) {
           console.error("Document Delete Failed", data["note"]);
           return;
         }
-        const url_actual = craftUrl(`/api/async/fetch_document/`+data.result.file_name, {
+        const url_actual = craftUrl(`${SERVER_ADDR_HTTP}/api/async/fetch_document/`+data.result.file_name, {
           "auth_access": data.result.access_encrypted
         })
         if (args.metadata.type === "pdf") window.open(url_actual.toString()+args.metadata.location_link_chrome);
@@ -210,9 +211,9 @@ export function getSerpKey(args : getSerpKeyArgs) {
     }
   }, ...((args.organization_hash_id)?{"organization_hash_id": args.organization_hash_id}:{})};
 
-  const url = craftUrl(`/api/get_serp_key`, params);
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/get_serp_key`, params);
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
 		response.json().then((data) => {
       console.log(data);
 			if (!data["success"]) {
@@ -254,7 +255,7 @@ export function setSerpKey(args: setSerpKeyArgs) {
     ...(org_specified ? { "organization_hash_id": args.organization_hash_id } : {})
   };
 
-  const url = craftUrl(`/api/` + (org_specified ? "set_organization_serp_key" : "set_user_serp_key"), params);
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/` + (org_specified ? "set_organization_serp_key" : "set_user_serp_key"), params);
 
   fetch(url, { method: "POST" }).then((response) => {
     response.json().then((data) => {
@@ -278,7 +279,7 @@ type getChatHistoryArgs = {
 
 export function getChatHistory(args : getChatHistoryArgs) {
   const currentTime = Date.now()/1000;
-  const url = craftUrl(`/api/fetch_toolchain_sessions`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_toolchain_sessions`, {
     "auth": {
       "username": args.username,
       "password_prehash": args.password_prehash
@@ -286,7 +287,7 @@ export function getChatHistory(args : getChatHistoryArgs) {
   });
   const chat_history_tmp : timeWindowType[] = args.time_windows.slice();
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
     response.json().then((data) => {
       console.log("Fetched session history:", data);
       if (!data.success) {
@@ -324,14 +325,14 @@ type getAvailableModelsArgs = {
 };
 
 export function getAvailableModels(args : getAvailableModelsArgs) {
-  const url = craftUrl(`/api/get_available_models`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/get_available_models`, {
     "auth": {
       "username": args.userdata.username,
       "password_prehash": args.userdata.password_pre_hash
     }
   });
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
 		response.json().then((data) => {
       console.log(data);
 			if (!data["success"]) {
@@ -372,14 +373,14 @@ type getAvailableToolchainsArgs = {
 };
 
 export function getAvailableToolchains(args : getAvailableToolchainsArgs) {
-  const url = craftUrl(`/api/get_available_toolchains`, {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/get_available_toolchains`, {
     "auth": {
       "username": args.userdata.username,
       "password_prehash": args.userdata.password_pre_hash
     }
   });
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
 		response.json().then((data : {success : true, result: availableToolchainsResult} | {success : false, note : string}) => {
       console.log(data);
 			if (!data["success"]) {
@@ -415,9 +416,9 @@ export function setOpenAIAPIKey(args : setOpenAIAPIKeyArgs) {
     "openai_api_key": args.api_key
   })};
 
-  const url = craftUrl(`/api/`+(org_specified?"set_organization_openai_id":"set_user_openai_api_key"), params);
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/`+(org_specified?"set_organization_openai_id":"set_user_openai_api_key"), params);
 
-  fetch(url, {method: "POST"}).then((response) => {
+  fetch(url).then((response) => {
 		response.json().then((data) => {
       console.log(data);
 			if (!data["success"]) {

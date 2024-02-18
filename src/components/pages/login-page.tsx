@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { userDataType, availableToolchainsResult } from "@/typing/globalTypes";
- 
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
+
+
 const formSchema = z.object({
   username: z.string().min(1, {
     message: "Username must be at least 1 character.",
@@ -124,12 +126,20 @@ export default function LoginPage(props : LoginPageProps) {
   }
 
 	const login = (values: z.infer<typeof formSchema>) => {
-    const url = craftUrl(`http://localhost:5173/api/login`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/login`, {
       "username": values.username,
       "password": values.password
     });
 		
-    fetch(url, {method: "POST"}).then((response) => {
+		fetch("http://localhost:8000/ping").then((response) => {
+      console.log("Fetching");
+      console.log(response);
+      response.json().then((data : login_results) => {
+        console.log("Got data:", data);
+			});
+		});
+
+    fetch(url).then((response) => {
       console.log("Fetching");
       console.log(response);
       response.json().then((data : login_results) => {
@@ -175,11 +185,12 @@ export default function LoginPage(props : LoginPageProps) {
   }
 
 	const signup = (values: z.infer<typeof formSchema>) => {
-    const url = craftUrl(`/api/add_user`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/add_user`, {
 			"username": values.username,
 			"password": values.password
     });
-    fetch(url, {method: "POST"}).then((response) => {
+
+    fetch(url).then((response) => {
       console.log(response);
       response.json().then((data) => {
           console.log(data);

@@ -1,5 +1,6 @@
 import craftUrl from "./craftUrl";
 import { ChatEntry } from "@/typing/globalTypes";
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type userDataType = {
   username: string,
@@ -52,7 +53,7 @@ export default function generateSearchQuery(userData : userDataType, context : C
 	console.log(system_instruction_new);
 	console.log(chat_history)
 
-	const url = craftUrl(`/api/llm_call_model_synchronous`, {
+	const url = craftUrl(`${SERVER_ADDR_HTTP}/api/llm_call_model_synchronous`, {
 		"auth": {
 			"username": userData.username,
 			"password_prehash": userData.password_pre_hash,

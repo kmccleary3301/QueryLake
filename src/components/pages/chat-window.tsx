@@ -48,7 +48,7 @@ import { userDataType } from "@/typing/globalTypes";
 import { sourceMetadata, ChatEntry, selectedCollectionsType } from "@/typing/globalTypes";
 import { formEntryType } from "@/components/manual_components/dropdown-selection";
 import { Button } from "../ui/button";
-
+import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
 type ChatWindowProps = {
   toggleSideBar?: () => void,
@@ -126,7 +126,7 @@ export default function ChatWindow(props : ChatWindowProps) {
         setAnimateScroll(false);
         setNewChat([]);
         setSessionHash(navigate_args[1]);
-        const url = craftUrl(`/api/fetch_session`, {
+        const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_session`, {
           "username": props.userData.username,
           "password_prehash": props.userData.password_pre_hash,
           "hash_id": navigate_args[1],
@@ -176,7 +176,7 @@ export default function ChatWindow(props : ChatWindowProps) {
       } else {
         setDisplaySuggestions(true);
         setNewChat([]);
-      const url = craftUrl(`/api/create_chat_session`, {
+      const url = craftUrl(`${SERVER_ADDR_HTTP}/api/create_chat_session`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
       });
@@ -234,7 +234,7 @@ export default function ChatWindow(props : ChatWindowProps) {
   
       const bot_response_sources : sourceMetadata[] = [];
   
-      const url_vector_query = craftUrl(`/api/query_vector_db`, {
+      const url_vector_query = craftUrl(`${SERVER_ADDR_HTTP}/api/query_vector_db`, {
         "username": props.userData.username,
         "password_prehash": props.userData.password_pre_hash,
         "query": query+". "+message,
@@ -298,7 +298,7 @@ export default function ChatWindow(props : ChatWindowProps) {
 
     console.log("Chat history all:", chat_history_all);
 
-    const url = craftUrl(`/api/async/llm_call_chat_session`, {
+    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/async/llm_call_chat_session`, {
       "session_hash": sessionHash,
       "history": chat_history_all,
       "username": props.userData.username,
