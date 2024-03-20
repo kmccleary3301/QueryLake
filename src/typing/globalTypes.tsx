@@ -31,7 +31,7 @@ export type toolchainEntry = {
 
 export type toolchainCategory = {
   category: string,
-  entries: toolchainEntry[]
+  entries: toolchain_type[]
 };
 
 
@@ -120,17 +120,11 @@ export type sessionEntry = {
   hash_id: string
 }
 
-export type timeWindowType = {
-  title: string,
-  cutoff: number,
-  entries: sessionEntry[]
-}
 
 
 export type genericArrayType = Array<string | boolean | number | object>;
 export type genericMapValueType = string | boolean | number | object | genericArrayType;
 export type sessionStateType = Map<string, string | boolean | number | object | genericArrayType>;
-
 
 export type membershipType = {
 	organization_id: string,
@@ -139,20 +133,61 @@ export type membershipType = {
 	invite_still_open: boolean,
 };
 
+export type model_type = {
+  title : string,
+  id : string,
+  model_description : string
+};
+
+export type external_model_provider = {
+  provider_name : string,
+  models : model_type[]
+}
+
+export type available_models = {
+  default_model: model_type,
+  local_models: model_type[],
+  external_models?: external_model_provider[]
+};
+
+export type all_available_models = {
+  [model_type : string]: available_models
+}
+
+export type toolchain_type = {
+  title : string,
+  id : string,
+  category : string
+}
+
+export type toolchain_category = {
+  category : string,
+  entries : toolchain_type[]
+}
+
+export type toolchain_session = {
+  title : string,
+  toolchain: string,
+  id : string,
+  time : number
+}
+
 export type userDataType = {
 	username: string,
 	password_pre_hash: string,
-	memberships?: membershipType[],
-	is_admin?: boolean,
-	serp_key?: string,
-	available_models?: {
-		default_model: string,
-		local_models: string[],
-		external_models: {
-      // openai?: string[]
-      [name: string]: string[]
-    }
-	},
+	memberships: membershipType[],
+	is_admin: boolean,
+	available_models: all_available_models,
 	available_toolchains: toolchainCategory[],
-  selected_toolchain: toolchainEntry
+  default_toolchain: toolchain_type
 };
+
+
+export type setStateOrCallback<T> = React.Dispatch<React.SetStateAction<T>> | ((value: T) => void);
+
+
+export type timeWindowType = {
+  title: string,
+  cutoff: number,
+  entries: toolchain_session[]
+}

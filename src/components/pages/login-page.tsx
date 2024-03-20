@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import craftUrl from "@/hooks/craftUrl";
-import { getAvailableToolchains, getUserMemberships } from "@/hooks/querylakeAPI";
+// import { getAvailableToolchains, getUserMemberships } from "@/hooks/querylakeAPI";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,9 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { userDataType, availableToolchainsResult } from "@/typing/globalTypes";
+import { userDataType } from "@/typing/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
-
+import { runUnitTestForDiffFunctions } from "./chat-window-toolchains/toochain-session";
 
 const formSchema = z.object({
   username: z.string().min(1, {
@@ -27,12 +27,12 @@ const formSchema = z.object({
   })
 })
 
-type membershipType = {
-	organization_id: string,
-	organization_name: string,
-	role: "owner" | "admin" | "member" | "viewer",
-	invite_still_open: boolean,
-};
+// type membershipType = {
+// 	organization_id: string,
+// 	organization_name: string,
+// 	role: "owner" | "admin" | "member" | "viewer",
+// 	invite_still_open: boolean,
+// };
 
 // type toolchainEntry = {
 //   name: string,
@@ -67,26 +67,10 @@ type membershipType = {
 
 type login_results = {
   success: false,
-  note: string
+  error: string
 } | {
   success: true,
-  result: {
-    admin: boolean,
-    password_single_hash: string,
-    memberships: {
-      organization_id: string,
-      organization_name: string,
-      role: "owner" | "admin" | "member" | "viewer",
-      invite_still_open: boolean,
-    }[],
-    available_models: {
-      default_model: string,
-      local_models: string[],
-      external_models: {
-        openai?: string[]
-      }
-    }
-  }
+  result: userDataType
 };
 
 type LoginPageProps = {
@@ -98,8 +82,6 @@ export default function LoginPage(props : LoginPageProps) {
   const [modeIsLogin, setModeIsLogin] = useState(true); //A boolean for if you're signing up or logging in.
   const [errorMessage, setErrorMessage] = useState("");
 	const navigate = useNavigate();
-
-	const navigateDestination = "/chat";
 
 	useEffect(() => {
 		console.log("Changed error message to:", errorMessage);
@@ -145,40 +127,10 @@ export default function LoginPage(props : LoginPageProps) {
       response.json().then((data : login_results) => {
         console.log("Got data:", data);
 				if (data.success) {
-					getUserMemberships({
-						username: values.username, 
-						password_prehash: data.result.password_single_hash, 
-						subset: "all", 
-						set_value: (memberships : membershipType[]) => {
-						getAvailableToolchains({
-							userdata: {username: values.username, password_pre_hash: data.result.password_single_hash}, 
-							onFinish: (result_tools : availableToolchainsResult | undefined) => {
-							
-								console.log("Result_tools:", result_tools);
-								if (result_tools !== undefined) {
-
-									props.setUserData({
-										username: values.username, 
-										password_pre_hash: data.result.password_single_hash,
-										available_toolchains: result_tools.toolchains,
-										selected_toolchain: result_tools.default,
-										available_models: data.result.available_models,
-										is_admin: data.result.admin,
-										memberships: memberships
-									});
-									
-									// CHANGE TO CHAT WINDOW
-									navigate(navigateDestination);
-								} else {
-									setErrorMessage("Could not fetch Toolchains")
-								}
-							}
-						});
-					}
-				});
-					//Sign-up Successful
+					const result : userDataType = data.result;
+					props.setUserData(result);
 				} else {
-					setErrorMessage(data.note);
+					setErrorMessage(data.error as string);
 				}
       });
     });
@@ -195,41 +147,12 @@ export default function LoginPage(props : LoginPageProps) {
       response.json().then((data) => {
           console.log(data);
           try {
-            if (data.success && data.result.account_made) {
-              getUserMemberships({
-								username: values.username, 
-								password_prehash: data.result.password_single_hash, 
-								subset: "all", 
-								set_value: (memberships : membershipType[]) => {
-                getAvailableToolchains({
-									userdata: {username: values.username, password_pre_hash: data.result.password_single_hash}, 
-									onFinish: (result_tools : availableToolchainsResult | undefined) => {
-                  
-										console.log("Result_tools:", result_tools);
-										if (result_tools !== undefined) {
-
-											props.setUserData({
-												username: values.username, 
-												password_pre_hash: data.result.password_single_hash,
-												available_toolchains: result_tools.toolchains,
-												selected_toolchain: result_tools.default,
-												available_models: data.result.available_models,
-												is_admin: data.result.admin,
-												memberships: memberships
-											});
-											
-											// CHANGE TO CHAT WINDOW
-											navigate(navigateDestination);
-										} else {
-											setErrorMessage("Could not fetch Toolchains")
-										}
-									}
-								});
-							}
-						});
+            if (data.success) {
+              const result : userDataType = data.result;
+							props.setUserData(result);
               //Sign-up Successful
             } else {
-							// setErrorMessage(data.note);
+							setErrorMessage(data.error as string);
 						}
           } catch (error) {
             console.log(error);
@@ -248,9 +171,7 @@ export default function LoginPage(props : LoginPageProps) {
       backgroundColor: "#23232D",
       alignItems: "center",
       justifyContent: "center",
-      // width: "80vw"
       height: "100vh",
-      // width: "100%",
     }}>
       <div style={{
         alignItems: 'center',
@@ -333,10 +254,10 @@ export default function LoginPage(props : LoginPageProps) {
 						</Form>
 					</>
 					<div style={{paddingTop: 10}}>
-						<Button variant="link" style={{paddingTop: 10}} onClick={() => {
+						<Button variant="ghost" style={{paddingTop: 10}} onClick={() => {
 							setModeIsLogin(modeIsLogin => !modeIsLogin);
 						}}>
-							<p style={{
+							<p className="text-primary-foreground" style={{
 								// fontFamily: "Inter-Regular",
 								fontSize: 20,
 								// color: '#E8E3E3'
@@ -347,6 +268,9 @@ export default function LoginPage(props : LoginPageProps) {
 					</div>
 					<Button variant={"secondary"} onClick={() => {navigate("/test_websocket");}}>
 						<p>{"Test Websocket"}</p>
+					</Button>
+					<Button variant={"secondary"} onClick={() => {runUnitTestForDiffFunctions();}}>
+						<p>{"Test Difference Functions"}</p>
 					</Button>
         </div>
       </div>

@@ -10,8 +10,14 @@
 // """
 
 export type substituteAny = string | number | boolean | null | undefined | Array<substituteAny> | {[key : string] : substituteAny} | Map<string, substituteAny>;
-export type compositionType = Array<substituteAny> | { [key: string]: substituteAny; } | Map<string, substituteAny>;
-export type compositionObjectType = { [key: string]: substituteAny; } | Map<string, substituteAny>;
+// export type compositionType = Array<substituteAny> | { [key: string]: substituteAny; } | Map<string, substituteAny>;
+// export type compositionObjectType = { [key: string]: substituteAny; } | Map<string, substituteAny>;
+
+export type compositionGenericType<T> = Array<T | compositionGenericType<T>> | { [key: string]: T | compositionGenericType<T>; } | Map<string, T | compositionGenericType<T>>;
+export type compositionObjectGenericType<T> = { [key: string]: T | compositionObjectGenericType<T>; } | Map<string, T | compositionObjectGenericType<T>>;
+
+export type compositionType = compositionGenericType<substituteAny>;
+export type compositionObjectType = compositionObjectGenericType<substituteAny>;
 
 export interface staticValue {
     type?: "staticValue";
@@ -198,10 +204,42 @@ export interface eventButton {
     display_text?: string;
 }
 
+
+export interface inputPointer {
+    event: string;
+    event_parameter: string;
+}
+
+export interface chatBarProperties {
+    text?: inputPointer;
+    file?: inputPointer;
+}
+
+export interface chatBar {
+    type?: "chat_bar";
+    properties: chatBarProperties;
+    display_text?: string;
+}
+
+export interface toggleInput extends inputPointer {
+    type?: "toggle";
+    display_text?: string;
+}
+
+export interface nativeApplicationParameter extends inputPointer {
+    type?: "native_application_parameter";
+    origin: string;
+}
+
+export type inputConfigType = chatBar | toggleInput | nativeApplicationParameter;
+
+
+
 export interface displayConfiguration {
     display_mappings: (chatWindowMapping | eventButton)[];
     max_files?: number;
     enable_rag?: boolean;
+    input_config: inputConfigType[];
 }
 
 export interface toolchainNode {
@@ -234,4 +272,10 @@ export interface ToolChain {
 export interface ToolChainSessionFile {
     name: string;
     document_hash_id: string;
+}
+
+export interface toolchainPointer {
+    title: string;
+    category: string;
+    id: string;
 }

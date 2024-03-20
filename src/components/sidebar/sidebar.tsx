@@ -10,10 +10,10 @@ import { useState, useEffect } from 'react';
 // import AnimatedPressable from './AnimatedPressable';
 // import SidebarChatHistory from './SidebarChatHistory';
 // import getChatHistory from '../hooks/getChatHistory';
-import { getChatHistory, getUserCollections } from '@/hooks/querylakeAPI';
+import { getUserCollections } from '@/hooks/querylakeAPI';
 // import getUserCollections from '../hooks/getUserCollections';
 // import SidebarToolchains from './SidebarToolchains';
-import { collectionGroup, timeWindowType, userDataType, pageID, selectedCollectionsType } from '@/typing/globalTypes';
+import { collectionGroup, userDataType, pageID, selectedCollectionsType, toolchain_session, setStateOrCallback, toolchain_type } from '@/typing/globalTypes';
 import { Button } from '../ui/button';
 import {
 	TabsContent,
@@ -51,8 +51,13 @@ type SidebarProps = {
   set_selected_collections: React.Dispatch<React.SetStateAction<selectedCollectionsType>>,
   selected_collections: selectedCollectionsType,
   set_user_data: React.Dispatch<React.SetStateAction<userDataType | undefined>>,
-  set_chat_history: React.Dispatch<React.SetStateAction<timeWindowType[]>>,
-  chat_history: timeWindowType[]
+  toolchain_sessions : Map<string, toolchain_session>,
+  set_toolchain_sessions : setStateOrCallback<Map<string, toolchain_session>>,
+  active_toolchain_session : toolchain_session | undefined,
+  set_active_toolchain_session : setStateOrCallback<toolchain_session>,
+
+  selected_toolchain : toolchain_type | undefined,
+  set_selected_toolchain : setStateOrCallback<toolchain_type>,
   // sidebarOpened?: boolean,
 }
 
@@ -62,31 +67,23 @@ type SidebarProps = {
 
 
 export default function Sidebar(props: SidebarProps) {
-  // console.log(props);
-	// const [panelMode, setPanelMode] = useState<panelModeType>("collections");
-  // const [chatHistory, setChatHistory] = useState<sessionEntry[]>([]);
 	const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
 	const navigate = useNavigate();
 	
   // Get all user data for sidebar. This includes chat history and collections
   useEffect(() => {
-		const timeWindows = [
-			{title: "Last 24 Hours", cutoff: 24*3600, entries: []},
-			{title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
-			{title: "Past Week", cutoff: 7*24*3600, entries: []},
-			{title: "Past Month", cutoff: 30*24*3600, entries: []},
-		];
+		
 
     console.log("userdata:", props.user_data);
     let chat_history_grabbed = false;
     let collections_grabbed = false;
-    if (props.chat_history.length == 0) {
-      getChatHistory({
-				username: props.user_data.username, 
-				password_prehash: props.user_data.password_pre_hash, 
-				time_windows: timeWindows.slice(), 
-				set_value: props.set_chat_history
-			});
+    if (props.toolchain_sessions.size == 0) {
+      // getChatHistory({
+			// 	username: props.user_data.username, 
+			// 	password_prehash: props.user_data.password_pre_hash, 
+			// 	time_windows: timeWindows.slice(), 
+			// 	set_value: props.set_chat_history
+			// });
       chat_history_grabbed = true;
     }
     if (collectionGroups.length == 0) {
@@ -99,12 +96,12 @@ export default function Sidebar(props: SidebarProps) {
     }
     for (let i = 0; i < props.refresh_side_panel.length; i++) {
       if (!chat_history_grabbed && props.refresh_side_panel[i] === "chat-history") {
-        getChatHistory({
-					username: props.user_data.username, 
-					password_prehash: props.user_data.password_pre_hash, 
-					time_windows: timeWindows.slice(), 
-					set_value: props.set_chat_history
-				});
+        // getChatHistory({
+				// 	username: props.user_data.username, 
+				// 	password_prehash: props.user_data.password_pre_hash, 
+				// 	time_windows: timeWindows.slice(), 
+				// 	set_value: props.set_chat_history
+				// });
         chat_history_grabbed = true;
       } else if (!collections_grabbed && props.refresh_side_panel[i] === "collections") {
         getUserCollections({
@@ -115,7 +112,11 @@ export default function Sidebar(props: SidebarProps) {
         collections_grabbed = true;
       }
     }
-  }, [props.refresh_side_panel, props.user_data, collectionGroups.length, props.chat_history.length, props.set_chat_history]);
+  }, [
+    props.refresh_side_panel, 
+    props.user_data, 
+    collectionGroups.length, 
+    props.toolchain_sessions]);
 
   // Destructure props
 	const { set_selected_collections: setSelectedCollections } = props;
@@ -218,15 +219,19 @@ export default function Sidebar(props: SidebarProps) {
                   setPageNavigateArguments={props.set_page_navigate_arguments} 
                   // setPageNavigate={props.set_page_navigate}
                   refreshSidePanel={props.refresh_side_panel}
-                  chatHistory={props.chat_history}
-                  setChatHistory={props.set_chat_history}
                   pageNavigateArguments={props.page_navigate_arguments}
+                  toolchain_sessions={props.toolchain_sessions}
+                  set_toolchain_sessions={props.set_toolchain_sessions}
+                  active_toolchain_session={props.active_toolchain_session}
+                  set_active_toolchain_session={props.set_active_toolchain_session}
                 />
 							</TabsContent>
               <TabsContent value="tools">
                 <SidebarToolchains
                   userData={props.user_data}
                   setUserData={props.set_user_data}
+                  selected_toolchain={props.selected_toolchain}
+                  set_selected_toolchain={props.set_selected_toolchain}
                 />
 							</TabsContent>
 						</Tabs>

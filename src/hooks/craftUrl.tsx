@@ -4,6 +4,6 @@ export default function craftUrl(host : string, parameters : object) {
   const stringed_json = JSON.stringify(parameters);
   url.searchParams.append("parameters", stringed_json);
   const return_url = url.toString().replace("http://t.c/", host);
-  console.log("Returning URL:", return_url);
+  // console.log("Returning URL:", return_url);
   return return_url;
 }

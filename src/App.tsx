@@ -4,25 +4,34 @@ import { useEffect, useMemo, useState, Dispatch, SetStateAction } from 'react'
 // import { Button } from './components/ui/button'
 import { ThemeProvider } from "@/components/theme-provider"
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import TestPage1 from '@/components/pages/test-page-1'
-import TestPage2 from '@/components/pages/test-page-2'
+// import TestPage1 from '@/components/pages/test-page-1'
+// import TestPage2 from '@/components/pages/test-page-2'
 import LoginPage from '@/components/pages/login-page'
 // import TestTextArea from './components/pages/test-text-area'
 import { AnimatePresence, motion, useAnimation } from "framer-motion";
-import { userDataType, pageID, selectedCollectionsType, timeWindowType } from '@/typing/globalTypes';
+
 // import ChatWindow from '@/components/pages/chat-window';
-import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
+// import TestScrollPage1 from '@/components/pages/test-scroll-page-1';
 import TestFramerAnimation from '@/components/pages/test-framer-animation';
 import Sidebar from '@/components/sidebar/sidebar';
 import ChatWindowToolchain from './components/pages/chat-window-toolchains/chat-window-toolchains';
-import TestWebSockets from './components/pages/test-websocket';
+// import TestWebSockets from './components/pages/test-websocket';
 // import AnimatedPressable from './components/manual_components/animated-pressable';
 import * as Icon from 'react-feather';
 import { Button } from './components/ui/button';
 import UserSettings from './components/pages/user-settings';
-import HuggingFaceRemodel from './components/pages/test-huggingface-remodel';
+// import HuggingFaceRemodel from './components/pages/test-huggingface-remodel';
 // import OrganizationControls from './components/manual_components/organization-controls';
 import OrganizationManager from './components/pages/organization-manager'
+import { 
+  userDataType, 
+  pageID, 
+  selectedCollectionsType, 
+  timeWindowType, 
+  toolchain_type, 
+  toolchain_session
+} from '@/typing/globalTypes';
+import { fetchToolchainSessions } from './hooks/querylakeAPI'
 
 // type userDataType = {
 //   username: string,
@@ -45,18 +54,45 @@ function MainContent() {
 
   // const pagesWithSidebarDisabled = ["login_page"];
   
-  
+  /*  Args to hold here:
+      1. selected toolchain
+      2. available toolchains (as a map, do not include the entire toolchain, as it will be fetched from the server when needed)
+      3. toolchain sessions from the sidebar
+      4. active toolchain session pointer for the sidebar
+      5. A callback for modifying the active toolchain session.
+  */
+  const [selectedToolchain, setSelectedToolchain] = useState<toolchain_type>();
   const [userData, setUserData] = useState<userDataType>();
+  const [toolchainSessions, setToolchainSessions] = useState<Map<string, toolchain_session>>(new Map());
+  const [activeToolchainSession, setActiveToolchainSession] = useState<toolchain_session>();
+
+  useEffect(() => {
+    if (userData !== undefined) {
+      fetchToolchainSessions({"userdata": userData, "onFinish": (result : toolchain_session[]) => {
+        console.log("Toolchain sessions fetched:", result);
+        const newToolchainSessions = new Map<string, toolchain_session>();
+        for (const session of result) {
+          newToolchainSessions.set(session.id, session);
+        }
+        setToolchainSessions(newToolchainSessions);
+      }})
+    }
+    setSelectedToolchain(userData?.default_toolchain);
+  }, [userData, setToolchainSessions]);
+
+
+
   const pagesWithSidebarDisabled = useMemo(() => ["login_page"], []);
   const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
   const [pageNavigate, setPageNavigate] = useState<pageID>("LoginPage");
-  // const [userData, setUserData] = useState<userDataType>();
-  // const transitionOpacity = useRef(new Animated.Value(1)).current;
-  const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
   const [sidebarOpened, setSidebarOpened] = useState(false);
   const [pageNavigateArguments, setPageNavigateArguments] = useState("");
   const [refreshSidePanel, setRefreshSidePanel] = useState<string[]>([]);
   const [selectedCollections, setSelectedCollections] = useState<selectedCollectionsType>(new Map<string, boolean>([]));
+
+  // const [userData, setUserData] = useState<userDataType>();
+  // const transitionOpacity = useRef(new Animated.Value(1)).current;
+  // const [pageNavigateDelayed, setPageNavigateDelayed] = useState<pageID>("LoginPage");
 
 
   const location = useLocation();
@@ -68,12 +104,11 @@ function MainContent() {
 
   }, [location.pathname, setSidebarDisabled, pagesWithSidebarDisabled]);
   
-  
   const toggle_sidebar = () => { setSidebarOpened(sidebarOpened => !sidebarOpened); };
-  // const location = useLocation();
-
+  
   useEffect(() => {
     console.log("userdata:", userData)
+    setSelectedToolchain(userData?.default_toolchain);
   }, [userData]);
 
   const controlsSidebarWidth = useAnimation();
@@ -95,7 +130,6 @@ function MainContent() {
 			transition: { duration: 0.4 }
 		});
 	}, [controlsSidebarWidth, sidebarOpened, userData, isSidebarDisabled]);
-
   
 	const controlSidebarButtonOffset = useAnimation();
 
@@ -158,7 +192,7 @@ function MainContent() {
                 // userData={userData}
                 // pageNavigateArguments={pageNavigateArguments}
                 // setPageNavigateArguments={setPageNavigateArguments}
-                toggle_sideBar={toggle_sidebar} 
+                toggle_sideBar={toggle_sidebar}
                 user_data={userData}
                 set_page_navigate={setPageNavigate} 
                 set_page_navigate_arguments={setPageNavigateArguments}
@@ -168,56 +202,22 @@ function MainContent() {
                 set_selected_collections={setSelectedCollections}
                 selected_collections={selectedCollections}
                 set_user_data={setUserData}
-                chat_history={chatHistory}
-                set_chat_history={setChatHistory}
+                toolchain_sessions={toolchainSessions}
+                set_toolchain_sessions={setToolchainSessions}
+                active_toolchain_session={activeToolchainSession}
+                set_active_toolchain_session={setActiveToolchainSession}
+                selected_toolchain={selectedToolchain}
+                set_selected_toolchain={setSelectedToolchain}
               />
             </div>
-            {/* <div
-              style={{
-                translate: 320,
-                position: "absolute",
-                width: 30,
-                height: 30,
-                backgroundColor: "#FF0000",
-                zIndex: 5,
-              }}
-            /> */}
-            {/* <motion.div id="SIDEBARBUTTON" style={{paddingTop: 4, paddingLeft: 10, zIndex: 5,
-              position: "absolute",
-              width: 30,
-              height: 30,
-              backgroundColor: "#FF0000",
-              translateX: 320
-            }} 
-            // animate={controlSidebarButtonOffset}
-            >
-              <Button variant={"ghost"} style={{padding: 2, borderRadius: 5, paddingLeft: 8, paddingRight: 8}} onClick={toggle_sidebar}>
-                <div style={{}}>
-                <Icon.Sidebar size={24} style={{}} color="#E8E3E3" />
-                </div>
-              </Button> 
-
-            </motion.div> */}
           </div>
         </motion.div>
-        {/* </motion.div> */}
         </>
       )}
       <div style={{zIndex: 1, flex: 1, display: "flex", height: "100vh"}} className='bg-background'>
-        
-        {/* <motion.div style={{backgroundColor: "#FF0000", position: "absolute", paddingTop: 4, paddingLeft: 10, zIndex: 5}} animate={controlSidebarButtonOffset}>
-          <Button variant={"ghost"} style={{padding: 2, borderRadius: 5, paddingLeft: 8, paddingRight: 8, zIndex: 5}} onClick={toggle_sidebar}>
-            <Icon.Sidebar size={24} style={{zIndex: 5}} color="#E8E3E300" />
-          </Button> 
-        </motion.div> */}
         <Routes location={location} key={location.pathname}>
           <Route index element={<LoginPage setUserData={setUserData}/>}/>
           <Route path="/login_page" element={<LoginPage setUserData={setUserData}/>}/>
-          <Route path="/test_page_1" element={<TestPage1/>}/>
-          <Route path="/test_page_2" element={<TestPage2/>}/>
-          <Route path="/test_scroll_page" element={<TestScrollPage1/>}/>
-          <Route path="/test_websocket" element={<TestWebSockets/>}/>
-          <Route path="/hf_test" element={<HuggingFaceRemodel/>}/>
           <Route path="/organization_manager" element={
             <>
               {(userData !== undefined) && (
@@ -241,21 +241,6 @@ function MainContent() {
           </>
           }/>
           <Route path="/test_animation" element={<TestFramerAnimation/>}/>
-          {/* <Route path="/chat" element={
-            <>
-              {(userData !== undefined) && (
-
-                <ChatWindow
-                  sidebarOpened={sidebarOpened}
-                  userData={userData}
-                  pageNavigateArguments={pageNavigateArguments}
-                  setRefreshSidePanel={setRefreshSidePanel}
-                  selectedCollections={selectedCollections}
-                  toggleSideBar={toggle_sidebar}
-                />
-              )}
-            </>
-          }/> */}
           <Route path="/chat" element={
             <>
               {(userData !== undefined) && (
@@ -271,7 +256,6 @@ function MainContent() {
               )}
             </>
           }/>
-          {/* <Route path="/test_text_area" element={<TestTextArea/>}/> */}
         </Routes>
       </div>
     </div>

@@ -6,6 +6,8 @@ import {
   metadataDocumentRaw,
   availableToolchainsResult,
   membershipType,
+  toolchain_session,
+  setStateOrCallback,
 } from "@/typing/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 
@@ -381,10 +383,10 @@ export function getAvailableToolchains(args : getAvailableToolchainsArgs) {
   });
 
   fetch(url).then((response) => {
-		response.json().then((data : {success : true, result: availableToolchainsResult} | {success : false, note : string}) => {
+		response.json().then((data : {success : true, result: availableToolchainsResult} | {success : false, error : string}) => {
       console.log(data);
 			if (!data["success"]) {
-        console.error("Failed to retrieve available toolchains:", data.note);
+        console.error("Failed to retrieve available toolchains:", data.error);
 				if (args.onFinish) args.onFinish(undefined);
         return;
 			}
@@ -427,6 +429,35 @@ export function setOpenAIAPIKey(args : setOpenAIAPIKeyArgs) {
         return;
 			}
 			if (args.onFinish) args.onFinish(true);
+		});
+	});
+}
+
+type fetchToolchainSessionsArgs = {
+	userdata : userDataAtomic, 
+	onFinish? : setStateOrCallback<toolchain_session[]>
+};
+
+export function fetchToolchainSessions(args : fetchToolchainSessionsArgs) {
+  const url = craftUrl(`${SERVER_ADDR_HTTP}/api/fetch_toolchain_sessions`, {
+    "auth": {
+      "username": args.userdata.username,
+      "password_prehash": args.userdata.password_pre_hash
+    }
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : true, result: toolchain_session[]} | {success : false, error : string}) => {
+      console.log(data);
+			if (!data["success"]) {
+        console.error("Failed to retrieve available toolchains:", data.error);
+				// if (args.onFinish) args.onFinish(undefined);
+        return;
+			}
+      // console.log("Available models:", data.result);
+      const results = data.result as toolchain_session[];
+
+			if (args.onFinish) args.onFinish(results);
 		});
 	});
 }

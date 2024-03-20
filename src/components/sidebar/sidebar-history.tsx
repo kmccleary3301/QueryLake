@@ -4,13 +4,13 @@ import * as Icon from 'react-feather';
 // import AnimatedPressable from './AnimatedPressable';
 // import HoverDocumentEntry from './HoverDocumentEntry';
 import HoverDocumentEntry from '../manual_components/hover_document_entry';
-import craftUrl from '@/hooks/craftUrl';
+// import craftUrl from '@/hooks/craftUrl';
 import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '../ui/button';
-import { userDataType, timeWindowType, collectionGroup } from '@/typing/globalTypes';
+import { userDataType, timeWindowType, collectionGroup, toolchain_session, setStateOrCallback } from '@/typing/globalTypes';
 import { useNavigate } from 'react-router-dom';
-import { SERVER_ADDR_HTTP } from '@/config_server_hostnames';
-
+// import { SERVER_ADDR_HTTP } from '@/config_server_hostnames';
+import { useState, useEffect } from 'react';
 
 type SidebarChatHistoryProps = {
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void,
@@ -18,42 +18,44 @@ type SidebarChatHistoryProps = {
   pageNavigateArguments: string,
   setPageNavigateArguments: React.Dispatch<React.SetStateAction<string>>,
   refreshSidePanel: string[],
-  chatHistory: timeWindowType[],
-  setChatHistory: React.Dispatch<React.SetStateAction<timeWindowType[]>>,
+  toolchain_sessions : Map<string, toolchain_session>,
+  set_toolchain_sessions : setStateOrCallback<Map<string, toolchain_session>>,
+  active_toolchain_session : toolchain_session | undefined,
+  set_active_toolchain_session : setStateOrCallback<toolchain_session>,
 }
   
 export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
 	const navigate = useNavigate();
-  // const [chatHistory, setChatHistory] = useState<timeWindowType[]>([]);
+  const [internalToolchainSessions, setInternalToolchainSessions] = useState<timeWindowType[]>([]);
 
-  // const timeWindows : timeWindowType[] = [
-  //   {title: "Last 24 Hours", cutoff: 24*3600, entries: []},
-  //   {title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
-  //   {title: "Past Week", cutoff: 7*24*3600, entries: []},
-  //   {title: "Past Month", cutoff: 30*24*3600, entries: []},
-  // ];
+  useEffect(() => {
+    const timeWindows : timeWindowType[] = [
+			{title: "Last 24 Hours", cutoff: 24*3600, entries: []},
+			{title: "Last 2 Days", cutoff: 2*24*3600, entries: []},
+			{title: "Past Week", cutoff: 7*24*3600, entries: []},
+			{title: "Past Month", cutoff: 30*24*3600, entries: []},
+		];
 
-  const deleteSession = (chat_history_window_index : number, window_entry_index : number, hash_id : string) => {
-    const url = craftUrl(`${SERVER_ADDR_HTTP}/api/hide_chat_session`, {
-      "auth": {
-        "username": props.userData.username,
-        "password_prehash": props.userData.password_pre_hash,
-      },
-      "hash_id": hash_id
-    });
-    fetch(url, {method: "POST"}).then((response) => {
-      response.json().then((data) => {
-        if (!data.success) {
-          console.error("Failed to retrieve sessions", data.note);
-          return;
+    const newToolchainSessions = new Map<string, toolchain_session>();
+    props.toolchain_sessions.forEach((session : toolchain_session) => {
+      newToolchainSessions.set(session.id, session);
+      const time = Math.floor((new Date().getTime() - session.time)/1000);
+      for (let i = 0; i < timeWindows.length; i++) {
+        if (time < timeWindows[i].cutoff) {
+          timeWindows[i].entries.push(session);
         }
-      })
+      }
     });
-    const chat_history_tmp = props.chatHistory.slice();
-    // chat_history_tmp[chat_history_window_index].entries = chat_history_tmp[chat_history_window_index].entries.splice(window_entry_index-1, 1);
-    const entries_tmp = chat_history_tmp[chat_history_window_index].entries;
-    chat_history_tmp[chat_history_window_index].entries = [...entries_tmp.slice(0, window_entry_index), ...entries_tmp.slice(window_entry_index+1, entries_tmp.length)];
-    props.setChatHistory(chat_history_tmp);
+    setInternalToolchainSessions(timeWindows);
+  }, [props.toolchain_sessions])
+
+
+  const deleteSession = (hash_id : string) => {
+    // TODO : Implement delete session with API
+    
+    props.toolchain_sessions.delete(hash_id)
+
+    props.set_toolchain_sessions(props.toolchain_sessions);
   };
   
   return (
@@ -99,7 +101,7 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
               </div>
           </Button>
         </div>
-        {props.chatHistory.map((chat_history_window : timeWindowType, chat_history_index : number) => (
+        {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index}>
             {(chat_history_window.entries.length > 0) && (
               <>
@@ -114,13 +116,13 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
               }}>
                 {chat_history_window.title}
               </p>
-              {chat_history_window.entries.map((value, index : number) => (
+              {chat_history_window.entries.map((value : toolchain_session, index : number) => (
                 <div style={{paddingTop: 0, paddingBottom: 0}} key={index}>
                   <HoverDocumentEntry
                     key={index}
                     title={(value.title !== null)?value.title:"Test"}
                     deleteIndex={() => {
-                      deleteSession(chat_history_index, index, value.hash_id);
+                      deleteSession(value.id);
                     }}
                     textStyle={{
                       width: "100%",
@@ -135,7 +137,8 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
 											width: "100%"
 										}}
                     onPress={() => {
-                      props.setPageNavigateArguments("chatSession-"+value.hash_id);
+                      props.set_active_toolchain_session(value);
+                      props.setPageNavigateArguments("chatSession-"+value.id);
                       navigate("/chat");
                     }}
                   />

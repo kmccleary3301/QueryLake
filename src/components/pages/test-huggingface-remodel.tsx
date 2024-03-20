@@ -11,7 +11,7 @@ export default function HuggingFaceRemodel() {
 		}}>
 			
 			<div style={{width:50, height:50, border: "2px solid #FF0000"}}/>
-			<div className="scrollbar-custom mr-1 h-full overflow-y-auto" style={{
+			<div className="scrollbar-custom mr-1 h-full overflow-x-auto" style={{
 				// margin: 1,
 				width: "100%",
 				height: "full",
