@@ -1,0 +1,7 @@
+
+const lavender = {
+	"slug": "Lavender",
+	"content": "## Overview\r\n\r\nLavender, known in-game as \"Lavender Sprig,\" is a unique item featured within the universe of *Top Dog*. \r\n\r\n## Usage\r\n\r\nPlayers utilize Lavender primarily on the Enchanted Forest board. When players acquire Lavender, they have the ability to drop the item onto Billy's space, causing Billy to run away. The item is a one-time use consumable.\r\n\r\n## Relevant Files/Folders\r\n\r\n- `GAME FILE LINK: Items/Universal Items/Lavender_Sprig.png`\r\n\r\n## See Also\r\n\r\n- [Enchanted Forest Board](/docs/game_content/boards/themespecific_boards/enchanted_forest_board)\r\n- [[Items & Power-Ups]]\r\n\r\n## Cited Document Text Segments\r\n\r\n#### Source 1\r\n```text\r\n## Draco's Karma \r\n\r\nGive a player coins / items and get things back\r\n\r\n## [Finn's Wipeout]{.mark} \r\n\r\n[Reset everyone to the start of the board]{.mark}\r\n\r\n## Assemble Exodia \r\n\r\nStep on five specific squares on the map, steal a star from everyone\r\n\r\n### Confirmed Items \r\n\r\nThis is a list of items that have been confirmed\r\n\r\n# Universal \r\n\r\n## [Lavender:]{.mark} \r\n\r\n[landing on billy\\'s space drop this item to make Billy run away]{.mark}\r\n\r\n[1 time use]{.mark}\r\n\r\n## [Battal buzzer:]{.mark} \r\n\r\n[create a duel for coins/stars]{.mark}\r\n\r\n## [Reverse Mushroom:]{.mark}\r\n```"
+};
+
+export default lavender;

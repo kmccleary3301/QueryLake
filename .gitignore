@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# documentation
+documentation/.obsidian
+
+# Temporary mask
+documentation/Game Content
+documentation/Overview
+
+
+./.next
+
+
