@@ -14,18 +14,24 @@ import {
 	userDataType,
 	setStateOrCallback,
 	toolchain_session,
-	toolchain_type
+	toolchain_type,
+	collectionGroup
 } from '@/types/globalTypes';
 import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import { useRouter } from 'next/navigation';
 import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
 import { set } from 'date-fns';
+import { getUserCollections } from '@/hooks/querylakeAPI';
 
 
 const Context = createContext<{
 	userData: userDataType | undefined;
 	setUserData: Dispatch<SetStateAction<userDataType | undefined>>;
+
+	collectionGroups: collectionGroup[];
+	setCollectionGroups: Dispatch<SetStateAction<collectionGroup[]>>;
+	refreshCollectionGroups: () => void;
 
 	selectedCollections: selectedCollectionsType;
 	setSelectedCollections: Dispatch<SetStateAction<selectedCollectionsType>>;
@@ -49,6 +55,10 @@ const Context = createContext<{
 }>({
 	userData: undefined,
 	setUserData: () => undefined,
+
+	collectionGroups: [],
+	setCollectionGroups: () => [],
+	refreshCollectionGroups: () => {},
 
 	selectedCollections: new Map(),
 	setSelectedCollections: () => new Map(),
@@ -95,6 +105,8 @@ export const ContextProvider = ({
 	const router = useRouter();
 
 	const [user_data, set_user_data] = useState<userDataType | undefined>(userData);
+
+	const [collection_groups, set_collection_groups] = useState<collectionGroup[]>([]);
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
 	const [active_toolchain_session, set_active_toolchain_session] = useState<toolchain_session | undefined>(undefined);
@@ -139,11 +151,23 @@ export const ContextProvider = ({
 			onFinish();
 		}
 	};
+
+
+	const refresh_collection_groups = () => {
+		getUserCollections({
+			auth: user_data?.auth as string, 
+			set_value: set_collection_groups
+		});
+	}
+
 	
 	return (
 		<Context.Provider value={{ 
 			userData : user_data, 
 			setUserData : set_user_data,
+			collectionGroups : collection_groups,
+			setCollectionGroups : set_collection_groups,
+			refreshCollectionGroups : refresh_collection_groups,
 			selectedCollections : selected_collections,
 			setSelectedCollections : set_selected_collections,
 			toolchainSessions : toolchain_sessions,

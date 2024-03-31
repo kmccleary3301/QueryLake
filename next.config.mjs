@@ -28,10 +28,12 @@ const nextConfig = {
         source: "/api/:path*",
         destination: "http://localhost:8000/api/:path*"
       },
-      
 		]
 	},
   reactStrictMode: true,
+  experimental: {
+    serverComponentsExternalPackages: ['shiki', 'vscode-oniguruma']
+  },
   swcMinify: true,
   images: {
     remotePatterns: [

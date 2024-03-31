@@ -1,12 +1,19 @@
 "use client";
 import { ScrollArea, ScrollAreaHorizontal, ScrollBar } from '@/registry/default/ui/scroll-area';
-import hljs from 'highlight.js';
+// import hljs from 'highlight.js';
+// import { getHighlighter } from 'shiki';
 import { useEffect, useState, useRef, useCallback } from "react";
 import { fontConsolas } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/default/ui/button';
 import * as Icon from 'react-feather';
 import { toast } from 'sonner';
+import { highlight } from '@/lib/shiki';
+import { set } from 'date-fns';
+// import { renderToHtml } from "shiki";
+// import codeToHTML
+// import { codeToHtml } from 'shiki/index.mjs';
+// import { Lang } from 'shiki';
 
 const code_styling = new Map<string, string>([
   ["hljs-keyword", "#2E80FF"],
@@ -48,93 +55,111 @@ function decode_html(input : string) {
 }
 
 
-function parseScopeTreeText(hljs_html : string) {
-  /*
-   * Let's not discuss this lmao.
-   */
+// function parseScopeTreeText(hljs_html : string) {
+//   /*
+//    * Let's not discuss this lmao.
+//    */
 
-  let match = hljs_html.match(/(<.*?>)/);
-  const current_scope : string[] = [];
-  let index = 0;
-  const return_segments : scoped_text[][] = [];
-  const string_segments : parser_segment[] = [];
+//   let match = hljs_html.match(/(<.*?>)/);
+//   const current_scope : string[] = [];
+//   let index = 0;
+//   const return_segments : scoped_text[][] = [];
+//   const string_segments : parser_segment[] = [];
 
 
-  if (match === null) {
-      string_segments.push({
-        scope: [],
-        content: hljs_html
-      });
-  }
-  while (match !== null && match.index !== undefined) {
-    // console.log("match:", match[0]);
-    if (match.index > 0) {
-      const text = hljs_html.slice(index, index+match.index).split("\n");
-      // console.log("Text");
-      // console.log(text);
-      for (let i = 0; i < text.length; i++) {
-        const decoded = decode_html(text[i]);
-        if (decoded.length > 0) {
-          if (i !== 0) { 
-            string_segments.push("\n") 
-          }
-          if (text[i].length > 0) {
-            string_segments.push({
-              scope: current_scope.slice(),
-              content: decoded
-            })
-          }
-        } else if (i != 0) {
-          string_segments.push("\n");
-        }
-      }
-    }
-    const match_open_scope = match[0].match(/(".*?")/);
-    if (match_open_scope !== null) {
-      current_scope.push(match_open_scope[0].slice(1, match_open_scope[0].length-1));
-    } else {
-      current_scope.pop();
-    }
-    const new_index = index+match[0].length+match.index;
-    const new_match = hljs_html.slice(new_index).match(/(<.*?>)/);
-    if (new_match === null && new_index < hljs_html.length) {
-      const text = hljs_html.slice(new_index).split("\n");
-      // console.log("Text");
-      // console.log(text);
-      for (let i = 0; i < text.length; i++) {
-        const decoded = decode_html(text[i]);
-        if (decoded.length > 0) {
-          if (i != 0) { 
-            string_segments.push("\n");
-          }
-          string_segments.push({
-            scope: current_scope.slice(),
-            content: decode_html(text[i])
-          })
-        } else if (i != 0) {
-          string_segments.push("\n");
-        }
-      }
-    } 
-    match = new_match;
-    index = new_index;
-  }
-  index = 0;
-  let temp_segments : scoped_text[]  = [];
-	for (let i = 0; i < string_segments.length; i++) {
-		if (string_segments[i] === "\n") {
-			// if (temp_segments.length > 0) {
-			return_segments.push(temp_segments.slice());
-			// }
-			temp_segments = [];
-			index = i;
-		} else {
-			const tmp_value : scoped_text = string_segments[i] as scoped_text;
-			temp_segments.push(tmp_value);
-		}
-	}
-  return_segments.push(temp_segments.slice());
-  return return_segments;
+//   if (match === null) {
+//       string_segments.push({
+//         scope: [],
+//         content: hljs_html
+//       });
+//   }
+//   while (match !== null && match.index !== undefined) {
+//     // console.log("match:", match[0]);
+//     if (match.index > 0) {
+//       const text = hljs_html.slice(index, index+match.index).split("\n");
+//       // console.log("Text");
+//       // console.log(text);
+//       for (let i = 0; i < text.length; i++) {
+//         const decoded = decode_html(text[i]);
+//         if (decoded.length > 0) {
+//           if (i !== 0) { 
+//             string_segments.push("\n") 
+//           }
+//           if (text[i].length > 0) {
+//             string_segments.push({
+//               scope: current_scope.slice(),
+//               content: decoded
+//             })
+//           }
+//         } else if (i != 0) {
+//           string_segments.push("\n");
+//         }
+//       }
+//     }
+//     const match_open_scope = match[0].match(/(".*?")/);
+//     if (match_open_scope !== null) {
+//       current_scope.push(match_open_scope[0].slice(1, match_open_scope[0].length-1));
+//     } else {
+//       current_scope.pop();
+//     }
+//     const new_index = index+match[0].length+match.index;
+//     const new_match = hljs_html.slice(new_index).match(/(<.*?>)/);
+//     if (new_match === null && new_index < hljs_html.length) {
+//       const text = hljs_html.slice(new_index).split("\n");
+//       // console.log("Text");
+//       // console.log(text);
+//       for (let i = 0; i < text.length; i++) {
+//         const decoded = decode_html(text[i]);
+//         if (decoded.length > 0) {
+//           if (i != 0) { 
+//             string_segments.push("\n");
+//           }
+//           string_segments.push({
+//             scope: current_scope.slice(),
+//             content: decode_html(text[i])
+//           })
+//         } else if (i != 0) {
+//           string_segments.push("\n");
+//         }
+//       }
+//     } 
+//     match = new_match;
+//     index = new_index;
+//   }
+//   index = 0;
+//   let temp_segments : scoped_text[]  = [];
+// 	for (let i = 0; i < string_segments.length; i++) {
+// 		if (string_segments[i] === "\n") {
+// 			// if (temp_segments.length > 0) {
+// 			return_segments.push(temp_segments.slice());
+// 			// }
+// 			temp_segments = [];
+// 			index = i;
+// 		} else {
+// 			const tmp_value : scoped_text = string_segments[i] as scoped_text;
+// 			temp_segments.push(tmp_value);
+// 		}
+// 	}
+//   return_segments.push(temp_segments.slice());
+//   return return_segments;
+// }
+
+async function parseScopeTreeText(code: string, lang: string) {
+  // const highlighter = await getHighlighter({ theme: 'nord' }); // You can choose any theme you like
+  // const highlightedLines = highlighter.codeToThemedTokens(code, lang);
+
+  // const highlightedLines = await highlight(code, 'nord', lang);
+
+  // return highlightedLines.map(line => line.map(token => ({
+  //   scope: token.color ? [token.color] : [],
+  //   content: token.content
+  // })));
+
+  const html = await highlight(code, 'nord', lang)
+
+  console.log(html);
+
+
 }
 
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
@@ -156,54 +181,89 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   const [highlights, setHighlights] = useState<scoped_text[][]>([]);
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
   const [language, setLanguage] = useState<string>("Unknown");
+  const [codeHTML, setCodeHTML] = useState<string>("");
+  const [lineCount, setLineCount] = useState<number>(0);
+
 
 	const lastRefreshTime = useRef(Date.now());
 	const oldInputLength = useRef(0);
 
   const refreshInterval = 250; // In milliseconds
 
-  useEffect(() => {
-    // setRawCode(raw_code);
+  // useEffect(() => {
+  //   // setRawCode(raw_code);
 
+  //   if (props.lang === "text") {
+  //     setLanguage("text");
+  //     const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
+  //       return [{
+  //         scope: [],
+  //         content: line
+  //       }];
+  //     });
+  //     setHighlights(scope_tree);
+  //     return;
+  //   }
+
+
+  //   let raw_code = props.text+props.unProcessedText;
+  //   const unprocessed_text = raw_code.slice(oldInputLength.current);
+  //   if (props.finished) {
+  //     raw_code = props.text;
+  //   }
+
+  //   // console.log("Highlighting raw code:", raw_code)
+  //   // setLineOffsets(getLineOffsets(raw_code));
+  //   if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
+  //     const highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
+  //     setLanguage((props.lang)?props.lang:(highlights_get.language?highlights_get.language:"Unknown"));
+      
+  //     const scope_tree = parseScopeTreeText(highlights_get.value);
+  //     setHighlights(scope_tree);
+  //     // console.log("Highlights:", scope_tree);
+  //     // setLastRefreshTime(Date.now());
+  //     // setOldInputLength(raw_code.length);
+	// 		lastRefreshTime.current = Date.now();
+	// 		oldInputLength.current = raw_code.length;
+  //   } else {
+  //     setUnprocessedText(unprocessed_text.split("\n"));
+  //   }
+  // }, [props.text, props.unProcessedText, props.finished, props.lang]);
+
+  useEffect(() => {
+    setLineCount(props.text.split("\n").length);
+    setLanguage(props.lang);
     if (props.lang === "text") {
-      setLanguage("text");
-      const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
-        return [{
-          scope: [],
-          content: line
-        }];
-      });
-      setHighlights(scope_tree);
+      // const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
+      //   return [{
+      //     scope: [],
+      //     content: line
+      //   }];
+      // });
+      // setHighlights(scope_tree);
+      setCodeHTML(props.text + props.unProcessedText);
       return;
     }
-
-
+  
     let raw_code = props.text+props.unProcessedText;
     const unprocessed_text = raw_code.slice(oldInputLength.current);
     if (props.finished) {
       raw_code = props.text;
     }
-
-    // console.log("Highlighting raw code:", raw_code)
-    // setLineOffsets(getLineOffsets(raw_code));
+  
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
-      const highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
-      setLanguage((props.lang)?props.lang:(highlights_get.language?highlights_get.language:"Unknown"));
+
+      highlight(raw_code, 'nord', props.lang).then((html) => {
+        setCodeHTML(html);
+      });
       
-      const scope_tree = parseScopeTreeText(highlights_get.value);
-      setHighlights(scope_tree);
-      // console.log("Highlights:", scope_tree);
-      // setLastRefreshTime(Date.now());
-      // setOldInputLength(raw_code.length);
-			lastRefreshTime.current = Date.now();
-			oldInputLength.current = raw_code.length;
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
   }, [props.text, props.unProcessedText, props.finished, props.lang]);
 
   return (
-    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas', fontConsolas.className)}>
+    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white', fontConsolas.className)}>
       <div className='w-auto mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
@@ -215,20 +275,28 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       </div>
       <div className='w-auto h-[1px] bg-secondary'/>
       <pre className="p-0 flex flex-row rounded-lg text-sm ">
-        <code className="pt-[5px] pb-[20px] pl-[7px] pr-[7px] text-primary/50 !whitespace-pre select-none border-r-[2px] border-opacity-100 border-secondary">
-          {Array(highlights.length + (props.finished ? 0 : unprocessedText.slice(1, unprocessedText.length - 1).length)).fill(20).map((e, line_number: number) => (
+        <code className="pt-[5px] pb-[20px] pl-[7px] pr-[7px] text-white/50 !whitespace-pre select-none border-opacity-100 border-secondary">
+          {/* {Array(highlights.length + (props.finished ? 0 : unprocessedText.slice(1, unprocessedText.length - 1).length)).fill(20).map((e, line_number: number) => (
               <>
                 {line_number + 1}
                 {"\n"}
               </>
+          ))} */}
+          {Array(lineCount).fill(20).map((e, line_number: number) => (
+              <span key={line_number}>
+                {line_number + 1}
+                {"\n"}
+              </span>
           ))}
         </code>
         {/* <div className='w-[2px] h-auto bg-secondary'/>
         <div className='w-[4px] h-auto'/> */}
         <ScrollAreaHorizontal className="flex flex-col overflow-y-hidden">
           <div className='pl-[10px] pt-[5px] pb-[20px]'>
-            <code className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'>
-              {highlights.map((line: scoped_text[], line_number: number) => (
+            <code 
+              className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'
+            >
+              {/* {highlights.map((line: scoped_text[], line_number: number) => (
                 <>
                   {line.map((token_seg: scoped_text, token_number: number) => (
                     <>
@@ -255,7 +323,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
                   ))}
                   {"\n"}
                 </>
-              ))}
+              ))} */}
               {(!props.finished) && (
                 <>
                   {unprocessedText.slice(1, unprocessedText.length - 1).map((line: string, line_number: number) => (
@@ -268,6 +336,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
                   ))}
                 </>
               )}
+              <code className='bg-transparent' dangerouslySetInnerHTML={{__html: codeHTML}}></code>
             </code>
           </div>
           <ScrollBar orientation="horizontal" />

@@ -162,9 +162,9 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'paragraph':
       return (
-        <p>
+        <div>
           <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/>
-        </p>
+        </div>
       );
     case 'html':
       return (null);

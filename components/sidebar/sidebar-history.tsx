@@ -59,17 +59,10 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
               // TODO : Implement new chat
             }}>
               <div style={{paddingRight: 5}}>
-                <Icon.Plus size={20} color="#E8E3E3" />
+                <Icon.Plus size={20}/>
               </div>
               <div style={{alignSelf: 'center', justifyContent: 'center'}}>
-              <p style={{
-                // width: '100%',
-                // height: '100%',
-                // fontFamily: 'Inter-Regular',
-                fontSize: 14,
-                color: '#E8E3E3',
-                paddingTop: 1
-              }}>{"New Chat"}</p>
+              <p>{"New Chat"}</p>
               </div>
           </Button>
         </div>

@@ -12,10 +12,14 @@ import {
 export default function ContextMenuWrapper({
 	onSplit,
 	onCollapse,
+	headerAvailable = true,
+	footerAvailable = true,
 	children
 }: {
-	onSplit : (split_type : "horizontal" | "vertical") => void,
+	onSplit : (split_type : "horizontal" | "vertical" | "header" | "footer") => void,
 	onCollapse : () => void,
+	headerAvailable?: boolean,
+	footerAvailable?: boolean,
 	children: React.ReactNode,
 }) {
   return (
@@ -30,6 +34,12 @@ export default function ContextMenuWrapper({
 				<ContextMenuItem inset onClick={() => (onSplit("vertical"))}>
 					Split Vertical <div className='w-2'/><ViewHorizontalIcon/>
 				</ContextMenuItem>
+				{headerAvailable && (<ContextMenuItem inset onClick={() => (onSplit("header"))}>
+					Add Header <div className='w-2'/><ViewHorizontalIcon/>
+				</ContextMenuItem>)}
+				{footerAvailable && (<ContextMenuItem inset onClick={() => (onSplit("footer"))}>
+					Add Footer <div className='w-2'/><ViewHorizontalIcon/>
+				</ContextMenuItem>)}
 				<ContextMenuItem inset onClick={onCollapse}>
 					Delete
 				</ContextMenuItem>

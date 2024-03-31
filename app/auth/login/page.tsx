@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner"
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
+import CompactInput from "@/registry/default/ui/compact-input";
 
 
 type login_results = {
@@ -91,20 +92,19 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto space-y-2 max-w-sm">
-			<div className="text-center space-y-0">
+			<div className="text-center space-y-0 pb-8">
         <h1 className="text-3xl font-bold">Log In</h1>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(login)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="username-email">Username or Email</Label>
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="h-10 outline-none" placeholder="Enter your username or email" {...field} />
+                    <CompactInput className="h-11 outline-none" placeholder="Username or Email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -112,19 +112,14 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              {/* <Link className="ml-auto inline-block text-sm underline" href="#">
-                Forgot password?
-              </Link> */}
-            </div>
+            
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="h-10" placeholder="Password" {...field} />
+                    <CompactInput className="h-12" placeholder="Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

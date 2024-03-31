@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from "sonner"
 import { useContextAction } from "@/app/context-provider";
 import { get } from "http";
+import CompactInput from "@/registry/default/ui/compact-input";
 
 type login_results = {
   success: false,
@@ -100,20 +101,20 @@ export default function Component() {
 
   return (
     <div className="mx-auto max-w-sm space-y-2">
-      <div className="text-center space-y-0">
+      <div className="text-center space-y-0 pb-6 pt-2">
         <h1 className="text-2xl font-bold">Sign Up</h1>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(signup)} className="space-y-2">
+        <form className="space-y-4" onSubmit={() => {}}>
           <div className="space-y-0">
-            <Label htmlFor="username-email">Email</Label>
+            {/* <Label htmlFor="username-email">Email</Label> */}
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="h-10" placeholder="m@lsu.edu" {...field} />
+                    <CompactInput className="h-10" placeholder="Email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,14 +122,14 @@ export default function Component() {
             />
           </div>
           <div className="space-y-0">
-            <Label htmlFor="username-email">Username</Label>
+            {/* <Label htmlFor="username-email">Username</Label> */}
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="h-10" placeholder="Enter your username" {...field} />
+                    <CompactInput className="h-10" placeholder="Username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -136,14 +137,14 @@ export default function Component() {
             />
           </div>
           <div className="space-y-0">
-            <Label htmlFor="password">Password</Label>
+            {/* <Label htmlFor="password">Password</Label> */}
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input className="h-10" placeholder="Password" hidden {...field} />
+                    <CompactInput className="h-10" placeholder="Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -151,14 +152,14 @@ export default function Component() {
             />
           </div>
           <div className="space-y-0">
-            <Label htmlFor="password">Confirm Password</Label>
+            {/* <Label htmlFor="password">Confirm Password</Label> */}
             <FormField
               control={form.control}
               name="password_confirm"
               render={({ field }) => (
                 <FormItem>
-                  <FormControl hidden>
-                    <Input className="h-10" placeholder="Password" {...field} />
+                  <FormControl>
+                    <CompactInput className="h-10" placeholder="Confirm Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,7 +167,7 @@ export default function Component() {
             />
           </div>
           <div className="pb-2">
-            <Button className="w-full h-10" type="submit">
+            <Button className="w-full h-10" type="submit" onClick={form.handleSubmit(signup)}>
               Sign Up
             </Button>
           </div>

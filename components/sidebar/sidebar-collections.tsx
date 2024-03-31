@@ -71,8 +71,8 @@ export default function SidebarCollectionSelect(props: SidebarCollectionSelectPr
             <div className='pt-[10px] pb-[20px]'>
               <Button className="flex w-full rounded-full h-10 items-center justify-center" variant={"ghost"}>
                 <Link href={"/collection/create"} className='flex items-center'>
-                  <Icon.Plus size={20} color="#E8E3E3"/>
-                  <p className="text-base text-white ml-2 pt-[1px]">New Collection</p>
+                  <Icon.Plus size={20}/>
+                  <p className="text-base ml-2 pt-[1px]">New Collection</p>
                 </Link>
               </Button>
             </div>

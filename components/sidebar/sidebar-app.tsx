@@ -25,11 +25,14 @@ import SidebarTemplate from './sidebar-template';
 export default function AppSidebar() {
   const pathname = usePathname();
 
-	const [collectionGroups, setCollectionGroups] = useState<collectionGroup[]>([]);
+	
 	
   const { 
     userData, 
     setUserData, 
+    collectionGroups,
+    setCollectionGroups,
+    refreshCollectionGroups,
     selectedCollections, 
     setSelectedCollections,
     toolchainSessions,
@@ -47,22 +50,17 @@ export default function AppSidebar() {
 		if (userData === undefined || !authReviewed || !loginValid) return;
 
     // console.log("userdata:", userData);
-    let chat_history_grabbed = false;
-    let collections_grabbed = false;
-    if (toolchainSessions.size == 0) {
-      chat_history_grabbed = true;
-    }
+    // let chat_history_grabbed = false;
+    // let collections_grabbed = false;
+    // if (toolchainSessions.size == 0) {
+    //   chat_history_grabbed = true;
+    // }
     if (collectionGroups.length == 0) {
-      getUserCollections({
-				auth: userData.auth, 
-				set_value: setCollectionGroups
-			});
-      collections_grabbed = true;
+      refreshCollectionGroups();
+      // collections_grabbed = true;
     }
   }, [
-    userData, 
-    collectionGroups.length, 
-    toolchainSessions,
+    userData,
     authReviewed,
     loginValid
   ]);
@@ -99,13 +97,13 @@ export default function AppSidebar() {
           <div className="w-full px-22 pb-0 flex-grow flex flex-col">
             <Tabs className="flex-grow flex flex-col" defaultValue={"collections"}>
               <TabsList className="bg-[#7968D9] grid w-full h-auto grid-cols-3 bottom pb-0 pt-0 pl-0 pr-0">
-                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="collections">
+                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-md" value="collections">
                   <Icon.Folder size={20} color="#17181D" />
                 </TabsTrigger>
-                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="history">
+                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-md" value="history">
                   <Icon.Clock size={20} color="#17181D" />
                 </TabsTrigger>
-                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-lg" value="tools">
+                <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-md" value="tools">
                   <Icon.Aperture size={20} color="#17181D" />
                 </TabsTrigger>
               </TabsList>

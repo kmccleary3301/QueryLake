@@ -78,7 +78,7 @@ export default function SidebarTemplate({
       <motion.div id="SIDEBARBUTTON" className={`p-1 pl-2 absolute`} animate={controlSidebarButtonOffset}>
         {(sidebarToggleVisible) ? (
           <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2`} onClick={() => {setSidebarOpened(true);}}>
-            <Icon.Sidebar id="closed_sidebar_button" size={24} color="#E8E3E3" />
+            <Icon.Sidebar id="closed_sidebar_button" size={24}/>
           </Button> 
 
         ):null}
@@ -95,18 +95,18 @@ export default function SidebarTemplate({
                 <div className={cn("flex flex-row pt-1 pb-[7.5px] px-30 items-center w-full justify-between", buttonsClassName)}>
                   <Link href="/home">
                     <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
-                      <Icon.Home size={24} color="#E8E3E3" />
+                      <Icon.Home size={24}/>
                     </Button>
                   </Link>
                   <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
-                    <Icon.Settings size={24} color="#E8E3E3" />
+                    <Icon.Settings size={24}/>
                   </Button>
                   <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2" onClick={() => {
                     // TODO: Toggle Sidebar
                     setSidebarOpened(false);
                   }}>
                     {/* <Icon.Sidebar size={24} color="#E8E3E3" /> */}
-                    <Icon.Sidebar size={24} color="#E8E3E3" />
+                    <Icon.Sidebar size={24}/>
                   </Button>
                 </div>
                 <div className='w-full h-[calc(100vh-52px)] flex flex-col'>

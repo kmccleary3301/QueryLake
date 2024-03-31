@@ -63,7 +63,7 @@ export function FolderViewer({
 				<div className="overflow-hidden">
 				{/* <div className="flex flex-col scrollbar-hide overflow-y-auto"> */}
 					{Object.entries(content).map(([key, value]) => (
-						<>
+						<div key={key}>
 							{(value === null)?(
 								<Link 
 									href={`/docs/${route.map((s : string) => toVariableName(s)).join("/")}/${toVariableName(key)}`} 
@@ -77,7 +77,7 @@ export function FolderViewer({
 								<FolderViewer key={key} content={value} topLevel={false} route={[...route, key]} />
 							)}
 						
-						</>
+						</div>
 					))}
 				{/* </div> */}
 				</div>

@@ -70,7 +70,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 					<div className="w-full h-full flex flex-col justify-center pl-2">
 						<div className="w-[83%] flex flex-row justify-start">
 							<Link href={`/collection/edit/${props.collectionId}`}>
-								<Button variant={"link"} className="text-base text-[#E8E3E3] text-left pt-0 pb-0 pl-0 pr-0" onClick={props.onPress}>
+								<Button variant={"link"} className="text-base text-left pt-0 pb-0 pl-0 pr-0" onClick={props.onPress}>
 									{title}
 								</Button>
 							</Link>

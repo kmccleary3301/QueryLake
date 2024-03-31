@@ -1,5 +1,5 @@
 "use client";
-import { Dispatch, SetStateAction, useState } from "react"
+import { Dispatch, SetStateAction, useState, useMemo } from "react"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -15,13 +15,17 @@ export type displayMappings = {
 
 export type contentSection = {
   split: "none",
-  mappings: displayMappings[]
+  mappings: displayMappings[],
+  header?: displaySection,
+  footer?: displaySection
 }
 
 export type divisionSection = {
   split: "horizontal" | "vertical",
   sectionOne: displaySection,
-  sectionTwo: displaySection
+  sectionTwo: displaySection,
+  header?: displaySection,
+  footer?: displaySection
 }
 
 export type displaySection = contentSection | divisionSection
@@ -46,40 +50,88 @@ export function DivisibleSection({
 
   const [section, setSection] = useState<displaySection>(sectionInfo);
 
-  const onSplit = (splitType : "horizontal" | "vertical") => {
-    const new_section : divisionSection = {
-      split: splitType,
-      sectionOne: {
-        split: "none",
-        mappings: []
-      },
-      sectionTwo: {
-        split: "none",
-        mappings: []
+  const onSplit = (splitType : "horizontal" | "vertical" | "header" | "footer") => {
+    if (splitType == "horizontal" || splitType == "vertical") {
+      const new_section : divisionSection = {
+        ...section,
+        split: splitType as "horizontal" | "vertical",
+        sectionOne: {
+          split: "none",
+          mappings: []
+        },
+        sectionTwo: {
+          split: "none",
+          mappings: []
+        }
       }
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    } else if (splitType === "header") {
+      const new_section : displaySection = {
+        ...section,
+        header: {
+          split: "none",
+          mappings: []
+        }
+      }
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    } else if (splitType === "footer") {
+      const new_section : displaySection = {
+        ...section,
+        footer: {
+          split: "none",
+          mappings: []
+        }
+      }
+      setSection(new_section);
+      onSectionUpdate(new_section);
     }
-    setSection(new_section);
-    onSectionUpdate(new_section);
   }
 
-  const resetSection = (type : 1 | 2) => {
-    if (section.split === "none") return;
-    
-    const new_section : contentSection = {
-      split: "none",
-      mappings: []
-    }
+  const resetSection = (type : 1 | 2 | 3 | 4) => {
+    if (type === 1) {
 
-    // const new_section : displaySection = (type === 1) ? section.sectionOne : section.sectionTwo;
-    setSection(new_section);
-    onSectionUpdate(new_section);
+      if (section.split === "none") return;
+      
+      const { sectionOne, sectionTwo, ...new_section_one } = section;
+      const new_section : displaySection = {...new_section_one, ...sectionOne};
+
+
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    } 
+    else if (type === 3) {
+      const { header, ...new_section } = section;
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    } 
+    else if (type === 4) {
+      const { footer, ...new_section } = section;
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    }
+    else {
+      if (section.split === "none") return;
+      
+      const { sectionOne, sectionTwo, ...new_section_one } = section;
+      // const new_section : displaySection = {...new_section_one, mappings: [], split: "none"};
+      const new_section : displaySection = {...new_section_one, ...sectionTwo};
+
+      setSection(new_section);
+      onSectionUpdate(new_section);
+    }
   }
 
-
-  return (
+  const PrimaryContent = () => (
     <>
       {(section.split === "none") ? (
-        <ContextMenuWrapper onSplit={onSplit} onCollapse={onCollapse}>
+        <ContextMenuWrapper 
+          onSplit={onSplit} 
+          onCollapse={onCollapse}
+          headerAvailable={(section.header === undefined)}
+          footerAvailable={(section.footer === undefined)}
+        >
           <ScrollSection scrollBar={true} scrollToBottomButton={true}>
             <div className="flex flex-col w-full">
               {large_array.map((_, index) => (
@@ -123,6 +175,43 @@ export function DivisibleSection({
           </ResizablePanel>
         </ResizablePanelGroup>
       )}
+    </>
+  );
+
+
+  return (
+    <>
+    {(section.header !== undefined || section.footer !== undefined) ? (
+      <ResizablePanelGroup direction="vertical">
+        {(section.header !== undefined) && (
+          
+            <div className="h-[50px] border-green-500 border-[2px] text-center flex flex-col justify-center">Header</div>
+        )}
+        <ResizablePanel defaultSize={100} >
+        <PrimaryContent />
+        </ResizablePanel>
+        {(section.footer !== undefined) && (
+          // <ResizablePanel defaultSize={10}>
+          //   <DivisibleSection
+          //     onCollapse={() => {resetSection(4)}}
+          //     onSectionUpdate={(sectionLocal) => {
+          //       const new_section = section as displaySection;
+          //       new_section.footer = sectionLocal;
+          //       setSection(new_section);
+          //       onSectionUpdate(new_section);
+          //     }}
+          //     windowNumber={windowNumber}
+          //     currentWindowCount={currentWindowCount}
+          //     setCurrentWindowCount={setCurrentWindowCount}
+          //     sectionInfo={section.footer}
+          //   />
+          // </ResizablePanel>
+          <div className="h-[50px] border-red-500 border-[2px] text-center flex flex-col justify-center">Footer</div>
+        )}
+      </ResizablePanelGroup>
+    ) : (
+      <PrimaryContent />
+    )}
     </>
   );
 }

@@ -36,41 +36,56 @@ import { useContextAction } from "@/app/context-provider";
 import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
+import { Progress } from '@/registry/default/ui/progress';
+import { set } from 'date-fns';
+
+const file_size_as_string = (size : number) => {
+  if (size < 1024) {
+    return `${size} B`;
+  } else if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  } else if (size < 1024 * 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  } else {
+    return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+}
 
 export function FileDisplayType({ 
   name, 
-  length = undefined, 
-  size = undefined,
+  subtext = undefined,
   progress = undefined,
   onOpen = undefined,
   onDelete = undefined
 } : { 
   name: string, 
-  length?: string, 
-  size?: string,
+  subtext?: string[],
   progress?: number,
   onOpen?: () => void,
   onDelete?: () => void
 }) {
   return (
-    <div className="h-14 flex items-center justify-between border-b pt-2 pb-2">
-      <div className='pb-2'>
+    <div className="h-14 flex flex-row items-center justify-between border-b pt-2 pb-2">
+      <div className='pb-2 flex flex-col'>
         {(onOpen === undefined)?(
-          <p className="font-medium">{name}</p>
+          <p className="font-medium max-w-[400px] whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
         ):(
-          <Button variant="link" className="font-medium p-0 h-6" onClick={onOpen}>
-            <p>{name}</p>
+          <Button variant="link" className="font-medium p-0 h-6]" onClick={onOpen}>
+            <p className="font-medium max-w-[50vw] md:max-w-[30vw] xl:max-w-[25vw] whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
           </Button>
         )}
-        {(length !== undefined && size !== undefined) && (
-          <p className={`text-xs text-primary/35`}>{`${length} | Size: ${size}`}</p>
+        {(subtext !== undefined) && (
+          <p className={`text-xs text-primary/35`}>{subtext.join(" | ")}</p>
         )}
       </div>
       {progress !== undefined && (
-        <div className="w-1/4 h-2 bg-gray-200 rounded-md">
-          {/* <div className="h-full bg-blue-500 rounded-md" style={{ width: `${progress}%` }} /> */}
-          <p>{progress.toString()}</p>
-        </div>
+        // <div className="w-1/4 h-2 bg-gray-200 rounded-md">
+        //   {/* <div className="h-full bg-blue-500 rounded-md" style={{ width: `${progress}%` }} /> */}
+        //   <p>{progress.toString()}</p>
+        // </div>
+        // <div className=''>
+          <Progress value={progress} className='h-2 ml-10 mb-2 w-[100px]' />
+        // </div>
       )}
       {(onDelete !== undefined) && (
         <Button size="icon" variant="ghost" onClick={onDelete}>
@@ -98,11 +113,12 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   const [collectionOwner, setCollectionOwner] = useState<string>("personal");
   const [publishStarted, setPublishStarted] = useState<boolean>(false);
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
-  const [pendingUploadFiles, setPendingUploadFiles] = useState<FileList | null>(null);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
 
 
   const {
-    userData
+    userData,
+    refreshCollectionGroups,
   } = useContextAction();
 
   useEffect(() => {
@@ -158,6 +174,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
           if (result !== false && pendingUploadFiles !== null) {
             start_document_uploads(params["slug"][1]);
           }
+          refreshCollectionGroups();
         }
       })
       
@@ -218,24 +235,24 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   // };
 
   const start_document_uploads = async (collection_hash_id : string) => {
+    if (pendingUploadFiles === null) return;
+
     const url_2 = craftUrl("/upload/", {
       "auth": userData?.auth as string,
       "collection_hash_id": collection_hash_id
     });
   
-    const files = Array.from(pendingUploadFiles as FileList);
-  
     setPublishStarted(true);
     
-    setUploadingFiles(files.map((file) => {
+    setUploadingFiles(pendingUploadFiles.map((file) => {
       return {
         title: file.name,
         progress: 0
       }
     }));
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < pendingUploadFiles.length; i++) {
+      const file = pendingUploadFiles[i];
       const formData = new FormData();
       formData.append("file", file);
   
@@ -243,16 +260,28 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         const response = await axios.post(url_2.toString(), formData, {
           onUploadProgress: (progressEvent) => {
             const progress = Math.round((progressEvent.loaded / (progressEvent.total || 1)) * 100);
-            console.log(`File ${file.name} upload progress: ${progress}%`);
+            console.log(`File ${file.name} upload progress: ${progress}%`, progress);
+            setUploadingFiles(files => [{...files[0], progress: progress}, ...files.slice(1)]);
+
           },
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-  
+        
         console.log(`File ${file.name} upload response:`, response.data);
+
+        const response_data = response.data as {success: false} | {success : true, result: fetch_collection_document_type};
+        // setUploadingFiles(files => [{...files[0], progress: 100}, ...files.slice(1)]);
+
+        if (response_data.success) {
+          setCollectionDocuments((docs) => [response_data.result,...docs]);
+        }
+
+        setPendingUploadFiles((files) => files?.filter((_, i) => i !== 0) || null)
+
   
-        const new_uploading_files = uploadingFiles.slice(1);
+        const new_uploading_files = uploadingFiles.filter((_, i) => i !== 0);
         setUploadingFiles(new_uploading_files);
         if (new_uploading_files.length === 0) {
           onFinishedUploads(collection_hash_id);
@@ -315,7 +344,9 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   const onFinishedUploads = (collection_hash_id : string) => {
     setPublishStarted(false);
     setPendingUploadFiles(null);
-    router.push(`/collection/edit/${collection_hash_id}`);
+    refreshCollectionGroups();
+    if (CollectionMode === "create")
+      router.push(`/collection/edit/${collection_hash_id}`);
   }
 
   return (
@@ -390,13 +421,24 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 <Label htmlFor="document">Upload Document</Label>
                 <Input id="document" type="file" multiple onChange={(event) =>{
                   if (event.target.files !== null) {
-                    setPendingUploadFiles(event.target.files);
+                    setPendingUploadFiles(Array.from(event.target.files));
                   }
                 }}/>
               </div>
             )}
-            <div className="min-h-72 w-full rounded-md border flex-grow">
-              <ScrollArea className="p-4 pt-2 text-sm">
+            <div className="h-72 w-full rounded-md border flex-grow">
+              <ScrollArea className="p-4 pt-2 text-sm h-full">
+                {(pendingUploadFiles !== null && !publishStarted) && pendingUploadFiles.map((file, index) => (
+                  <FileDisplayType
+                    key={index}
+                    name={file.name}
+                    subtext={[file_size_as_string(file.size)]}
+                    onDelete={() => {
+                      setPendingUploadFiles(pendingUploadFiles.filter((_, i) => i !== index));
+                    }} 
+                  />
+                ))}
+
                 {uploadingFiles.map((file, index) => (
                   <FileDisplayType
                     key={index}
@@ -414,8 +456,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                         document_id: doc.hash_id
                       })
                     }}
-                    length={""}
-                    size={doc.size} 
+                    subtext={[doc.size]} 
                     // progress={doc.progress} 
                     onDelete={(CollectionMode === "create" || CollectionMode === "edit")?(() => {
                       deleteDocument({

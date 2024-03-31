@@ -96,7 +96,6 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
                       // fontFamily: 'Inter-Regular',
                       fontSize: 14,
                       // height: 24,
-                      color: '#E8E3E3'
                     }}>
                       {toolchain_entry.title}
                     </p>
