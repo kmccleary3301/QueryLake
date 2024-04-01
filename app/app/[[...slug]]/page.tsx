@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 import { ToolChain } from '@/types/toolchains';
 
 
-export default function CollectionPage({ params, searchParams }: DocPageProps) {
+export default function AppPage({ params, searchParams }: DocPageProps) {
 
   const router = useRouter();
   const collection_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as collection_mode_type : undefined;

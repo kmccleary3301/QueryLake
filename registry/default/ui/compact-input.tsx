@@ -76,6 +76,7 @@ export default function CompactInput({
 				)} onFocus={()=>{console.log("Focus Called!")}}>
 					<motion.div
 						className='h-full'
+						initial={{ y: 'calc(50% - 1em + 2px)', fontSize: '1em', paddingLeft: '0.5rem'}}
 						animate={ (placeHolderMoved) ? 
 							{ y: 'calc(0% - 0.75em - 0px)', fontSize: '0.75em', paddingLeft: '0.2rem' } : 
 							{ y: 'calc(50% - 1em + 2px)', fontSize: '1em', paddingLeft: '0.5rem'}

@@ -20,7 +20,7 @@ export default function NodesLayout({ children, searchParams }: ExamplesLayoutPr
             
           </div>
         </section> */}
-        <div className="absolute z-50 w-full flex flex-row justify-center pt-3 pb-3 pointer-events-none">
+        <div className="absolute z-50 w-full flex flex-row justify-center pb-3 pointer-events-none">
           <div className="pointer-events-auto">
             <NodesNav/>
           </div>

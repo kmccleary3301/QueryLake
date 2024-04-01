@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSearchParams } from 'next/navigation'
 import { usePathname } from "next/navigation"
-
+import { useState, useRef, useEffect } from "react"
 import {
   Tabs,
   TabsList,
@@ -29,33 +29,62 @@ interface ExamplesNavProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function NodesNav({ className, ...props }: ExamplesNavProps) {
   const pathname = usePathname() || "";
   
-  // Get searchParams as an Object
-  // const searchParams = useSearchParams();
-  // const allParams = Object.fromEntries(searchParams?.entries() || []); 
-  
   const searchParamsString = useSearchParams()?.toString() || undefined;
   const linkAppend = searchParamsString ? `?${searchParamsString}` : "";
 
-  return (
-    <motion.div
-      initial={{ height: 20 }}
-      whileHover={{ height: "auto" }}
-      transition={{ duration: 0.3 }}
-    >
-      <ScrollArea>
-      <Tabs defaultValue={pathname} onValueChange={(value : string) => {console.log("Value changed to", value)}}>
-        <TabsList className="grid w-full grid-cols-2">
-          {examples.map((example, index) => (
-            <TabsTrigger key={index} value={example.href}>
-              <Link href={example.href+linkAppend}>
-                {example.name}
-              </Link>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      </ScrollArea>
-    </motion.div>
-  );
+  const [hover, setHover] = useState(false);
 
+  // const divRef = useRef<HTMLDivElement>(null);
+
+  // const scrollToBottom = () => {
+  //   const div = divRef.current;
+  //   if (div) {
+  //     div.scrollTop = div.scrollHeight;
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [hover]); // add any other dependencies that could change the content of the div
+
+  return (
+    <div className="">
+      <motion.div
+        className="overflow-hidden bg-secondary rounded-b-md"
+        initial={{ height: 20 }}
+        animate={ (hover) ? 
+          { height: 'auto'} : 
+          { height: 10}
+        }
+        transition={{ duration: 0.2 }}
+        onHoverStart={() => setHover(true)}
+        onHoverEnd={() => setHover(false)}
+        // onChange={()=>{scrollToBottom();}}
+        // ref={divRef}
+      >
+        <div className="pb-2 pt-2">
+          {/* <motion.div
+            className="w-auto bg-secondary"
+            animate={ (hover) ? 
+              { height: 0, borderRadius: "10px"} : 
+              { height: 10, borderRadius: "0px 0px 10px 10px"}
+            }
+            transition={{ duration: 0.2, delay: 0.01 }}
+          >
+          </motion.div> */}
+            <Tabs defaultValue={pathname} onValueChange={(value : string) => {console.log("Value changed to", value)}}>
+              <TabsList className="grid w-full grid-cols-2 rounded-none">
+                {examples.map((example, index) => (
+                  <TabsTrigger key={index} value={example.href}>
+                    <Link href={example.href+linkAppend}>
+                      {example.name}
+                    </Link>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+        </div>
+      </motion.div>
+    </div>
+  );
 }

@@ -188,7 +188,7 @@ export default function ScrollSection({
 												setAnimateScroll(true);
 											}
 										}} className="rounded-full z-5 p-0 w-10 h-10 items-center" variant={"secondary"}>
-											<Icon.ChevronDown className="text-white w-[50%] h-[50%]" />
+											<Icon.ChevronDown className="text-primary w-[50%] h-[50%]" />
 										</Button>
 									)}
 								</div>

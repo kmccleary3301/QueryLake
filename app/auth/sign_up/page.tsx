@@ -101,7 +101,7 @@ export default function Component() {
 
   return (
     <div className="mx-auto max-w-sm space-y-2">
-      <div className="text-center space-y-0 pb-6 pt-2">
+      <div className="text-center space-y-0 pb-3">
         <h1 className="text-2xl font-bold">Sign Up</h1>
       </div>
       <Form {...form}>
@@ -114,7 +114,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-10" placeholder="Email" {...field} />
+                    <CompactInput className="h-11" placeholder="Email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +129,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-10" placeholder="Username" {...field} />
+                    <CompactInput className="h-11" placeholder="Username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +144,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-10" placeholder="Password" type="password" {...field} />
+                    <CompactInput className="h-11" placeholder="Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,7 +159,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-10" placeholder="Confirm Password" type="password" {...field} />
+                    <CompactInput className="h-11" placeholder="Confirm Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +167,7 @@ export default function Component() {
             />
           </div>
           <div className="pb-2">
-            <Button className="w-full h-10" type="submit" onClick={form.handleSubmit(signup)}>
+            <Button className="w-full h-8" type="submit" onClick={form.handleSubmit(signup)}>
               Sign Up
             </Button>
           </div>

@@ -92,7 +92,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto space-y-2 max-w-sm">
-			<div className="text-center space-y-0 pb-8">
+			<div className="text-center space-y-0 pb-3">
         <h1 className="text-3xl font-bold">Log In</h1>
       </div>
       <Form {...form}>
@@ -119,7 +119,7 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-12" placeholder="Password" type="password" {...field} />
+                    <CompactInput className="h-11" placeholder="Password" type="password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
