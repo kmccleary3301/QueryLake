@@ -2,6 +2,7 @@
 import React from "react";
 import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import { Button } from "@/registry/default/ui/button";
+import ToolchainSession from "@/components/manual_components/toolchain-session";
 
 interface DocPageProps {
   params: {
@@ -11,9 +12,14 @@ interface DocPageProps {
 }
 
 export default function TestPage() {
+
+  const testWebsocket = () => {
+    const tc_ws = new ToolchainSession(() => {}, () => {});
+  }
+  
   return (
     <div>
-      <Button onClick={() => {}}>
+      <Button onClick={testWebsocket}>
         Test websocket.
       </Button>
     </div>

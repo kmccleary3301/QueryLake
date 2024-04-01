@@ -28,6 +28,10 @@ const nextConfig = {
         source: "/api/:path*",
         destination: "http://localhost:8000/api/:path*"
       },
+      {
+        source: "/toolchain",
+        destination: "http://localhost:8000/toolchain"
+      }
 		]
 	},
   reactStrictMode: true,
