@@ -66,7 +66,7 @@ export default function RootTemplate({
   useEffect(() => {
     console.log("pathname changed to:", pathname);
   }, [pathname]);
-
+  
   // Redirect to login page if not logged in, redirect to home page if logged in and attempting to log in.
   useEffect(() => {
     // console.log("TEMPLATE RECIEVED VALUES:", authReviewed, loginValid, pathname, pathname?.startsWith("/account"));

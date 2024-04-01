@@ -14,31 +14,54 @@ type titleSet = Dispatch<React.SetStateAction<string>> | ((new_state : string) =
 type deleteStateListType = Array<string | number | compositionObjectGenericType<substituteAny>>;
 type deleteStateGenericType = string | number | compositionObjectGenericType<substituteAny>;
 
+export interface ToolchainSessionMessage {
+  toolchain_session_id?: string;
+  [key: string]: any;
+}
+
 export default class ToolchainSession {
 	private onStateChange: stateSet;
 	private onTitleChange: titleSet;
+	private onMessage: (message: object) => void;
+	private onOpen: (session : ToolchainSession) => void;
 	private socket: WebSocket; // Add socket as a type
 	private state: Map<string, substituteAny>;
 	private stream_mappings: Map<string, (string | number)[][]>;
 	
-	constructor ( onStateChange: stateSet, 
-								onTitleChange: titleSet ) {
-			
-		this.onStateChange = onStateChange;
-		this.onTitleChange = onTitleChange;
+	constructor ( { onStateChange = undefined, 
+									onTitleChange = undefined,
+									onMessage = undefined,
+								  onOpen = undefined, }:
+								{ onStateChange?: stateSet, 
+								  onTitleChange?: titleSet,
+									onMessage?: (message: object) => void,
+								  onOpen?: (session : ToolchainSession) => void } ) {
+		
+		this.onStateChange = onStateChange || (() => {});
+		this.onTitleChange = onTitleChange || (() => {});
+		this.onMessage = onMessage || (() => {});
+		this.onOpen = onOpen || (() => {});
+		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
 		this.state = new Map<string, substituteAny>();
 		this.stream_mappings = new Map<string, (string | number)[][]>();
-		
-		
 
 		this.socket.onmessage = async (event: MessageEvent) => {
 			try {
-				const message_text : Blob = event.data;
-				const message_text_string : string = await message_text.text();
-				const message = JSON.parse(message_text_string);
+				const message_text : Blob | string = event.data;
+
+
+				// console.log("Message received data  :", typeof message_text, message_text)
+				// const message_text_string : string = 
+				// console.log("Message received string:", typeof message_text_string, message_text_string)
+				const message = (typeof message_text === "string") ? 
+													JSON.parse(message_text) : 
+													JSON.parse(await message_text.text());
+				
+				// console.log("Message received parsed:", typeof message, message)
 				this.handle_message(message);
+				this.onMessage(message);
 			} catch (error) {
 				console.error("Error parsing message:", error);
 			}
@@ -46,18 +69,24 @@ export default class ToolchainSession {
 
 		this.socket.onopen = () => {
 			console.log("Connected to server");
+			this.onOpen(this);
 		}
 	}
 
 	handle_message(data : { [key : string] : substituteAny }) {
+		if ("state" in data) {
+			const state = data["state"] as object;
+			this.state = new Map(Object.entries(state));
+			this.onStateChange(this.state);
+		}
+
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
 			// Rest this.stream_mappings to an empty map
 			this.stream_mappings = new Map<string, (string | number)[][]>();
 		} else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
 			console.log(data);
-		} else if ("state" in data) {
-			this.state = data["state"] as Map<string, substituteAny>;
 		} else if ("type" in data) {
+			// console.log("Data type:", data["type"]);
 
 			if (data["type"] === "streaming_output_mapping") {
 				const data_typed = data as {"type" : "streaming_output_mapping", "stream_id" : string, "routes" : (string | number)[][]};
@@ -65,16 +94,19 @@ export default class ToolchainSession {
 			} else if (data["type"] === "state_diff") {
 				const data_typed = data as {
 					type : "state_diff",
-					appendRoutes?: Route[];
-					appendState?: compositionObjectType;
-					updateState?: compositionObjectType;
-					deleteStates?: deleteStateListType;
+					append_routes?: Route[];
+					append_state?: compositionObjectType;
+					update_state?: compositionObjectType;
+					delete_state?: deleteStateListType;
 				};
 
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { type , ...data_typed_type_removed } = data_typed;
-
+				
+				// console.log("State before diff:", JSON.parse(JSON.stringify(this.state)));
 				this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
+				// console.log("State after diff:", JSON.parse(JSON.stringify(this.state)));
+
 				this.onStateChange(this.state);
 				this.onTitleChange(get_value(this.state, "title") as string);
 			}
@@ -249,7 +281,7 @@ export function runDeleteState(
 	if (Array.isArray(deleteStates)) {
 		for (const deleteState of deleteStates) {
 			stateInput = runDeleteState(stateInput, deleteState);
-			console.log("State input after array delete with pair", deleteState, ": ", JSON.stringify(stateInput))
+			// console.log("State input after array delete with pair", deleteState, ": ", JSON.stringify(stateInput))
 		}
 	// deleteStates is a map
 	// } else if (deleteStates instanceof Map) {
@@ -269,14 +301,14 @@ export function runDeleteState(
 					get_value(stateInput, key) as compositionType, value
 				)
 			) as typeof stateInput;
-			console.log("State input after object delete with pair", key, value, ": ", JSON.stringify(stateInput))
+			// console.log("State input after object delete with pair", key, value, ": ", JSON.stringify(stateInput))
 
 		}
 	// } else if (typeof deleteStates === "string" || typeof deleteStates === "number") {
 			
 	} else {
 		stateInput = delete_value(stateInput, deleteStates) as typeof stateInput;
-		console.log("State input after delete of key", deleteStates, ": ", JSON.stringify(stateInput))
+		// console.log("State input after delete of key", deleteStates, ": ", JSON.stringify(stateInput))
 	}
 
 	return stateInput;
@@ -331,31 +363,27 @@ export function updateObjects(
 export function runStateDiff(
     stateInput: compositionObjectType,
     stateDiffSpecs: {
-        appendRoutes?: Route[];
-        appendState?: compositionObjectType;
-        updateState?: compositionObjectType;
-        deleteStates?: deleteStateListType;
+        append_routes?: Route[];
+        append_state?: compositionObjectType;
+        update_state?: compositionObjectType;
+        delete_state?: deleteStateListType;
     }
 ): typeof stateInput {
-	const appendRoutes = stateDiffSpecs.appendRoutes || [];
-	const appendState = stateDiffSpecs.appendState || {};
-	const updateState = stateDiffSpecs.updateState || {};
-	const deleteStates = stateDiffSpecs.deleteStates || [];
+	const appendRoutes = stateDiffSpecs.append_routes || [];
+	const appendState = stateDiffSpecs.append_state || {};
+	const updateState = stateDiffSpecs.update_state || {};
+	const deleteStates = stateDiffSpecs.delete_state || [];
 
 	for (const route of appendRoutes) {
 		const valGet = retrieveValueFromObj(appendState, route);
 		stateInput = appendInRoute(stateInput, route, valGet, true) as typeof stateInput;
 	}
-	console.log("State input after append:", JSON.stringify(stateInput))
 
 	stateInput = updateObjects(stateInput, updateState) as typeof stateInput;
-	console.log("State input after update:", JSON.stringify(stateInput))
-
 
 	for (const deleteState of deleteStates) {
 		stateInput = runDeleteState(stateInput, deleteState) as typeof stateInput;
 	}
-	console.log("State input after delete:", JSON.stringify(stateInput))
 
 	return stateInput;
 }
@@ -378,10 +406,10 @@ export function runUnitTestForDiffFunctions() {
 	const diff_delete = ['d', {'f': ['y']}] ;
 
 	const result = runStateDiff(dict2Map, {
-		appendRoutes: diff_append_routes, 
-		appendState: diff_append, 
-		updateState: diff_update, 
-		deleteStates: diff_delete
+		append_routes: diff_append_routes, 
+		append_state: diff_append, 
+		update_state: diff_update, 
+		delete_state: diff_delete
 	});
 
 	if (result === dict1) {

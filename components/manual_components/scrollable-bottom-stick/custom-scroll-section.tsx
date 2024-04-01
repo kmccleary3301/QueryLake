@@ -35,11 +35,13 @@ export default function ScrollSection({
 	scrollToBottomButton = false,
 	scrollBar = true,
 	className = "",
+	innerClassName = "",
 } : { 
 	children: React.ReactNode,
 	scrollToBottomButton?: boolean,
 	scrollBar?: boolean,
-	className?: string
+	className?: string,
+	innerClassName?: string,
 }) {
 
 	const [animateScroll, setAnimateScroll] = useState(false);
@@ -169,7 +171,7 @@ export default function ScrollSection({
 				>
 					<ScrollAreaPrimitive.Viewport id="scrollAreaPrimitive2" className="flex flex-col" ref={interiorDiv}>
 						<div className="flex flex-row w-full justify-center">
-							<div className="flex flex-col">
+							<div className={cn(`flex flex-col`, innerClassName)}>
 								{children}
 							</div>
 						</div>

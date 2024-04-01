@@ -27,11 +27,11 @@ export function HeaderSection({
 				}}
 				align={sectionInfo.align}
 			>
-				<div className={`w-full h-full border-red-500 border-[2px] flex flex-row ${
-					(sectionInfo.align === "justify") ? "justify-around" :
-					(sectionInfo.align === "left") ?    "justify-start"   :
-					(sectionInfo.align === "center") ?  "justify-center"  :
-					"justify-end"
+				<div className={`w-full h-full border-red-500 border-[2px] flex flex-row justify-${
+					(sectionInfo.align === "justify") ? "around" :
+					(sectionInfo.align === "left") ?    "start"   :
+					(sectionInfo.align === "center") ?  "center"  :
+					"end"
 				}`}>
 					Header
 				</div>

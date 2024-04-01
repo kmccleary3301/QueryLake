@@ -28,12 +28,16 @@ import CompactInput from '@/registry/default/ui/compact-input';
 export function ContextMenuViewportWrapper({
 	onSplit,
 	onCollapse,
+	onAlign,
+	align,
 	headerAvailable = true,
 	footerAvailable = true,
 	children
 }: {
 	onSplit : (split_type : "horizontal" | "vertical" | "header" | "footer", count: number) => void,
 	onCollapse : () => void,
+	onAlign: (a : alignType) => void,
+	align: alignType,
 	headerAvailable?: boolean,
 	footerAvailable?: boolean,
 	children: React.ReactNode,
@@ -43,8 +47,26 @@ export function ContextMenuViewportWrapper({
 			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
 				{children}
 			</ContextMenuTrigger>
-			<ContextMenuContent className="space-y-2 pt-6 p-2">
-				<CompactInput placeholder='Inner Tailwind' className='h-8'/>
+			<ContextMenuContent className="space-y-1 pt-6 p-2">
+				<ToggleGroup 
+					type="single" 
+					onValueChange={(value : alignType | "") => {
+						if (value !== "") onAlign(value);
+					}}
+					className='flex flex-row justify-between'
+					value={align}
+				>
+					<ToggleGroupItem value="left" aria-label="Align left">
+						<AlignLeft className="h-4 w-4" />
+					</ToggleGroupItem>
+					<ToggleGroupItem value="center" aria-label="Align center">
+						<AlignCenter className="h-4 w-4" />
+					</ToggleGroupItem>
+					<ToggleGroupItem value="right" aria-label="Align right">
+						<AlignRight className="h-4 w-4" />
+					</ToggleGroupItem>
+				</ToggleGroup>
+				<div className='pt-2 pb-2'><CompactInput placeholder='Inner Tailwind' className='h-9'/></div>
 				<ContextMenuSeparator/>
 				<ContextMenuSub>
           <ContextMenuSubTrigger inset>

@@ -20,6 +20,7 @@ export type displayMappings = {
 
 export type contentSection = {
   split: "none",
+  align: alignType,
   mappings: displayMappings[],
   header?: headerSection,
   footer?: headerSection
@@ -46,6 +47,7 @@ export default function DisplayEditorPage() {
   const [windowCount, setWindowCount] = useState(1);
   const [section, setSection] = useState<displaySection>({
     split: "none",
+    align: "center",
     mappings: []
   });
 
