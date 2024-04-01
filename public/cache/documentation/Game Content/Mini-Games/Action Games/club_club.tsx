@@ -1,7 +1,0 @@
-
-const club_club = {
-	"slug": "Club Club",
-	"content": "## Overview\r\n\r\nClub Club is an action minigame featured in the party game *Top Dog*. It is a 2v2 player minigame where players engage in a joust match atop a balance beam, attempting to knock their opponents into an enclosing ball pit below.\r\n\r\n## Gameplay\r\n\r\nPlayers stand on opposite ends of a balance beam, equipped with oversized rubber clubs. The main objective is to knock the rival team off the beam into the ball pit without compromising their own position or hitting their teammate.\r\n\r\n## Relevant Files/Folders\r\n\r\n- `GAME FILE LINK: Characters/ClubClubDog.png`\r\n- `GAME FILE LINK: Characters/ClubClubDogLineup.png`\r\n\r\n## See Also\r\n\r\n- [[Characters]]\r\n- [[Mini-Games]]\r\n\r\n## Cited Document Text Segments\r\n\r\n#### Source 1\r\n```text\r\nLittle Wars:\r\n\r\n-   Little Wars\r\n\r\n    -   Each player gets a variety of troops to select from then deploys\r\n        them on the battlefield.\r\n\r\n    -   Free for All\r\n\r\n    -   Here was an image showing the 4 players each placed on their own\r\n        island. Bridges connect each island over rivers. Players can\r\n        select 1 of 4 buttons to deploy a type of troop.\r\n\r\nClub Club (jousting):\r\n\r\n-   Club Club\r\n\r\n    -   Players stand on a beam (battle beam) and take part in a joust.\r\n\r\n    -   Players attempt to knock the enemy off the battle beam and into\r\n        the ball pit without hurting their teammate.\r\n```"
-};
-
-export default club_club;
