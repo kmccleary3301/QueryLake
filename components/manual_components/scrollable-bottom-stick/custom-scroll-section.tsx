@@ -44,7 +44,9 @@ export default function ScrollSection({
 	innerClassName?: string,
 }) {
 
-	const [animateScroll, setAnimateScroll] = useState(false);
+	// Add a new state to keep track of whether there's overflow
+	const [isOverflowing, setIsOverflowing] = useState(false);
+	const [animateScroll, setAnimateScroll] = useState(true);
 	const scrollDiv = useRef<HTMLDivElement>(null);
 	const oldScrollValue = useRef(0);
   const oldScrollHeight = useRef(0);
@@ -54,28 +56,38 @@ export default function ScrollSection({
 
 	const interiorDiv = useRef<HTMLDivElement>(null);
 	const interiorDivSize = useSize(interiorDiv);
-
-	const [smoothScroll, setSmoothScroll]	= useState(false);
+	const [smoothScroll, setSmoothScroll]	= useState(true);
 	
+
 	const scrollToBottomHook = useCallback(() => {
+		console.log("Scrolling to bottom");
 		if (scrollDiv.current !== null) {
 			scrollDiv.current.scrollTo({
 				top: scrollDiv.current.scrollHeight,
         behavior: (smoothScroll)?"smooth":"instant"
       });
     }
-  }, [smoothScroll]);
-	
-	useEffect(() => {
-		setTimeout(() => { setSmoothScroll(true); }, 1000)
-	}, []);
+  }, [smoothScroll, scrollDiv]);
+
+
+	// useEffect(() => {
+	// 	setTimeout(() => { setSmoothScroll(true); }, 1000)
+	// }, []);
 
 	useEffect(() => {
-		// console.log("Resize monitor triggered");
+		console.log("Resize monitor triggered");
 		if (animateScroll) {
 			scrollToBottomHook();
 		}
-	}, [interiorDivSize, animateScroll, scrollToBottomHook]);
+	}, [interiorDivSize, scrollToBottomHook]);
+
+	useEffect(() => {
+		console.log("interiorDivSize Height changed to:", interiorDivSize?.height);
+		if (animateScroll && interiorDivSize?.height !== undefined) {
+			scrollToBottomHook();
+		}
+	}, [interiorDivSize?.height]);
+
 
 	useEffect(() => {
 		const div = interiorDiv.current;
@@ -90,56 +102,7 @@ export default function ScrollSection({
 		} else if (observer.current) {
 			observer.current.unobserve(div)
 		}
-	}, [animateScroll, scrollToBottomHook]);
-
-
-	// OLD VERSION ; Worked well, but it used default scrollbar and the Chrome scrollbar is ugly.
-  // return (
-	// 	<div className="scrollbar-custom mr-1 h-full w-[100%] overflow-y-auto"
-	// 	ref={scrollDiv}
-	// 	onChange={() => {
-	// 		if (animateScroll) {
-	// 			scrollToBottomHook();
-	// 		}
-	// 	}}
-	// 	onScroll={(e) => {
-	// 		if (animateScroll && e.currentTarget.scrollTop < oldScrollValue.current - 3 && e.currentTarget.scrollHeight === oldScrollHeight.current) {
-	// 			// console.log("Unlocking");
-	// 			setAnimateScroll(false);
-	// 		} else if (!animateScroll && Math.abs( e.currentTarget.scrollHeight - (e.currentTarget.scrollTop + e.currentTarget.clientHeight)) < 5) {
-	// 			// console.log("Locking Scroll");
-	// 			scrollToBottomHook();
-	// 			setAnimateScroll(true);
-	// 		}
-	// 		oldScrollValue.current = e.currentTarget.scrollTop;
-	// 		oldScrollHeight.current = e.currentTarget.scrollHeight;
-	// 	}}>
-	// 		<ScrollViewBottomStickInner bottomMargin={0}>
-	// 			<div className="flex flex-col" ref={interiorDiv}>
-	// 					{props.children}
-	// 			</div>
-	// 		</ScrollViewBottomStickInner>
-	// 		<div id="InputBox" className="flex flex-row justify-center h-0 pb-0">
-	// 			<div className="absolute h-0 flex flex-grow flex-col justify-end">
-	// 				<div className="bg-none flex flex-col justify-around pt-[10px] pb-0">
-	// 					<div id="scrollButton" className="bg-transparent flex flex-row justify-end pb-[10px]">
-	// 						{(animateScroll === false) && (
-
-	// 							<Button onClick={() => {
-	// 								// setAnimateScroll(true);
-	// 								if (scrollDiv.current !== null) {
-	// 									setAnimateScroll(true);
-	// 								}
-	// 							}} className="rounded-full bg-gray-800 z-5 p-0 w-10 h-10 items-center" variant={"secondary"}>
-	// 								<Icon.ChevronDown className="text-white w-[50%] h-[50%]" />
-	// 							</Button>
-	// 						)}
-	// 					</div>
-	// 				</div>
-	// 			</div> 
-	// 		</div>
-	// 	</div>
-  // );
+	}, [scrollToBottomHook]);
 
 	return (
 		<>
@@ -151,13 +114,20 @@ export default function ScrollSection({
 					id="scrollAreaPrimitive1" 
 					className="h-full w-full rounded-[inherit]"
 					onChange={() => {
-						// console.log("Change called")
+						console.log("Change called");
 						if (animateScroll && scrollToBottomButton) {
 							scrollToBottomHook();
 						}
 					}}
 					onScroll={(e) => {
-						if (animateScroll && e.currentTarget.scrollTop < oldScrollValue.current - 3 && e.currentTarget.scrollHeight === oldScrollHeight.current) {
+						const isNowOverflowing = e.currentTarget.scrollHeight > e.currentTarget.clientHeight;
+						if (isOverflowing !== isNowOverflowing) {
+							setIsOverflowing(isNowOverflowing);
+						}
+
+						if (animateScroll && e.currentTarget.scrollTop < oldScrollValue.current - 3 && 
+								e.currentTarget.scrollHeight === oldScrollHeight.current &&
+								isNowOverflowing) {
 							// console.log("Unlocking");
 							setAnimateScroll(false);
 						} else if (!animateScroll && Math.abs( e.currentTarget.scrollHeight - (e.currentTarget.scrollTop + e.currentTarget.clientHeight)) < 5) {
@@ -183,11 +153,12 @@ export default function ScrollSection({
 						<div className="absolute h-0 flex flex-grow flex-col justify-end">
 							<div className="bg-none flex flex-col justify-around pt-[10px] pb-0">
 								<div id="scrollButton" className="bg-transparent flex flex-row justify-end pb-[10px]">
-									{(animateScroll === false) && (
+									{(animateScroll === false && isOverflowing) && (
 										<Button onClick={() => {
 											// setAnimateScroll(true);
 											if (scrollDiv.current !== null) {
 												setAnimateScroll(true);
+												scrollToBottomHook();
 											}
 										}} className="rounded-full z-5 p-0 w-10 h-10 items-center" variant={"secondary"}>
 											<Icon.ChevronDown className="text-primary w-[50%] h-[50%]" />

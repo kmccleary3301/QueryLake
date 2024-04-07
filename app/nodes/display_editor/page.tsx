@@ -11,36 +11,7 @@ import {
 } from "./components/context-menu-wrapper";
 import ScrollSection from "@/components/manual_components/scrollable-bottom-stick/custom-scroll-section";
 import { DivisibleSection } from "./components/section-divisible";
-
-
-export type displayMappings = {
-  display_route: string[],
-  display_as: "chat" | "markdown" | "graph"
-}
-
-export type contentSection = {
-  split: "none",
-  align: alignType,
-  mappings: displayMappings[],
-  header?: headerSection,
-  footer?: headerSection
-}
-
-export type divisionSection = {
-  split: "horizontal" | "vertical",
-  sections: displaySection[],
-  header?: headerSection,
-  footer?: headerSection
-}
-
-export type alignType = "left" | "center" | "right" | "justify";
-
-export type headerSection = {
-  align: alignType,
-  mappings: displayMappings[]
-}
-
-export type displaySection = contentSection | divisionSection
+import { displaySection } from "@/types/toolchain-interface";
 
 
 export default function DisplayEditorPage() {
@@ -48,9 +19,10 @@ export default function DisplayEditorPage() {
   const [section, setSection] = useState<displaySection>({
     split: "none",
     align: "center",
+    tailwind: "",
     mappings: []
   });
-
+  
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
       <DivisibleSection

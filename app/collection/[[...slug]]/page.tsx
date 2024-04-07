@@ -33,11 +33,9 @@ import {
   modifyCollection
 } from "@/hooks/querylakeAPI";
 import { useContextAction } from "@/app/context-provider";
-import createUploader, { UPLOADER_EVENTS } from "@rpldy/uploader";
 import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/registry/default/ui/progress';
-import { set } from 'date-fns';
 
 const file_size_as_string = (size : number) => {
   if (size < 1024) {

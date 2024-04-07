@@ -15,7 +15,7 @@ import {
 	displaySection,
   contentSection,
   alignType
-} from "../page";
+} from "@/types/toolchain-interface";
 import { HeaderSection } from "./section-header";
 import { ContentSection } from "./section-content";
 
@@ -28,7 +28,7 @@ export function DivisibleSection({
   windowNumber,
   currentWindowCount,
   setCurrentWindowCount,
-  sectionInfo = {split: "none", align: "center", mappings: []}
+  sectionInfo = {split: "none", align: "center", tailwind: "", mappings: []}
 }:{
   onCollapse: () => void,
   onSectionUpdate: (section : displaySection) => void,
@@ -42,12 +42,16 @@ export function DivisibleSection({
 
   const onSplit = (splitType : "horizontal" | "vertical" | "header" | "footer", count: number) => {
     if (splitType == "horizontal" || splitType == "vertical") {
-      
-      const sections_array : contentSection[] = Array(count).fill({
+      let sections_array : contentSection[] = Array(count).fill({
         split: "none",
         align: "center",
         mappings: []
       });
+      
+      sections_array[0] = JSON.parse(JSON.stringify(sectionInfo)) as contentSection;
+      sections_array[0].header = undefined;
+      sections_array[0].footer = undefined;
+
 
       const { mappings, ...sectionInfoReduced } = sectionInfo as contentSection;
 
@@ -62,8 +66,8 @@ export function DivisibleSection({
       const new_section : displaySection = {
         ...sectionInfo,
         header: {
-          // split: "none",
           align: "justify",
+          tailwind: "",
           mappings: []
         }
       }
@@ -74,6 +78,7 @@ export function DivisibleSection({
         ...sectionInfo,
         footer: {
           align: "justify",
+          tailwind: "",
           mappings: []
         }
       }
@@ -190,6 +195,7 @@ export function DivisibleSection({
               onSectionUpdate({...sectionInfo, footer: s});
             }} 
             sectionInfo={sectionInfo.footer}
+            type="footer"
           />
         )}
       </ResizablePanelGroup>

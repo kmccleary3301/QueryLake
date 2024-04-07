@@ -18,18 +18,32 @@ import {
 	AlignLeft,
 	AlignRight,
 	AlignCenter,
-	AlignJustify
+	AlignJustify,
+	Wand
 } from 'lucide-react';
 import { Button } from '@/registry/default/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/registry/default/ui/toggle-group';
-import { alignType } from '../page';
+import { 
+	alignType, 
+	displayComponents, 
+	displayMapping,
+	DISPLAY_COMPONENTS,
+	INPUT_COMPONENTS,
+	contentMapping
+} from '@/types/toolchain-interface';
 import CompactInput from '@/registry/default/ui/compact-input';
+import { ChangeEvent, useRef } from 'react';
+import { config } from 'process';
+
 
 export function ContextMenuViewportWrapper({
 	onSplit,
 	onCollapse,
 	onAlign,
+	setTailwind,
+	addComponent,
 	align,
+	tailwind,
 	headerAvailable = true,
 	footerAvailable = true,
 	children
@@ -37,11 +51,16 @@ export function ContextMenuViewportWrapper({
 	onSplit : (split_type : "horizontal" | "vertical" | "header" | "footer", count: number) => void,
 	onCollapse : () => void,
 	onAlign: (a : alignType) => void,
+	setTailwind: (t : string) => void,
+	addComponent: (component : contentMapping) => void,
 	align: alignType,
+	tailwind: string,
 	headerAvailable?: boolean,
 	footerAvailable?: boolean,
 	children: React.ReactNode,
 }) {
+	const tailwindRef= useRef("");
+	
   return (
 		<ContextMenu>
 			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
@@ -57,17 +76,59 @@ export function ContextMenuViewportWrapper({
 					value={align}
 				>
 					<ToggleGroupItem value="left" aria-label="Align left">
-						<AlignLeft className="h-4 w-4" />
+						<AlignLeft className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 					<ToggleGroupItem value="center" aria-label="Align center">
-						<AlignCenter className="h-4 w-4" />
+						<AlignCenter className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 					<ToggleGroupItem value="right" aria-label="Align right">
-						<AlignRight className="h-4 w-4" />
+						<AlignRight className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 				</ToggleGroup>
-				<div className='pt-2 pb-2'><CompactInput placeholder='Inner Tailwind' className='h-9'/></div>
+				<div className='pt-2 pb-2 flex flex-row space-x-1'>
+					<CompactInput 
+						onChange={(e : ChangeEvent<HTMLInputElement>) => tailwindRef.current = e.target.value}
+						placeholder='Inner Tailwind' 
+						className='h-9 w-40'
+						defaultValue={tailwind}
+					/>
+					<Button className='h-9 px-0 w-9' variant={"ghost"} onClick={() => setTailwind(tailwindRef.current)}>
+						<Wand className='h-4 w-4 text-primary'/>
+					</Button>
+				</div>
 				<ContextMenuSeparator/>
+				<ContextMenuSub>
+          <ContextMenuSubTrigger inset>
+					<p className='text-primary/0 text-xs'>.</p>Add Display
+					</ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-48">
+						{DISPLAY_COMPONENTS.map((component, index) => (
+							<ContextMenuItem inset key={index} onClick={() => (addComponent({
+								display_route: [],
+								display_as: component
+							}))}>
+								{component}
+							</ContextMenuItem>
+						))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+				<ContextMenuSub>
+          <ContextMenuSubTrigger inset>
+					<p className='text-primary/0 text-xs'>.</p>Add Input
+					</ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-48">
+						{INPUT_COMPONENTS.map((component, index) => (
+							<ContextMenuItem inset key={index} onClick={() => (addComponent({
+								display_as: component,
+								hooks: [],
+								config: [],
+								tailwind: ""
+							}))}>
+								{component}
+							</ContextMenuItem>
+						))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
 				<ContextMenuSub>
           <ContextMenuSubTrigger inset>
 					<p className='text-primary/0 text-xs'>.</p>Split Horizontal <div className='w-2'/><ViewVerticalIcon viewBox="0 0 15.5 15"/>
@@ -113,14 +174,23 @@ export function ContextMenuViewportWrapper({
 export function ContextMenuHeaderWrapper({
 	onCollapse,
 	onAlign,
+	setTailwind,
+	addComponent,
 	align,
+	tailwind,
 	children
 }: {
 	onCollapse : () => void,
 	onAlign: (a : alignType) => void,
+	setTailwind: (t : string) => void,
+	addComponent: (component : contentMapping) => void,
 	align: alignType,
+	tailwind: string,
 	children: React.ReactNode,
 }) {
+
+	const tailwindRef= useRef("");
+
   return (
 		<ContextMenu>
 			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
@@ -136,18 +206,62 @@ export function ContextMenuHeaderWrapper({
 					value={align}
 				>
 					<ToggleGroupItem value="left" aria-label="Align left">
-						<AlignLeft className="h-4 w-4" />
+						<AlignLeft className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 					<ToggleGroupItem value="center" aria-label="Align center">
-						<AlignCenter className="h-4 w-4" />
+						<AlignCenter className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 					<ToggleGroupItem value="justify" aria-label="Align justify">
-						<AlignJustify className="h-4 w-4" />
+						<AlignJustify className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 					<ToggleGroupItem value="right" aria-label="Align right">
-						<AlignRight className="h-4 w-4" />
+						<AlignRight className="h-4 w-4 text-primary" />
 					</ToggleGroupItem>
 				</ToggleGroup>
+				<div className='pt-2 pb-2 flex flex-row space-x-1'>
+					<CompactInput 
+						onChange={(e : ChangeEvent<HTMLInputElement>) => tailwindRef.current = e.target.value}
+						placeholder='Inner Tailwind' 
+						className='h-9 w-40'
+						defaultValue={tailwind}
+					/>
+					<Button className='h-9 px-0 w-9' variant={"ghost"} onClick={() => setTailwind(tailwindRef.current)}>
+						<Wand className='h-4 w-4 text-primary'/>
+					</Button>
+				</div>
+				<ContextMenuSeparator/>
+				<ContextMenuSub>
+          <ContextMenuSubTrigger inset>
+					<p className='text-primary/0 text-xs'>.</p>Add Display
+					</ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-48">
+						{DISPLAY_COMPONENTS.map((component, index) => (
+							<ContextMenuItem inset key={index} onClick={() => (addComponent({
+								display_route: [],
+								display_as: component
+							}))}>
+								{component}
+							</ContextMenuItem>
+						))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+				<ContextMenuSub>
+          <ContextMenuSubTrigger inset>
+					<p className='text-primary/0 text-xs'>.</p>Add Input
+					</ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-48">
+						{INPUT_COMPONENTS.map((component, index) => (
+							<ContextMenuItem inset key={index} onClick={() => (addComponent({
+								display_as: component,
+								hooks: [],
+								config: [],
+								tailwind: ""
+							}))}>
+								{component}
+							</ContextMenuItem>
+						))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
 				<ContextMenuItem inset onClick={onCollapse}>
 					Delete
 				</ContextMenuItem>

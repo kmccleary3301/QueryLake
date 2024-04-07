@@ -6,6 +6,7 @@ const {
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  mode: 'jit',
   darkMode: ["class"],
   theme: {
     container: {
@@ -91,7 +92,6 @@ module.exports = {
     "registry/**/*.{ts,tsx}",
   ],
 }
-
 
 function addVariablesForColors({ addBase, theme }) {
   let allColors = flattenColorPalette(theme("colors"));

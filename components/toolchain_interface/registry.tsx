@@ -3,5 +3,5 @@ export type inputComponents = [
 ]
 
 export function inputComponentMapper() {
-
+    
 }
