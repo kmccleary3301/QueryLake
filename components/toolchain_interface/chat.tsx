@@ -21,25 +21,31 @@ export function ChatSkeleton({
 	);
 }
 
-export interface DocumentEmbeddingDictionary {
+export type DocumentEmbeddingDictionary = {
 	id: string;
-	collection_type?: string;
-	document_id?: string;
-	document_integrity?: string;
-	parent_collection_hash_id?: string;
 	document_name: string;
-	website_url?: string;
 	private: boolean;
 	text: string;
-	headline?: string;
-	cover_density_rank?: number;
-	rerank_score?: number;
-}
+} & (
+	{
+		collection_type: string;
+		document_id: string;
+		document_chunk_number: number;
+		document_integrity: string;
+		parent_collection_hash_id: string;
+	} | {
+		website_url: string;
+	}
+) & (
+	{ headline: string; cover_density_rank: number; } | {}
+) & (
+	{ rerank_score: number; } | {}
+)
 
 export type chatInput = {
 	role: "user" | "assistant",
 	content: string,
-	sources?: string[]
+	sources?: DocumentEmbeddingDictionary[]
 }[]
 
 export default function Chat({
