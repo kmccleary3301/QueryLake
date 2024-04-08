@@ -19,11 +19,11 @@ import { useContextAction } from "@/app/context-provider";
 import { deleteCookie } from '@/hooks/cookies';
 import { motion, useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';
-import { usePathname } from "next/navigation";
+// import { usePathname } from "next/navigation";
 import SidebarTemplate from './sidebar-template';
 
 export default function AppSidebar() {
-  const pathname = usePathname();
+  // const pathname = usePathname();
 
 	
 	

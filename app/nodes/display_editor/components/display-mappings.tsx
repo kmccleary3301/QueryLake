@@ -1,3 +1,4 @@
+"use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { 
 	DISPLAY_COMPONENTS, 
@@ -19,6 +20,11 @@ import RouteAddSheet from "./route-add-sheet";
 import SheetDemo from "@/registry/default/example/sheet-demo";
 import InputComponentSheet from "./input-component-sheet";
 import { BreadcrumbEllipsis } from "@/registry/default/ui/breadcrumb";
+import { FileUploadSkeleton } from "@/components/toolchain_interface/file-upload";
+import { ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
+import { ChatSkeleton } from "@/components/toolchain_interface/chat";
+import { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
+import { TextSkeleton } from "@/components/toolchain_interface/text";
 
 export function DisplayComponentSkeletonMapper({
 	info,
@@ -31,32 +37,15 @@ export function DisplayComponentSkeletonMapper({
 		// Display Components
 		case "chat":
 			return (
-				<div className="flex flex-row space-x-4 w-auto	">
-					<div>
-						<Skeleton className="rounded-full w-10 h-10"/>
-					</div>
-					<div className="flex-grow flex flex-col space-y-3">
-						{Array(10).fill(0).map((_, i) => (
-							<Skeleton key={i} className="rounded-full w-auto h-3"/>
-						))}
-					</div>
-				</div>
+				<ChatSkeleton configuration={info}/>
 			);
 		case "markdown":
 			return (
-				<div className="flex-grow flex flex-col space-y-3">
-					{Array(10).fill(0).map((_, i) => (
-						<Skeleton key={i} className="rounded-full w-auto h-3"/>
-					))}
-				</div>
+				<MarkdownSkeleton	configuration={info}/>
 			);
 		case "text":
 			return (
-				<div className="flex-grow flex flex-col space-y-3">
-					{Array(10).fill(0).map((_, i) => (
-						<Skeleton key={i} className="rounded-full w-auto h-3"/>
-					))}
-				</div>
+				<TextSkeleton configuration={info}/>
 			);
 		case "graph":
 			return (
@@ -68,11 +57,16 @@ export function DisplayComponentSkeletonMapper({
 
 		// Input Components
 		case "chat_input":
+			return (
+				<ChatInputSkeleton configuration={info}>
+					{children}
+				</ChatInputSkeleton>
+			)
 		case "file_upload":
 			return (
-				<Skeleton className="rounded-md h-10 border-dashed border-[2px] border-primary/50 flex flex-col justify-center">
+				<FileUploadSkeleton configuration={info}>
 					{children}
-				</Skeleton>
+				</FileUploadSkeleton>
 			);
 	}
 }
@@ -80,12 +74,16 @@ export function DisplayComponentSkeletonMapper({
 export default function DisplayMappings({
 	info,
 	onDelete,
-	onRouteSet,
+	setInfo,
 }:{
 	info: contentMapping,
 	onDelete: () => void,
-	onRouteSet: (route: (string | number)[]) => void
+	setInfo: (value: contentMapping) => void
 }) {
+
+	const onRouteSet = (value: (string | number)[]) => {
+		setInfo({...info, display_route: value} as displayMapping);
+	}	
 
 	return (
 		<>
@@ -127,14 +125,14 @@ export default function DisplayMappings({
 			</div>
 		) : ( // Input Component
 			<div className="flex flex-row space-x-2 w-auto">
-				
-
 				<DisplayComponentSkeletonMapper info={info}>
-					<div className="flex flex-row space-x-1">
+					<div className="flex flex-row space-x-1 w-auto justify-between">
 					<InputComponentSheet
 						value={info as inputMapping}
 						type={info.display_as as inputComponents}
-						onChange={(config) => {}}
+						onChange={(value : inputMapping) => {
+							setInfo(value);
+						}}
 						onDelete={onDelete}
 					>
 						{/* <Button size="icon" variant="ghost"> */}
@@ -145,7 +143,7 @@ export default function DisplayMappings({
 						</div>
 						{/* </Button> */}
 					</InputComponentSheet>
-					<p className="w-auto text-center select-none h-auto flex flex-col justify-center">
+					<p className="flex-grow text-center select-none h-auto flex flex-col justify-center">
 						{info.display_as}
 					</p>
 					{/* <Button size="icon" variant="ghost" onClick={onDelete}> */}

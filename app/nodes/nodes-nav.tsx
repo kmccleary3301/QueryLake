@@ -10,7 +10,9 @@ import {
   TabsTrigger,
 } from "@/registry/default/ui/tabs"
 import { motion } from 'framer-motion';
-import { ScrollArea } from "@radix-ui/react-scroll-area"
+import { Button } from "@/registry/default/ui/button"
+import { Download } from "lucide-react"
+import { useNodeContextAction } from "./context-provider"
 
 
 const examples = [
@@ -27,6 +29,12 @@ const examples = [
 interface ExamplesNavProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function NodesNav({ className, ...props }: ExamplesNavProps) {
+
+  const { 
+    interfaceConfiguration, 
+    setInterfaceConfiguration
+  } = useNodeContextAction();
+
   const pathname = usePathname() || "";
   
   const searchParamsString = useSearchParams()?.toString() || undefined;
@@ -34,18 +42,17 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
 
   const [hover, setHover] = useState(false);
 
-  // const divRef = useRef<HTMLDivElement>(null);
-
-  // const scrollToBottom = () => {
-  //   const div = divRef.current;
-  //   if (div) {
-  //     div.scrollTop = div.scrollHeight;
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [hover]); // add any other dependencies that could change the content of the div
+  const downloadHook = (json : object, filename : string) => {
+    const data = JSON.stringify(json, null, '\t');
+    const blob = new Blob([data], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="">
@@ -59,19 +66,8 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
         transition={{ duration: 0.2 }}
         onHoverStart={() => setHover(true)}
         onHoverEnd={() => setHover(false)}
-        // onChange={()=>{scrollToBottom();}}
-        // ref={divRef}
       >
-        <div className="pb-2 pt-2">
-          {/* <motion.div
-            className="w-auto bg-secondary"
-            animate={ (hover) ? 
-              { height: 0, borderRadius: "10px"} : 
-              { height: 10, borderRadius: "0px 0px 10px 10px"}
-            }
-            transition={{ duration: 0.2, delay: 0.01 }}
-          >
-          </motion.div> */}
+        <div className="pb-2 pt-2 flex flex-col">
             <Tabs defaultValue={pathname} onValueChange={(value : string) => {console.log("Value changed to", value)}}>
               <TabsList className="grid w-full grid-cols-2 rounded-none">
                 {examples.map((example, index) => (
@@ -83,6 +79,13 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
                 ))}
               </TabsList>
             </Tabs>
+            <div className="w-auto flex flex-row justify-end">
+              <Button size="icon" variant="ghost" onClick={() => {
+                downloadHook(interfaceConfiguration, "interface-configuration.json");
+              }}>
+                <Download className="w-4 h-4 text-primary" />
+							</Button>
+            </div>
         </div>
       </motion.div>
     </div>

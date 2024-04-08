@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/registry/default/ui/button"
 import { Input } from "@/registry/default/ui/input"
 import { Label } from "@/registry/default/ui/label"
@@ -56,7 +57,7 @@ export default function InputComponentSheet({
 	useEffect(() => {resetActingValue()}, [value]);
 
 	return (
-		<Sheet onOpenChange={resetActingValue}>
+		<Sheet>
 			<SheetTrigger asChild>
 				{children}
 			</SheetTrigger>
@@ -135,6 +136,7 @@ export default function InputComponentSheet({
 										setHook({...hookLocal, target_event: event.target.value}, index);
 									}}
 									placeholder="Target Event"
+									spellCheck={false}
 								/>
 								<Input
 									value={hookLocal.target_route} 
@@ -149,6 +151,7 @@ export default function InputComponentSheet({
 										});
 									}}
 									placeholder="Target Route"
+									spellCheck={false}
 								/>
 							</div>
 							</Fragment>

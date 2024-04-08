@@ -5,7 +5,8 @@ import {
 import ScrollSection from "@/components/manual_components/scrollable-bottom-stick/custom-scroll-section";
 import {
   contentSection,
-  alignType
+  alignType,
+	contentMapping
 } from "@/types/toolchain-interface";
 import { cn } from "@/lib/utils";
 import DisplayMappings from "./display-mappings";
@@ -65,10 +66,10 @@ export function ContentSection({
 									...sectionInfo, 
 									mappings: [...sectionInfo.mappings.slice(0, index), ...sectionInfo.mappings.slice(index+1)]
 								} as contentSection)}}
-								onRouteSet={(route : (string | number)[]) => {
+								setInfo={(value : contentMapping) => {
 									onSectionUpdate({
 										...sectionInfo, 
-										mappings: [...sectionInfo.mappings.slice(0, index), {...mapping, display_route: route}, ...sectionInfo.mappings.slice(index+1)]
+										mappings: [...sectionInfo.mappings.slice(0, index), value, ...sectionInfo.mappings.slice(index+1)]
 									} as contentSection);
 								}}
 							/>

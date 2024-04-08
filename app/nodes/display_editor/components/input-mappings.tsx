@@ -1,3 +1,4 @@
+"use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
 import { Input } from "@/registry/default/ui/input";

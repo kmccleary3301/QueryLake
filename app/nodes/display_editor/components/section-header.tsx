@@ -5,6 +5,7 @@ import {
 } from "./context-menu-wrapper";
 import {
 	alignType,
+	contentMapping,
 	contentSection,
 	headerSection
 } from "@/types/toolchain-interface";
@@ -61,10 +62,10 @@ export function HeaderSection({
 									...sectionInfo, 
 									mappings: [...sectionInfo.mappings.slice(0, index), ...sectionInfo.mappings.slice(index+1)]
 								} as contentSection)}}
-								onRouteSet={(route : (string | number)[]) => {
+								setInfo={(value : contentMapping) => {
 									onSectionUpdate({
 										...sectionInfo, 
-										mappings: [...sectionInfo.mappings.slice(0, index), {...mapping, display_route: route}, ...sectionInfo.mappings.slice(index+1)]
+										mappings: [...sectionInfo.mappings.slice(0, index), value, ...sectionInfo.mappings.slice(index+1)]
 									} as contentSection);
 								}}
 							/>

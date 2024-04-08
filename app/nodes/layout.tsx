@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { NodesNav } from "./nodes-nav"
+import { NodeContextProvider } from "./context-provider"
 
 export const metadata: Metadata = {
   title: "Examples",
@@ -12,9 +13,16 @@ interface ExamplesLayoutProps {
 }
 
 export default function NodesLayout({ children, searchParams }: ExamplesLayoutProps) {
+  
   return (
     <>
       <div>
+        <NodeContextProvider interfaceConfiguration={{
+          split: "none",
+          align: "center",
+          tailwind: "",
+          mappings: []
+        }}>
         {/* <section>
           <div className="overflow-hidden rounded-[0.5rem] border bg-background shadow-md md:shadow-xl">
             
@@ -26,6 +34,7 @@ export default function NodesLayout({ children, searchParams }: ExamplesLayoutPr
           </div>
         </div>
         {children}
+        </NodeContextProvider>
       </div>
     </>
   )

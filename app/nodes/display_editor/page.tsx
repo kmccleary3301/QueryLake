@@ -1,20 +1,16 @@
 "use client";
-import { Dispatch, SetStateAction, useState, useMemo, useEffect } from "react"
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/registry/default/ui/resizable"
-import { 
-  ContextMenuViewportWrapper,
-  ContextMenuHeaderWrapper
-} from "./components/context-menu-wrapper";
-import ScrollSection from "@/components/manual_components/scrollable-bottom-stick/custom-scroll-section";
+import { useState } from "react"
 import { DivisibleSection } from "./components/section-divisible";
 import { displaySection } from "@/types/toolchain-interface";
+import { useNodeContextAction } from "../context-provider"
 
 
 export default function DisplayEditorPage() {
+  const { 
+    interfaceConfiguration, 
+    setInterfaceConfiguration
+  } = useNodeContextAction();
+
   const [windowCount, setWindowCount] = useState(1);
   const [section, setSection] = useState<displaySection>({
     split: "none",
@@ -28,12 +24,12 @@ export default function DisplayEditorPage() {
       <DivisibleSection
         onCollapse={() => {}}
         onSectionUpdate={(sectionLocal) => {
-          setSection(sectionLocal);
+          setInterfaceConfiguration(sectionLocal);
         }}
         windowNumber={windowCount}
         currentWindowCount={windowCount}
         setCurrentWindowCount={setWindowCount}
-        sectionInfo={section}
+        sectionInfo={interfaceConfiguration}
       />
     </div>
   )
