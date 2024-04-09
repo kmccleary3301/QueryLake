@@ -10,72 +10,112 @@ import {
 } from "@/types/toolchain-interface";
 import { cn } from "@/lib/utils";
 import DisplayMappings from "./display-mappings";
-import { useEffect } from "react";
+import { useEffect, memo, useState, useRef } from "react";
 
 const large_array = Array(350).fill(0);
+
+export function DivTailwindRerender({
+	className,
+	children
+}:{
+	className: string | string[],
+	children: React.ReactNode
+}) {
+	const [tailwindRendered, setTailwindRendered] = useState(false);
+	
+	useEffect(() => {
+		// setKey(prevKey => prevKey + 1);
+		setTailwindRendered(false);
+		// console.log("New Tailwind:", className);
+	}, [className]);
+
+	useEffect(() => {
+		setTailwindRendered(true);
+	}, [tailwindRendered]);
+
+	if (!tailwindRendered) {
+		return null;
+	} else {
+		return (
+			<div className={(typeof className === "string") ? className : cn(...className)}>
+				{children}
+			</div>
+		);
+	}
+
+}
+
 
 export function ContentSection({
 	onSplit,
   onCollapse,
   onSectionUpdate,
-  sectionInfo = {split: "none", align: "center", tailwind: "", mappings: []}
+  sectionInfo = {split: "none", size: 100, align: "center", tailwind: "", mappings: []}
 }:{
 	onSplit: (split_type : "horizontal" | "vertical" | "header" | "footer", count: number) => void,
   onCollapse: () => void,
   onSectionUpdate: (section : contentSection) => void,
   sectionInfo: contentSection,
 }) {
-	useEffect(() => {console.log(cn(sectionInfo.tailwind, "flex flex-col"))}, [sectionInfo.tailwind]);
+	const [section, setSection] = useState<contentSection>(sectionInfo);
+	const sectionRef = useRef<contentSection>(sectionInfo);
 
+	const updateSectionUpstream = (sectionLocal : contentSection) => {
+    sectionRef.current = JSON.parse(JSON.stringify(sectionLocal));
+    onSectionUpdate(sectionRef.current);
+  }
+
+  const updateSection = (sectionLocal : contentSection) => {
+    setSection(sectionLocal);
+    updateSectionUpstream(sectionLocal);
+  }
+
+	// useEffect(() => {console.log(cn(section.tailwind, "flex flex-col"))}, [section.tailwind]);
 
   return (
     <ContextMenuViewportWrapper
 			onSplit={onSplit} 
 			onCollapse={onCollapse}
 			onAlign={(a : alignType) => {
-				onSectionUpdate({...sectionInfo, align: a} as contentSection);
+				updateSection({...section, align: a} as contentSection);
 			}}
 			setTailwind={(t : string) => {
-				onSectionUpdate({...sectionInfo, tailwind: t} as contentSection);
+				updateSection({...section, tailwind: t} as contentSection);
 			}}
 			addComponent={(component) => {
-				onSectionUpdate({...sectionInfo, mappings: [...sectionInfo.mappings, component]} as contentSection);
+				updateSection({...section, mappings: [...section.mappings, component]} as contentSection);
 			}}
-			align={sectionInfo.align}
-			tailwind={sectionInfo.tailwind}
-			headerAvailable={(sectionInfo.header === undefined)}
-			footerAvailable={(sectionInfo.footer === undefined)}
+			align={section.align}
+			tailwind={section.tailwind}
+			headerAvailable={(section.header === undefined)}
+			footerAvailable={(section.footer === undefined)}
 		>
 			<ScrollSection scrollBar={true} scrollToBottomButton={true} innerClassName={`w-full`}>
-				<div className={`flex flex-row justify-${
-					(sectionInfo.align === "justify") ? "around" :
-					(sectionInfo.align === "left") ?    "start"   :
-					(sectionInfo.align === "center") ?  "center"  :
+				<DivTailwindRerender className={`flex flex-row justify-${
+					(section.align === "justify") ? "around" :
+					(section.align === "left") ?    "start"   :
+					(section.align === "center") ?  "center"  :
 					"end"
 				}`}>
-					<div className={cn("flex flex-col", sectionInfo.tailwind)}>
-						{/* {large_array.map((_, index) => (
-							<div key={index} className="h-[50px]">{index+1}</div>
-						))} */}
-						{sectionInfo.mappings.map((mapping, index) => (
-							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
+					<DivTailwindRerender className={["flex flex-col", section.tailwind]}>
+						{section.mappings.map((mapping, index) => (
 							<DisplayMappings 
 								key={index} 
 								info={mapping}
-								onDelete={() => {onSectionUpdate({
-									...sectionInfo, 
-									mappings: [...sectionInfo.mappings.slice(0, index), ...sectionInfo.mappings.slice(index+1)]
+								onDelete={() => {updateSection({
+									...section, 
+									mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
 								} as contentSection)}}
 								setInfo={(value : contentMapping) => {
-									onSectionUpdate({
-										...sectionInfo, 
-										mappings: [...sectionInfo.mappings.slice(0, index), value, ...sectionInfo.mappings.slice(index+1)]
+									updateSection({
+										...section, 
+										mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
 									} as contentSection);
 								}}
 							/>
 						))}
-					</div>
-				</div>
+					</DivTailwindRerender>
+				</DivTailwindRerender>
 			</ScrollSection>
 		</ContextMenuViewportWrapper>
   );

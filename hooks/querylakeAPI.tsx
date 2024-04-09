@@ -114,9 +114,9 @@ export function getUserCollections(args: getUserCollectionsArgs) {
           } catch { return; }
         }
       } catch { return; }
-      console.log("Start");
+      // console.log("Start");
       if (args.set_value) args.set_value(collection_groups_fetch);
-      console.log("End");
+      // console.log("End");
     });
   });
   // return collection_groups_fetch;

@@ -1,12 +1,9 @@
 "use client";
-
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import * as Icon from 'react-feather';
-import ScrollViewBottomStickInner from "./scrollview-bottom-stick-inner";
 import { Button } from "@/registry/default/ui/button";
 import useResizeObserver from '@react-hook/resize-observer';
 import { ScrollBar } from "@/registry/default/ui/scroll-area";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 import { cn } from "@/lib/utils";
 
@@ -60,7 +57,7 @@ export default function ScrollSection({
 	
 
 	const scrollToBottomHook = useCallback(() => {
-		console.log("Scrolling to bottom");
+		// console.log("Scrolling to bottom");
 		if (scrollDiv.current !== null) {
 			scrollDiv.current.scrollTo({
 				top: scrollDiv.current.scrollHeight,
@@ -75,14 +72,14 @@ export default function ScrollSection({
 	// }, []);
 
 	useEffect(() => {
-		console.log("Resize monitor triggered");
+		// console.log("Resize monitor triggered");
 		if (animateScroll) {
 			scrollToBottomHook();
 		}
 	}, [interiorDivSize, scrollToBottomHook]);
 
 	useEffect(() => {
-		console.log("interiorDivSize Height changed to:", interiorDivSize?.height);
+		// console.log("interiorDivSize Height changed to:", interiorDivSize?.height);
 		if (animateScroll && interiorDivSize?.height !== undefined) {
 			scrollToBottomHook();
 		}
@@ -114,7 +111,7 @@ export default function ScrollSection({
 					id="scrollAreaPrimitive1" 
 					className="h-full w-full rounded-[inherit]"
 					onChange={() => {
-						console.log("Change called");
+						// console.log("Change called");
 						if (animateScroll && scrollToBottomButton) {
 							scrollToBottomHook();
 						}

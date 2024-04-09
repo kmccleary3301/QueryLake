@@ -32,7 +32,8 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
 
   const { 
     interfaceConfiguration, 
-    setInterfaceConfiguration
+    // setInterfaceConfiguration
+    getInterfaceConfiguration
   } = useNodeContextAction();
 
   const pathname = usePathname() || "";
@@ -81,7 +82,7 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
             </Tabs>
             <div className="w-auto flex flex-row justify-end">
               <Button size="icon" variant="ghost" onClick={() => {
-                downloadHook(interfaceConfiguration, "interface-configuration.json");
+                downloadHook(getInterfaceConfiguration(), "interface-configuration.json");
               }}>
                 <Download className="w-4 h-4 text-primary" />
 							</Button>

@@ -23,9 +23,13 @@ export function ChatInputSkeleton({
 
 
 export default function ChatInput({
-	configuration
+	configuration,
+  on_upload = () => {},
+  on_submit = () => {}
 }:{
-	configuration: inputMapping
+	configuration: inputMapping,
+  on_upload?: (files: File[]) => void,
+  on_submit?: (text: string) => void
 }) {
     
 }

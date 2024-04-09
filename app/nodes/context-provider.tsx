@@ -1,21 +1,21 @@
 // ThemeProvider.tsx
 'use client';
 import {
-	Dispatch,
 	PropsWithChildren,
-	SetStateAction,
 	createContext,
 	useContext,
-	useState,
+	useRef,
 } from 'react';
 import { displaySection } from '@/types/toolchain-interface';
 
 const NodeContext = createContext<{
 	interfaceConfiguration: displaySection;
-	setInterfaceConfiguration: Dispatch<SetStateAction<displaySection>>;
+	setInterfaceConfiguration: (value: displaySection) => void;
+	getInterfaceConfiguration: () => displaySection;
 }>({
 	interfaceConfiguration: {
 		split: "none",
+		size: 100,
 		align: "center",
 		tailwind: "",
 		mappings: []
@@ -23,11 +23,21 @@ const NodeContext = createContext<{
 	setInterfaceConfiguration: () => {
 		return {
 			split: "none",
+			size: 100,
 			align: "center",
 			tailwind: "",
 			mappings: []
 		}
 	},
+	getInterfaceConfiguration: () => {
+		return {
+			split: "none",
+			size: 100,
+			align: "center",
+			tailwind: "",
+			mappings: []
+		}
+	}
 });
 
 export const NodeContextProvider = ({
@@ -36,12 +46,21 @@ export const NodeContextProvider = ({
 }: PropsWithChildren<{ 
 	interfaceConfiguration : displaySection,
 }>) => {
-	const [interface_configuration, set_interface_configuration] = useState<displaySection>(interfaceConfiguration);
+	// const [interface_configuration, set_interface_configuration] = useState<displaySection>(interfaceConfiguration);
+	const interface_configuration = useRef<displaySection>(interfaceConfiguration);
+	const set_interface_configuration = (value: displaySection) => {
+		interface_configuration.current = value;
+		// console.log(interface_configuration.current);
+	};
+	const get_interface_configuration : () => displaySection = () => {
+		return interface_configuration.current;
+	};
 
 	return (
 		<NodeContext.Provider value={{ 
-			interfaceConfiguration: interface_configuration,
+			interfaceConfiguration: interface_configuration.current,
 			setInterfaceConfiguration: set_interface_configuration,
+			getInterfaceConfiguration: get_interface_configuration
 		}}>
 			{children}
 		</NodeContext.Provider>

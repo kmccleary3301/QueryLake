@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { DivisibleSection } from "./components/section-divisible";
 import { displaySection } from "@/types/toolchain-interface";
 import { useNodeContextAction } from "../context-provider"
@@ -12,24 +12,36 @@ export default function DisplayEditorPage() {
   } = useNodeContextAction();
 
   const [windowCount, setWindowCount] = useState(1);
-  const [section, setSection] = useState<displaySection>({
+  const [section, setSection] = useState<displaySection>(JSON.parse(JSON.stringify(interfaceConfiguration)));
+
+  
+
+  const sectionRef = useRef<displaySection>({
     split: "none",
+    size: 100,
     align: "center",
     tailwind: "",
     mappings: []
   });
+
+  const sectionUpdate = (sectionLocal : displaySection) => {
+    sectionRef.current = sectionLocal;
+    setInterfaceConfiguration(sectionRef.current);
+
+    // setInterfaceConfiguration(sectionLocal);
+    // console.log(sectionLocal);
+  }
   
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
       <DivisibleSection
         onCollapse={() => {}}
-        onSectionUpdate={(sectionLocal) => {
-          setInterfaceConfiguration(sectionLocal);
-        }}
+        onSectionUpdate={sectionUpdate}
         windowNumber={windowCount}
         currentWindowCount={windowCount}
         setCurrentWindowCount={setWindowCount}
-        sectionInfo={interfaceConfiguration}
+        // sectionInfo={sectionRef.current}
+        sectionInfo={section}
       />
     </div>
   )

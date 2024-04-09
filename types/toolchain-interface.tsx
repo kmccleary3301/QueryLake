@@ -80,6 +80,7 @@ export type contentMapping = displayMapping | inputMapping;
 
 export type contentSection = {
   split: "none",
+  size: number,
   align: alignType,
   tailwind: string,
   mappings: contentMapping[],
@@ -89,6 +90,7 @@ export type contentSection = {
 
 export type divisionSection = {
   split: "horizontal" | "vertical",
+  size: number,
   sections: displaySection[],
   header?: headerSection,
   footer?: headerSection

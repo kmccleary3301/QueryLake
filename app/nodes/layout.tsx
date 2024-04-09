@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import { NodesNav } from "./nodes-nav"
 import { NodeContextProvider } from "./context-provider"
+import { useRef } from "react"
 
 export const metadata: Metadata = {
   title: "Examples",
@@ -19,6 +20,7 @@ export default function NodesLayout({ children, searchParams }: ExamplesLayoutPr
       <div>
         <NodeContextProvider interfaceConfiguration={{
           split: "none",
+          size: 100,
           align: "center",
           tailwind: "",
           mappings: []

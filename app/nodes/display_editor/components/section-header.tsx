@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   ContextMenuHeaderWrapper
 } from "./context-menu-wrapper";
@@ -23,6 +23,19 @@ export function HeaderSection({
 	sectionInfo: headerSection,
 	type?: "header" | "footer"
 }) {
+	const [section, setSection] = useState<headerSection>(sectionInfo);
+	const sectionRef = useRef<headerSection>(sectionInfo);
+
+	const updateSectionUpstream = (sectionLocal : headerSection) => {
+    sectionRef.current = JSON.parse(JSON.stringify(sectionLocal));
+    onSectionUpdate(sectionRef.current);
+  }
+
+  const updateSection = (sectionLocal : headerSection) => {
+    setSection(sectionLocal);
+    updateSectionUpstream(sectionLocal);
+  }
+
 
 	useEffect(() => {
 		console.log("New Header Tailwind:", sectionInfo.tailwind);
@@ -34,38 +47,38 @@ export function HeaderSection({
 			<ContextMenuHeaderWrapper 
 				onCollapse={onCollapse} 
 				onAlign={(a : alignType) => {
-					onSectionUpdate({...sectionInfo, align: a})
+					updateSection({...section, align: a})
 				}}
 				setTailwind={(t : string) => {
-					onSectionUpdate({...sectionInfo, tailwind: t} as headerSection)
+					updateSection({...section, tailwind: t} as headerSection)
 				}}
 				addComponent={(component) => {
-					onSectionUpdate({...sectionInfo, mappings: [...sectionInfo.mappings, component]} as headerSection);
+					updateSection({...section, mappings: [...section.mappings, component]} as headerSection);
 				}}
-				align={sectionInfo.align}
-				tailwind={sectionInfo.tailwind}
+				align={section.align}
+				tailwind={section.tailwind}
 			>
 				<div className={cn(`w-full h-full border-primary/50 border-[2px] border-dashed flex flex-row justify-${
-					(sectionInfo.align === "justify") ? "around" :
-					(sectionInfo.align === "left") ?    "start"   :
-					(sectionInfo.align === "center") ?  "center"  :
+					(section.align === "justify") ? "around" :
+					(section.align === "left") ?    "start"   :
+					(section.align === "center") ?  "center"  :
 					"end"
-				}`, sectionInfo.tailwind)}>
-					{(sectionInfo.mappings.length === 0) && (<p className="select-none">{(type === "header")?"Header":"Footer"}</p>)}
+				}`, section.tailwind)}>
+					{(section.mappings.length === 0) && (<p className="select-none">{(type === "header")?"Header":"Footer"}</p>)}
 
-					{sectionInfo.mappings.map((mapping, index) => (
+					{section.mappings.map((mapping, index) => (
 							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
 							<DisplayMappings 
 								key={index} 
 								info={mapping}
-								onDelete={() => {onSectionUpdate({
-									...sectionInfo, 
-									mappings: [...sectionInfo.mappings.slice(0, index), ...sectionInfo.mappings.slice(index+1)]
+								onDelete={() => {updateSection({
+									...section, 
+									mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
 								} as contentSection)}}
 								setInfo={(value : contentMapping) => {
-									onSectionUpdate({
-										...sectionInfo, 
-										mappings: [...sectionInfo.mappings.slice(0, index), value, ...sectionInfo.mappings.slice(index+1)]
+									updateSection({
+										...section, 
+										mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
 									} as contentSection);
 								}}
 							/>

@@ -20,9 +20,11 @@ export function FileUploadSkeleton({
 
 
 export default function FileUpload({
-	configuration
+	configuration,
+  on_upload = () => {}
 }:{
-	configuration: inputMapping
+	configuration: inputMapping,
+  on_upload?: (files: File[]) => void
 }) {
-    
+  
 }
