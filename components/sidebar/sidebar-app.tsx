@@ -17,7 +17,7 @@ import SidebarChatHistory from './sidebar-history';
 import Link from 'next/link';
 import { useContextAction } from "@/app/context-provider";
 import { deleteCookie } from '@/hooks/cookies';
-import { motion, useAnimation } from "framer-motion";
+import { useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';
 // import { usePathname } from "next/navigation";
 import SidebarTemplate from './sidebar-template';

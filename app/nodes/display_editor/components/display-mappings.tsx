@@ -88,7 +88,7 @@ export default function DisplayMappings({
 	return (
 		<>
 		{(DISPLAY_COMPONENTS.includes(info.display_as as displayComponents)) ? ( // Display Component
-			<div className="flex flex-col w-auto pt-4 space-y-2">
+			<div className="flex-grow flex flex-col pt-4 space-y-2">
 				<div className="w-auto flex flex-row space-x-2 justify-between">
 					<div className="flex-grow h-auto flex flex-col justify-center text-base">
 						<div className="flex flex-row">

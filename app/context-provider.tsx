@@ -21,9 +21,9 @@ import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import { useRouter } from 'next/navigation';
 import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
-import { set } from 'date-fns';
 import { getUserCollections } from '@/hooks/querylakeAPI';
 
+export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 const Context = createContext<{
 	userData: userDataType | undefined;
@@ -52,6 +52,8 @@ const Context = createContext<{
 	setLoginValid : setStateOrCallback<boolean>,
 
 	getUserData : (user_data_input : userDataType | undefined, onFinish : () => void) => void,
+
+	breakpoint : breakpointType,
 }>({
 	userData: undefined,
 	setUserData: () => undefined,
@@ -78,7 +80,9 @@ const Context = createContext<{
 	loginValid: false,
 	setLoginValid: () => false,
 
-	getUserData: () => undefined
+	getUserData: () => undefined,
+
+	breakpoint: '2xl',
 });
 
 
@@ -105,7 +109,6 @@ export const ContextProvider = ({
 	const router = useRouter();
 
 	const [user_data, set_user_data] = useState<userDataType | undefined>(userData);
-
 	const [collection_groups, set_collection_groups] = useState<collectionGroup[]>([]);
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
@@ -113,6 +116,35 @@ export const ContextProvider = ({
 	const [selected_toolchain, set_selected_toolchain] = useState<toolchain_type | undefined>(undefined);
 	const [auth_reviewed, set_auth_reviewed] = useState<boolean>(false);
 	const [login_valid, set_login_valid] = useState<boolean>(false);
+	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
+
+
+	useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+
+    const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
+    const widths = [0, 640, 768, 1024, 1280, 1536];
+
+		const updateBreakpoint = () => {
+			const width = window.innerWidth;
+			let index = widths.findIndex(w => width < w);
+			if (index !== -1) {
+				index = index === 0 ? 0 : index - 1;
+			} else {
+				index = breakpoints.length - 1;
+			}
+			set_breakpoint(breakpoints[index]);
+		};
+
+    window.addEventListener('resize', updateBreakpoint);
+
+    updateBreakpoint();
+
+    return () => window.removeEventListener('resize', updateBreakpoint);
+  }, []);
+
+	// useEffect(() => {console.log("BREAKPOINT:", break_point)}, [break_point]);
+
 
 	const get_user_data = async (user_data_input : userDataType | undefined, onFinish : () => void) => {
 		if (user_data_input !== undefined) {
@@ -180,7 +212,8 @@ export const ContextProvider = ({
 			setAuthReviewed : set_auth_reviewed,
 			loginValid : login_valid,
 			setLoginValid : set_login_valid,
-			getUserData : get_user_data
+			getUserData : get_user_data,
+			breakpoint : break_point,
 		}}>
 			{children}
 		</Context.Provider>

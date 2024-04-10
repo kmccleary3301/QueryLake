@@ -64,12 +64,12 @@ export function DivisibleSection({
 
       sizes.current = Array(count).fill(Math.min(100/count, 100));
       
-      sections_array[0] = JSON.parse(JSON.stringify(section)) as contentSection;
+      sections_array[0] = JSON.parse(JSON.stringify(sectionRef.current)) as contentSection;
       sections_array[0].header = undefined;
       sections_array[0].footer = undefined;
 
 
-      const { mappings, ...sectionInfoReduced } = section as contentSection;
+      const { mappings, ...sectionInfoReduced } = sectionRef.current as contentSection;
 
       const new_section : divisionSection = {
         ...sectionInfoReduced,
@@ -80,7 +80,7 @@ export function DivisibleSection({
       updateSection(new_section);
     } else if (splitType === "header") {
       const new_section : displaySection = {
-        ...section,
+        ...sectionRef.current,
         header: {
           align: "justify",
           tailwind: "",
@@ -91,7 +91,7 @@ export function DivisibleSection({
       updateSection(new_section);
     } else if (splitType === "footer") {
       const new_section : displaySection = {
-        ...section,
+        ...sectionRef.current,
         footer: {
           align: "justify",
           tailwind: "",
@@ -184,10 +184,10 @@ export function DivisibleSection({
                     // let new_section = sectionInfo as divisionSection;
                     // new_section.sections[index] = sectionLocal;
                     // setSection(new_section);
-                    updateSectionUpstream({...(section as divisionSection), sections: [
-                      ...(section as divisionSection).sections.slice(0, index),
+                    updateSectionUpstream({...(sectionRef.current as divisionSection), sections: [
+                      ...(sectionRef.current as divisionSection).sections.slice(0, index),
                       sectionLocal,
-                      ...(section as divisionSection).sections.slice(index+1)
+                      ...(sectionRef.current as divisionSection).sections.slice(index+1)
                     ]});
                   }}
                   windowNumber={windowNumber}

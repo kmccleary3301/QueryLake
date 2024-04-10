@@ -8,43 +8,11 @@ import {
   alignType,
 	contentMapping
 } from "@/types/toolchain-interface";
-import { cn } from "@/lib/utils";
 import DisplayMappings from "./display-mappings";
-import { useEffect, memo, useState, useRef } from "react";
-
-const large_array = Array(350).fill(0);
-
-export function DivTailwindRerender({
-	className,
-	children
-}:{
-	className: string | string[],
-	children: React.ReactNode
-}) {
-	const [tailwindRendered, setTailwindRendered] = useState(false);
-	
-	useEffect(() => {
-		// setKey(prevKey => prevKey + 1);
-		setTailwindRendered(false);
-		// console.log("New Tailwind:", className);
-	}, [className]);
-
-	useEffect(() => {
-		setTailwindRendered(true);
-	}, [tailwindRendered]);
-
-	if (!tailwindRendered) {
-		return null;
-	} else {
-		return (
-			<div className={(typeof className === "string") ? className : cn(...className)}>
-				{children}
-			</div>
-		);
-	}
-
-}
-
+import { useState, useRef } from "react";
+// import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
+import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
+import { useContextAction } from "@/app/context-provider";
 
 export function ContentSection({
 	onSplit,
@@ -57,6 +25,11 @@ export function ContentSection({
   onSectionUpdate: (section : contentSection) => void,
   sectionInfo: contentSection,
 }) {
+	
+	const { 
+		breakpoint
+  } = useContextAction();
+
 	const [section, setSection] = useState<contentSection>(sectionInfo);
 	const sectionRef = useRef<contentSection>(sectionInfo);
 
@@ -91,13 +64,15 @@ export function ContentSection({
 			footerAvailable={(section.footer === undefined)}
 		>
 			<ScrollSection scrollBar={true} scrollToBottomButton={true} innerClassName={`w-full`}>
-				<DivTailwindRerender className={`flex flex-row justify-${
+				<div className={`flex flex-row justify-${
 					(section.align === "justify") ? "around" :
 					(section.align === "left") ?    "start"   :
 					(section.align === "center") ?  "center"  :
 					"end"
 				}`}>
-					<DivTailwindRerender className={["flex flex-col", section.tailwind]}>
+					<div style={
+						tailwindToObject(["flex flex-col", section.tailwind], breakpoint)
+					}>
 						{section.mappings.map((mapping, index) => (
 							<DisplayMappings 
 								key={index} 
@@ -114,8 +89,8 @@ export function ContentSection({
 								}}
 							/>
 						))}
-					</DivTailwindRerender>
-				</DivTailwindRerender>
+					</div>
+				</div>
 			</ScrollSection>
 		</ContextMenuViewportWrapper>
   );
