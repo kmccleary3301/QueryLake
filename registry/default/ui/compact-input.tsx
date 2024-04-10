@@ -23,6 +23,8 @@ export default function CompactInput({
 		false
 	);
 	const [hidden, setHidden] = useState((type === "password") ? true : false);
+	const buttonAvailable = (type === "password") ? true : false;
+
 
 	// const height = className ? className.match(/h-(^[\s]+)/)?.[1] : "h-10";
 
@@ -45,7 +47,7 @@ export default function CompactInput({
 				<div className='flex-grow overflow-hidden px-0'>
 					<input
 						className={
-							"w-auto p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden"
+							`${buttonAvailable ? "w-auto" : "w-full"} p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden`
 						}
 						// type={type}
 						type={hidden ? "password" : "text"}
@@ -68,7 +70,7 @@ export default function CompactInput({
 						// hidden={true}
 					/>
 				</div>
-				{(type === "password") && (
+				{buttonAvailable && (
 					<div className='p-0 m-0 h-full rounded-l-none rounded-md pl-3'>
 					<Button variant={"ghost"} type="button" className={cn(
 						"border-[3.5px] border-transparent h-full w-full py-0 m-0 px-2",
