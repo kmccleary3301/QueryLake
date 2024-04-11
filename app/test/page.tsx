@@ -6,6 +6,7 @@ import { Button } from "@/registry/default/ui/button";
 import ToolchainSession, { ToolchainSessionMessage } from "@/hooks/toolchain-session";
 import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
+import ChatBarInput from "@/components/manual_components/chat-input-bar";
 
 
 
@@ -143,6 +144,8 @@ export default function TestPage() {
       <Button onClick={sendMessage4}>
         Question 3
       </Button>
+
+      <ChatBarInput/>
     </div>
   );
 }

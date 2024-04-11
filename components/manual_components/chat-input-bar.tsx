@@ -1,8 +1,9 @@
 import { useState, useRef, useImperativeHandle} from 'react'
-import '@/App.css'
+// import '@/App.css'
 import { Button } from '@/registry/default/ui/button'
 import { PaperPlaneIcon } from '@radix-ui/react-icons'
 import AdaptiveTextArea from '@/registry/default/ui/adaptive-text-area'
+import ChatInput from '@/registry/default/ui/chat-input'
 
 type ChatBarInputProps = {
 	onMessageSend?: (message: string) => void,
@@ -28,40 +29,27 @@ export default function ChatBarInput(props : ChatBarInputProps) {
   }}:{};
 
   return (
-    <div 
-      style={{
-        display: 'flex', 
-        flexDirection: 'row', 
-        justifyContent: 'center', 
-        paddingTop: 0 
-      }}
-    >
-      <div style={{width: "60vw", display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-        <AdaptiveTextArea
+    <div className='flex flex-row justify-center pt-0'>
+      <div className='w-[60vw] flex flex-row justify-center'>
+        <ChatInput
           {...passProps}
-          value={userInput}
-          setValue={setUserInput}
+          // value={userInput}
+          // setValue={setUserInput}
           onSubmission={(value : string) => {
             if (props.onMessageSend) props.onMessageSend(value);
           }}
-          onUpdateHeight={props.onHeightChange}
-        />
+        >
         
-        <div style={{
-          display: "flex", 
-          height: "auto", 
-          paddingLeft: 10, 
-          flexDirection: 'column',
-          justifyContent: 'center'
-        }}>
+        <div className='flex h-auto pl-[10px] flex-col justify-center'>
           <Button variant="secondary" type="submit" size="icon" disabled={(userInput.length < 1 && !filesQueued)} onClick={()=>{
             if (props.onMessageSend) props.onMessageSend(userInput);
             setUserInput("");
             setFilesQueued(false);
           }}>
-            <PaperPlaneIcon className="h-4 w-4" />
+            <PaperPlaneIcon className="h-4 w-4 text-primary" />
           </Button>
         </div>
+        </ChatInput>
       </div>
     </div>
   )
