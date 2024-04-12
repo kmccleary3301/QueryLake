@@ -5,6 +5,7 @@ export default function DocsLayout({
 } : {
 	children: React.ReactNode
 }) {
+  
 	return (
 		<>
 			<div className="w-full h-[calc(100vh-60px)] flex flex-row justify-center">

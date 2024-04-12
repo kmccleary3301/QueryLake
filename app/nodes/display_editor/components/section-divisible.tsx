@@ -4,11 +4,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/registry/default/ui/resizable"
-import { 
-  ContextMenuViewportWrapper
-} from "./context-menu-wrapper";
-import ScrollSection from "@/components/manual_components/scrollable-bottom-stick/custom-scroll-section";
+} from "@/registry/default/ui/resizable";
 import {
 	divisionSection,
 	headerSection,
@@ -20,7 +16,6 @@ import { HeaderSection } from "./section-header";
 import { ContentSection } from "./section-content";
 
 const large_array = Array(350).fill(0);
-
 
 export function DivisibleSection({
   onCollapse,

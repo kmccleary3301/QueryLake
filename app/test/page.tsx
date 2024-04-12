@@ -88,7 +88,7 @@ export default function TestPage() {
             "question": "What is the Riemann-Roch theorem?"
           }
         }
-    });
+      });
     }
   }
 
@@ -148,7 +148,7 @@ export default function TestPage() {
 
       <ChatBarInput/>
 
-      <FileDropzone onFileSelected={(file) => console.log(file)} />
+      <FileDropzone onFile={(file) => console.log(file)} />
     </div>
   );
 }

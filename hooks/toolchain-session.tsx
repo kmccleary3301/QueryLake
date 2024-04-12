@@ -28,6 +28,7 @@ export default class ToolchainSession {
 	private state: Map<string, substituteAny>;
 	private stream_mappings: Map<string, (string | number)[][]>;
 	
+  
 	constructor ( { onStateChange = undefined, 
 									onTitleChange = undefined,
 									onMessage = undefined,

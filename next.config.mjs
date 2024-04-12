@@ -82,6 +82,11 @@ const nextConfig = {
         source: "/docs",
         destination: "/docs/naive_bayes_classifier",
         permanent: true,
+      },
+      {
+        source: "/app",
+        destination: "/app/create",
+        permanent: true,
       }
     ]
   },

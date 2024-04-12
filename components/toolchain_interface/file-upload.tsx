@@ -5,6 +5,7 @@ import { Skeleton } from "@/registry/default/ui/skeleton";
 import { inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import ToolchainSession from "@/hooks/toolchain-session";
 
 export function FileUploadSkeleton({
 	configuration,
@@ -28,10 +29,10 @@ export function FileUploadSkeleton({
 
 export default function FileUpload({
 	configuration,
-  on_upload = () => {}
+  toolchainWebsocket,
 }:{
 	configuration: inputMapping,
-  on_upload?: (files: File[]) => void
+  toolchainWebsocket?: ToolchainSession
 }) {
   
 }

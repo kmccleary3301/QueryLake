@@ -5,6 +5,8 @@
 // argument propagation without using redundant nodes and API functions to accomplish
 // this instead.
 
+import { displaySection } from "./toolchain-interface";
+
 // The sequenceAction type can be thought of as a bash command, and the object
 // can be thought of as a file system which is being traversed and/or changed.
 // """
@@ -263,7 +265,7 @@ export interface ToolChain {
     name: string;
     id: string;
     category: string;
-    display_configuration: displayConfiguration;
+    display_configuration: displaySection;
     // suggestions?: startScreenSuggestion[];
     initial_state: substituteAny;
     nodes: toolchainNode[];

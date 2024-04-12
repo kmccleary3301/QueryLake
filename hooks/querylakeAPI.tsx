@@ -10,6 +10,7 @@ import {
   setStateOrCallback,
 } from "@/types/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
+import { ToolChain } from "@/types/toolchains";
 
 type getUserMembershipArgs = {
 	auth : string, 
@@ -584,6 +585,36 @@ export function fetchToolchainSessions(args : fetchToolchainSessionsArgs) {
       const results = data.result as toolchain_session[];
 
 			if (args.onFinish) args.onFinish(results);
+		});
+	});
+}
+
+
+type fetchToolchainConfigArgs = {
+	auth : string,
+  toolchain_id: string,
+	onFinish? : setStateOrCallback<ToolChain>
+};
+
+export function fetchToolchainConfig(args : fetchToolchainConfigArgs) {
+
+  const url = craftUrl(`/api/fetch_toolchain_config`, {
+    "auth": args.auth,
+    "toolchain_id": args.toolchain_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : true, result: ToolChain} | {success : false, error : string}) => {
+      console.log(data);
+			if (!data["success"]) {
+        console.error("Failed to retrieve available toolchains:", data.error);
+				// if (args.onFinish) args.onFinish(undefined);
+        return;
+			}
+      // console.log("Available models:", data.result);
+      // const results = data.result as toolchain_session[];
+
+			if (args.onFinish) args.onFinish(data.result);
 		});
 	});
 }

@@ -45,7 +45,7 @@ const buttonProps : {header : string, content : string, link : string}[] = [
   {
     header: "Apps",
     content: "Use Querylake and its custom applications.",
-    link: "/chat"
+    link: "/app"
   
   }
 ]

@@ -6,7 +6,6 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 import { Button } from "./button";
 import { Paperclip, Send, Trash } from "lucide-react";
 import { ClassValue } from "clsx";
-import { motion, useAnimation } from "framer-motion";
 import {
   HoverCard,
   HoverCardContent,
@@ -85,7 +84,7 @@ export default function ChatInput({
     }
     setPreventUpdate(false);
   };
-  
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!event.shiftKey && event.key === "Enter" && value.length > 0) {
       onSubmission?handleSubmission():null;

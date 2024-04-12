@@ -1,6 +1,7 @@
 "use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
+import { substituteAny } from "@/types/toolchains";
 
 export function MarkdownSkeleton({
 	configuration
@@ -18,9 +19,11 @@ export function MarkdownSkeleton({
 
 
 export default function Markdown({
-	configuration
+	configuration,
+	toolchainState
 }:{
-	configuration: displayMapping
+	configuration: displayMapping,
+	toolchainState: Map<string, substituteAny>
 }) {
     
 }

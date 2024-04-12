@@ -1,41 +1,31 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
 export default function FileDropzone({ 
-  onFileSelected,
+  onFile,
   multiple = false,
 }:{
-  onFileSelected: (file: File) => void;
+  onFile: (files: File[]) => void;
   multiple?: boolean;
 }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [files, setFiles] = useState<File[]>([]);
+  // const [isDragging, setIsDragging] = useState(false);
+  // const [files, setFiles] = useState<File[]>([]);
 
-  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
 
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-  };
+  // useEffect(() => {
+  //   if (files.length > 0) {
+  //     onFileSelected(files[files.length - 1]);
+  //     setFiles([...files.slice(0, files.length - 1)]);
+  //   }
+  // }, [files]);
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-
-    const file = event.dataTransfer.files[0];
-    onFileSelected(file);
-  };
-
-  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onFileSelected(file);
-    }
-  };
+  // const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     onFileSelected(file);
+  //   }
+  // };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,9 +36,9 @@ export default function FileDropzone({
   const handleFileChange = (files_in : FileList) => {
     if (files_in !== null && files_in.length > 0) {
       if (multiple) {
-        setFiles([...files, ...Array.from(files_in)]);
+        onFile(Array.from(files_in));
       } else {
-        setFiles([Array.from(files_in)[0]]);
+        onFile([Array.from(files_in)[0]]);
       }
     }
   };
@@ -61,7 +51,7 @@ export default function FileDropzone({
     onClick={handleButtonClick}
     onDrop={(e)=>{
       e.preventDefault();
-      console.log("DROP!!!");
+      handleFileChange(e.dataTransfer.files);
     }}
     onDragOver={(e) => {
       e.preventDefault();

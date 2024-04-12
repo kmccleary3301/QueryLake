@@ -1,6 +1,7 @@
 "use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
+import { substituteAny } from "@/types/toolchains";
 
 export function ChatSkeleton({
 	configuration
@@ -50,10 +51,10 @@ export type chatInput = {
 
 export default function Chat({
 	configuration,
-	value
+	toolchainState
 }:{
 	configuration: displayMapping,
-	value: chatInput
+	toolchainState: Map<string, substituteAny>
 }) {
     
 }

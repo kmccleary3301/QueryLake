@@ -80,7 +80,6 @@ export default function SidebarTemplate({
           <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2`} onClick={() => {setSidebarOpened(true);}}>
             <Icon.Sidebar id="closed_sidebar_button" size={24}/>
           </Button> 
-
         ):null}
       </motion.div>
       

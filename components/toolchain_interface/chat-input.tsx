@@ -3,6 +3,7 @@ import { Skeleton } from "@/registry/default/ui/skeleton";
 import { inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import ToolchainSession from "@/hooks/toolchain-session";
 
 export function ChatInputSkeleton({
 	configuration,
@@ -26,12 +27,10 @@ export function ChatInputSkeleton({
 
 export default function ChatInput({
 	configuration,
-  on_upload = () => {},
-  on_submit = () => {}
+  toolchainWebsocket,
 }:{
 	configuration: inputMapping,
-  on_upload?: (files: File[]) => void,
-  on_submit?: (text: string) => void
+  toolchainWebsocket?: ToolchainSession
 }) {
-    
+  
 }

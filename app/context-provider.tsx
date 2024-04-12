@@ -21,7 +21,8 @@ import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import { useRouter } from 'next/navigation';
 import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
-import { getUserCollections } from '@/hooks/querylakeAPI';
+import { fetchToolchainConfig, getUserCollections } from '@/hooks/querylakeAPI';
+import { ToolChain } from '@/types/toolchains';
 
 export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -44,6 +45,9 @@ const Context = createContext<{
 
 	selectedToolchain : toolchain_type | undefined,
 	setSelectedToolchain : setStateOrCallback<toolchain_type>,
+
+  selectedToolchainFull : ToolChain | undefined,
+	setSelectedToolchainFull : setStateOrCallback<ToolChain>,
 
 	authReviewed : boolean,
 	setAuthReviewed : setStateOrCallback<boolean>,
@@ -73,6 +77,9 @@ const Context = createContext<{
 
 	selectedToolchain: undefined,
 	setSelectedToolchain: () => undefined,
+
+  selectedToolchainFull: undefined,
+  setSelectedToolchainFull: () => undefined,
 
 	authReviewed: false,
 	setAuthReviewed: () => false,
@@ -114,6 +121,9 @@ export const ContextProvider = ({
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
 	const [active_toolchain_session, set_active_toolchain_session] = useState<toolchain_session | undefined>(undefined);
 	const [selected_toolchain, set_selected_toolchain] = useState<toolchain_type | undefined>(undefined);
+
+  const [selected_toolchain_full, set_selected_toolchain_full] = useState<ToolChain | undefined>(undefined);
+
 	const [auth_reviewed, set_auth_reviewed] = useState<boolean>(false);
 	const [login_valid, set_login_valid] = useState<boolean>(false);
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
@@ -144,7 +154,6 @@ export const ContextProvider = ({
   }, []);
 
 	// useEffect(() => {console.log("BREAKPOINT:", break_point)}, [break_point]);
-
 
 	const get_user_data = async (user_data_input : userDataType | undefined, onFinish : () => void) => {
 		if (user_data_input !== undefined) {
@@ -190,7 +199,16 @@ export const ContextProvider = ({
 			auth: user_data?.auth as string, 
 			set_value: set_collection_groups
 		});
-	}
+	};
+
+  useEffect(() => {
+    if (selected_toolchain === undefined) return;
+    fetchToolchainConfig({
+      auth: user_data?.auth as string,
+      toolchain_id: selected_toolchain?.id as string,
+      onFinish: set_selected_toolchain_full
+    })
+  }, [selected_toolchain, user_data?.auth]);
 
 	
 	return (
@@ -208,6 +226,8 @@ export const ContextProvider = ({
 			setActiveToolchainSession : set_active_toolchain_session,
 			selectedToolchain : selected_toolchain,
 			setSelectedToolchain : set_selected_toolchain,
+      selectedToolchainFull : selected_toolchain_full,
+      setSelectedToolchainFull : set_selected_toolchain_full,
 			authReviewed : auth_reviewed,
 			setAuthReviewed : set_auth_reviewed,
 			loginValid : login_valid,
