@@ -61,8 +61,8 @@ export function FilePreview({
 export default function ChatInput({
   className = "",
   upload = true,
-  multiple = false,
-  onSubmission,
+  multiple = true,
+  onSubmission = undefined,
   style = {},
 }:{
   className?: ClassValue,
@@ -75,7 +75,6 @@ export default function ChatInput({
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const [preventUpdate, setPreventUpdate] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [dragging, setDragging] = useState(false);
 
   useAutosizeTextArea(textAreaRef.current, value);
 
@@ -86,23 +85,13 @@ export default function ChatInput({
     }
     setPreventUpdate(false);
   };
-
+  
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!event.shiftKey && event.key === "Enter" && value.length > 0) {
       onSubmission?handleSubmission():null;
       setPreventUpdate(true);
       setValue("");
     }
-  };
-
-  
-
-  const handleDragEnter = () => {
-    setDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragging(false);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,21 +116,6 @@ export default function ChatInput({
     setFiles([]);
   }, [value, files]);
 
-  const containerOpacity = useAnimation();
-
-  useEffect(() => {
-    containerOpacity.set({
-			opacity : 1
-		});
-  });
-
-  useEffect(() => {
-    console.log("DRAGGING:", dragging);
-    containerOpacity.start({
-      opacity: dragging?0.8:1,
-			transition: { duration: 0.6, ease: "easeInOut", bounce: 0 }
-		});
-  }, [dragging]);
 
   return (
 
@@ -153,8 +127,10 @@ export default function ChatInput({
     style={style}
     onDrop={(e) => {
       e.preventDefault();
-      setDragging(false);
       handleFileChange(e.dataTransfer.files);
+    }}
+    onDragOver={(e) => {
+      e.preventDefault();
     }}>
       <ScrollAreaPrimitive.Root className={cn("relative overflow-hidden rounded-[inherit]", "flex-grow pl-3 pr-2.5 py-1 gap-x-0 items-start flex flex-row")}>
         <ScrollAreaPrimitive.Viewport className="h-full flex-grow rounded-[inherit] pb-0 flex flex-col justify-center">
@@ -164,7 +140,8 @@ export default function ChatInput({
             {(files.length > 0) && (
               <div className="w-auto flex flex-wrap gap-x-2 gap-y-1 pb-1">
                 {files.map((file, index) => (
-                  <FilePreview 
+                  <FilePreview
+                    key={index}
                     className="w-auto rounded-full bg-secondary px-2 text-sm max-w-[100px]" 
                     fileName={file.name}
                     onDelete={() => {

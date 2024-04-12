@@ -217,7 +217,7 @@ export function DivisibleSection({
             onSectionUpdate={(s : headerSection) => {
 
               // TODO: If it breaks, it's probably this
-              updateSection({...section, header: s});
+              updateSectionUpstream({...section, header: s});
             }} 
             sectionInfo={section.header}
           />
@@ -229,7 +229,7 @@ export function DivisibleSection({
           <HeaderSection 
             onCollapse={() => {resetSection("footer")}} 
             onSectionUpdate={(s : headerSection) => {
-              updateSection({...section, footer: s});
+              updateSectionUpstream({...section, footer: s});
             }} 
             sectionInfo={section.footer}
             type="footer"

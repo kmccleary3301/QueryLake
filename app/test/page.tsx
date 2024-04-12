@@ -7,6 +7,7 @@ import ToolchainSession, { ToolchainSessionMessage } from "@/hooks/toolchain-ses
 import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
+import FileDropzone from "@/registry/default/ui/file-dropzone";
 
 
 
@@ -146,6 +147,8 @@ export default function TestPage() {
       </Button>
 
       <ChatBarInput/>
+
+      <FileDropzone onFileSelected={(file) => console.log(file)} />
     </div>
   );
 }
