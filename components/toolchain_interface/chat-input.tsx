@@ -4,6 +4,8 @@ import { inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
+import {default as ChatInputProto} from "@/registry/default/ui/chat-input";
+import { substituteAny } from "@/types/toolchains";
 
 export function ChatInputSkeleton({
 	configuration,
@@ -27,10 +29,28 @@ export function ChatInputSkeleton({
 
 export default function ChatInput({
 	configuration,
-  toolchainWebsocket,
+  sendEvent = () => {},
 }:{
 	configuration: inputMapping,
-  toolchainWebsocket?: ToolchainSession
+  sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
 }) {
-  
+  const { breakpoint } = useContextAction();
+
+  const handleSubmission = (text : string, files: File[]) => {
+    console.log("ChatInput handleSubmission", text, files);
+    configuration.hooks.forEach(hook => {
+      if (hook.hook === "on_submit") {
+        sendEvent(hook.target_event, {
+          [`${hook.target_route}`]: text,
+        })
+      }
+    })
+  }
+
+  return (
+    <ChatInputProto 
+      style={tailwindToObject([configuration.tailwind], breakpoint)}
+      onSubmission={handleSubmission}
+    />
+  )
 }

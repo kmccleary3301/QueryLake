@@ -12,10 +12,13 @@ import {
 } from "@/types/toolchain-interface";
 import { HeaderSection } from "./section-header";
 import { ContentSection } from "./section-content";
+import { substituteAny } from "@/types/toolchains";
 
 export function DivisibleSection({
+  stateData,
   section
 }:{
+  stateData: Map<string, substituteAny>,
   section: displaySection,
 }) {
 
@@ -23,6 +26,7 @@ export function DivisibleSection({
     <>
       {(section.split === "none" && (section as contentSection)) ? (
         <ContentSection
+          stateData={stateData}
           section={section as contentSection}
         />
       ):(
@@ -30,7 +34,7 @@ export function DivisibleSection({
           {(section as divisionSection).sections.map((split_section, index) => (
             <Fragment key={index}>
               <ResizablePanel defaultSize={split_section.size}>
-                <DivisibleSection section={split_section}/>
+                <DivisibleSection stateData={stateData} section={split_section}/>
               </ResizablePanel>
               {(index < (section as divisionSection).sections.length - 1) && (
                 <ResizableHandle/>
@@ -48,7 +52,8 @@ export function DivisibleSection({
     {(section.header || section.footer) ? (
       <ResizablePanelGroup direction="vertical">
         {(section.header) && (
-          <HeaderSection 
+          <HeaderSection
+            stateData={stateData}
             section={section.header}
           />
         )}
@@ -57,6 +62,7 @@ export function DivisibleSection({
         </ResizablePanel>
         {(section.footer) && (
           <HeaderSection
+            stateData={stateData}
             section={section.footer}
             type="footer"
           />

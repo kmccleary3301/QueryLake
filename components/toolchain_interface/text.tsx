@@ -25,5 +25,9 @@ export default function Text({
 	configuration: displayMapping,
 	toolchainState: Map<string, substituteAny>
 }) {
-    
+  
+  return (
+    <>
+    </>
+  );
 }

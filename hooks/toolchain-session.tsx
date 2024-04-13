@@ -1,4 +1,4 @@
-// "use client";
+"use client";
 import { Dispatch } from "react";
 import { 
     compositionObjectGenericType,
@@ -51,7 +51,6 @@ export default class ToolchainSession {
 		this.socket.onmessage = async (event: MessageEvent) => {
 			try {
 				const message_text : Blob | string = event.data;
-
 
 				// console.log("Message received data  :", typeof message_text, message_text)
 				// const message_text_string : string = 
@@ -136,7 +135,7 @@ export default class ToolchainSession {
 		this.socket.send(JSON.stringify(message));
 	}
 
-	// Rest of the class implementation...
+	// TODO: turn send_message into a queue system.
 }
 
 

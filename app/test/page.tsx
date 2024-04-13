@@ -122,7 +122,7 @@ export default function TestPage() {
             "question": "You're wrong. It was named after Gustav Roch."
           }
         }
-    });
+      });
     }
   }
 

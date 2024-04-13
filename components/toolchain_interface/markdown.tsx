@@ -25,5 +25,9 @@ export default function Markdown({
 	configuration: displayMapping,
 	toolchainState: Map<string, substituteAny>
 }) {
-    
+  
+  return (
+    <>
+    </>
+  );
 }

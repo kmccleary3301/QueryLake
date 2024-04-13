@@ -1,7 +1,10 @@
 "use client";
+import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
+import { useEffect, useState } from "react";
+import MarkdownRenderer from "../markdown/markdown-renderer";
 
 export function ChatSkeleton({
 	configuration
@@ -56,5 +59,26 @@ export default function Chat({
 	configuration: displayMapping,
 	toolchainState: Map<string, substituteAny>
 }) {
-    
+	const [currentValue, setCurrentValue] = useState<chatInput>(
+		retrieveValueFromObj(toolchainState, configuration.display_route) as chatInput || []
+	);
+
+	useEffect(() => {
+    const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as chatInput || [];
+    console.log("Chat newValue", newValue);
+		setCurrentValue(newValue);
+	}, [toolchainState]);
+
+
+  return (
+		<div className="w-auto flex flex-col gap-y-2 border-[2px] border-red-500 min-h-[50px]">
+			{currentValue.map((value, index) => (
+
+				<div key={index} className="w-auto flex flex-row gap-x-2">
+					<div className="rounded-full h-10 w-10 bg-primary/50"/>
+					<MarkdownRenderer input={value.content} finished={false}/>
+				</div>
+			))}
+		</div>
+	);
 }

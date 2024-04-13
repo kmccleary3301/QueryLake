@@ -6,6 +6,8 @@ import { inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
+import { substituteAny } from "@/types/toolchains";
+import FileDropzone from "@/registry/default/ui/file-dropzone";
 
 export function FileUploadSkeleton({
 	configuration,
@@ -29,10 +31,28 @@ export function FileUploadSkeleton({
 
 export default function FileUpload({
 	configuration,
-  toolchainWebsocket,
+  sendEvent = () => {},
 }:{
 	configuration: inputMapping,
-  toolchainWebsocket?: ToolchainSession
+  sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
 }) {
-  
+  const { breakpoint } = useContextAction();
+
+  const handleSubmission = (files: File[]) => {
+    configuration.hooks.forEach(hook => {
+      if (hook.hook === "on_upload") {
+
+        // files.forEach(file => {
+
+        //   sendEvent(hook.target_event, {
+        //     [`${hook.target_route}`]: file,
+        //   })
+        // })
+      }
+    })
+  }
+
+  return (
+    <FileDropzone onFile={handleSubmission} style={tailwindToObject([configuration.tailwind], breakpoint)}/>
+  )
 }

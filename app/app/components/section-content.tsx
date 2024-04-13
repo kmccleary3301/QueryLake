@@ -7,13 +7,15 @@ import DisplayMappings from "./display-mappings";
 // import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { substituteAny } from "@/types/toolchains";
 
 export function ContentSection({
+  stateData,
   section = {split: "none", size: 100, align: "center", tailwind: "", mappings: []}
 }:{
+  stateData: Map<string, substituteAny>
   section: contentSection,
 }) {
-	
 	const { 
 		breakpoint
   } = useContextAction();
@@ -31,8 +33,9 @@ export function ContentSection({
 						tailwindToObject(["flex flex-col", section.tailwind], breakpoint)
 					}>
 						{section.mappings.map((mapping, index) => (
-							<DisplayMappings 
+							<DisplayMappings
 								key={index} 
+                stateData={stateData}
 								info={mapping}
 								setInfo={() => {}}
 							/>

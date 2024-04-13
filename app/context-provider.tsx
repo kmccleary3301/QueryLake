@@ -206,7 +206,7 @@ export const ContextProvider = ({
     fetchToolchainConfig({
       auth: user_data?.auth as string,
       toolchain_id: selected_toolchain?.id as string,
-      onFinish: set_selected_toolchain_full
+      onFinish: (v : ToolChain) => set_selected_toolchain_full(v)
     })
   }, [selected_toolchain, user_data?.auth]);
 

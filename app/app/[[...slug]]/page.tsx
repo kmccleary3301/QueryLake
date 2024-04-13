@@ -8,12 +8,6 @@ interface DocPageProps {
 
 type app_mode_type = "create" | "session" | "view" | undefined;
 
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/n2FrFZXZwwu
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
@@ -28,6 +22,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
   const [appMode, setAppMode] = useState<app_mode_type>(app_mode_immediate);
   const mounting = useRef(true);
+  // const [toolchainState, setToolchainState] = useState<Map<string, substituteAny>>(new Map());
+
 
   const { 
     toolchainState,
@@ -62,21 +58,28 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       },
       onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
-        // console.log(message);
+        console.log("TOOLCHAIN MESSAGE:", message);
         if (message.toolchain_session_id !== undefined) {
           setSessionId(message.toolchain_session_id);
         }
       },
       onOpen: (session: ToolchainSession) => {
-        if (mounting.current && toolchainWebsocket !== undefined) {
+        if (true) {
           if (appMode === "create") {
-            console.log("Creating toolchain");
+            console.log("Creating toolchain", {
+              "auth": userData?.auth,
+              "command" : "toolchain/create",
+              "arguments": {
+                // "toolchain_id": "test_chat_session_normal"
+                "toolchain_id": selectedToolchainFull,
+              }
+            });
             session.send_message({
               "auth": userData?.auth,
               "command" : "toolchain/create",
               "arguments": {
                 // "toolchain_id": "test_chat_session_normal"
-                "toolchain_id": selectedToolchain?.id,
+                "toolchain_id": selectedToolchainFull?.id,
               }
             });
           } else if (appMode === "session") {
@@ -103,15 +106,17 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   }, [appMode, selectedToolchainFull, userData]);
 
   useEffect(() => {
+    if (selectedToolchainFull === undefined) return;
     if (mounting.current) initializeWebsocket();
     mounting.current = false;
-  }, [userData, selectedToolchainFull])
+  }, [userData, selectedToolchainFull, initializeWebsocket]);
 
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
       {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && 
        (toolchainWebsocket !== undefined) && (
         <DivisibleSection
+          stateData={toolchainState}
           section={selectedToolchainFull.display_configuration}
         />
       )}

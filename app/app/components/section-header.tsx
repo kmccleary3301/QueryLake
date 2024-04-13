@@ -5,11 +5,14 @@ import {
 import DisplayMappings from "./display-mappings";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { substituteAny } from "@/types/toolchains";
 
 export function HeaderSection({
+	stateData,
 	section = {align: "justify", tailwind: "", mappings: []},
 	type = "header"
 }:{
+	stateData: Map<string, substituteAny>,
 	section: headerSection,
 	type?: "header" | "footer"
 }) {
@@ -32,9 +35,10 @@ export function HeaderSection({
 
 					{section.mappings.map((mapping, index) => (
 							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
-							<DisplayMappings 
+							<DisplayMappings
 								key={index} 
-								info={mapping}
+								stateData={stateData}
+                info={mapping}
 								setInfo={() => {}}
 							/>
 						))}

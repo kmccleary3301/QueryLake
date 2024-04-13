@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils';
 export default function FileDropzone({ 
   onFile,
   multiple = false,
+  style = {}
 }:{
   onFile: (files: File[]) => void;
   multiple?: boolean;
+  style?: React.CSSProperties;
 }) {
   // const [isDragging, setIsDragging] = useState(false);
   // const [files, setFiles] = useState<File[]>([]);
@@ -55,7 +57,9 @@ export default function FileDropzone({
     }}
     onDragOver={(e) => {
       e.preventDefault();
-    }}>
+    }}
+    style={style}
+    >
       <div className='rounded-[inherit]'>
         <input
           type="file"

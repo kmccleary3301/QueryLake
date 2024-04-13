@@ -6,38 +6,70 @@ import {
 	displayComponents, 
 	displayMapping,
 } from "@/types/toolchain-interface";
-import { FileUploadSkeleton } from "@/components/toolchain_interface/file-upload";
-import { ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
-import { ChatSkeleton } from "@/components/toolchain_interface/chat";
-import { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
-import { TextSkeleton } from "@/components/toolchain_interface/text";
+import FileUpload, { FileUploadSkeleton } from "@/components/toolchain_interface/file-upload";
+import ChatInput, { ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
+import Chat, { ChatSkeleton } from "@/components/toolchain_interface/chat";
+import Markdown, { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
+import Text, { TextSkeleton } from "@/components/toolchain_interface/text";
 import { useToolchainContextAction } from "../context-provider";
+import { useContextAction } from "@/app/context-provider";
+import { useCallback, useEffect } from "react";
+import { substituteAny } from "@/types/toolchains";
 
 export function ToolchainComponentMapper({
+  stateData,
 	info,
 	children
 }:{
+  stateData: Map<string, substituteAny>,
 	info: contentMapping,
 	children?: React.ReactNode
 }) {
 	const {
     toolchainState,
 		toolchainWebsocket,
+    sessionId,
   } = useToolchainContextAction();
+
+  useEffect(() => {
+    console.log("ToolchainComponentMapper got Toolchainstate", toolchainState);
+  
+  }, [Array.from(toolchainState)]);
+
+  const {
+    userData,
+  } = useContextAction();
+
+  const callEvent = useCallback((event: string, event_params: {[key : string]: substituteAny}) => {
+    console.log("ToolchainComponentMapper callEvent", event, event_params, toolchainWebsocket, sessionId, userData?.auth)
+    if (toolchainWebsocket && sessionId) {
+      console.log("Sending Event", event, event_params);
+      toolchainWebsocket.send_message({
+        "auth": userData?.auth,
+        "command" : "toolchain/event",
+        "arguments": {
+          "session_id": sessionId,
+          "event_node_id": event,
+          "event_parameters": event_params
+        }
+      });
+    }
+  }, [userData, toolchainWebsocket, sessionId]);
+
 
 	switch(info.display_as) {
 		// Display Components
 		case "chat":
 			return (
-				<ChatSkeleton configuration={info}/>
+        <Chat configuration={info} toolchainState={toolchainState}/>
 			);
 		case "markdown":
 			return (
-				<MarkdownSkeleton	configuration={info}/>
+				<Markdown configuration={info} toolchainState={toolchainState}/>
 			);
 		case "text":
 			return (
-				<TextSkeleton configuration={info}/>
+				<Text configuration={info} toolchainState={toolchainState}/>
 			);
 		case "graph":
 			return (
@@ -50,26 +82,28 @@ export function ToolchainComponentMapper({
 		// Input Components
 		case "chat_input":
 			return (
-				<ChatInputSkeleton configuration={info}>
-					{children}
-				</ChatInputSkeleton>
+				<ChatInput configuration={info} sendEvent={callEvent}/>
 			)
 		case "file_upload":
 			return (
-				<FileUploadSkeleton configuration={info}>
-					{children}
-				</FileUploadSkeleton>
+				<FileUpload configuration={info} sendEvent={callEvent}/>
 			);
 	}
 }
 
 export default function DisplayMappings({
+  stateData,
 	info,
 	setInfo,
 }:{
+  stateData: Map<string, substituteAny>,
 	info: contentMapping,
 	setInfo: (value: contentMapping) => void
 }) {
+
+  useEffect(() => {
+    console.log("Displaymappings got Toolchainstate", stateData);
+  }, [stateData]);
 
 	const onRouteSet = (value: (string | number)[]) => {
 		setInfo({...info, display_route: value} as displayMapping);
@@ -79,11 +113,11 @@ export default function DisplayMappings({
 		<>
 		{(DISPLAY_COMPONENTS.includes(info.display_as as displayComponents)) ? ( // Display Component
 			<div className="flex-grow flex flex-col pt-4 space-y-2">
-				<ToolchainComponentMapper info={info}/>
+				<ToolchainComponentMapper stateData={stateData} info={info}/>
 			</div>
 		) : ( // Input Component
 			<div className="flex flex-row space-x-2 w-auto">
-				<ToolchainComponentMapper info={info}/>
+				<ToolchainComponentMapper stateData={stateData} info={info}/>
 			</div>
 		)}
 		</>
