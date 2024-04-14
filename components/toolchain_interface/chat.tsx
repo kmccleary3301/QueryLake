@@ -5,6 +5,7 @@ import { displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
 import { useEffect, useState } from "react";
 import MarkdownRenderer from "../markdown/markdown-renderer";
+import { useToolchainContextAction } from "@/app/app/context-provider";
 
 export function ChatSkeleton({
 	configuration
@@ -53,30 +54,36 @@ export type chatInput = {
 }[]
 
 export default function Chat({
-	configuration,
-	toolchainState
+	configuration
 }:{
-	configuration: displayMapping,
-	toolchainState: Map<string, substituteAny>
+	configuration: displayMapping
 }) {
+
+	const { toolchainState, toolchainStateCounter, toolchainWebsocket } = useToolchainContextAction();
+
 	const [currentValue, setCurrentValue] = useState<chatInput>(
 		retrieveValueFromObj(toolchainState, configuration.display_route) as chatInput || []
 	);
 
 	useEffect(() => {
-    const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as chatInput || [];
-    console.log("Chat newValue", newValue);
+		if (toolchainWebsocket === undefined) return;
+    const newValue = retrieveValueFromObj(toolchainWebsocket.state, configuration.display_route) as chatInput || [];
+    console.log("Chat newValue", JSON.parse(JSON.stringify(newValue)));
 		setCurrentValue(newValue);
-	}, [toolchainState]);
+	}, [toolchainStateCounter]);
 
 
   return (
-		<div className="w-auto flex flex-col gap-y-2 border-[2px] border-red-500 min-h-[50px]">
+		<div className="w-auto flex flex-col space-y-2 border-[2px] border-red-500 min-h-[50px]">
 			{currentValue.map((value, index) => (
 
-				<div key={index} className="w-auto flex flex-row gap-x-2">
-					<div className="rounded-full h-10 w-10 bg-primary/50"/>
-					<MarkdownRenderer input={value.content} finished={false}/>
+				<div key={index} className="flex flex-row space-x-2">
+					<div className="flex flex-col h-auto justify-start">
+						<div className="rounded-full h-8 w-8 bg-primary/50"/>
+					</div>
+					<div className="flex-grow pt-8 space-y-0">
+						<MarkdownRenderer input={(value || {}).content || ""} finished={false}/>
+					</div>
 				</div>
 			))}
 		</div>

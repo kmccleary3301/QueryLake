@@ -104,7 +104,7 @@ export default function ScrollSection({
 	return (
 		<>
 			<ScrollAreaPrimitive.Root
-				className={cn("h-full w-full overflow-y-auto", className)}
+				className={cn("h-full w-full overflow-y-hidden", className)}
 			>
 				<ScrollAreaPrimitive.Viewport
 					ref={scrollDiv}

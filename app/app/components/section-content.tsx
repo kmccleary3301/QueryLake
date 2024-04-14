@@ -10,10 +10,8 @@ import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 
 export function ContentSection({
-  stateData,
   section = {split: "none", size: 100, align: "center", tailwind: "", mappings: []}
 }:{
-  stateData: Map<string, substituteAny>
   section: contentSection,
 }) {
 	const { 
@@ -34,8 +32,7 @@ export function ContentSection({
 					}>
 						{section.mappings.map((mapping, index) => (
 							<DisplayMappings
-								key={index} 
-                stateData={stateData}
+								key={index}
 								info={mapping}
 								setInfo={() => {}}
 							/>

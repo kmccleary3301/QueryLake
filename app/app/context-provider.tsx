@@ -7,17 +7,21 @@ import {
   useState,
 } from 'react';
 import { substituteAny } from '@/types/toolchains';
-import ToolchainSession from '@/hooks/toolchain-session';
+import ToolchainSession, { toolchainStateType } from '@/hooks/toolchain-session';
 
 const ToolchainContext = createContext<{
-	toolchainState: Map<string, substituteAny>,
-	setToolchainState: (value: Map<string, substituteAny>) => void;
+  toolchainStateCounter: number;
+  setToolchainStateCounter: (value: number) => void;
+	toolchainState: toolchainStateType,
+	setToolchainState: (value: toolchainStateType) => void;
   toolchainWebsocket: ToolchainSession | undefined;
   setToolchainWebsocket: (value: ToolchainSession | undefined) => void;
   sessionId: string;
   setSessionId: (value: string) => void;
 }>({
-	toolchainState: new Map(),
+  toolchainStateCounter: 0,
+  setToolchainStateCounter: () => {},
+	toolchainState: {},
   setToolchainState: () => {},
   toolchainWebsocket: undefined,
   setToolchainWebsocket: () => {},
@@ -28,12 +32,15 @@ const ToolchainContext = createContext<{
 export const ToolchainContextProvider = ({
 	children,
 }: PropsWithChildren<{}>) => {
-	const [toolchain_state, set_toolchain_state] = useState<Map<string, substituteAny>>(new Map());
+  const [toolchain_state_counter, set_toolchain_state_counter] = useState<number>(0);
+	const [toolchain_state, set_toolchain_state] = useState<toolchainStateType>({});
   const [toolchain_websocket, set_toolchain_websocket] = useState<ToolchainSession | undefined>();
   const [session_id, set_session_id] = useState<string>("");
 
 	return (
 		<ToolchainContext.Provider value={{ 
+      toolchainStateCounter: toolchain_state_counter,
+      setToolchainStateCounter: set_toolchain_state_counter,
 			toolchainState: toolchain_state,
       setToolchainState: set_toolchain_state,
       toolchainWebsocket: toolchain_websocket,

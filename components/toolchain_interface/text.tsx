@@ -1,4 +1,5 @@
 "use client";
+import { toolchainStateType } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
@@ -23,7 +24,7 @@ export default function Text({
 	toolchainState
 }:{
 	configuration: displayMapping,
-	toolchainState: Map<string, substituteAny>
+	toolchainState: toolchainStateType
 }) {
   
   return (

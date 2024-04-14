@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import { ToolChain, substituteAny } from '@/types/toolchains';
-import ToolchainSession, { ToolchainSessionMessage } from "@/hooks/toolchain-session";
+import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 
@@ -22,10 +22,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
   const [appMode, setAppMode] = useState<app_mode_type>(app_mode_immediate);
   const mounting = useRef(true);
-  // const [toolchainState, setToolchainState] = useState<Map<string, substituteAny>>(new Map());
-
+  const [toolchainStateCopied, setToolchainStateCopied] = useState<{[key: string]: substituteAny}>({});
+  // const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
 
   const { 
+    toolchainStateCounter,
+    setToolchainStateCounter,
     toolchainState,
     setToolchainState,
     toolchainWebsocket,
@@ -45,20 +47,23 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   }, [sessionId]);
 
   useEffect(() => {
-    console.log("Toolchain state updated: ", toolchainState);
-  }, [toolchainState]);
-  
+    // console.log("Toolchain state updated: ", toolchainState);
+    setToolchainStateCopied(toolchainState);
+  }, [toolchainStateCounter]);
 
-  const initializeWebsocket = useCallback(() => {
-    setToolchainState(new Map());
+  const state_change_callback = useCallback((state : toolchainStateType, counter_value : number) => {
+    // console.log("State change", toolchainStateCounter, counter_value, state);
+    setToolchainState(state);
+    setToolchainStateCounter(counter_value);
+  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
+
+  const initializeWebsocket = () => {
+    setToolchainState({});
     setToolchainWebsocket(new ToolchainSession({
-      onStateChange: (state : Map<string, substituteAny>) => {
-        console.log("State change: ", state);
-        setToolchainState(state);
-      },
+      onStateChange: state_change_callback,
       onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
-        console.log("TOOLCHAIN MESSAGE:", message);
+        // console.log("TOOLCHAIN MESSAGE:", message);
         if (message.toolchain_session_id !== undefined) {
           setSessionId(message.toolchain_session_id);
         }
@@ -89,7 +94,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
               return;
             }
             console.log("Loading toolchain");
-            setToolchainState(new Map());
+            setToolchainState({});
             session.send_message({
               "auth": userData?.auth,
               "command" : "toolchain/createtoolchain/load",
@@ -103,7 +108,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         }
       }
     }));
-  }, [appMode, selectedToolchainFull, userData]);
+  };
 
   useEffect(() => {
     if (selectedToolchainFull === undefined) return;
@@ -116,7 +121,6 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && 
        (toolchainWebsocket !== undefined) && (
         <DivisibleSection
-          stateData={toolchainState}
           section={selectedToolchainFull.display_configuration}
         />
       )}

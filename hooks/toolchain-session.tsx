@@ -1,14 +1,17 @@
 "use client";
 import { Dispatch } from "react";
 import { 
-    compositionObjectGenericType,
-    // compositionGenericType,
-    compositionObjectType, 
-    compositionType,
-    substituteAny 
+  compositionObjectGenericType,
+  // compositionGenericType,
+  compositionObjectType, 
+  compositionType,
+  substituteAny 
 } from "@/types/toolchains";
 
-type stateSet = Dispatch<React.SetStateAction<Map<string, substituteAny>>> | ((new_state : Map<string, substituteAny>) => void)
+
+export type toolchainStateType = {[key : string]: substituteAny};
+
+type stateSet = ((new_state : toolchainStateType, counter: number) => void)
 type titleSet = Dispatch<React.SetStateAction<string>> | ((new_state : string) => void)
 // type deleteStateElements = string | number | Array<string | number | compositionObjectGenericType<substituteAny>>;
 type deleteStateListType = Array<string | number | compositionObjectGenericType<substituteAny>>;
@@ -25,9 +28,9 @@ export default class ToolchainSession {
 	private onMessage: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
 	private socket: WebSocket; // Add socket as a type
-	private state: Map<string, substituteAny>;
+	public  state: toolchainStateType;
 	private stream_mappings: Map<string, (string | number)[][]>;
-	
+	private stateChangeCounter: number;
   
 	constructor ( { onStateChange = undefined, 
 									onTitleChange = undefined,
@@ -45,8 +48,11 @@ export default class ToolchainSession {
 		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
-		this.state = new Map<string, substituteAny>();
+		this.state = {};
 		this.stream_mappings = new Map<string, (string | number)[][]>();
+
+    this.stateChangeCounter = 0;
+    
 
 		this.socket.onmessage = async (event: MessageEvent) => {
 			try {
@@ -75,9 +81,10 @@ export default class ToolchainSession {
 
 	handle_message(data : { [key : string] : substituteAny }) {
 		if ("state" in data) {
-			const state = data["state"] as object;
-			this.state = new Map(Object.entries(state));
-			this.onStateChange(this.state);
+			const state = data["state"] as toolchainStateType;
+			this.state = state;
+			this.onStateChange(this.state, this.stateChangeCounter);
+      this.stateChangeCounter += 1;
 		}
 
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
@@ -107,10 +114,13 @@ export default class ToolchainSession {
 				this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
 				// console.log("State after diff:", JSON.parse(JSON.stringify(this.state)));
 
-				this.onStateChange(this.state);
+				this.onStateChange(this.state, this.stateChangeCounter);
+        this.stateChangeCounter += 1;
 				this.onTitleChange(get_value(this.state, "title") as string);
 			}
 		} else if (checkKeys(["s_id", "v"], Object.keys(data))) {
+      console.log("Stream Token:", data);
+
 			const data_typed = data as { s_id : string, v : substituteAny };
 
 			// const routes_get: Array<Array<string | number>> = stream_mappings[parsedResponse["s_id"]];
@@ -119,7 +129,8 @@ export default class ToolchainSession {
 				this.state = appendInRoute(this.state, route_get, data_typed["v"]) as typeof this.state;
 			}
 
-			this.onStateChange(this.state);
+			this.onStateChange(this.state, this.stateChangeCounter);
+      this.stateChangeCounter += 1;
 			this.onTitleChange(get_value(this.state, "title") as string);
 
 		} else if (checkKeys(["event_result"], Object.keys(data))) {

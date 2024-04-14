@@ -1,13 +1,14 @@
 "use client";
 // import React from "react";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import { Button } from "@/registry/default/ui/button";
-import ToolchainSession, { ToolchainSessionMessage } from "@/hooks/toolchain-session";
+import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
+import { set } from "date-fns";
 
 
 
@@ -25,7 +26,8 @@ export default function TestPage() {
 
   const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
   const [sessionId, setSessionId] = useState<string>();
-  const [toolchainState, setToolchainState] = useState<Map<string, substituteAny>>(new Map());
+  const [toolchainState, setToolchainState] = useState<toolchainStateType>({});
+  const [toolchainStateCounter, setToolchainStateCounter] = useState<number>(0);
 
   const model_params_static = {
     "model_choice": "mistral-7b-instruct-v0.1",
@@ -46,12 +48,20 @@ export default function TestPage() {
     console.log("Toolchain state updated: ", toolchainState);
   }, [toolchainState]);
 
+
+  const state_change_callback = useCallback((state : toolchainStateType, counter_value : number) => {
+    console.log("State change", toolchainStateCounter, counter_value, state);
+    setToolchainState(state);
+    setToolchainStateCounter(counter_value);
+  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
+
+  useEffect(() => {
+    console.log("Toolchain state updated: ", toolchainState);
+  }, [toolchainStateCounter])
+
   const testWebsocket = () => {
     setToolchainWebsocket(new ToolchainSession({
-      onStateChange: (state : Map<string, substituteAny>) => {
-        console.log("State change: ", state);
-        setToolchainState(state);
-      },
+      onStateChange: state_change_callback,
       onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
         // console.log(message);

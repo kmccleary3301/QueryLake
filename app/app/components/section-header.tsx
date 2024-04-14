@@ -8,11 +8,9 @@ import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 
 export function HeaderSection({
-	stateData,
 	section = {align: "justify", tailwind: "", mappings: []},
 	type = "header"
 }:{
-	stateData: Map<string, substituteAny>,
 	section: headerSection,
 	type?: "header" | "footer"
 }) {
@@ -36,8 +34,7 @@ export function HeaderSection({
 					{section.mappings.map((mapping, index) => (
 							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
 							<DisplayMappings
-								key={index} 
-								stateData={stateData}
+								key={index}
                 info={mapping}
 								setInfo={() => {}}
 							/>

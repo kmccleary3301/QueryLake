@@ -17,24 +17,18 @@ import { useCallback, useEffect } from "react";
 import { substituteAny } from "@/types/toolchains";
 
 export function ToolchainComponentMapper({
-  stateData,
 	info,
 	children
 }:{
-  stateData: Map<string, substituteAny>,
 	info: contentMapping,
 	children?: React.ReactNode
 }) {
 	const {
+    toolchainStateCounter,
     toolchainState,
 		toolchainWebsocket,
     sessionId,
   } = useToolchainContextAction();
-
-  useEffect(() => {
-    console.log("ToolchainComponentMapper got Toolchainstate", toolchainState);
-  
-  }, [Array.from(toolchainState)]);
 
   const {
     userData,
@@ -61,7 +55,7 @@ export function ToolchainComponentMapper({
 		// Display Components
 		case "chat":
 			return (
-        <Chat configuration={info} toolchainState={toolchainState}/>
+        <Chat configuration={info}/>
 			);
 		case "markdown":
 			return (
@@ -92,18 +86,12 @@ export function ToolchainComponentMapper({
 }
 
 export default function DisplayMappings({
-  stateData,
 	info,
 	setInfo,
 }:{
-  stateData: Map<string, substituteAny>,
 	info: contentMapping,
 	setInfo: (value: contentMapping) => void
 }) {
-
-  useEffect(() => {
-    console.log("Displaymappings got Toolchainstate", stateData);
-  }, [stateData]);
 
 	const onRouteSet = (value: (string | number)[]) => {
 		setInfo({...info, display_route: value} as displayMapping);
@@ -113,11 +101,11 @@ export default function DisplayMappings({
 		<>
 		{(DISPLAY_COMPONENTS.includes(info.display_as as displayComponents)) ? ( // Display Component
 			<div className="flex-grow flex flex-col pt-4 space-y-2">
-				<ToolchainComponentMapper stateData={stateData} info={info}/>
+				<ToolchainComponentMapper info={info}/>
 			</div>
 		) : ( // Input Component
 			<div className="flex flex-row space-x-2 w-auto">
-				<ToolchainComponentMapper stateData={stateData} info={info}/>
+				<ToolchainComponentMapper info={info}/>
 			</div>
 		)}
 		</>
