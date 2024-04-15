@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect } from "react"
+import { Fragment, memo, useEffect, useMemo } from "react"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -13,27 +13,22 @@ import {
 import { HeaderSection } from "./section-header";
 import { ContentSection } from "./section-content";
 
-export function DivisibleSection({
-  section
-}:{
-  section: displaySection,
-}) {
+export function PrimaryContent({ section }: { section: displaySection }) {
+  useEffect(() => {console.log("Rerendering")}, []);
 
-  const PrimaryContent = () => (
+  return (
     <>
-      {(section.split === "none" && (section as contentSection)) ? (
-        <ContentSection
-          section={section as contentSection}
-        />
-      ):(
+      {section.split === "none" && (section as contentSection) ? (
+        <ContentSection section={section as contentSection} />
+      ) : (
         <ResizablePanelGroup direction={(section as divisionSection).split}>
           {(section as divisionSection).sections.map((split_section, index) => (
             <Fragment key={index}>
               <ResizablePanel defaultSize={split_section.size}>
-                <DivisibleSection section={split_section}/>
+                <DivisibleSection section={split_section} />
               </ResizablePanel>
-              {(index < (section as divisionSection).sections.length - 1) && (
-                <ResizableHandle/>
+              {index < (section as divisionSection).sections.length - 1 && (
+                <ResizableHandle />
               )}
             </Fragment>
           ))}
@@ -41,6 +36,41 @@ export function DivisibleSection({
       )}
     </>
   );
+};
+
+export function DivisibleSection({
+  section
+}:{
+  section: displaySection,
+}) {
+
+  useEffect(() => {console.log("Rerendering")}, []);
+
+  // const PrimaryContent = useMemo(() => {
+  //   return (
+  //   <>
+  //     {(section.split === "none" && (section as contentSection)) ? (
+  //       <ContentSection
+  //         section={section as contentSection}
+  //       />
+  //     ):(
+  //       <ResizablePanelGroup direction={(section as divisionSection).split}>
+  //         {(section as divisionSection).sections.map((split_section, index) => (
+  //           <Fragment key={index}>
+  //             <ResizablePanel defaultSize={split_section.size}>
+  //               <DivisibleSection section={split_section}/>
+  //             </ResizablePanel>
+  //             {(index < (section as divisionSection).sections.length - 1) && (
+  //               <ResizableHandle/>
+  //             )}
+  //           </Fragment>
+  //         ))}
+  //       </ResizablePanelGroup>
+  //     )}
+  //   </>
+  //   )
+  // }, [section]); // Recompute PrimaryContent only if section changes
+
 
 
   return (
@@ -53,7 +83,7 @@ export function DivisibleSection({
           />
         )}
         <ResizablePanel defaultSize={100}>
-          <PrimaryContent />
+          <PrimaryContent section={section} />
         </ResizablePanel>
         {(section.footer) && (
           <HeaderSection
@@ -63,7 +93,7 @@ export function DivisibleSection({
         )}
       </ResizablePanelGroup>
     ) : (
-      <PrimaryContent />
+      <PrimaryContent section={section} />
     )}
     </>
   );

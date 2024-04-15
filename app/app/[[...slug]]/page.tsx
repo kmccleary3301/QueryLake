@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import { ToolChain, substituteAny } from '@/types/toolchains';
-import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
+import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 
@@ -24,6 +24,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const mounting = useRef(true);
   const [toolchainStateCopied, setToolchainStateCopied] = useState<{[key: string]: substituteAny}>({});
   // const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
+  const toolchainStateRef = useRef<toolchainStateType>({});
 
   const { 
     toolchainStateCounter,
@@ -31,41 +32,44 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     toolchainState,
     setToolchainState,
     toolchainWebsocket,
-    setToolchainWebsocket,
-    sessionId,
-    setSessionId,
+    sessionId
   } = useToolchainContextAction();
 
   const {
     userData,
-    selectedToolchain,
     selectedToolchainFull,
   } = useContextAction();
   
-  useEffect(() => {
-    console.log("Session ID: ", sessionId);
-  }, [sessionId]);
+  // useEffect(() => {
+  //   console.log("Session ID: ", sessionId);
+  // }, [sessionId]);
 
-  useEffect(() => {
-    // console.log("Toolchain state updated: ", toolchainState);
-    setToolchainStateCopied(toolchainState);
-  }, [toolchainStateCounter]);
+  // useEffect(() => {
+  //   // console.log("Toolchain state updated: ", toolchainState);
+  //   setToolchainStateCopied(toolchainState);
+  // }, [toolchainStateCounter]);
 
-  const state_change_callback = useCallback((state : toolchainStateType, counter_value : number) => {
-    // console.log("State change", toolchainStateCounter, counter_value, state);
-    setToolchainState(state);
-    setToolchainStateCounter(counter_value);
-  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
+  const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
+    // console.log("update state called with", toolchainStateCounter);
+    // setToolchainStateCounter((prevCount : number) => prevCount + 1);
+
+    const value = (typeof state === "function") ? state(toolchainStateRef.current) : state;
+    toolchainStateRef.current = value;
+    const value_copied = JSON.parse(JSON.stringify(value));
+    setToolchainState(value_copied);
+    // console.log(value);
+  }, [toolchainState, setToolchainState]);
 
   const initializeWebsocket = () => {
+    if (toolchainWebsocket === undefined || sessionId === undefined) return;
     setToolchainState({});
-    setToolchainWebsocket(new ToolchainSession({
-      onStateChange: state_change_callback,
+    toolchainWebsocket.current = new ToolchainSession({
+      onStateChange: updateState,
       onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
         // console.log("TOOLCHAIN MESSAGE:", message);
         if (message.toolchain_session_id !== undefined) {
-          setSessionId(message.toolchain_session_id);
+          sessionId.current = message.toolchain_session_id;
         }
       },
       onOpen: (session: ToolchainSession) => {
@@ -107,7 +111,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           mounting.current = false;
         }
       }
-    }));
+    });
   };
 
   useEffect(() => {
@@ -116,10 +120,13 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     mounting.current = false;
   }, [userData, selectedToolchainFull, initializeWebsocket]);
 
+  useEffect(() => {
+    console.log("UPDATING DISPLAY CONFIGURATION");
+  }, [selectedToolchainFull?.display_configuration]);
+
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
-      {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && 
-       (toolchainWebsocket !== undefined) && (
+      {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && (
         <DivisibleSection
           section={selectedToolchainFull.display_configuration}
         />

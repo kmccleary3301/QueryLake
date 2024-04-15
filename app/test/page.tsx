@@ -1,6 +1,6 @@
 "use client";
 // import React from "react";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import { Button } from "@/registry/default/ui/button";
 import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
@@ -8,7 +8,7 @@ import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
-import { set } from "date-fns";
+import { Textarea } from "@/registry/default/ui/textarea";
 
 
 
@@ -24,9 +24,11 @@ export default function TestPage() {
     userData,
   } = useContextAction();
 
-  const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
+  const toolchainWebsocket = useRef<ToolchainSession | undefined>();
   const [sessionId, setSessionId] = useState<string>();
   const [toolchainState, setToolchainState] = useState<toolchainStateType>({});
+  const toolchainStateRef = useRef<toolchainStateType>({});
+
   const [toolchainStateCounter, setToolchainStateCounter] = useState<number>(0);
 
   const model_params_static = {
@@ -40,28 +42,41 @@ export default function TestPage() {
   }
 
 
-  useEffect(() => {
-    console.log("Session ID: ", sessionId);
-  }, [sessionId]);
+  // useEffect(() => {
+  //   console.log("Session ID: ", sessionId);
+  // }, [sessionId]);
 
   useEffect(() => {
     console.log("Toolchain state updated: ", toolchainState);
   }, [toolchainState]);
 
 
-  const state_change_callback = useCallback((state : toolchainStateType, counter_value : number) => {
-    console.log("State change", toolchainStateCounter, counter_value, state);
-    setToolchainState(state);
-    setToolchainStateCounter(counter_value);
+  const state_change_callback = useCallback((state : toolchainStateType) => {
+    // console.log("State change", toolchainStateCounter, counter_value, state);
+    setToolchainState(JSON.parse(JSON.stringify(state)));
   }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
 
-  useEffect(() => {
-    console.log("Toolchain state updated: ", toolchainState);
-  }, [toolchainStateCounter])
+  const get_state_callback = useCallback(() => {
+    return toolchainState;
+  }, [toolchainState]);
+
+  const set_state_callback = (value : toolchainStateType) => {
+    toolchainStateRef.current = value;
+  }
+
+  // useEffect(() => {
+  //   if (toolchainWebsocket.current) {
+  //     toolchainWebsocket.current.getState = get_state_callback;
+  //   }
+  // }, [get_state_callback]);
+
+  // useEffect(() => {
+  //   console.log("Toolchain state updated: ", toolchainState);
+  // }, [toolchainStateCounter])
 
   const testWebsocket = () => {
-    setToolchainWebsocket(new ToolchainSession({
-      onStateChange: state_change_callback,
+    toolchainWebsocket.current = new ToolchainSession({
+      onStateChange: setToolchainState,
       onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
         // console.log(message);
@@ -69,12 +84,12 @@ export default function TestPage() {
           setSessionId(message.toolchain_session_id);
         }
       }
-    }));
+    });
   }
   
   const sendMessage1 = () => {
-    if (toolchainWebsocket) {
-      toolchainWebsocket.send_message({
+    if (toolchainWebsocket.current) {
+      toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/create",
         "arguments": {
@@ -86,8 +101,8 @@ export default function TestPage() {
   }
 
   const sendMessage2 = () => {
-    if (toolchainWebsocket && sessionId) {
-      toolchainWebsocket.send_message({
+    if (toolchainWebsocket.current && sessionId) {
+      toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/event",
         "arguments": {
@@ -103,8 +118,8 @@ export default function TestPage() {
   }
 
   const sendMessage3 = () => {
-    if (toolchainWebsocket && sessionId) {
-      toolchainWebsocket.send_message({
+    if (toolchainWebsocket.current && sessionId) {
+      toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/event",
         "arguments": {
@@ -120,8 +135,8 @@ export default function TestPage() {
   }
 
   const sendMessage4 = () => {
-    if (toolchainWebsocket && sessionId) {
-      toolchainWebsocket.send_message({
+    if (toolchainWebsocket.current && sessionId) {
+      toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/event",
         "arguments": {
@@ -159,6 +174,15 @@ export default function TestPage() {
       <ChatBarInput/>
 
       <FileDropzone onFile={(file) => console.log(file)} />
+      <ScrollArea className="w-auto h-[200px] rounded-md border-[2px] border-secondary">
+        <Textarea 
+          className="w-full h-full scrollbar-hide"
+          value={JSON.stringify(toolchainState, null, "\t")} 
+          onChange={() => {}}
+        />
+        {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
+      </ScrollArea>
+
     </div>
   );
 }

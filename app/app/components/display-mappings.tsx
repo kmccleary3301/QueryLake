@@ -17,14 +17,11 @@ import { useCallback, useEffect } from "react";
 import { substituteAny } from "@/types/toolchains";
 
 export function ToolchainComponentMapper({
-	info,
-	children
+	info
 }:{
-	info: contentMapping,
-	children?: React.ReactNode
+	info: contentMapping
 }) {
 	const {
-    toolchainStateCounter,
     toolchainState,
 		toolchainWebsocket,
     sessionId,
@@ -36,19 +33,29 @@ export function ToolchainComponentMapper({
 
   const callEvent = useCallback((event: string, event_params: {[key : string]: substituteAny}) => {
     console.log("ToolchainComponentMapper callEvent", event, event_params, toolchainWebsocket, sessionId, userData?.auth)
-    if (toolchainWebsocket && sessionId) {
+    if (toolchainWebsocket?.current && sessionId?.current) {
       console.log("Sending Event", event, event_params);
-      toolchainWebsocket.send_message({
+      toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/event",
         "arguments": {
-          "session_id": sessionId,
+          "session_id": sessionId.current,
           "event_node_id": event,
           "event_parameters": event_params
         }
       });
     }
-  }, [userData, toolchainWebsocket, sessionId]);
+  }, [userData]);
+
+  // useEffect(() => {
+  //   console.log("websocket changed in toolchain component mapper");
+  // }, [callEvent]);
+
+  // useEffect(() => {
+  //   console.log("info updated!");
+  
+  // }, [info]);
+  useEffect(() => {console.log("Rerendering")}, []);
 
 
 	switch(info.display_as) {
@@ -86,16 +93,10 @@ export function ToolchainComponentMapper({
 }
 
 export default function DisplayMappings({
-	info,
-	setInfo,
+	info
 }:{
-	info: contentMapping,
-	setInfo: (value: contentMapping) => void
+	info: contentMapping
 }) {
-
-	const onRouteSet = (value: (string | number)[]) => {
-		setInfo({...info, display_route: value} as displayMapping);
-	}	
 
 	return (
 		<>

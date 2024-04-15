@@ -8,10 +8,13 @@ import {
   substituteAny 
 } from "@/types/toolchains";
 
-
 export type toolchainStateType = {[key : string]: substituteAny};
 
-type stateSet = ((new_state : toolchainStateType, counter: number) => void)
+export type CallbackOrValue<T> = T | ((prevState: T) => T);
+// type stateSetGeneric<T> = Dispatch<React.SetStateAction<T>>;
+// type stateSet = stateSetGeneric<toolchainStateType>
+
+type stateSet = (value: CallbackOrValue<toolchainStateType>) => void;
 type titleSet = Dispatch<React.SetStateAction<string>> | ((new_state : string) => void)
 // type deleteStateElements = string | number | Array<string | number | compositionObjectGenericType<substituteAny>>;
 type deleteStateListType = Array<string | number | compositionObjectGenericType<substituteAny>>;
@@ -23,14 +26,13 @@ export interface ToolchainSessionMessage {
 }
 
 export default class ToolchainSession {
-	private onStateChange: stateSet;
+	public  onStateChange: stateSet;
 	private onTitleChange: titleSet;
 	private onMessage: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
-	private socket: WebSocket; // Add socket as a type
-	public  state: toolchainStateType;
+	public  socket: WebSocket; // Add socket as a type
 	private stream_mappings: Map<string, (string | number)[][]>;
-	private stateChangeCounter: number;
+	// private stateChangeCounter: number;
   
 	constructor ( { onStateChange = undefined, 
 									onTitleChange = undefined,
@@ -48,10 +50,8 @@ export default class ToolchainSession {
 		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
-		this.state = {};
+		// this.state = {};
 		this.stream_mappings = new Map<string, (string | number)[][]>();
-
-    this.stateChangeCounter = 0;
     
 
 		this.socket.onmessage = async (event: MessageEvent) => {
@@ -66,7 +66,8 @@ export default class ToolchainSession {
 													JSON.parse(await message_text.text());
 				
 				// console.log("Message received parsed:", typeof message, message)
-				this.handle_message(message);
+				// this.onStateChange(() => this.handle_message(message))
+        this.handle_message(message);
 				this.onMessage(message);
 			} catch (error) {
 				console.error("Error parsing message:", error);
@@ -82,9 +83,8 @@ export default class ToolchainSession {
 	handle_message(data : { [key : string] : substituteAny }) {
 		if ("state" in data) {
 			const state = data["state"] as toolchainStateType;
-			this.state = state;
-			this.onStateChange(this.state, this.stateChangeCounter);
-      this.stateChangeCounter += 1;
+			// this.state = state;
+			this.onStateChange(state);
 		}
 
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
@@ -109,29 +109,36 @@ export default class ToolchainSession {
 
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { type , ...data_typed_type_removed } = data_typed;
-				
+        
+        console.log("Running state diff:", data_typed);
+
 				// console.log("State before diff:", JSON.parse(JSON.stringify(this.state)));
-				this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
+				// this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
 				// console.log("State after diff:", JSON.parse(JSON.stringify(this.state)));
 
-				this.onStateChange(this.state, this.stateChangeCounter);
-        this.stateChangeCounter += 1;
-				this.onTitleChange(get_value(this.state, "title") as string);
+				this.onStateChange(
+          (prevState) => runStateDiff(prevState, data_typed_type_removed) as toolchainStateType
+        );
+				// this.onTitleChange(get_value(this.getState(), "title") as string);
 			}
 		} else if (checkKeys(["s_id", "v"], Object.keys(data))) {
-      console.log("Stream Token:", data);
+      // console.log("Stream Token:", data);
 
 			const data_typed = data as { s_id : string, v : substituteAny };
 
 			// const routes_get: Array<Array<string | number>> = stream_mappings[parsedResponse["s_id"]];
 			const routes_get = this.stream_mappings.get(data_typed["s_id"]) as (string | number)[][];
 			for (const route_get of routes_get) {
-				this.state = appendInRoute(this.state, route_get, data_typed["v"]) as typeof this.state;
+				// this.state = appendInRoute(this.state, route_get, data_typed["v"]) as toolchainStateType;
+        this.onStateChange(
+          (prevState) => appendInRoute(prevState, route_get, data_typed["v"]) as toolchainStateType
+        )
+        // console.log(route_get, this.state, retrieveValueFromObj(this.state, route_get));
 			}
 
-			this.onStateChange(this.state, this.stateChangeCounter);
-      this.stateChangeCounter += 1;
-			this.onTitleChange(get_value(this.state, "title") as string);
+			// this.onStateChange(this.state, this.stateChangeCounter);
+      // this.stateChangeCounter += 1;
+			// this.onTitleChange(get_value(this.state, "title") as string);
 
 		} else if (checkKeys(["event_result"], Object.keys(data))) {
 			// TODO: Find a way to return the event result.
@@ -140,6 +147,9 @@ export default class ToolchainSession {
 			// final_output = parsedResponse["event_result"];
 			console.log("Event result:", data_typed["event_result"]);
 		}
+
+    // console.log("State:", this.getState());
+    // return this.state;
 	}
 
 	send_message(message : { [key : string] : substituteAny }) {
@@ -147,6 +157,7 @@ export default class ToolchainSession {
 	}
 
 	// TODO: turn send_message into a queue system.
+  
 }
 
 
@@ -156,13 +167,108 @@ type Route = Array<string | number>;
 //     routes: (string | number)[][]
 // }
 
+export type handleToolchainMessageReturnType = {
+  counter?: number,
+  streamMappings?: Map<string, (string | number)[][]>,
+  endWsCall?: boolean,
+  sessionId?: string,
+}
 
+// export function handleToolchainMessage(
+//   data : { [key : string] : substituteAny },
+//   streamMappings: Map<string, (string | number)[][]>,
+//   stateInitial: toolchainStateType,
+//   onStateChange: stateSet,
+//   counter: number,
+// ) : handleToolchainMessageReturnType {
+
+//   const returnObject : handleToolchainMessageReturnType = {};
+
+//   if ("state" in data) {
+//     const state = data["state"] as toolchainStateType;
+//     onStateChange(state, counter);
+//     counter += 1;
+//     returnObject.counter = counter;
+//   }
+
+//   if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
+//     // Rest this.stream_mappings to an empty map
+//     returnObject.streamMappings = new Map<string, (string | number)[][]>();
+//     returnObject.endWsCall = true;
+//   } else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
+//     console.log(data);
+//   } else if ("type" in data) {
+//     // console.log("Data type:", data["type"]);
+
+//     if (data["type"] === "streaming_output_mapping") {
+//       const data_typed = data as {"type" : "streaming_output_mapping", "stream_id" : string, "routes" : (string | number)[][]};
+//       returnObject.streamMappings = streamMappings;
+//       returnObject.streamMappings.set(data_typed["stream_id"], data_typed["routes"]);
+//     } else if (data["type"] === "state_diff") {
+//       const data_typed = data as {
+//         type : "state_diff",
+//         append_routes?: Route[];
+//         append_state?: compositionObjectType;
+//         update_state?: compositionObjectType;
+//         delete_state?: deleteStateListType;
+//       };
+
+//       // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//       const { type , ...data_typed_type_removed } = data_typed;
+      
+//       // console.log("State before diff:", JSON.parse(JSON.stringify(this.state)));
+//       // this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
+//       // console.log("State after diff:", JSON.parse(JSON.stringify(this.state)));
+
+//       onStateChange(
+//         runStateDiff(stateInitial, data_typed_type_removed) as typeof stateInitial, 
+//         counter
+//       );
+//       returnObject.counter = counter + 1;
+//       // this.onTitleChange(get_value(this.state, "title") as string);
+//     }
+//   } else if (checkKeys(["s_id", "v"], Object.keys(data))) {
+//     console.log("Stream Token:", data);
+
+//     const data_typed = data as { s_id : string, v : substituteAny };
+
+//     // const routes_get: Array<Array<string | number>> = stream_mappings[parsedResponse["s_id"]];
+//     const routes_get = streamMappings.get(data_typed["s_id"]) as (string | number)[][];
+
+
+//     returnObject.counter = counter;
+    
+//     for (const route_get of routes_get) {
+
+
+//       stateInitial = appendInRoute(stateInitial, route_get, data_typed["v"]) as typeof stateInitial;
+
+//       onStateChange(
+//         stateInitial,
+//         returnObject.counter
+//       );
+//       returnObject.counter += 1;
+//     }
+//   } else if (checkKeys(["event_result"], Object.keys(data))) {
+//     // TODO: Find a way to return the event result.
+
+//     const data_typed = data as { event_result : compositionObjectType };
+//     // final_output = parsedResponse["event_result"];
+//     console.log("Event result:", data_typed["event_result"]);
+//   }
+
+//   if (checkKeys(["toolchain_session_id"], Object.keys(data))) {
+//     returnObject.sessionId = data.toolchain_session_id as string;
+//   }
+
+//   return returnObject;
+// }
 
 
 export function get_value(data: compositionType, 
                           index: number | string): substituteAny {
 	if (Array.isArray(data)) {
-		return data[index as number];
+		return data[index as number % data.length];
 	} else if (data instanceof Map) {
 		if (typeof index !== "string") {
 			throw new Error("Index over a map must be a string");
@@ -243,7 +349,16 @@ export function appendInRoute(
 	} else {
 		if (onlyAdd) {
 			if (Array.isArray(objectForStaticRoute)) {
-				objectForStaticRoute.push(value);
+        // TODO: This is causing issues. It is supposed to be equivalent to the following python:
+        // `objectForStaticRoute += value`;
+        console.log("APPEND CONDITION 1", objectForStaticRoute, value);
+        objectForStaticRoute = objectForStaticRoute.concat(value);
+        console.log("AFTER:", objectForStaticRoute)
+        // if (Array.isArray(value)) {
+        //   objectForStaticRoute.concat(value);
+        // } else {
+        //   objectForStaticRoute.push(value);
+        // }
 			} else if (typeof objectForStaticRoute === "string") {
 				objectForStaticRoute += value as string;
 			} else {
@@ -251,7 +366,10 @@ export function appendInRoute(
 				throw new Error("Invalid data type used in appendInRoute");
 			}
 		} else if (Array.isArray(objectForStaticRoute)) {
+
+      console.log("APPEND CONDITION 2", objectForStaticRoute, value);
 			objectForStaticRoute.push(value);
+      console.log("AFTER:", objectForStaticRoute)
 		} else {
 
 			if (typeof objectForStaticRoute === "string") {

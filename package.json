@@ -82,6 +82,7 @@
     "highlight.js": "^11.9.0",
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^2.0.6",
+    "immer": "^10.0.4",
     "jotai": "^2.1.0",
     "js-cookie": "^3.0.5",
     "katex": "^0.16.9",

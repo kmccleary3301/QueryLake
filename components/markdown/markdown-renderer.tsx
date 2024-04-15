@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./markdown-text-splitter";
 import MarkdownCodeBlock from "./markdown-code-block";
@@ -181,28 +181,41 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
   }
 }
 
-export default function MarkdownRenderer(props: MarkdownRendererProps) {
-  const disableRender = (props.disableRender)?props.disableRender:false;
+const MarkdownRenderer = memo(function MarkdownRenderer({
+  input,
+  transparentDisplay,
+  disableRender,
+  finished,
+} : {
+  input: string,
+  transparentDisplay?: boolean,
+  disableRender?: boolean,
+  finished: boolean,
+}) {
+  // const disableRender = (disableRender)?props.disableRender:false;
   const [unprocessedText, setUnprocessedText] = useState("");
 	const lastUpdateTime = useRef(Date.now());
   const [markdownTokens, setMarkdownTokens] = useState<TokensList | Token[]>([]);
 	const oldInputLength = useRef(0);
 	const markdownTokenLength = useRef(0);
-  const { input } = props;
-  const [old_string_hash, set_old_string_hash] = useState(0);
+  // const { input } = props;
+  // const [old_string_hash, set_old_string_hash] = useState(0);
+  const old_string_hash = useRef(0);
   const reRenderInterval = 250;
+  const lexer = new marked.Lexer();
 
   useEffect(() => {
-		const lexer = new marked.Lexer();
+		console.log("Calling input change hook", unprocessedText);
     const new_string_hash = stringHash(input);
-    if (new_string_hash === old_string_hash) {
+    if (new_string_hash === old_string_hash.current) {
       return;
     }
     if (markdownTokenLength.current === 0 || (Date.now() - lastUpdateTime.current > reRenderInterval)) {
       const lexed_input = lexer.lex(sanitizeMarkdown(input));
+      // TODO: error occurs here: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
       setMarkdownTokens(lexed_input);
       // console.log("LEXED INPUT:", lexed_input);
-      set_old_string_hash(stringHash(input));
+      old_string_hash.current = stringHash(input);
       lastUpdateTime.current = Date.now();
       oldInputLength.current = input.length;
       setUnprocessedText("");
@@ -210,20 +223,35 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
       // textUpdating = true;
       setUnprocessedText(input.slice(oldInputLength.current));
     }
-  }, [input, old_string_hash]);
+  }, [input]);
+
+  // useEffect(() => {
+  //   const lexer = new marked.Lexer();
+  //   const new_string_hash = stringHash(input);
+  //   if (new_string_hash !== old_string_hash) {
+  //     const lexed_input = lexer.lex(sanitizeMarkdown(input));
+  //     setMarkdownTokens(lexed_input);
+  //     set_old_string_hash(new_string_hash);
+  //     oldInputLength.current = input.length;
+  //     setUnprocessedText("");
+  //   } else if (Date.now() - lastUpdateTime.current > reRenderInterval) {
+  //     setUnprocessedText(input.slice(oldInputLength.current));
+  //   }
+  //   lastUpdateTime.current = Date.now();
+  // }, [input, old_string_hash, reRenderInterval]);
 
   return (
     <>
       {(disableRender)?(
         <p>
-          {props.input}
+          {input}
         </p>
       ):(
-        <div className="prose text-sm space-y-3 text-theme-primary">
+        <div className="prose text-sm space-y-2 text-theme-primary">
           {markdownTokens.map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
-              finished={props.finished || k < (markdownTokens.length - 1)}
+              finished={finished || k < (markdownTokens.length - 1)}
               token={v} 
               unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}
               disableHeadingPaddingTop={(k === 0)}
@@ -233,4 +261,6 @@ export default function MarkdownRenderer(props: MarkdownRendererProps) {
       )}
     </>
   );
-}
+});
+
+export default MarkdownRenderer;

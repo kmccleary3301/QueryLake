@@ -5,7 +5,7 @@ import {
 import DisplayMappings from "./display-mappings";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
-import { substituteAny } from "@/types/toolchains";
+import { useEffect } from "react";
 
 export function HeaderSection({
 	section = {align: "justify", tailwind: "", mappings: []},
@@ -14,6 +14,8 @@ export function HeaderSection({
 	section: headerSection,
 	type?: "header" | "footer"
 }) {
+
+  useEffect(() => {console.log("Rerendering")}, []);
 
 	const { 
 		breakpoint
@@ -36,7 +38,6 @@ export function HeaderSection({
 							<DisplayMappings
 								key={index}
                 info={mapping}
-								setInfo={() => {}}
 							/>
 						))}
 				</div>
