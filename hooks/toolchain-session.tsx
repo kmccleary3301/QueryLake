@@ -15,7 +15,8 @@ export type CallbackOrValue<T> = T | ((prevState: T) => T);
 // type stateSet = stateSetGeneric<toolchainStateType>
 
 type stateSet = (value: CallbackOrValue<toolchainStateType>) => void;
-type titleSet = Dispatch<React.SetStateAction<string>> | ((new_state : string) => void)
+// type titleSet = Dispatch<React.SetStateAction<string>> | ((new_state : string) => void)
+type sessionCallback = (session : ToolchainSession) => void;
 // type deleteStateElements = string | number | Array<string | number | compositionObjectGenericType<substituteAny>>;
 type deleteStateListType = Array<string | number | compositionObjectGenericType<substituteAny>>;
 type deleteStateGenericType = string | number | compositionObjectGenericType<substituteAny>;
@@ -27,7 +28,7 @@ export interface ToolchainSessionMessage {
 
 export default class ToolchainSession {
 	public  onStateChange: stateSet;
-	private onTitleChange: titleSet;
+	private onCallEnd: sessionCallback;
 	private onMessage: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
 	public  socket: WebSocket; // Add socket as a type
@@ -35,16 +36,16 @@ export default class ToolchainSession {
 	// private stateChangeCounter: number;
   
 	constructor ( { onStateChange = undefined, 
-									onTitleChange = undefined,
+									onCallEnd = undefined,
 									onMessage = undefined,
 								  onOpen = undefined, }:
 								{ onStateChange?: stateSet, 
-								  onTitleChange?: titleSet,
+								  onCallEnd?: sessionCallback,
 									onMessage?: (message: object) => void,
 								  onOpen?: (session : ToolchainSession) => void } ) {
 		
 		this.onStateChange = onStateChange || (() => {});
-		this.onTitleChange = onTitleChange || (() => {});
+		this.onCallEnd = onCallEnd || (() => {});
 		this.onMessage = onMessage || (() => {});
 		this.onOpen = onOpen || (() => {});
 		
@@ -79,7 +80,7 @@ export default class ToolchainSession {
 			this.onOpen(this);
 		}
 	}
-
+  
 	handle_message(data : { [key : string] : substituteAny }) {
 		if ("state" in data) {
 			const state = data["state"] as toolchainStateType;
@@ -90,6 +91,7 @@ export default class ToolchainSession {
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
 			// Rest this.stream_mappings to an empty map
 			this.stream_mappings = new Map<string, (string | number)[][]>();
+      this.onCallEnd(this);
 		} else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
 			console.log(data);
 		} else if ("type" in data) {

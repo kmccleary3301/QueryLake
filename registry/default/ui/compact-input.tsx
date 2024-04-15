@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/default/ui/button';
 import * as Icon from 'react-feather';
 import { AspectRatio } from './aspect-ratio';
 
-export default function CompactInput({
+const CompactInput = forwardRef(({
   className,
-  type,
+  type = "",
   placeholder,
   ...props
 }: {
@@ -15,7 +15,7 @@ export default function CompactInput({
   type?: string;
   placeholder?: string;
   [key: string]: any;
-}) {
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
 	const [placeHolderMoved, setPlaceHolderMoved] = useState(
 		(props.value && props.value !== "") ? true : 
@@ -23,7 +23,7 @@ export default function CompactInput({
 		false
 	);
 	const [hidden, setHidden] = useState((type === "password") ? true : false);
-	const buttonAvailable = (type === "password") ? true : false;
+	const buttonAvailable =  (type === "password") ? true : false;
 
 
 	// const height = className ? className.match(/h-(^[\s]+)/)?.[1] : "h-10";
@@ -104,4 +104,6 @@ export default function CompactInput({
 			</div>
 		</div>
   );
-}
+})
+
+export default CompactInput;

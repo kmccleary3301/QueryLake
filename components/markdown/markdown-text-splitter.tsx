@@ -139,15 +139,16 @@ export type textSegment = {
 }
 
 export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
-  const [textSplit, setTextSplit] = useState<textSegment[]>([]);
-  useEffect(() => {
-    const string_segments = parseText(props.text);
-    // console.log("Text splitter got text:", props.text, string_segments);
-    setTextSplit(string_segments);
-  }, [props.text]);
+//   const [textSplit, setTextSplit] = useState<textSegment[]>([]);
+//   useEffect(() => {
+//     const string_segments = parseText(props.text);
+//     // console.log("Text splitter got text:", props.text, string_segments);
+//     setTextSplit(string_segments);
+//   }, [props.text]);
+
   return (
     <>
-      {textSplit.map((v : textSegment, k : number) => (
+      {parseText(props.text).map((v : textSegment, k : number) => (
         <MarkdownTextAtomic key={k} textSeg={v}/>
       ))}
     </>

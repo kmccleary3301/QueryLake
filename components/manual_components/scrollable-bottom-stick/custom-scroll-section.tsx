@@ -27,18 +27,20 @@ const useSize = (target : React.RefObject<HTMLDivElement>) => {
   return size
 }
 
-export default function ScrollSection({ 
-	children,
-	scrollToBottomButton = false,
+export default function ScrollSection({
+  horizontal = false,
+  scrollToBottomButton = false,
 	scrollBar = true,
 	className = "",
 	innerClassName = "",
+	children,
 } : { 
-	children: React.ReactNode,
-	scrollToBottomButton?: boolean,
+  horizontal?: boolean,
+  scrollToBottomButton?: boolean,
 	scrollBar?: boolean,
 	className?: string,
 	innerClassName?: string,
+	children: React.ReactNode,
 }) {
 
 	// Add a new state to keep track of whether there's overflow
@@ -104,7 +106,7 @@ export default function ScrollSection({
 	return (
 		<>
 			<ScrollAreaPrimitive.Root
-				className={cn("h-full w-full overflow-y-hidden", className)}
+				className={cn(`h-full w-full overflow-${horizontal?"x":"y"}-hidden`, className)}
 			>
 				<ScrollAreaPrimitive.Viewport
 					ref={scrollDiv}
@@ -137,7 +139,7 @@ export default function ScrollSection({
 					}}
 				>
 					<ScrollAreaPrimitive.Viewport id="scrollAreaPrimitive2" className="flex flex-col" ref={interiorDiv}>
-						<div className="flex flex-row w-full justify-center">
+						<div className="flex flex-row w-full">
 							<div className={cn(`flex flex-col`, innerClassName)}>
 								{children}
 							</div>
@@ -166,7 +168,7 @@ export default function ScrollSection({
 						</div> 
 					</div>
 				)}
-				<ScrollBar className={`opacity-${scrollBar?"100":"0"}`}/>
+				<ScrollBar className={`opacity-${scrollBar?"100":"0"}`} orientation={horizontal?"horizontal":"vertical"}/>
     		{/* <ScrollAreaPrimitive.Corner /> */}
 			</ScrollAreaPrimitive.Root>
 		</>

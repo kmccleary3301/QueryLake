@@ -5,6 +5,7 @@ import {
 	PropsWithChildren,
 	SetStateAction,
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
 	useState,
@@ -128,10 +129,7 @@ export const ContextProvider = ({
 	const [login_valid, set_login_valid] = useState<boolean>(false);
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
 
-
 	useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-
     const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
     const widths = [0, 640, 768, 1024, 1280, 1536];
 
@@ -145,11 +143,8 @@ export const ContextProvider = ({
 			}
 			set_breakpoint(breakpoints[index]);
 		};
-
     window.addEventListener('resize', updateBreakpoint);
-
     updateBreakpoint();
-
     return () => window.removeEventListener('resize', updateBreakpoint);
   }, []);
 
@@ -201,15 +196,23 @@ export const ContextProvider = ({
 		});
 	};
 
-  useEffect(() => {
-    if (selected_toolchain === undefined) return;
+  const setFullToolchain = useCallback((toolchain_id : string) => {
     fetchToolchainConfig({
       auth: user_data?.auth as string,
-      toolchain_id: selected_toolchain?.id as string,
+      toolchain_id: toolchain_id as string,
       onFinish: (v : ToolChain) => set_selected_toolchain_full(v)
     })
-  }, [selected_toolchain, user_data?.auth]);
+  }, [user_data?.auth]);
 
+  useEffect(() => {
+    if (selected_toolchain === undefined) return;
+    setFullToolchain(selected_toolchain.id as string);
+  }, [selected_toolchain, user_data?.auth]);
+  
+  useEffect(() => {
+    if (user_data === undefined) return;
+    set_selected_toolchain(user_data.default_toolchain);
+  }, [user_data]);
 	
 	return (
 		<Context.Provider value={{ 

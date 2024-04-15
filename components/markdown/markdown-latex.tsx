@@ -14,7 +14,7 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
     if (props.type === "inline") {
       return <TeX math={props.textSeg.text} />;
     } else {
-      return <TeX block math={props.textSeg.text} />;
+      return <TeX className="w-full" block math={props.textSeg.text} />;
     }
   } catch (error) {
     return (

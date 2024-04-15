@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./markdown-text-splitter";
 import MarkdownCodeBlock from "./markdown-code-block";
@@ -63,35 +63,35 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         switch (token.depth) {
           case 1:
             return (
-              <h1>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
-                {/* {token.text + props.unProcessedText} */}
-              </h1>
-            );
-          case 2:
-            return (
               <h2>
                 <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
                 {/* {token.text + props.unProcessedText} */}
               </h2>
             );
-          case 3:
+          case 2:
             return (
               <h3>
                 <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+                {/* {token.text + props.unProcessedText} */}
               </h3>
             );
-          case 4:
+          case 3:
             return (
               <h4>
                 <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
               </h4>
             );
-          case 5:
+          case 4:
             return (
               <h5>
                 <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
               </h5>
+            );
+          case 5:
+            return (
+              <h6>
+                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              </h6>
             );
           case 6:
             return (
@@ -198,14 +198,11 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   const [markdownTokens, setMarkdownTokens] = useState<TokensList | Token[]>([]);
 	const oldInputLength = useRef(0);
 	const markdownTokenLength = useRef(0);
-  // const { input } = props;
-  // const [old_string_hash, set_old_string_hash] = useState(0);
   const old_string_hash = useRef(0);
   const reRenderInterval = 250;
   const lexer = new marked.Lexer();
 
-  useEffect(() => {
-		console.log("Calling input change hook", unprocessedText);
+  const updateData = useCallback(() => {
     const new_string_hash = stringHash(input);
     if (new_string_hash === old_string_hash.current) {
       return;
@@ -223,7 +220,11 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
       // textUpdating = true;
       setUnprocessedText(input.slice(oldInputLength.current));
     }
-  }, [input]);
+  }, [input])
+
+  // useEffect(() => {
+  //   updateData();
+  // }, [input]);
 
   // useEffect(() => {
   //   const lexer = new marked.Lexer();
@@ -243,12 +244,16 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   return (
     <>
       {(disableRender)?(
-        <p>
-          {input}
-        </p>
+        <>
+          {input.split('\n').map((line, i) => (
+            <p key={i}>
+              {line}
+            </p>
+          ))}
+        </>
       ):(
-        <div className="prose text-sm space-y-2 text-theme-primary">
-          {markdownTokens.map((v : Token, k : number) => (
+        <div className="prose text-sm space-y-2 text-theme-primary whitespace-pre-wrap break-words">
+          {lexer.lex(sanitizeMarkdown(input)).map((v : Token, k : number) => (
             <MarkdownMapComponent 
               key={k} 
               finished={finished || k < (markdownTokens.length - 1)}

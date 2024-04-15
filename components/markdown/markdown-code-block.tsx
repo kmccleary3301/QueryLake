@@ -9,7 +9,7 @@ import { Button } from '@/registry/default/ui/button';
 import * as Icon from 'react-feather';
 import { toast } from 'sonner';
 import { highlight } from '@/lib/shiki';
-import { set } from 'date-fns';
+import ScrollSection from '../manual_components/scrollable-bottom-stick/custom-scroll-section';
 // import { renderToHtml } from "shiki";
 // import codeToHTML
 // import { codeToHtml } from 'shiki/index.mjs';
@@ -162,10 +162,11 @@ async function parseScopeTreeText(code: string, lang: string) {
 
 }
 
+
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   // const fontSize = 14;
 
-  const handleCopy = useCallback((text : string) => {
+  const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -176,7 +177,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
     } catch (err) {
       toast("Failed to copy to clipboard");
     }
-  }, []);
+  };
 
   const [highlights, setHighlights] = useState<scoped_text[][]>([]);
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
@@ -189,46 +190,6 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
 	const oldInputLength = useRef(0);
 
   const refreshInterval = 250; // In milliseconds
-
-  // useEffect(() => {
-  //   // setRawCode(raw_code);
-
-  //   if (props.lang === "text") {
-  //     setLanguage("text");
-  //     const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
-  //       return [{
-  //         scope: [],
-  //         content: line
-  //       }];
-  //     });
-  //     setHighlights(scope_tree);
-  //     return;
-  //   }
-
-
-  //   let raw_code = props.text+props.unProcessedText;
-  //   const unprocessed_text = raw_code.slice(oldInputLength.current);
-  //   if (props.finished) {
-  //     raw_code = props.text;
-  //   }
-
-  //   // console.log("Highlighting raw code:", raw_code)
-  //   // setLineOffsets(getLineOffsets(raw_code));
-  //   if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
-  //     const highlights_get = (props.lang)?hljs.highlight(props.text, {"language": props.lang}):hljs.highlightAuto(raw_code.replaceAll(/\n[\s|\t]+/g, "\n"));
-  //     setLanguage((props.lang)?props.lang:(highlights_get.language?highlights_get.language:"Unknown"));
-      
-  //     const scope_tree = parseScopeTreeText(highlights_get.value);
-  //     setHighlights(scope_tree);
-  //     // console.log("Highlights:", scope_tree);
-  //     // setLastRefreshTime(Date.now());
-  //     // setOldInputLength(raw_code.length);
-	// 		lastRefreshTime.current = Date.now();
-	// 		oldInputLength.current = raw_code.length;
-  //   } else {
-  //     setUnprocessedText(unprocessed_text.split("\n"));
-  //   }
-  // }, [props.text, props.unProcessedText, props.finished, props.lang]);
 
   useEffect(() => {
     setLineCount(props.text.split("\n").length);
@@ -263,8 +224,8 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   }, [props.text, props.unProcessedText, props.finished, props.lang]);
 
   return (
-    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white', fontConsolas.className)}>
-      <div className='w-auto mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
+    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white overflow-x-', fontConsolas.className)}>
+      <div className='mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
           handleCopy(props.text + props.unProcessedText);
@@ -291,39 +252,9 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
         </code>
         {/* <div className='w-[2px] h-auto bg-secondary'/>
         <div className='w-[4px] h-auto'/> */}
-        <ScrollAreaHorizontal className="flex flex-col overflow-y-hidden">
+        <div className="flex flex-col overflow-y-hidden overflow-x-auto w-full justify-start">
           <div className='pl-[10px] pt-[5px] pb-[20px]'>
-            <code 
-              className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'
-            >
-              {/* {highlights.map((line: scoped_text[], line_number: number) => (
-                <>
-                  {line.map((token_seg: scoped_text, token_number: number) => (
-                    <>
-                      {(token_seg.scope[token_seg.scope.length-1] === undefined) ? (
-                        <>
-                          {token_seg.content}
-                        </>
-                      ) : (
-                        <span key={token_number} id={`hljs ${token_seg.scope[token_seg.scope.length-1]}`} style={{
-                          color: (token_seg.scope.length > 0) ?
-                                  code_styling.get(token_seg.scope[token_seg.scope.length-1]) :
-                                  code_styling.get("default")
-                        }}>
-                          {token_seg.content}
-                        </span>
-                      )}
-      
-                      {(line_number === highlights.length - 1 && token_number === line.length - 1 && unprocessedText.length > 0 && !props.finished) && (
-                        <span className="font-consolas text-sm whitespace-pre">
-                          {unprocessedText[0]}
-                        </span>
-                      )}
-                    </>
-                  ))}
-                  {"\n"}
-                </>
-              ))} */}
+            <code className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'>
               {(!props.finished) && (
                 <>
                   {unprocessedText.slice(1, unprocessedText.length - 1).map((line: string, line_number: number) => (
@@ -339,8 +270,8 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
               <code className='bg-transparent' dangerouslySetInnerHTML={{__html: codeHTML}}></code>
             </code>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollAreaHorizontal>
+          {/* <ScrollBar orientation="horizontal" /> */}
+        </div>
       </pre>
     </div>
   );

@@ -5,6 +5,10 @@ import { displayMapping } from "@/types/toolchain-interface";
 import { useEffect, useState } from "react";
 import MarkdownRenderer from "../markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
+import { useContextAction } from "@/app/context-provider";
+import { Button } from "@/registry/default/ui/button";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 
 export function ChatSkeleton({
 	configuration
@@ -59,6 +63,7 @@ export default function Chat({
 }) {
 	
 	const { toolchainState, toolchainWebsocket } = useToolchainContextAction();
+  const { userData } = useContextAction();
 
 	const [currentValue, setCurrentValue] = useState<chatInput>(
 		retrieveValueFromObj(toolchainState, configuration.display_route) as chatInput || []
@@ -77,17 +82,49 @@ export default function Chat({
 		setCurrentValue(newValue);
 	}, [toolchainState]);
 
+  const handleCopy = (text : string) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      window.navigator.clipboard.writeText(text);
+      toast("Copied to clipboard");
+    } catch (err) {
+      toast("Failed to copy to clipboard");
+    }
+  };
+
   return (
-		<div className="w-auto flex flex-col space-y-2 border-[2px] border-red-500 min-h-[50px]">
+		<div className="w-full flex flex-col space-y-6 pb-2">
 			{currentValue.map((value, index) => (
 
-				<div key={index} className="flex flex-row space-x-2">
-					<div className="flex flex-col h-auto justify-start">
-						<div className="rounded-full h-8 w-8 bg-primary/50"/>
+				<div key={index} className="flex flex-row space-x-3 w-full overflow">
+					<div className="flex flex-col h-auto justify-start pt-1">
+						<div className={`rounded-full h-7 w-7 ${(value.role === "user")?"bg-red-500":"bg-green-500"}`}>
+              <p className="w-full h-full text-center text-xs flex flex-col justify-center pt-[2px] select-none">
+                {userData?.username.slice(0, Math.max(2, userData?.username.length)).toUpperCase()}
+              </p>
+            </div>
 					</div>
-					<div className="flex-grow pt-8 space-y-0">
-						<MarkdownRenderer input={(value || {}).content || ""} finished={false}/>
-					</div>
+          <div className="flex flex-col space-y-1">
+            <p className="select-none"><strong>{(value.role === "user")?"You":"QueryLake"}</strong></p>
+            <div className="space-y-0">
+              <MarkdownRenderer 
+                disableRender={(value.role === "user")}
+                input={(value || {}).content || ""} 
+                finished={false}
+              />
+            </div>
+            {(value.role === "assistant") && (
+              <div className="w-full flex flex-row">
+                <Button variant={"ghost"} className="rounded-full p-0 h-10 w-10" onClick={() => handleCopy((value || {}).content || "")}>
+                  <Copy className="w-4 h-4 text-primary"/>
+                </Button>
+
+              </div>
+            )}
+          </div>
 				</div>
 			))}
 		</div>

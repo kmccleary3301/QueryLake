@@ -213,3 +213,40 @@ y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 print("Accuracy:", accuracy)
 ```
+
+
+```json
+{
+	"split": "none",
+	"size": 100,
+	"align": "center",
+	"tailwind": "w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw]",
+	"mappings": [
+		{
+			"display_route": [
+				"chat_history"
+			],
+			"display_as": "chat"
+		}
+	],
+	"footer": {
+		"align": "justify",
+		"tailwind": "pb-2",
+		"mappings": [
+			{
+				"display_as": "chat_input",
+				"hooks": [
+					{
+						"hook": "on_submit",
+						"target_event": "user_question_event",
+						"target_route": "question",
+						"store": false
+					}
+				],
+				"config": [],
+				"tailwind": "w-[85vw] md:w-[70vw] lg:w-[60vw] xl:w-[50vw]"
+			}
+		]
+	}
+}
+```

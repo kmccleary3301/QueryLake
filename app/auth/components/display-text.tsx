@@ -65,7 +65,7 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 						<TextGenerateEffect
 							initialDelay={2.3}
 							staggerDelay={0.05}
-							words="An AI platform for everyone."
+							words="An AI platform for everyone"
 							// words="Test"
 							className="inline-block text-base md:text-base mt-4 text-white font-normal inter-var"
 						/>

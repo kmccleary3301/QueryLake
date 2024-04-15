@@ -79,7 +79,7 @@ export default function LoginPage() {
 		
     fetch(url).then((response) => {
       response.json().then((data : login_results) => {
-        console.log("Got data:", data);
+        console.log("GOT LOGIN DATA:", data);
 				if (data.success) {
 					const result : userDataType = data.result;
           getUserData(result, () => {});
@@ -104,7 +104,7 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11 outline-none" placeholder="Username or Email" {...field} />
+                    <CompactInput className="h-11 outline-none" placeholder="Username or Email" autoComplete="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,7 +119,7 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Password" type="password" {...field} />
+                    <CompactInput className="h-11" placeholder="Password" type="password" autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

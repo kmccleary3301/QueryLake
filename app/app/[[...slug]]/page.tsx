@@ -8,7 +8,7 @@ interface DocPageProps {
 
 type app_mode_type = "create" | "session" | "view" | undefined;
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import { ToolChain, substituteAny } from '@/types/toolchains';
@@ -25,10 +25,9 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const [toolchainStateCopied, setToolchainStateCopied] = useState<{[key: string]: substituteAny}>({});
   // const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
   const toolchainStateRef = useRef<toolchainStateType>({});
+  const toolchainIsFired = useRef((app_mode_immediate === "create") ? false : true);
 
-  const { 
-    toolchainStateCounter,
-    setToolchainStateCounter,
+  const {
     toolchainState,
     setToolchainState,
     toolchainWebsocket,
@@ -39,25 +38,19 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     userData,
     selectedToolchainFull,
   } = useContextAction();
+
+  const onFirstCall = useCallback(() => {
+    console.log("ON FIRST CALL:", toolchainIsFired.current);
+    toolchainIsFired.current = true;
+    console.log("ON FIRST CALL:", toolchainIsFired.current);
+  }, []);
+
   
-  // useEffect(() => {
-  //   console.log("Session ID: ", sessionId);
-  // }, [sessionId]);
-
-  // useEffect(() => {
-  //   // console.log("Toolchain state updated: ", toolchainState);
-  //   setToolchainStateCopied(toolchainState);
-  // }, [toolchainStateCounter]);
-
   const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
-    // console.log("update state called with", toolchainStateCounter);
-    // setToolchainStateCounter((prevCount : number) => prevCount + 1);
-
     const value = (typeof state === "function") ? state(toolchainStateRef.current) : state;
     toolchainStateRef.current = value;
     const value_copied = JSON.parse(JSON.stringify(value));
     setToolchainState(value_copied);
-    // console.log(value);
   }, [toolchainState, setToolchainState]);
 
   const initializeWebsocket = () => {
@@ -65,9 +58,10 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     setToolchainState({});
     toolchainWebsocket.current = new ToolchainSession({
       onStateChange: updateState,
-      onTitleChange: () => {},
+      onCallEnd: (session : ToolchainSession) => {
+        onFirstCall();
+      },
       onMessage: (message : ToolchainSessionMessage) => {
-        // console.log("TOOLCHAIN MESSAGE:", message);
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
@@ -79,7 +73,6 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
               "auth": userData?.auth,
               "command" : "toolchain/create",
               "arguments": {
-                // "toolchain_id": "test_chat_session_normal"
                 "toolchain_id": selectedToolchainFull,
               }
             });
