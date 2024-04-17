@@ -1,4 +1,5 @@
 "use client";
+import { ScrollAreaHorizontal } from "@/registry/default/ui/scroll-area";
 import TeX from "@matejmazur/react-katex";
 import "katex/dist/katex.min.css";
 
@@ -14,7 +15,13 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
     if (props.type === "inline") {
       return <TeX math={props.textSeg.text} />;
     } else {
-      return <TeX className="w-full" block math={props.textSeg.text} />;
+      return (
+        // <div className="items-center w-auto">
+          <ScrollAreaHorizontal>
+            <TeX as={"span"} block className="word-break whitespace-pre-wrap" math={props.textSeg.text} />
+          </ScrollAreaHorizontal>
+        // </div>
+      );
     }
   } catch (error) {
     return (

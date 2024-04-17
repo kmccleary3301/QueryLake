@@ -43,129 +43,7 @@ type scoped_text = {
   content: string
 };
 
-type parser_segment = scoped_text | "\n";
-
-function decode_html(input : string) {
-  input = input.replaceAll('&#x27;', "'");
-  input = input.replaceAll('&quot;', "\"");
-  input = input.replaceAll('&lt;', "<");
-  input = input.replaceAll('&gt;', ">");
-  input = input.replaceAll('&amp;', '&');
-  return input;
-}
-
-
-// function parseScopeTreeText(hljs_html : string) {
-//   /*
-//    * Let's not discuss this lmao.
-//    */
-
-//   let match = hljs_html.match(/(<.*?>)/);
-//   const current_scope : string[] = [];
-//   let index = 0;
-//   const return_segments : scoped_text[][] = [];
-//   const string_segments : parser_segment[] = [];
-
-
-//   if (match === null) {
-//       string_segments.push({
-//         scope: [],
-//         content: hljs_html
-//       });
-//   }
-//   while (match !== null && match.index !== undefined) {
-//     // console.log("match:", match[0]);
-//     if (match.index > 0) {
-//       const text = hljs_html.slice(index, index+match.index).split("\n");
-//       // console.log("Text");
-//       // console.log(text);
-//       for (let i = 0; i < text.length; i++) {
-//         const decoded = decode_html(text[i]);
-//         if (decoded.length > 0) {
-//           if (i !== 0) { 
-//             string_segments.push("\n") 
-//           }
-//           if (text[i].length > 0) {
-//             string_segments.push({
-//               scope: current_scope.slice(),
-//               content: decoded
-//             })
-//           }
-//         } else if (i != 0) {
-//           string_segments.push("\n");
-//         }
-//       }
-//     }
-//     const match_open_scope = match[0].match(/(".*?")/);
-//     if (match_open_scope !== null) {
-//       current_scope.push(match_open_scope[0].slice(1, match_open_scope[0].length-1));
-//     } else {
-//       current_scope.pop();
-//     }
-//     const new_index = index+match[0].length+match.index;
-//     const new_match = hljs_html.slice(new_index).match(/(<.*?>)/);
-//     if (new_match === null && new_index < hljs_html.length) {
-//       const text = hljs_html.slice(new_index).split("\n");
-//       // console.log("Text");
-//       // console.log(text);
-//       for (let i = 0; i < text.length; i++) {
-//         const decoded = decode_html(text[i]);
-//         if (decoded.length > 0) {
-//           if (i != 0) { 
-//             string_segments.push("\n");
-//           }
-//           string_segments.push({
-//             scope: current_scope.slice(),
-//             content: decode_html(text[i])
-//           })
-//         } else if (i != 0) {
-//           string_segments.push("\n");
-//         }
-//       }
-//     } 
-//     match = new_match;
-//     index = new_index;
-//   }
-//   index = 0;
-//   let temp_segments : scoped_text[]  = [];
-// 	for (let i = 0; i < string_segments.length; i++) {
-// 		if (string_segments[i] === "\n") {
-// 			// if (temp_segments.length > 0) {
-// 			return_segments.push(temp_segments.slice());
-// 			// }
-// 			temp_segments = [];
-// 			index = i;
-// 		} else {
-// 			const tmp_value : scoped_text = string_segments[i] as scoped_text;
-// 			temp_segments.push(tmp_value);
-// 		}
-// 	}
-//   return_segments.push(temp_segments.slice());
-//   return return_segments;
-// }
-
-async function parseScopeTreeText(code: string, lang: string) {
-  // const highlighter = await getHighlighter({ theme: 'nord' }); // You can choose any theme you like
-  // const highlightedLines = highlighter.codeToThemedTokens(code, lang);
-
-  // const highlightedLines = await highlight(code, 'nord', lang);
-
-  // return highlightedLines.map(line => line.map(token => ({
-  //   scope: token.color ? [token.color] : [],
-  //   content: token.content
-  // })));
-
-  const html = await highlight(code, 'nord', lang)
-
-  console.log(html);
-
-
-}
-
-
 export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
-  // const fontSize = 14;
-
   const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
       return;
@@ -179,7 +57,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
     }
   };
 
-  const [highlights, setHighlights] = useState<scoped_text[][]>([]);
+  // const [highlights, setHighlights] = useState<scoped_text[][]>([]);
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
   const [language, setLanguage] = useState<string>("Unknown");
   const [codeHTML, setCodeHTML] = useState<string>("");
@@ -224,7 +102,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   }, [props.text, props.unProcessedText, props.finished, props.lang]);
 
   return (
-    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white overflow-x-', fontConsolas.className)}>
+    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white my-3', fontConsolas.className)}>
       <div className='mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
@@ -252,7 +130,8 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
         </code>
         {/* <div className='w-[2px] h-auto bg-secondary'/>
         <div className='w-[4px] h-auto'/> */}
-        <div className="flex flex-col overflow-y-hidden overflow-x-auto w-full justify-start">
+        {/* <div className="flex flex-col overflow-y-hidden overflow-x-auto w-full justify-start"> */}
+        <ScrollAreaHorizontal className='min-w-auto'>
           <div className='pl-[10px] pt-[5px] pb-[20px]'>
             <code className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'>
               {(!props.finished) && (
@@ -271,7 +150,8 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
             </code>
           </div>
           {/* <ScrollBar orientation="horizontal" /> */}
-        </div>
+        </ScrollAreaHorizontal>
+        {/* </div> */}
       </pre>
     </div>
   );

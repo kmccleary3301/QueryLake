@@ -1,7 +1,7 @@
 "use client";
 // import React from "react";
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
+import { ScrollArea, ScrollAreaHorizontal } from "@/registry/default/ui/scroll-area";
 import { Button } from "@/registry/default/ui/button";
 import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { useContextAction } from "@/app/context-provider";
@@ -9,7 +9,30 @@ import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { Textarea } from "@/registry/default/ui/textarea";
+import { motion } from "framer-motion";
+import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 
+const test_text = `
+# Heading 1
+## Heading 2
+### Heading 3
+
+## Blockquotes
+\`\`\`py
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Sample dataset
+X = [[1, 2], [2, 3], [3, 4], [4, 5]]  # Features
+y = [0, 0, 1, 1]  # Labels
+
+# Splitting the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42), train_test_split(X, y, test_size=0.2, random_state=42), train_test_split(X, y, test_size=0.2, random_state=42), train_test_split(X, y, test_size=0.2, random_state=42)
+\`\`\`
+
+$$P(Spam|Sender=A,Subject Line=Re:Important Meeting) = \\frac{P(Sender=A,Subject Line=Re:Important Meeting|Spam) \\cdot P(Spam)}{P(Sender=A,Subject Line=Re:Important Meeting)} = \\frac{(0.1 \\cdot 0.5) / (0.1 + 0.5)}{0.1} = 0.5$$
+`
 
 
 interface DocPageProps {
@@ -28,8 +51,17 @@ export default function TestPage() {
   const [sessionId, setSessionId] = useState<string>();
   const [toolchainState, setToolchainState] = useState<toolchainStateType>({});
   const toolchainStateRef = useRef<toolchainStateType>({});
-
   const [toolchainStateCounter, setToolchainStateCounter] = useState<number>(0);
+  const [expanded, setExpanded] = useState(false);
+  const [markdownText, setMarkdownText] = useState<string>("");
+
+  const startTyping = () => {
+    for (let i = 0; i < test_text.length; i++) {
+      setTimeout(() => {
+        setMarkdownText(test_text.slice(0, i));
+      }, i * 10);
+    }
+  }
 
   const model_params_static = {
     "model_choice": "mistral-7b-instruct-v0.1",
@@ -40,11 +72,6 @@ export default function TestPage() {
     "stop": ["<|im_end|>"],
     "include_stop_str_in_output": true
   }
-
-
-  // useEffect(() => {
-  //   console.log("Session ID: ", sessionId);
-  // }, [sessionId]);
 
   useEffect(() => {
     console.log("Toolchain state updated: ", toolchainState);
@@ -77,7 +104,6 @@ export default function TestPage() {
   const testWebsocket = () => {
     toolchainWebsocket.current = new ToolchainSession({
       onStateChange: setToolchainState,
-      onTitleChange: () => {},
       onMessage: (message : ToolchainSessionMessage) => {
         // console.log(message);
         if (message.toolchain_session_id !== undefined) {
@@ -170,6 +196,9 @@ export default function TestPage() {
       <Button onClick={sendMessage4}>
         Question 3
       </Button>
+      <Button onClick={startTyping}>
+        Start Typing
+      </Button>
 
       <ChatBarInput/>
 
@@ -182,6 +211,23 @@ export default function TestPage() {
         />
         {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
       </ScrollArea>
+      <div className="border-[2px] border-red-500 w-[400px] h-[500px]">
+        <Button onClick={() => setExpanded(!expanded)}>
+          Expand
+        </Button>
+        <ScrollAreaHorizontal className="p-4 border-[2px] border-teal-500">
+          <motion.div
+            className="h-[40px] bg-green-500"
+            initial={{width: 20}}
+            animate={{
+              width: expanded ? 1700 : 20
+            }}
+            transition={{ duration: 0.5 }}
+          />
+        </ScrollAreaHorizontal>
+
+        <MarkdownRenderer input={markdownText} finished={false}/>
+      </div>
 
     </div>
   );

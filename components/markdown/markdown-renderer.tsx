@@ -7,6 +7,7 @@ import stringHash from "@/hooks/stringHash";
 import MarkdownTable from "./markdown-table";
 import sanitizeMarkdown from "@/hooks/sanitizeMarkdown";
 import "./prose.css"
+import { cn } from "@/lib/utils";
 
 type MarkdownRendererProps = {
   input: string,
@@ -46,7 +47,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
   switch (token.type) {
     case 'space':
       return (
-        <br className="w-[2px] h-[3px] bg-red-500"/>
+        <br className="w-[2px] h-[1px] bg-red-500"/>
       );
     case 'code':
       return (
@@ -124,7 +125,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 
       if (token.ordered) {
         return (
-          <ol className="">
+          <ol className="not-prose w-auto">
             {token.items.map((v : Tokens.ListItem, k : number) => (
               <MarkdownMapComponent
                 finished={props.finished}
@@ -137,7 +138,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         );
       } else {
         return (
-          <ul className="">
+          <ul className="not-prose">
             {token.items.map((v : Tokens.ListItem, k : number) => (
               <MarkdownMapComponent
                 finished={props.finished}
@@ -154,6 +155,7 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         <li className="">
           {/* <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/> */}
           <MarkdownRenderer 
+            unpacked={true}
             input={token.text + props.unProcessedText} 
             finished={props.finished} 
             disableRender={false}
@@ -162,9 +164,13 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       );
     case 'paragraph':
       return (
-        <div>
-          <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/>
-        </div>
+        <p>
+          <MarkdownTextSplitter 
+            selectable={true} 
+            className={`text-left text-base text-gray-200`} 
+            text={token.text + props.unProcessedText}
+          />
+        </p>
       );
     case 'html':
       return (null);
@@ -182,64 +188,21 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
 }
 
 const MarkdownRenderer = memo(function MarkdownRenderer({
+  className = "",
+  unpacked = false,
   input,
   transparentDisplay,
-  disableRender,
+  disableRender = false,
   finished,
 } : {
+  className?: string,
+  unpacked?: boolean,
   input: string,
   transparentDisplay?: boolean,
   disableRender?: boolean,
   finished: boolean,
 }) {
-  // const disableRender = (disableRender)?props.disableRender:false;
-  const [unprocessedText, setUnprocessedText] = useState("");
-	const lastUpdateTime = useRef(Date.now());
-  const [markdownTokens, setMarkdownTokens] = useState<TokensList | Token[]>([]);
-	const oldInputLength = useRef(0);
-	const markdownTokenLength = useRef(0);
-  const old_string_hash = useRef(0);
-  const reRenderInterval = 250;
   const lexer = new marked.Lexer();
-
-  const updateData = useCallback(() => {
-    const new_string_hash = stringHash(input);
-    if (new_string_hash === old_string_hash.current) {
-      return;
-    }
-    if (markdownTokenLength.current === 0 || (Date.now() - lastUpdateTime.current > reRenderInterval)) {
-      const lexed_input = lexer.lex(sanitizeMarkdown(input));
-      // TODO: error occurs here: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
-      setMarkdownTokens(lexed_input);
-      // console.log("LEXED INPUT:", lexed_input);
-      old_string_hash.current = stringHash(input);
-      lastUpdateTime.current = Date.now();
-      oldInputLength.current = input.length;
-      setUnprocessedText("");
-    } else {
-      // textUpdating = true;
-      setUnprocessedText(input.slice(oldInputLength.current));
-    }
-  }, [input])
-
-  // useEffect(() => {
-  //   updateData();
-  // }, [input]);
-
-  // useEffect(() => {
-  //   const lexer = new marked.Lexer();
-  //   const new_string_hash = stringHash(input);
-  //   if (new_string_hash !== old_string_hash) {
-  //     const lexed_input = lexer.lex(sanitizeMarkdown(input));
-  //     setMarkdownTokens(lexed_input);
-  //     set_old_string_hash(new_string_hash);
-  //     oldInputLength.current = input.length;
-  //     setUnprocessedText("");
-  //   } else if (Date.now() - lastUpdateTime.current > reRenderInterval) {
-  //     setUnprocessedText(input.slice(oldInputLength.current));
-  //   }
-  //   lastUpdateTime.current = Date.now();
-  // }, [input, old_string_hash, reRenderInterval]);
 
   return (
     <>
@@ -252,17 +215,32 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
           ))}
         </>
       ):(
-        <div className="prose text-sm space-y-2 text-theme-primary whitespace-pre-wrap break-words">
-          {lexer.lex(sanitizeMarkdown(input)).map((v : Token, k : number) => (
-            <MarkdownMapComponent 
-              key={k} 
-              finished={finished || k < (markdownTokens.length - 1)}
-              token={v} 
-              unProcessedText={(k === markdownTokens.length - 1)?unprocessedText:""}
-              disableHeadingPaddingTop={(k === 0)}
+        <>
+        {unpacked?(
+          <>
+            {lexer.lex(sanitizeMarkdown(input)).map((v : Token, k : number) => (
+              <MarkdownMapComponent 
+                key={k} 
+                finished={finished}
+                token={v} 
+                unProcessedText={""}
+                disableHeadingPaddingTop={(k === 0)}
+              />
+            ))}
+          </>
+        ):(
+          <div className={cn("prose markdown text-sm text-theme-primary whitespace-pre-wrap break-words", className)}>
+            <MarkdownRenderer 
+              className={className}
+              unpacked={true}
+              input={input} 
+              transparentDisplay={transparentDisplay}
+              disableRender={disableRender}
+              finished={finished}
             />
-          ))}
-        </div>
+          </div>
+        )}
+        </>
       )}
     </>
   );

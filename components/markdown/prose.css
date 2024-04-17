@@ -64,10 +64,11 @@
 }
 .prose :where(ol>li):not(:where([class~=not-prose] *))::marker {
   color:var(primary)/80;
-  font-weight:400
+  font-weight:400;
+  opacity: 0.5;
 }
 .prose :where(ul>li):not(:where([class~=not-prose] *))::marker {
-  color:var(--tw-prose-bullets)
+  /* color:var(--tw-prose-bullets) */
 }
 .prose :where(hr):not(:where([class~=not-prose] *)) {
   border-color:var(--tw-prose-hr);
@@ -483,3 +484,268 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 .prose-2xl :where(.prose>:last-child):not(:where([class~=not-prose] *)) {
   margin-bottom:0
 }
+
+
+
+
+.markdown {
+    max-width: none
+}
+
+.markdown h1 {
+    font-weight: 600
+}
+
+.markdown h1:first-child {
+    margin-top: 0
+}
+
+.markdown h2 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    margin-top: 2rem
+}
+
+.markdown h2:first-child {
+    margin-top: 0
+}
+
+.markdown h3 {
+    font-weight: 600;
+    margin-bottom: .5rem;
+    margin-top: 1rem
+}
+
+.markdown h3:first-child {
+    margin-top: 0
+}
+
+.markdown h4 {
+    font-weight: 400;
+    margin-bottom: .5rem;
+    margin-top: 1rem
+}
+
+.markdown h4:first-child {
+    margin-top: 0
+}
+
+.markdown h5 {
+    font-weight: 600
+}
+
+.markdown h5:first-child {
+    margin-top: 0
+}
+
+.markdown blockquote {
+    --tw-border-opacity: 1;
+    border-color: rgba(155, 155, 155, var(--tw-border-opacity));
+    border-left-width: 2px;
+    line-height: 1.5rem;
+    margin: 0;
+    padding-bottom: .5rem;
+    padding-left: 1rem;
+    padding-top: .5rem
+}
+
+.markdown blockquote>p {
+    margin: 0
+}
+
+.markdown blockquote>p:after,
+.markdown blockquote>p:before {
+    display: none
+}
+
+.markdown p {
+    margin-bottom: 0rem;
+    margin-top: 0
+}
+
+.markdown ol {
+    counter-reset: list-number;
+    display: flex;
+    flex-direction: column;
+    list-style-type: none;
+    padding-left: 0
+}
+
+.markdown blockquote {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* .markdown ol:first-child>li {
+    padding-left: 1.25rem
+} */
+.markdown ol>li:first-child {
+    padding-top: 0.15rem;
+}
+
+.markdown ol {
+    counter-reset: list-number; /* Resets the counter for each new ol element */
+}
+
+.markdown ol>li {
+    counter-increment: list-number;
+    display: flex;
+    align-items: start;
+    margin-bottom: 0.125rem;
+    margin-top: 0.125rem;
+    min-height: 2rem;
+    position: relative; /* Added to position the ::before pseudo-element relative to the li element */
+}
+
+.markdown ol>li:before {
+    --tw-numeric-spacing: tabular-nums;
+    height: 0;
+    opacity: 0.5;
+    content: counters(list-number, ".") ".";
+    font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
+    padding-right: .65rem;
+    position: absolute; /* Added to position the ::before pseudo-element */
+    right: 100%; /* Added to push the ::before pseudo-element to the left */
+    text-align: right; /* Added to justify the text of the ::before pseudo-element to the right */
+    width: 2.5rem;
+}
+
+.markdown ul {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0
+}
+
+/* .markdown ul:first-child>li {
+    padding-left: 1.25rem
+} */
+.markdown ul>li:first-child {
+    padding-top: 0.15rem;
+}
+
+/* .markdown ul>li {
+    display: block;
+    margin: 0;
+    min-height: 28px
+}
+
+.markdown ul>li:before {
+    --tw-translate-x: -100%;
+    content: "\2022";
+    font-size: .875rem;
+    line-height: 1.25rem;
+    padding-right: .5rem;
+    position: absolute;
+    -webkit-transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))
+} */
+
+.markdown ul>li {
+    counter-increment: list-number;
+    display: flex;
+    align-items: start;
+    margin-bottom: 0.125rem;
+    margin-top: 0.125rem;
+    /* min-height: 28px; */
+    position: relative; /* Added to position the ::before pseudo-element relative to the li element */
+}
+
+.markdown ul>li:before {
+    --tw-numeric-spacing: tabular-nums;
+    height: 0;
+    opacity: 0.5;
+    /* content: counters(list-number, ".") "."; */
+    content: "\2022";
+    font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
+    padding-right: .65rem;
+    position: absolute; /* Added to position the ::before pseudo-element */
+    right: 100%; /* Added to push the ::before pseudo-element to the left */
+    text-align: right; /* Added to justify the text of the ::before pseudo-element to the right */
+}
+
+.markdown ol li>p,
+.markdown ul li>p {
+    margin: 0
+}
+
+.markdown ol li>pre,
+.markdown ul li>pre {
+    margin-bottom: .5rem;
+    margin-top: .25rem
+}
+
+.markdown ol ol,
+.markdown ol ul,
+.markdown ul ol,
+.markdown ul ul {
+    margin-bottom: 0;
+    margin-left: 1rem;
+    margin-top: 0
+}
+
+
+
+
+
+/* .markdown table {
+    --tw-border-spacing-x: 0px;
+    --tw-border-spacing-y: 0px;
+    border-collapse: separate;
+    border-spacing: var(--tw-border-spacing-x) var(--tw-border-spacing-y);
+    margin-bottom: .25rem;
+    margin-top: .25rem;
+    width: 100%
+}
+
+.markdown th {
+    background-color: hsla(0, 0%, 93%, .2);
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-width: 1px;
+    padding: .25rem .75rem
+}
+
+.markdown th:first-child {
+    border-top-left-radius: .375rem
+}
+
+.markdown th:last-child {
+    border-right-width: 1px;
+    border-top-right-radius: .375rem
+}
+
+.markdown td {
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    padding: .25rem .75rem
+}
+
+.markdown td:last-child {
+    border-right-width: 1px
+}
+
+.markdown tbody tr:last-child td:first-child {
+    border-bottom-left-radius: .375rem
+}
+
+.markdown tbody tr:last-child td:last-child {
+    border-bottom-right-radius: .375rem
+}
+
+.markdown a {
+    color: #2964aa;
+    color: var(--link);
+    font-weight: 400;
+    text-decoration-line: none
+}
+
+.markdown a:hover {
+    color: #749ac8;
+    color: var(--link-hover)
+} */
+/* 
+.gizmo .markdown>:not(pre),
+.gizmo .markdown>:not(pre)>:not(a) {
+    color: #0d0d0d;
+    color: var(--text-primary)
+} */
