@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import MarkdownTextSplitter from "./markdown-text-splitter";
 
 import {
@@ -22,20 +23,32 @@ type MarkdownTableProps = {
   fontSize?: number,
 }
 
-function MarkdownTable(props : MarkdownTableProps){
+function MarkdownTable({
+  className = "",
+  header,
+  rows,
+  unProcessedText,
+  fontSize,
+}:{
+  className?: string,
+  header: textSegment[],
+  rows: textSegment[][],
+  unProcessedText?: string,
+  fontSize?: number,
+}){
 
   return (
-    <div className="not-prose mb-[1em]">
+    <div className={cn("not-prose mb-[1em]", className)}>
       <Table>
         <TableHeader>
           <TableRow>
-            {(props.header).map((header : textSegment, index : number) => (
+            {(header).map((header : textSegment, index : number) => (
               <TableHead key={index}>{header.text}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {props.rows.map((row : textSegment[], row_index : number) => (
+          {rows.map((row : textSegment[], row_index : number) => (
             <TableRow key={row_index}>
               {row.map((entry : textSegment, col_index : number) => (
                 <TableCell key={col_index} style={{

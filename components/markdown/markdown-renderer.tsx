@@ -39,65 +39,79 @@ function MarkdownMapComponentError(props : MarkdownMapComponentErrorProps) {
   );
 }
 
-function MarkdownMapComponent(props : MarkdownMapComponentProps) {
+function MarkdownMapComponent({
+  className = "",
+  token,
+  unProcessedText,
+  finished,
+}:{
+  className?: string,
+  token: Token,
+  unProcessedText: string,
+  finished: boolean,
+}) {
   const defaultFontSize = 'text-base';
-  
-  const { token } = props;
 
   switch (token.type) {
     case 'space':
       return (
-        <br className="w-[2px] h-[1px] bg-red-500"/>
+        <br className={cn("w-[2px] h-[1px] bg-red-500", className)}/>
       );
     case 'code':
       return (
-        <MarkdownCodeBlock finished={props.finished} text={token.text} lang={token.lang} unProcessedText={props.unProcessedText}/>
+        <MarkdownCodeBlock
+          className={className}
+          finished={finished} 
+          text={token.text} 
+          lang={token.lang} 
+          unProcessedText={unProcessedText}
+        />
       );
     case 'heading':
       if (token.raw[0] != "#") {
         return (
-          <p>
-            <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + props.unProcessedText}/>
+          <p className={className}>
+            <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + unProcessedText}/>
           </p>
         );
       } else {
         switch (token.depth) {
           case 1:
             return (
-              <h2>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h2 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
                 {/* {token.text + props.unProcessedText} */}
               </h2>
             );
           case 2:
             return (
-              <h3>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h3 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
                 {/* {token.text + props.unProcessedText} */}
               </h3>
             );
           case 3:
             return (
-              <h4>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h4 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
               </h4>
             );
           case 4:
             return (
-              <h5>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h5 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
               </h5>
             );
           case 5:
             return (
-              <h6>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h6 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
               </h6>
             );
           case 6:
             return (
-              <h6>
-                <MarkdownTextSplitter selectable={true} text={token.text + props.unProcessedText}/>
+              <h6 className={className}>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
               </h6>
             );
         }
@@ -107,30 +121,31 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       if (token.type === "table") { // Literally just here to get rid of the type error.
         return (
           <MarkdownTable
-          header={token.header} 
-          rows={token.rows}
-          unProcessedText={props.unProcessedText}
+            className={className}
+            header={token.header} 
+            rows={token.rows}
+            unProcessedText={unProcessedText}
           />
-          );
+        );
       }
     case 'hr':
       return (null);
     case 'blockquote':
       return (
-        <blockquote>
-          <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + props.unProcessedText}/>
+        <blockquote className={className}>
+          <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + unProcessedText}/>
         </blockquote>
       );
     case 'list':
 
       if (token.ordered) {
         return (
-          <ol className="not-prose w-auto">
+          <ol className={cn("not-prose w-auto", className)}>
             {token.items.map((v : Tokens.ListItem, k : number) => (
               <MarkdownMapComponent
-                finished={props.finished}
+                finished={finished}
                 key={k}
-                unProcessedText={(k === token.items.length-1)?props.unProcessedText:""}
+                unProcessedText={(k === token.items.length-1)?unProcessedText:""}
                 token={{...v, type: "list_item"}}
               />
             ))}
@@ -138,12 +153,12 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
         );
       } else {
         return (
-          <ul className="not-prose">
+          <ul className={cn("not-prose", className)}>
             {token.items.map((v : Tokens.ListItem, k : number) => (
               <MarkdownMapComponent
-                finished={props.finished}
+                finished={finished}
                 key={k}
-                unProcessedText={(k === token.items.length-1)?props.unProcessedText:""}
+                unProcessedText={(k === token.items.length-1)?unProcessedText:""}
                 token={{...v, type: "list_item"}}
               />
             ))}
@@ -152,23 +167,23 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       }
     case 'list_item':
       return (
-        <li className="">
+        <li className={className}>
           {/* <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/> */}
           <MarkdownRenderer 
             unpacked={true}
-            input={token.text + props.unProcessedText} 
-            finished={props.finished} 
+            input={token.text + unProcessedText} 
+            finished={finished} 
             disableRender={false}
           />
         </li>
       );
     case 'paragraph':
       return (
-        <p>
+        <p className={className}>
           <MarkdownTextSplitter 
             selectable={true} 
             className={`text-left text-base text-gray-200`} 
-            text={token.text + props.unProcessedText}
+            text={token.text + unProcessedText}
           />
         </p>
       );
@@ -176,8 +191,8 @@ function MarkdownMapComponent(props : MarkdownMapComponentProps) {
       return (null);
     case 'text':
       return (
-        <span>
-          <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/>
+        <span className={className}>
+          <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + unProcessedText}/>
         </span>
       );
     default:
@@ -224,7 +239,6 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
                 finished={finished}
                 token={v} 
                 unProcessedText={""}
-                disableHeadingPaddingTop={(k === 0)}
               />
             ))}
           </>

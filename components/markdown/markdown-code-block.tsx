@@ -43,7 +43,19 @@ type scoped_text = {
   content: string
 };
 
-export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
+export default function MarkdownCodeBlock({
+  className = "",
+  text,
+  unProcessedText,
+  lang,
+  finished,
+}:{
+  className?: string,
+  text : string,
+  unProcessedText: string,
+  lang: string,
+  finished: boolean
+}){
   const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
       return;
@@ -70,9 +82,9 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
   const refreshInterval = 250; // In milliseconds
 
   useEffect(() => {
-    setLineCount(props.text.split("\n").length);
-    setLanguage(props.lang);
-    if (props.lang === "text") {
+    setLineCount(text.split("\n").length);
+    setLanguage(lang);
+    if (lang === "text") {
       // const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
       //   return [{
       //     scope: [],
@@ -80,33 +92,37 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
       //   }];
       // });
       // setHighlights(scope_tree);
-      setCodeHTML(props.text + props.unProcessedText);
+      setCodeHTML(text + unProcessedText);
       return;
     }
   
-    let raw_code = props.text+props.unProcessedText;
+    let raw_code = text+unProcessedText;
     const unprocessed_text = raw_code.slice(oldInputLength.current);
-    if (props.finished) {
-      raw_code = props.text;
+    if (finished) {
+      raw_code = text;
     }
   
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, 'nord', props.lang).then((html) => {
+      highlight(raw_code, 'nord', lang).then((html) => {
         setCodeHTML(html);
       });
       
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
-  }, [props.text, props.unProcessedText, props.finished, props.lang]);
+  }, [text, unProcessedText, finished, lang]);
 
   return (
-    <div className={cn('not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white my-3', fontConsolas.className)}>
+    <div className={cn(
+      'not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white my-3', 
+      fontConsolas.className,
+      className
+    )}>
       <div className='mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
-          handleCopy(props.text + props.unProcessedText);
+          handleCopy(text + unProcessedText);
         }}>
           <Icon.Clipboard className='w-[17px]'/>
           <p className='pl-[5px]'>{"Copy"}</p>
@@ -134,7 +150,7 @@ export default function MarkdownCodeBlock(props : MarkdownCodeBlockProps){
         <ScrollAreaHorizontal className='min-w-auto'>
           <div className='pl-[10px] pt-[5px] pb-[20px]'>
             <code className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'>
-              {(!props.finished) && (
+              {(!finished) && (
                 <>
                   {unprocessedText.slice(1, unprocessedText.length - 1).map((line: string, line_number: number) => (
                     <>
