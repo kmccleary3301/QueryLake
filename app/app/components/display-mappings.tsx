@@ -23,29 +23,29 @@ export function ToolchainComponentMapper({
 }) {
 	const {
     toolchainState,
-		toolchainWebsocket,
-    sessionId,
+		// toolchainWebsocket,
+    // sessionId,
   } = useToolchainContextAction();
 
-  const {
-    userData,
-  } = useContextAction();
+  // const {
+  //   userData,
+  // } = useContextAction();
 
-  const callEvent = useCallback((event: string, event_params: {[key : string]: substituteAny}) => {
-    console.log("ToolchainComponentMapper callEvent", event, event_params, toolchainWebsocket, sessionId, userData?.auth)
-    if (toolchainWebsocket?.current && sessionId?.current) {
-      console.log("Sending Event", event, event_params);
-      toolchainWebsocket.current.send_message({
-        "auth": userData?.auth,
-        "command" : "toolchain/event",
-        "arguments": {
-          "session_id": sessionId.current,
-          "event_node_id": event,
-          "event_parameters": event_params
-        }
-      });
-    }
-  }, [userData]);
+  // const callEvent = useCallback((event: string, event_params: {[key : string]: substituteAny}) => {
+  //   console.log("ToolchainComponentMapper callEvent", event, event_params, toolchainWebsocket, sessionId, userData?.auth)
+  //   if (toolchainWebsocket?.current && sessionId?.current) {
+  //     console.log("Sending Event", event, event_params);
+  //     toolchainWebsocket.current.send_message({
+  //       "auth": userData?.auth,
+  //       "command" : "toolchain/event",
+  //       "arguments": {
+  //         "session_id": sessionId.current,
+  //         "event_node_id": event,
+  //         "event_parameters": event_params
+  //       }
+  //     });
+  //   }
+  // }, [userData]);
 
   // useEffect(() => {
   //   console.log("websocket changed in toolchain component mapper");
@@ -83,11 +83,11 @@ export function ToolchainComponentMapper({
 		// Input Components
 		case "chat_input":
 			return (
-				<ChatInput configuration={info} sendEvent={callEvent}/>
+				<ChatInput configuration={info}/>
 			)
 		case "file_upload":
 			return (
-				<FileUpload configuration={info} sendEvent={callEvent}/>
+				<FileUpload configuration={info}/>
 			);
 	}
 }

@@ -8,6 +8,7 @@ import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
 import { substituteAny } from "@/types/toolchains";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
+import { useToolchainContextAction } from "@/app/app/context-provider";
 
 export function FileUploadSkeleton({
 	configuration,
@@ -31,12 +32,13 @@ export function FileUploadSkeleton({
 
 export default function FileUpload({
 	configuration,
-  sendEvent = () => {},
+  // sendEvent = () => {},
 }:{
 	configuration: inputMapping,
-  sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
+  // sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
 }) {
-  const { breakpoint } = useContextAction();
+  const { userData, breakpoint } = useContextAction();
+  const { callEvent } = useToolchainContextAction();
 
   const handleSubmission = (files: File[]) => {
     configuration.hooks.forEach(hook => {

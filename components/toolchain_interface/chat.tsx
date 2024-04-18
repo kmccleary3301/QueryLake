@@ -96,12 +96,12 @@ export default function Chat({
   };
 
   return (
-		<div className="flex flex-col gap-6 pb-2">
+		<div className="flex flex-col gap-4 pb-2">
 			{currentValue.map((value, index) => (
         <div className="flex flex-col gap-0" key={index}>
           <div key={index} className="flex flex-row">
-            <div className="w-11 h-8 pt-1">
-              <div className={`rounded-full h-7 w-7 ${(value.role === "user")?"bg-red-500":"bg-green-500"}`}>
+            <div className="w-11 h-8 pt-[5px]">
+              <div className={`rounded-full h-7 w-7 ${(value.role === "user")?"bg-red-500":"bg-teal-500"}`}>
                 <p className="w-full h-full text-center text-xs flex flex-col justify-center pt-[2px] select-none">
                   {userData?.username.slice(0, Math.max(2, userData?.username.length)).toUpperCase()}
                 </p>
@@ -116,10 +116,10 @@ export default function Chat({
               </div>
             </div> */}
             {/* <div className="flex flex-col space-y-1"> */}
-            <p className="select-none h-7 text-primary/70"><strong>{(value.role === "user")?"You":"QueryLake"}</strong></p>
+            <p className="select-none h-7 text-primary/70">{(value.role === "user")?"You":"QueryLake"}</p>
             {/* </div> */}
           </div>
-          <div className="max-w-full p-0 pl-11 -mt-2">
+          <div className="max-w-full p-0 pl-11 -mt-1.5">
             <MarkdownRenderer 
               disableRender={(value.role === "user")}
               input={(value || {}).content || ""} 

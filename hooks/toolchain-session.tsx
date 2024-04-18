@@ -28,9 +28,11 @@ export interface ToolchainSessionMessage {
 
 export default class ToolchainSession {
 	public  onStateChange: stateSet;
-	private onCallEnd: sessionCallback;
+	public  onCallEnd: sessionCallback;
 	private onMessage: (message: object) => void;
+  private onSend: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
+	private onFirstCallEnd: () => void;
 	public  socket: WebSocket; // Add socket as a type
 	private stream_mappings: Map<string, (string | number)[][]>;
 	// private stateChangeCounter: number;
@@ -38,16 +40,24 @@ export default class ToolchainSession {
 	constructor ( { onStateChange = undefined, 
 									onCallEnd = undefined,
 									onMessage = undefined,
-								  onOpen = undefined, }:
-								{ onStateChange?: stateSet, 
+                  onSend = undefined,
+								  onOpen = undefined, 
+                  onFirstCallEnd = undefined,
+                }:{ 
+                  onStateChange?: stateSet, 
 								  onCallEnd?: sessionCallback,
 									onMessage?: (message: object) => void,
-								  onOpen?: (session : ToolchainSession) => void } ) {
+                  onSend?: (message: object) => void,
+								  onOpen?: (session : ToolchainSession) => void,
+                  onFirstCallEnd?: () => void,
+                } ) {
 		
 		this.onStateChange = onStateChange || (() => {});
 		this.onCallEnd = onCallEnd || (() => {});
 		this.onMessage = onMessage || (() => {});
+    this.onSend = onSend || (() => {});
 		this.onOpen = onOpen || (() => {});
+    this.onFirstCallEnd = onFirstCallEnd || (() => {});
 		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
@@ -112,7 +122,7 @@ export default class ToolchainSession {
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { type , ...data_typed_type_removed } = data_typed;
         
-        console.log("Running state diff:", data_typed);
+        // console.log("Running state diff:", data_typed);
 
 				// console.log("State before diff:", JSON.parse(JSON.stringify(this.state)));
 				// this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
@@ -155,6 +165,7 @@ export default class ToolchainSession {
 	}
 
 	send_message(message : { [key : string] : substituteAny }) {
+    this.onSend(message);
 		this.socket.send(JSON.stringify(message));
 	}
 
@@ -353,9 +364,9 @@ export function appendInRoute(
 			if (Array.isArray(objectForStaticRoute)) {
         // TODO: This is causing issues. It is supposed to be equivalent to the following python:
         // `objectForStaticRoute += value`;
-        console.log("APPEND CONDITION 1", objectForStaticRoute, value);
+        // console.log("APPEND CONDITION 1", objectForStaticRoute, value);
         objectForStaticRoute = objectForStaticRoute.concat(value);
-        console.log("AFTER:", objectForStaticRoute)
+        // console.log("AFTER:", objectForStaticRoute)
         // if (Array.isArray(value)) {
         //   objectForStaticRoute.concat(value);
         // } else {

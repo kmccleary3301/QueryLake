@@ -58,12 +58,16 @@ export default function ScrollSection({
 	const [smoothScroll, setSmoothScroll]	= useState(true);
 	
 
-	const scrollToBottomHook = useCallback(() => {
+	const scrollToBottomHook = useCallback(({
+    smooth = undefined,
+  }:{
+    smooth?: boolean
+  }) => {
 		// console.log("Scrolling to bottom");
 		if (scrollDiv.current !== null) {
 			scrollDiv.current.scrollTo({
 				top: scrollDiv.current.scrollHeight,
-        behavior: (smoothScroll)?"smooth":"instant"
+        behavior: ((smooth !== undefined)?smooth:smoothScroll)?"smooth":"instant"
       });
     }
   }, [smoothScroll, scrollDiv]);
@@ -73,18 +77,24 @@ export default function ScrollSection({
 	// 	setTimeout(() => { setSmoothScroll(true); }, 1000)
 	// }, []);
 
-	useEffect(() => {
-		// console.log("Resize monitor triggered");
-		if (animateScroll) {
-			scrollToBottomHook();
-		}
-	}, [interiorDivSize, scrollToBottomHook]);
+	// useEffect(() => {
+	// 	// console.log("Resize monitor triggered");
+	// 	if (animateScroll) {
+	// 		scrollToBottomHook({});
+	// 	}
+	// }, [interiorDivSize, scrollToBottomHook]);
 
 	useEffect(() => {
 		// console.log("interiorDivSize Height changed to:", interiorDivSize?.height);
 		if (animateScroll && interiorDivSize?.height !== undefined) {
-			scrollToBottomHook();
+			scrollToBottomHook({smooth: false});
 		}
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    }
 	}, [interiorDivSize?.height]);
 
 
@@ -95,13 +105,13 @@ export default function ScrollSection({
 		if (animateScroll) {
 			observer.current = new ResizeObserver(() => {
 				if (animateScroll) {
-					scrollToBottomHook();
+					scrollToBottomHook({});
 				}
 			});
 		} else if (observer.current) {
 			observer.current.unobserve(div)
 		}
-	}, [scrollToBottomHook]);
+	}, []);
 
 	return (
 		<>
@@ -112,12 +122,12 @@ export default function ScrollSection({
 					ref={scrollDiv}
 					id="scrollAreaPrimitive1" 
 					className="h-full w-full rounded-[inherit]"
-					onChange={() => {
-						// console.log("Change called");
-						if (animateScroll && scrollToBottomButton) {
-							scrollToBottomHook();
-						}
-					}}
+					// onChange={() => {
+					// 	// console.log("Change called");
+					// 	if (animateScroll && scrollToBottomButton) {
+					// 		scrollToBottomHook({});
+					// 	}
+					// }}
 					onScroll={(e) => {
 						const isNowOverflowing = e.currentTarget.scrollHeight > e.currentTarget.clientHeight;
 						if (isOverflowing !== isNowOverflowing) {
@@ -131,7 +141,7 @@ export default function ScrollSection({
 							setAnimateScroll(false);
 						} else if (!animateScroll && Math.abs( e.currentTarget.scrollHeight - (e.currentTarget.scrollTop + e.currentTarget.clientHeight)) < 5) {
 							// console.log("Locking Scroll");
-							scrollToBottomHook();
+							scrollToBottomHook({});
 							setAnimateScroll(true);
 						}
 						oldScrollValue.current = e.currentTarget.scrollTop;
@@ -157,7 +167,7 @@ export default function ScrollSection({
 											// setAnimateScroll(true);
 											if (scrollDiv.current !== null) {
 												setAnimateScroll(true);
-												scrollToBottomHook();
+												scrollToBottomHook({});
 											}
 										}} className="rounded-full z-5 p-0 w-10 h-10 items-center" variant={"secondary"}>
 											<Icon.ChevronDown className="text-primary w-[50%] h-[50%]" />

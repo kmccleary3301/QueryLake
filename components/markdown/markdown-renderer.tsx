@@ -55,7 +55,8 @@ function MarkdownMapComponent({
   switch (token.type) {
     case 'space':
       return (
-        <br className={cn("w-[2px] h-[1px] bg-red-500", className)}/>
+        // <br className={cn("not-prose", className)}/>
+        <></>
       );
     case 'code':
       return (
@@ -140,7 +141,7 @@ function MarkdownMapComponent({
 
       if (token.ordered) {
         return (
-          <ol className={cn("not-prose w-auto", className)}>
+          <ol className={cn("not-prose", className)}>
             {token.items.map((v : Tokens.ListItem, k : number) => (
               <MarkdownMapComponent
                 finished={finished}
@@ -178,14 +179,30 @@ function MarkdownMapComponent({
         </li>
       );
     case 'paragraph':
+      const lines = (token.text + unProcessedText).split("\n") || "";
       return (
-        <p className={className}>
-          <MarkdownTextSplitter 
-            selectable={true} 
-            className={`text-left text-base text-gray-200`} 
-            text={token.text + unProcessedText}
-          />
-        </p>
+        <span className={className}>
+          {(lines.length > 1)?(
+            <>
+              {lines.map((line, i) => (
+                <p className="pb-3" key={i}>
+                  <MarkdownTextSplitter 
+                    selectable={true} 
+                    className={`text-left text-base text-gray-200`} 
+                    text={line}
+                  />
+                </p>
+              ))}
+            </>
+          ):(
+          
+            <MarkdownTextSplitter 
+              selectable={true} 
+              className={`text-left text-base text-gray-200`} 
+              text={lines[0]}
+            />
+          )}
+        </span>
       );
     case 'html':
       return (null);
@@ -218,6 +235,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   finished: boolean,
 }) {
   const lexer = new marked.Lexer();
+  const lexed_input = lexer.lex(sanitizeMarkdown(input));
 
   return (
     <>
@@ -233,8 +251,15 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
         <>
         {unpacked?(
           <>
-            {lexer.lex(sanitizeMarkdown(input)).map((v : Token, k : number) => (
-              <MarkdownMapComponent 
+            {lexed_input.map((v : Token, k : number) => (
+              <MarkdownMapComponent
+                className={
+                  (lexed_input[0].type === "list" && v.type === "list")?
+                    (lexed_input[0].ordered) ?
+                      "ml-[1.25rem]" : 
+                      "ml-[1.25rem]" :
+                    ""
+                }
                 key={k} 
                 finished={finished}
                 token={v} 
@@ -243,7 +268,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
             ))}
           </>
         ):(
-          <div className={cn("prose markdown text-sm text-theme-primary whitespace-pre-wrap break-words", className)}>
+          <div className={cn("prose markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
             <MarkdownRenderer 
               className={className}
               unpacked={true}

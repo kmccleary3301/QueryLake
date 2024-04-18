@@ -26,7 +26,7 @@
 .prose :where(ol):not(:where([class~=not-prose] *)) {
   list-style-type:decimal;
   margin-bottom:1.25em;
-  margin-top:1.25em;
+  /* margin-top:1em; */
   padding-left:1.625em
 }
 .prose :where(ol[type=A]):not(:where([class~=not-prose] *)) {
@@ -291,7 +291,7 @@
   --tw-prose-invert-th-borders:#4b5563;
   --tw-prose-invert-td-borders:#374151;
   font-size:1rem;
-  line-height:1.75
+  /* line-height:1.5 */
 }
 .prose :where(p):not(:where([class~=not-prose] *)) {
   margin-bottom:1.25em;
@@ -489,7 +489,8 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 
 
 .markdown {
-    max-width: none
+    max-width: none;
+    line-height: 1.5rem;
 }
 
 .markdown h1 {
@@ -560,7 +561,7 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 
 .markdown p {
     margin-bottom: 0rem;
-    margin-top: 0
+    margin-top: 0;
 }
 
 .markdown ol {
@@ -580,7 +581,7 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     padding-left: 1.25rem
 } */
 .markdown ol>li:first-child {
-    padding-top: 0.15rem;
+    padding-top: 0rem;
 }
 
 .markdown ol {
@@ -590,24 +591,26 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 .markdown ol>li {
     counter-increment: list-number;
     display: flex;
+    flex-direction: column;
     align-items: start;
-    margin-bottom: 0.125rem;
-    margin-top: 0.125rem;
-    min-height: 2rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
+    /* min-height: 1.75rem; */
     position: relative; /* Added to position the ::before pseudo-element relative to the li element */
 }
 
 .markdown ol>li:before {
     --tw-numeric-spacing: tabular-nums;
-    height: 0;
+    /* height: 0; */
     opacity: 0.5;
     content: counters(list-number, ".") ".";
     font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
-    padding-right: .65rem;
+    padding-right: .5rem;
     position: absolute; /* Added to position the ::before pseudo-element */
     right: 100%; /* Added to push the ::before pseudo-element to the left */
     text-align: right; /* Added to justify the text of the ::before pseudo-element to the right */
     width: 2.5rem;
+    /* border-width: 1px; */
 }
 
 .markdown ul {
@@ -620,6 +623,11 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     padding-left: 1.25rem
 } */
 .markdown ul>li:first-child {
+    padding-top: 0.15rem;
+}
+
+
+.markdown ul>li:first-child:before {
     padding-top: 0.15rem;
 }
 
@@ -643,24 +651,32 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 .markdown ul>li {
     counter-increment: list-number;
     display: flex;
+    flex-direction: column;
     align-items: start;
     margin-bottom: 0.125rem;
     margin-top: 0.125rem;
-    /* min-height: 28px; */
+    /* min-height: 1.75rem; */
     position: relative; /* Added to position the ::before pseudo-element relative to the li element */
 }
 
 .markdown ul>li:before {
     --tw-numeric-spacing: tabular-nums;
-    height: 0;
+    /* height: 0; */
     opacity: 0.5;
-    /* content: counters(list-number, ".") "."; */
     content: "\2022";
     font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
-    padding-right: .65rem;
-    position: absolute; /* Added to position the ::before pseudo-element */
-    right: 100%; /* Added to push the ::before pseudo-element to the left */
-    text-align: right; /* Added to justify the text of the ::before pseudo-element to the right */
+    /* padding-right: .65rem; */
+    font-size: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: -0.1rem;
+    position: absolute; /* Keeps the ::before pseudo-element positioned absolutely */
+    right: 100%; /* Pushes the ::before pseudo-element to the left */
+    top: 0; /* Aligns the bullet to the top */
+    display: flex; /* Added to center the bullet */
+    align-items: flex-start; /* Aligns the bullet to the top */
+    justify-content: center; /* Centers the bullet horizontally */
+    /* border-width: 1px; */
 }
 
 .markdown ol li>p,
@@ -683,6 +699,11 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     margin-top: 0
 }
 
+.markdown br {
+    display: block;
+    margin: 5px 0;
+    line-height: 2.5rem;
+}
 
 
 

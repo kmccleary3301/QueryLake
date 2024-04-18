@@ -6,6 +6,7 @@ import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
 import {default as ChatInputProto} from "@/registry/default/ui/chat-input";
 import { substituteAny } from "@/types/toolchains";
+import { useToolchainContextAction } from "@/app/app/context-provider";
 
 export function ChatInputSkeleton({
 	configuration,
@@ -29,18 +30,19 @@ export function ChatInputSkeleton({
 
 export default function ChatInput({
 	configuration,
-  sendEvent = () => {},
+  // sendEvent = () => {},
 }:{
 	configuration: inputMapping,
-  sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
+  // sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
 }) {
-  const { breakpoint } = useContextAction();
+  const { userData, breakpoint } = useContextAction();
+  const { callEvent } = useToolchainContextAction();
 
   const handleSubmission = (text : string, files: File[]) => {
     console.log("ChatInput handleSubmission", text, files);
     configuration.hooks.forEach(hook => {
       if (hook.hook === "on_submit") {
-        sendEvent(hook.target_event, {
+        callEvent(userData?.auth || "", hook.target_event, {
           [`${hook.target_route}`]: text,
         })
       }

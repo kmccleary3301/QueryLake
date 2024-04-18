@@ -8,7 +8,7 @@ interface DocPageProps {
 
 type app_mode_type = "create" | "session" | "view" | undefined;
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import { ToolChain, substituteAny } from '@/types/toolchains';
@@ -17,7 +17,7 @@ import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
-
+  const [isPending, startTransition] = useTransition()
   const router = useRouter();
   const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
   const [appMode, setAppMode] = useState<app_mode_type>(app_mode_immediate);
@@ -25,7 +25,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const [toolchainStateCopied, setToolchainStateCopied] = useState<{[key: string]: substituteAny}>({});
   // const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
   const toolchainStateRef = useRef<toolchainStateType>({});
-  const toolchainIsFired = useRef((app_mode_immediate === "create") ? false : true);
+  const [firstEventRan, setFirstEventRan] = useState<boolean[]>([false, false]);
 
   const {
     toolchainState,
@@ -39,13 +39,24 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     selectedToolchainFull,
   } = useContextAction();
 
-  const onFirstCall = useCallback(() => {
-    console.log("ON FIRST CALL:", toolchainIsFired.current);
-    toolchainIsFired.current = true;
-    console.log("ON FIRST CALL:", toolchainIsFired.current);
-  }, []);
+  useEffect(() => {
+    let newFirstEventRan = firstEventRan;
+    if (!newFirstEventRan[0] && newFirstEventRan[1]) {
+      newFirstEventRan = [false, false];
+      setFirstEventRan(newFirstEventRan);
+    }
 
-  
+    if (appMode === "create" && newFirstEventRan[0] && newFirstEventRan[1] && sessionId?.current !== undefined) {
+      console.log("FIRST EVENT RAN; PUSHING TO SESSION");
+      startTransition(() => {
+        window.history.pushState(null, '', `/app/session?s=${sessionId?.current}`);
+      });
+      // router.push(`/app/session?s=${sessionId?.current}`);
+      // router.push(`/app/session?s=${sessionId?.current}`);
+      // routerOld.push(`/app/session?s=${sessionId?.current}`, undefined, { shallow: true });
+    }
+  }, [firstEventRan]);
+
   const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
     const value = (typeof state === "function") ? state(toolchainStateRef.current) : state;
     toolchainStateRef.current = value;
@@ -58,24 +69,22 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     setToolchainState({});
     toolchainWebsocket.current = new ToolchainSession({
       onStateChange: updateState,
-      onCallEnd: (session : ToolchainSession) => {
-        onFirstCall();
+      onCallEnd: () => {
+        setFirstEventRan((prevState) => [prevState[0], true]);
       },
       onMessage: (message : ToolchainSessionMessage) => {
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
       },
+      onSend: (message : {command?: string}) => {
+        if (message.command && message.command === "toolchain/event") {
+          setFirstEventRan((prevState) => [true, prevState[1]]);
+        }
+      },
       onOpen: (session: ToolchainSession) => {
         if (true) {
           if (appMode === "create") {
-            console.log("Creating toolchain", {
-              "auth": userData?.auth,
-              "command" : "toolchain/create",
-              "arguments": {
-                "toolchain_id": selectedToolchainFull,
-              }
-            });
             session.send_message({
               "auth": userData?.auth,
               "command" : "toolchain/create",
@@ -94,7 +103,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
             setToolchainState({});
             session.send_message({
               "auth": userData?.auth,
-              "command" : "toolchain/createtoolchain/load",
+              "command" : "toolchain/load",
               "arguments": {
                 // "toolchain_id": "test_chat_session_normal"
                 "session_id": searchParams.s as string,

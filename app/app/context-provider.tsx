@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react';
 import ToolchainSession, { toolchainStateType } from '@/hooks/toolchain-session';
+import { substituteAny } from '@/types/toolchains';
 
 const ToolchainContext = createContext<{
   toolchainStateCounter: number;
@@ -18,6 +19,7 @@ const ToolchainContext = createContext<{
 	setToolchainState: Dispatch<SetStateAction<toolchainStateType>>;
   toolchainWebsocket: MutableRefObject<ToolchainSession | undefined> | undefined;
   sessionId: MutableRefObject<string> | undefined;
+  callEvent: (auth: string, event: string, event_params: {[key : string]: substituteAny}) => void;
 }>({
   toolchainStateCounter: 0,
   setToolchainStateCounter: () => {},
@@ -25,6 +27,7 @@ const ToolchainContext = createContext<{
   setToolchainState: () => {},
   toolchainWebsocket: undefined,
   sessionId: undefined,
+  callEvent: () => {},
 });
 
 export const ToolchainContextProvider = ({
@@ -35,6 +38,26 @@ export const ToolchainContextProvider = ({
   const toolchain_websocket = useRef<ToolchainSession | undefined>();
   const session_id = useRef<string>("");
 
+  const call_event = (
+    auth: string,
+    event: string, 
+    event_params: {[key : string]: substituteAny}
+  ) => {
+    if (toolchain_websocket?.current && session_id?.current) {
+      console.log("Sending Event", event, event_params);
+      toolchain_websocket.current.send_message({
+        "auth": auth,
+        "command" : "toolchain/event",
+        "arguments": {
+          "session_id": session_id.current,
+          "event_node_id": event,
+          "event_parameters": event_params
+        }
+      });
+    }
+  };
+
+
 	return (
 		<ToolchainContext.Provider value={{ 
       toolchainStateCounter: toolchain_state_counter,
@@ -42,7 +65,8 @@ export const ToolchainContextProvider = ({
 			toolchainState: toolchain_state,
       setToolchainState: set_toolchain_state,
       toolchainWebsocket: toolchain_websocket,
-      sessionId: session_id
+      sessionId: session_id,
+      callEvent: call_event
 		}}>
 			{children}
 		</ToolchainContext.Provider>
