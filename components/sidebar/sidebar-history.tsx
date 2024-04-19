@@ -5,6 +5,8 @@ import { ScrollArea } from '@/registry/default/ui/scroll-area';
 import { Button } from '@/registry/default/ui/button';
 import { userDataType, timeWindowType, collectionGroup, toolchain_session, setStateOrCallback } from '@/types/globalTypes';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type SidebarChatHistoryProps = {
   onChangeCollections?: (collectionGroups: collectionGroup[]) => void,
@@ -17,6 +19,7 @@ type SidebarChatHistoryProps = {
 }
   
 export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
+  const router = useRouter();
   const [internalToolchainSessions, setInternalToolchainSessions] = useState<timeWindowType[]>([]);
 
   useEffect(() => {
@@ -54,17 +57,16 @@ export default function SidebarChatHistory(props: SidebarChatHistoryProps) {
       <ScrollArea className={props.scrollClassName}
       >
         <div className='pb-10'>
-          <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center"
-            onClick={() => {
-              // TODO : Implement new chat
-            }}>
-              <div style={{paddingRight: 5}}>
-                <Icon.Plus size={20}/>
-              </div>
-              <div style={{alignSelf: 'center', justifyContent: 'center'}}>
-              <p>{"New Chat"}</p>
-              </div>
-          </Button>
+          <Link href="/app/create">
+            <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center">
+                <div style={{paddingRight: 5}}>
+                  <Icon.Plus size={20}/>
+                </div>
+                <div style={{alignSelf: 'center', justifyContent: 'center'}}>
+                <p>{"New Session"}</p>
+                </div>
+            </Button>
+          </Link>
         </div>
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index}>

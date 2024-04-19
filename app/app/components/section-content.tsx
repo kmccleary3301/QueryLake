@@ -7,8 +7,6 @@ import DisplayMappings from "./display-mappings";
 // import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
-import { substituteAny } from "@/types/toolchains";
-import { useEffect } from "react";
 
 export function ContentSection({
   section
@@ -18,8 +16,6 @@ export function ContentSection({
 	const { 
 		breakpoint
   } = useContextAction();
-
-  useEffect(() => {console.log("Rerendering")}, []);
 
   return (
     <div className="w-full h-full">

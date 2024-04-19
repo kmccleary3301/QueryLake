@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, memo, useEffect, useMemo } from "react"
+import { Fragment, useEffect} from "react"
 import {
   ResizableHandle,
   ResizablePanel,
@@ -14,7 +14,6 @@ import { HeaderSection } from "./section-header";
 import { ContentSection } from "./section-content";
 
 export function PrimaryContent({ section }: { section: displaySection }) {
-  useEffect(() => {console.log("Rerendering")}, []);
 
   return (
     <>
@@ -43,35 +42,6 @@ export function DivisibleSection({
 }:{
   section: displaySection,
 }) {
-
-  useEffect(() => {console.log("Rerendering")}, []);
-
-  // const PrimaryContent = useMemo(() => {
-  //   return (
-  //   <>
-  //     {(section.split === "none" && (section as contentSection)) ? (
-  //       <ContentSection
-  //         section={section as contentSection}
-  //       />
-  //     ):(
-  //       <ResizablePanelGroup direction={(section as divisionSection).split}>
-  //         {(section as divisionSection).sections.map((split_section, index) => (
-  //           <Fragment key={index}>
-  //             <ResizablePanel defaultSize={split_section.size}>
-  //               <DivisibleSection section={split_section}/>
-  //             </ResizablePanel>
-  //             {(index < (section as divisionSection).sections.length - 1) && (
-  //               <ResizableHandle/>
-  //             )}
-  //           </Fragment>
-  //         ))}
-  //       </ResizablePanelGroup>
-  //     )}
-  //   </>
-  //   )
-  // }, [section]); // Recompute PrimaryContent only if section changes
-
-
 
   return (
     <>

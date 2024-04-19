@@ -10,6 +10,7 @@ import * as Icon from 'react-feather';
 import { toast } from 'sonner';
 import { highlight } from '@/lib/shiki';
 import ScrollSection from '../manual_components/scrollable-bottom-stick/custom-scroll-section';
+import { Copy } from 'lucide-react';
 // import { renderToHtml } from "shiki";
 // import codeToHTML
 // import { codeToHtml } from 'shiki/index.mjs';
@@ -79,19 +80,12 @@ export default function MarkdownCodeBlock({
 	const lastRefreshTime = useRef(Date.now());
 	const oldInputLength = useRef(0);
 
-  const refreshInterval = 250; // In milliseconds
+  const refreshInterval = 150; // In milliseconds
 
   useEffect(() => {
     setLineCount(text.split("\n").length);
     setLanguage(lang);
     if (lang === "text") {
-      // const scope_tree = (props.text + props.unProcessedText).split("\n").map((line: string) => {
-      //   return [{
-      //     scope: [],
-      //     content: line
-      //   }];
-      // });
-      // setHighlights(scope_tree);
       setCodeHTML(text + unProcessedText);
       return;
     }
@@ -101,10 +95,10 @@ export default function MarkdownCodeBlock({
     if (finished) {
       raw_code = text;
     }
-  
+    
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, 'nord', lang).then((html) => {
+      highlight(raw_code, 'tokyo-night', lang).then((html) => {
         setCodeHTML(html);
       });
       
@@ -119,55 +113,29 @@ export default function MarkdownCodeBlock({
       fontConsolas.className,
       className
     )}>
-      <div className='mr-5 ml-9 my-1 flex flex-row justify-between text-sm'>
+      <div className='mr-5 ml-9 my-2 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
           handleCopy(text + unProcessedText);
         }}>
-          <Icon.Clipboard className='w-[17px]'/>
-          <p className='pl-[5px]'>{"Copy"}</p>
+          <Copy className="w-4 h-4 text-primary"/>
+          <p className='pl-[9px]'>{"Copy"}</p>
         </Button>
       </div>
-      <div className='w-auto h-[1px] bg-secondary'/>
       <pre className="p-0 flex flex-row rounded-lg text-sm ">
-        <code className="pt-[5px] pb-[20px] pl-[7px] pr-[7px] text-white/50 !whitespace-pre select-none border-opacity-100 border-secondary">
-          {/* {Array(highlights.length + (props.finished ? 0 : unprocessedText.slice(1, unprocessedText.length - 1).length)).fill(20).map((e, line_number: number) => (
-              <>
-                {line_number + 1}
-                {"\n"}
-              </>
-          ))} */}
+        <code className="pt-[0px] pb-[20px] pl-[7px] pr-[7px] text-white/50 !whitespace-pre select-none border-opacity-100 border-secondary">
           {Array(lineCount).fill(20).map((e, line_number: number) => (
-              <span key={line_number}>
-                {line_number + 1}
-                {"\n"}
-              </span>
+            <span key={line_number}>
+              {line_number + 1}
+              {"\n"}
+            </span>
           ))}
         </code>
-        {/* <div className='w-[2px] h-auto bg-secondary'/>
-        <div className='w-[4px] h-auto'/> */}
-        {/* <div className="flex flex-col overflow-y-hidden overflow-x-auto w-full justify-start"> */}
         <ScrollAreaHorizontal className='min-w-auto'>
-          <div className='pl-[10px] pt-[5px] pb-[20px]'>
-            <code className='pt-[20px] pb-[20px] font-consolas text-sm !whitespace-pre cursor-text'>
-              {(!finished) && (
-                <>
-                  {unprocessedText.slice(1, unprocessedText.length - 1).map((line: string, line_number: number) => (
-                    <>
-                      <span key={line_number} className="text-sm" style={{color : code_styling.get("default")}}>
-                        {line}
-                      </span>
-                      {"\n"}
-                    </>
-                  ))}
-                </>
-              )}
-              <code className='bg-transparent' dangerouslySetInnerHTML={{__html: codeHTML}}></code>
-            </code>
+          <div className='pl-[5px] pt-[0px] pb-[20px]' dangerouslySetInnerHTML={{__html: codeHTML}}>
+            {/* <code className='bg-transparent' ></code> */}
           </div>
-          {/* <ScrollBar orientation="horizontal" /> */}
         </ScrollAreaHorizontal>
-        {/* </div> */}
       </pre>
     </div>
   );

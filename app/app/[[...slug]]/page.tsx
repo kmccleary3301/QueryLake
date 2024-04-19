@@ -10,20 +10,22 @@ type app_mode_type = "create" | "session" | "view" | undefined;
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useContextAction } from "@/app/context-provider";
-import { useRouter } from 'next/navigation';
-import { ToolChain, substituteAny } from '@/types/toolchains';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
+import { set } from "date-fns";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
-  const [isPending, startTransition] = useTransition()
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const router = useRouter(),
+        pathname = usePathname(),
+        search_params = useSearchParams();
+  
   const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
-  const [appMode, setAppMode] = useState<app_mode_type>(app_mode_immediate);
+  const appMode = useRef<app_mode_type>(app_mode_immediate);
   const mounting = useRef(true);
-  const [toolchainStateCopied, setToolchainStateCopied] = useState<{[key: string]: substituteAny}>({});
-  // const [toolchainWebsocket, setToolchainWebsocket] = useState<ToolchainSession | undefined>();
   const toolchainStateRef = useRef<toolchainStateType>({});
   const [firstEventRan, setFirstEventRan] = useState<boolean[]>([false, false]);
 
@@ -46,14 +48,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       setFirstEventRan(newFirstEventRan);
     }
 
-    if (appMode === "create" && newFirstEventRan[0] && newFirstEventRan[1] && sessionId?.current !== undefined) {
+    if (appMode.current === "create" && newFirstEventRan[0] && newFirstEventRan[1] && sessionId?.current !== undefined) {
       console.log("FIRST EVENT RAN; PUSHING TO SESSION");
       startTransition(() => {
         window.history.pushState(null, '', `/app/session?s=${sessionId?.current}`);
       });
-      // router.push(`/app/session?s=${sessionId?.current}`);
-      // router.push(`/app/session?s=${sessionId?.current}`);
-      // routerOld.push(`/app/session?s=${sessionId?.current}`, undefined, { shallow: true });
+      setFirstEventRan([false, false]);
     }
   }, [firstEventRan]);
 
@@ -84,7 +84,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       },
       onOpen: (session: ToolchainSession) => {
         if (true) {
-          if (appMode === "create") {
+          if (appMode.current === "create") {
             session.send_message({
               "auth": userData?.auth,
               "command" : "toolchain/create",
@@ -93,8 +93,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
                 "toolchain_id": selectedToolchainFull?.id,
               }
             });
-          } else if (appMode === "session") {
-            if (searchParams.s === undefined) {
+          } else if (appMode.current === "session") {
+            if (sessionId.current === undefined) {
               console.error("No session ID provided");
               router.push("/app/create");
               return;
@@ -106,7 +106,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
               "command" : "toolchain/load",
               "arguments": {
                 // "toolchain_id": "test_chat_session_normal"
-                "session_id": searchParams.s as string,
+                "session_id": sessionId.current as string,
               }
             });
           }
@@ -122,9 +122,21 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     mounting.current = false;
   }, [userData, selectedToolchainFull, initializeWebsocket]);
 
+  // This is a URL change monitor to refresh content.
   useEffect(() => {
-    console.log("UPDATING DISPLAY CONFIGURATION");
-  }, [selectedToolchainFull?.display_configuration]);
+    const url_mode = pathname?.replace(/^\/app\//, "").split("/")[0] as string;
+    const new_mode = (["create", "session", "view"].indexOf(url_mode) > -1) ? url_mode as app_mode_type : undefined;
+    
+    if (new_mode === "session" && search_params?.get("s") !== undefined && sessionId !== undefined) {
+      sessionId.current = search_params?.get("s") as string;
+    }
+
+    if (new_mode === "create" && appMode.current !== "create") {
+      initializeWebsocket();
+    }
+    
+    appMode.current = new_mode;
+  }, [pathname]);
 
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">

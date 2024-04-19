@@ -1,20 +1,8 @@
 "use client";
-import "public/registry/themes.css"
-import { Announcement } from "@/components/inherited/announcement"
-import {
-  PageActions,
-  PageHeader,
-  PageHeaderDescription,
-  PageHeaderHeading,
-} from "@/components/inherited/page-header"
-import { ThemeCustomizer } from "@/components/inherited/theme-customizer"
-import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
-import { ThemesTabs } from "@/app/themes/tabs"
+import "public/registry/themes.css";
 import { Button } from "@/registry/default/ui/button";
-import Link from "next/link"
+import Link from "next/link";
 import { motion } from 'framer-motion';
-
-// ...
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -74,67 +62,8 @@ export default function HomePage() {
               </Link>
             </motion.div>
           ))}
-          {/* <motion.div variants={childVariants}>
-            <Link href="/docs">
-              <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-                <p className="w-[260px] text-xl text-left">Documentation</p>
-                <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-                <p className="w-[260px] text-base text-primary/80 break-words text-left">Need help or want ideas on what to do? View QueryLake documentation, written by Kyle McCleary.</p>
-              </Button>
-            </Link>
-          </motion.div>
-          <motion.div variants={childVariants}>
-            <Link href="/api-keys">
-              <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-                <p className="w-[260px] text-xl text-left">API</p>
-                <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-                <p className="w-[260px] text-base break-words text-left">Manage your API keys and view your model usage.</p>
-              </Button>
-            </Link>
-          </motion.div>
-          <motion.div variants={childVariants}>
-            <Link href="/chat">
-              <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-                <p className="w-[260px] text-xl text-left">Apps</p>
-                <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-                <p className="w-[260px] text-base break-words text-left">Use Querylake and its custom applications.</p>
-              </Button>
-            </Link>
-          </motion.div> */}
         </motion.div>
       </div>
     </div>
   )
 }
-
-// export default function HomePage() {
-//   return (
-//     // <div className="container">
-//       <div className="w-full h-[calc(100vh-60px)] flex flex-col justify-center">
-//         <div className="w-full flex flex-row justify-center space-x-8">
-//           <Link href="/docs">
-//             <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-//               <p className="w-[260px] text-xl text-left">Documentation</p>
-//               <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-//               <p className="w-[260px] text-md break-words text-left">Need help or want ideas on what to do? View QueryLake documentation, written by Kyle McCleary.</p>
-//             </Button>
-//           </Link>
-//           <Link href="/api-keys">
-//             <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-//               <p className="w-[260px] text-xl text-left">API</p>
-//               <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-//               <p className="w-[260px] text-md break-words text-left">Manage your API keys and view your model usage.</p>
-//             </Button>
-//           </Link>
-//           <Link href="/chat">
-//             <Button variant="ghost" className="h-[400px] w-[300px] rounded-xl pt-8 flex flex-col overflow-auto whitespace-normal justify-start space-y-3">
-//               <p className="w-[260px] text-xl text-left">Apps</p>
-//               <div className="bg-secondary rounded-full w-[260px] h-[2px]"/>
-//               <p className="w-[260px] text-md break-words text-left">Use Querylake and its custom applications.</p>
-//             </Button>
-//           </Link>
-//         </div>
-//       </div>
-//     // </div>
-//   )
-// }
