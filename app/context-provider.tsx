@@ -22,7 +22,7 @@ import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import { useRouter } from 'next/navigation';
 import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
-import { fetchToolchainConfig, getUserCollections } from '@/hooks/querylakeAPI';
+import { fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
 import { ToolChain } from '@/types/toolchains';
 
 export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
@@ -39,7 +39,8 @@ const Context = createContext<{
 	setSelectedCollections: Dispatch<SetStateAction<selectedCollectionsType>>;
 
 	toolchainSessions : Map<string, toolchain_session>,
-	setToolchainSessions : setStateOrCallback<Map<string, toolchain_session>>
+	setToolchainSessions : setStateOrCallback<Map<string, toolchain_session>>,
+  refreshToolchainSessions : () => void,
 
 	activeToolchainSession : toolchain_session | undefined,
 	setActiveToolchainSession : setStateOrCallback<toolchain_session>,
@@ -72,6 +73,7 @@ const Context = createContext<{
 
 	toolchainSessions: new Map(),
 	setToolchainSessions: () => new Map(),
+  refreshToolchainSessions: () => {},
 
 	activeToolchainSession: undefined,
 	setActiveToolchainSession: () => undefined,
@@ -187,6 +189,22 @@ export const ContextProvider = ({
 			onFinish();
 		}
 	};
+  
+
+  const refresh_toolchain_sessions = useCallback(() => {
+    fetchToolchainSessions({
+      auth: user_data?.auth as string,
+      onFinish: (v : toolchain_session[]) => {
+        console.log("Toolchain Sessions Retrieved:", v)
+        const newToolchainSessions = new Map<string, toolchain_session>();
+        v.forEach((session : toolchain_session) => {
+          newToolchainSessions.set(session.id, session);
+        });
+        set_toolchain_sessions(newToolchainSessions);
+      }
+    })
+  }, [user_data, auth_reviewed]);
+
 
 
 	const refresh_collection_groups = () => {
@@ -197,22 +215,24 @@ export const ContextProvider = ({
 	};
 
   const setFullToolchain = useCallback((toolchain_id : string) => {
+    if (!auth_reviewed) return;
     fetchToolchainConfig({
       auth: user_data?.auth as string,
       toolchain_id: toolchain_id as string,
       onFinish: (v : ToolChain) => set_selected_toolchain_full(v)
     })
-  }, [user_data?.auth]);
+    refresh_toolchain_sessions();
+  }, [user_data?.auth, auth_reviewed]);
 
   useEffect(() => {
     if (selected_toolchain === undefined) return;
     setFullToolchain(selected_toolchain.id as string);
-  }, [selected_toolchain, user_data?.auth]);
+  }, [selected_toolchain, user_data?.auth, auth_reviewed]);
   
   useEffect(() => {
-    if (user_data === undefined) return;
+    if (user_data === undefined || !auth_reviewed) return;
     set_selected_toolchain(user_data.default_toolchain);
-  }, [user_data]);
+  }, [user_data, auth_reviewed]);
 	
 	return (
 		<Context.Provider value={{ 
@@ -224,7 +244,8 @@ export const ContextProvider = ({
 			selectedCollections : selected_collections,
 			setSelectedCollections : set_selected_collections,
 			toolchainSessions : toolchain_sessions,
-			setToolchainSessions : set_toolchain_sessions,
+			setToolchainSessions : set_toolchain_sessions,  
+      refreshToolchainSessions : refresh_toolchain_sessions,
 			activeToolchainSession : active_toolchain_session,
 			setActiveToolchainSession : set_active_toolchain_session,
 			selectedToolchain : selected_toolchain,

@@ -96,7 +96,7 @@ export default function Chat({
   };
 
   return (
-		<div className="flex flex-col gap-4 pb-2">
+		<div className="flex flex-col gap-8 pb-2">
 			{currentValue.map((value, index) => (
         <div className="flex flex-col gap-0" key={index}>
           <div key={index} className="flex flex-row">

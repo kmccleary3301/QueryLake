@@ -50,8 +50,8 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
       );
     case "anchor":
       return (
-        <Link href={props.textSeg.link as string}>
-          <Button variant="link" className="pl-0 pr-0 text-[#A68AEB]">
+        <Link href={props.textSeg.link as string} className="p-0 m-0">
+          <Button variant="link" className="p-0 m-0 text-[#A68AEB] h-auto">
             <p className="prose">
               {props.textSeg.text}
             </p>

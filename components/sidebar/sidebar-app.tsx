@@ -35,10 +35,6 @@ export default function AppSidebar() {
     refreshCollectionGroups,
     selectedCollections, 
     setSelectedCollections,
-    toolchainSessions,
-    setToolchainSessions,
-    activeToolchainSession,
-    setActiveToolchainSession,
     selectedToolchain,
     setSelectedToolchain,
     authReviewed,
@@ -122,12 +118,12 @@ export default function AppSidebar() {
                 </TabsContent>
                 <TabsContent value="history" className='mt-0 pt-2'>
                   <SidebarChatHistory
-                    scrollClassName='h-[calc(100vh-201px)] overflow-auto scrollbar-hide'
-                    userData={userData}
-                    toolchain_sessions={toolchainSessions}
-                    set_toolchain_sessions={setToolchainSessions}
-                    active_toolchain_session={activeToolchainSession}
-                    set_active_toolchain_session={setActiveToolchainSession}
+                    scrollClassName='h-[calc(100vh-232px)] overflow-auto scrollbar-hide'
+                    // userData={userData}
+                    // toolchain_sessions={toolchainSessions}
+                    // set_toolchain_sessions={setToolchainSessions}
+                    // active_toolchain_session={activeToolchainSession}
+                    // set_active_toolchain_session={setActiveToolchainSession}
                   />
                 </TabsContent>
                 <TabsContent value="tools" className='mt-0 pt-2'>
