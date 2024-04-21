@@ -8,9 +8,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/registry/default/ui/button';
 import * as Icon from 'react-feather';
 import { toast } from 'sonner';
-import { highlight } from '@/lib/shiki';
-import ScrollSection from '../manual_components/scrollable-bottom-stick/custom-scroll-section';
+import { getLanguage, highlight } from '@/lib/shiki';
+// import ScrollSection from '../manual_components/scrollable-bottom-stick/custom-scroll-section';
 import { Copy } from 'lucide-react';
+import { BundledLanguage } from 'shiki/langs';
 // import { renderToHtml } from "shiki";
 // import codeToHTML
 // import { codeToHtml } from 'shiki/index.mjs';
@@ -72,7 +73,7 @@ export default function MarkdownCodeBlock({
 
   // const [highlights, setHighlights] = useState<scoped_text[][]>([]);
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
-  const [language, setLanguage] = useState<string>("Unknown");
+  const [language, setLanguage] = useState<{value: BundledLanguage | "text", preview: string}>({value: "text", preview: "Text"});
   const [codeHTML, setCodeHTML] = useState<string>("");
   const [lineCount, setLineCount] = useState<number>(0);
 
@@ -84,7 +85,9 @@ export default function MarkdownCodeBlock({
 
   useEffect(() => {
     setLineCount(text.split("\n").length);
-    setLanguage(lang);
+
+    const language_get = getLanguage(lang);
+    setLanguage(language_get);
     if (lang === "text") {
       setCodeHTML(text + unProcessedText);
       return;
@@ -98,7 +101,7 @@ export default function MarkdownCodeBlock({
     
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, 'tokyo-night', lang).then((html) => {
+      highlight(raw_code, 'tokyo-night', language_get.value).then((html) => {
         setCodeHTML(html);
       });
       
@@ -114,7 +117,7 @@ export default function MarkdownCodeBlock({
       className
     )}>
       <div className='mr-5 ml-9 my-2 flex flex-row justify-between text-sm'>
-        <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language}</p>
+        <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language.preview}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
           handleCopy(text + unProcessedText);
         }}>

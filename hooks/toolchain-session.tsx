@@ -8,7 +8,7 @@ import {
   substituteAny 
 } from "@/types/toolchains";
 
-export type toolchainStateType = {[key : string]: substituteAny};
+export type toolchainStateType = {title?: string, [key : string]: substituteAny};
 
 export type CallbackOrValue<T> = T | ((prevState: T) => T);
 // type stateSetGeneric<T> = Dispatch<React.SetStateAction<T>>;

@@ -266,6 +266,7 @@ export interface ToolChain {
     id: string;
     category: string;
     display_configuration: displaySection;
+    first_event_follow_up?: string;
     // suggestions?: startScreenSuggestion[];
     initial_state: substituteAny;
     nodes: toolchainNode[];

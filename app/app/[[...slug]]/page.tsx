@@ -15,6 +15,7 @@ import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainSt
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 import { set } from "date-fns";
+import path from "path";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
   const [isPending, startTransition] = useTransition();
@@ -39,6 +40,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const {
     userData,
     selectedToolchainFull,
+    toolchainSessions,
+    setToolchainSessions,
   } = useContextAction();
 
   useEffect(() => {
@@ -78,8 +81,19 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         }
       },
       onSend: (message : {command?: string}) => {
-        if (message.command && message.command === "toolchain/event") {
+        if (message.command && message.command === "toolchain/event" && pathname === "/app/create") {
           setFirstEventRan((prevState) => [true, prevState[1]]);
+          if (sessionId.current !== undefined) {
+            const new_sessions = toolchainSessions;
+            const new_session = {
+              time: Math.floor(Date.now() / 1000),
+              toolchain: selectedToolchainFull?.id as string,
+              id: sessionId?.current as string,
+              title: toolchainState.title as string || "Untitled Session"
+            };
+            new_sessions.set(sessionId.current as string, new_session);
+            setToolchainSessions(new_sessions);
+          }
         }
       },
       onOpen: (session: ToolchainSession) => {
@@ -124,19 +138,33 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
 
   // This is a URL change monitor to refresh content.
   useEffect(() => {
+    console.log("URL Change", pathname, search_params?.get("s"));
     const url_mode = pathname?.replace(/^\/app\//, "").split("/")[0] as string;
     const new_mode = (["create", "session", "view"].indexOf(url_mode) > -1) ? url_mode as app_mode_type : undefined;
     
+    console.log((new_mode === "session" ));
+    console.log((sessionId !== undefined));
+    console.log((search_params?.get("s") !== sessionId?.current));
+    
+    if (new_mode === "session" && (sessionId !== undefined) && search_params?.get("s") !== sessionId?.current) {
+      console.log("Session ID Change", search_params?.get("s"), sessionId?.current);
+      sessionId.current = search_params?.get("s") as string;
+      initializeWebsocket();
+      return;
+    }
+
     if (new_mode === "session" && search_params?.get("s") !== undefined && sessionId !== undefined) {
       sessionId.current = search_params?.get("s") as string;
     }
 
     if (new_mode === "create" && appMode.current !== "create") {
       initializeWebsocket();
+      setFirstEventRan([false, false]);
     }
+
     
     appMode.current = new_mode;
-  }, [pathname]);
+  }, [pathname, search_params]);
 
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">

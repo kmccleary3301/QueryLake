@@ -11,7 +11,46 @@ import { useContextAction } from "@/app/context-provider";
 import { Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-  
+
+function SessionEntry({
+  session,
+  selected = false,
+  onDelete = () => {},
+}:{
+  session: toolchain_session,
+  selected?: boolean,
+  onDelete?: () => void,
+}) {
+  return (
+    <>
+      {selected ? (
+        <div className={cn(
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/60",
+          'px-4 w-auto flex flex-row justify-between h-8 rounded-lg'
+        )}>
+          <p className='text-sm h-auto flex flex-col justify-center'>{session.title}</p>
+          <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
+            <Trash className='w-3.5 h-3.5 text-primary'/>
+          </Button>
+        </div>
+      ) : (
+        <Link href={`/app/session?s=${session.id}`} className={cn(
+          "hover:bg-accent active:bg-accent/70 hover:text-accent-foreground hover:text-accent-foreground/",
+          'px-4 w-auto flex flex-row justify-between h-8 rounded-lg'
+        )}>
+          <p className='text-sm h-auto flex flex-col justify-center'>{session.title}</p>
+          <div className='h-auto flex flex-col justify-center pointer-events-none'>
+            <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
+              <Trash className='w-3.5 h-3.5 text-primary'/>
+            </Button>
+          </div>
+        </Link>
+      )}
+    </>
+  );
+}
+
+
 export default function SidebarChatHistory({
   scrollClassName,
 }:{
@@ -48,6 +87,7 @@ export default function SidebarChatHistory({
       for (let i = 0; i < timeWindows.length; i++) {
         if (delta_time < timeWindows[i].cutoff) {
           timeWindows[i].entries.push(session);
+          break;
         }
       }
     });
@@ -82,8 +122,8 @@ export default function SidebarChatHistory({
           </Button>
         </Link>
       </div>
-      <ScrollArea className={cn("pb-0", scrollClassName)}>
-        <div className='space-y-6'>
+      <ScrollArea className={cn("pb-0 -mr-4", scrollClassName)}>
+        <div className='space-y-6 pr-4'>
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index} className='space-y-8'>
             {(chat_history_window.entries.length > 0) && (
@@ -92,34 +132,7 @@ export default function SidebarChatHistory({
                   {chat_history_window.title}
                 </p>
                 {chat_history_window.entries.map((value : toolchain_session, index : number) => (
-                  <div key={index} className='px-4 w-auto flex flex-row justify-between h-8'>
-                    {/* <HoverDocumentEntry
-                      key={index}
-                      title={(value.title !== null)?value.title:"Test"}
-                      deleteIndex={() => {
-                        deleteSession(value.id);
-                      }}
-                      textStyle={{
-                        width: "100%",
-                        textAlign: 'left',
-                        paddingLeft: 10,
-                        // fontFamily: 'Inter-Regular',
-                        fontSize: 14,
-                        color: '#E8E3E3',
-                        // height: "100%",
-                      }}
-                      style={{
-                        width: "100%"
-                      }}
-                      onPress={() => {
-                        // TODO : Implement chat history navigation
-                      }}
-                    /> */}
-                    <p className='text-sm h-auto flex flex-col justify-center'>{value.title}</p>
-                    <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"}>
-                      <Trash className='w-3.5 h-3.5 text-primary'/>
-                    </Button>
-                  </div>
+                  <SessionEntry key={index} session={value}/>
                 ))}
               </div>
             )}

@@ -185,7 +185,7 @@ function MarkdownMapComponent({
           {(lines.length > 1)?(
             <>
               {lines.map((line, i) => (
-                <p className="pb-3" key={i}>
+                <p className="pb-1" key={i}>
                   <MarkdownTextSplitter 
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 
