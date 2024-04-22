@@ -14,8 +14,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
-import { set } from "date-fns";
-import path from "path";
+import { toolchain_session } from "@/types/globalTypes";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
   const [isPending, startTransition] = useTransition();
@@ -34,7 +33,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     toolchainState,
     setToolchainState,
     toolchainWebsocket,
-    sessionId
+    sessionId,
+    callEvent
   } = useToolchainContextAction();
 
   const {
@@ -42,10 +42,56 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     selectedToolchainFull,
     toolchainSessions,
     setToolchainSessions,
+    activeToolchainSession,
+    setActiveToolchainSession,
   } = useContextAction();
+  
+  const setCurrentToolchainSession = (title: string) => {
+    console.log("Setting toolchain session with", sessionId?.current, title, search_params?.get("s"), appMode.current, pathname, activeToolchainSession);
+
+    const new_session_make : toolchain_session = {
+      time: toolchainSessions.has(sessionId?.current as string) ? 
+            toolchainSessions.get(sessionId?.current as string)?.time as number :
+            Math.floor(Date.now() / 1000),
+      toolchain: selectedToolchainFull?.id as string,
+      id: sessionId?.current as string,
+      title: title || "Untitled Session"
+    };
+    setToolchainSessions((prevSessions) => {
+      // Create a new Map from the previous one
+      const newMap = new Map(prevSessions);
+      // Update the new Map
+      newMap.set(sessionId?.current as string, new_session_make);
+      // Return the new Map to update the state
+      return newMap;
+    });
+    setActiveToolchainSession(sessionId?.current);
+  }
+
+  useEffect(() => {
+    console.log("TITLE CHANGED, UPDATING WITH", toolchainState.title);
+    // if (sessionId !== undefined) sessionId.current = searchParams?.s as string;
+    if (sessionId === undefined || 
+        sessionId.current === "" || 
+        sessionId.current === "undefined" || 
+        !toolchainState.title ||
+        !toolchainSessions.has(sessionId.current) ||
+        toolchainSessions.get(sessionId.current)?.title === toolchainState.title
+      ) return;
+    console.log("FOLLOWING THROUGH");
+    setCurrentToolchainSession(toolchainState.title as string || "Untitled Session");
+  }, [toolchainState?.title]);
 
   useEffect(() => {
     let newFirstEventRan = firstEventRan;
+    // if (sessionId !== undefined) sessionId.current = searchParams?.s as string;
+    if (sessionId && sessionId.current && newFirstEventRan[0] && !newFirstEventRan[1] && !toolchainSessions.has(sessionId.current)) {
+      
+      console.log("FIRST EVENT RAN; PUSHING SESSION TO HISTORY");
+      setCurrentToolchainSession(toolchainStateRef.current.title as string);
+    }
+
+
     if (!newFirstEventRan[0] && newFirstEventRan[1]) {
       newFirstEventRan = [false, false];
       setFirstEventRan(newFirstEventRan);
@@ -57,6 +103,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         window.history.pushState(null, '', `/app/session?s=${sessionId?.current}`);
       });
       setFirstEventRan([false, false]);
+      if (selectedToolchainFull?.first_event_follow_up)
+        callEvent(userData?.auth as string, selectedToolchainFull.first_event_follow_up, {})
     }
   }, [firstEventRan]);
 
@@ -71,7 +119,10 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     if (toolchainWebsocket === undefined || sessionId === undefined) return;
     setToolchainState({});
     toolchainWebsocket.current = new ToolchainSession({
-      onStateChange: updateState,
+      onStateChange: (state) => {
+        // toolchainStateRef.current = state;
+        updateState(state);
+      },
       onCallEnd: () => {
         setFirstEventRan((prevState) => [prevState[0], true]);
       },
@@ -81,19 +132,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         }
       },
       onSend: (message : {command?: string}) => {
-        if (message.command && message.command === "toolchain/event" && pathname === "/app/create") {
+        if (message.command && message.command === "toolchain/event" && appMode) {
           setFirstEventRan((prevState) => [true, prevState[1]]);
-          if (sessionId.current !== undefined) {
-            const new_sessions = toolchainSessions;
-            const new_session = {
-              time: Math.floor(Date.now() / 1000),
-              toolchain: selectedToolchainFull?.id as string,
-              id: sessionId?.current as string,
-              title: toolchainState.title as string || "Untitled Session"
-            };
-            new_sessions.set(sessionId.current as string, new_session);
-            setToolchainSessions(new_sessions);
-          }
         }
       },
       onOpen: (session: ToolchainSession) => {
@@ -113,13 +153,11 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
               router.push("/app/create");
               return;
             }
-            console.log("Loading toolchain");
             setToolchainState({});
             session.send_message({
               "auth": userData?.auth,
               "command" : "toolchain/load",
               "arguments": {
-                // "toolchain_id": "test_chat_session_normal"
                 "session_id": sessionId.current as string,
               }
             });
@@ -130,41 +168,31 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     });
   };
 
-  useEffect(() => {
-    if (selectedToolchainFull === undefined) return;
-    if (mounting.current) initializeWebsocket();
-    mounting.current = false;
-  }, [userData, selectedToolchainFull, initializeWebsocket]);
-
   // This is a URL change monitor to refresh content.
   useEffect(() => {
+    if (selectedToolchainFull === undefined) return;
     console.log("URL Change", pathname, search_params?.get("s"));
     const url_mode = pathname?.replace(/^\/app\//, "").split("/")[0] as string;
     const new_mode = (["create", "session", "view"].indexOf(url_mode) > -1) ? url_mode as app_mode_type : undefined;
     
-    console.log((new_mode === "session" ));
-    console.log((sessionId !== undefined));
-    console.log((search_params?.get("s") !== sessionId?.current));
-    
     if (new_mode === "session" && (sessionId !== undefined) && search_params?.get("s") !== sessionId?.current) {
       console.log("Session ID Change", search_params?.get("s"), sessionId?.current);
       sessionId.current = search_params?.get("s") as string;
+      setActiveToolchainSession(sessionId.current);
       initializeWebsocket();
-      return;
     }
 
-    if (new_mode === "session" && search_params?.get("s") !== undefined && sessionId !== undefined) {
-      sessionId.current = search_params?.get("s") as string;
-    }
-
-    if (new_mode === "create" && appMode.current !== "create") {
+    else if (new_mode === "create" && appMode.current !== "create") {
       initializeWebsocket();
       setFirstEventRan([false, false]);
+      setCurrentToolchainSession(toolchainState.title as string || "Untitled Session");
+      setActiveToolchainSession(undefined);
+    } else if (new_mode === "create") {
+      initializeWebsocket();
+      setActiveToolchainSession(undefined);
     }
-
-    
     appMode.current = new_mode;
-  }, [pathname, search_params]);
+  }, [pathname, search_params, selectedToolchainFull]);
 
   return (
     <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">

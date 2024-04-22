@@ -25,26 +25,36 @@ function SessionEntry({
     <>
       {selected ? (
         <div className={cn(
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/60",
-          'px-4 w-auto flex flex-row justify-between h-8 rounded-lg'
+          "bg-secondary text-secondary-foreground hover:bg-accent active:bg-secondary/60",
+          'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
-          <p className='text-sm h-auto flex flex-col justify-center'>{session.title}</p>
-          <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
-            <Trash className='w-3.5 h-3.5 text-primary'/>
-          </Button>
+          <div className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
+            <p className='relative px-2 overflow-hidden text-sm whitespace-nowrap'>{session.title}</p>
+          </div>
+          <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+            <div className='h-auto flex flex-row pointer-events-none'>
+              <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
+                <Trash className='w-3.5 h-3.5 text-primary'/>
+              </Button>
+            </div>
+          </div>
         </div>
       ) : (
-        <Link href={`/app/session?s=${session.id}`} className={cn(
+        <div className={cn(
           "hover:bg-accent active:bg-accent/70 hover:text-accent-foreground hover:text-accent-foreground/",
-          'px-4 w-auto flex flex-row justify-between h-8 rounded-lg'
+          'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
-          <p className='text-sm h-auto flex flex-col justify-center'>{session.title}</p>
-          <div className='h-auto flex flex-col justify-center pointer-events-none'>
-            <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
-              <Trash className='w-3.5 h-3.5 text-primary'/>
-            </Button>
+          <Link href={`/app/session?s=${session.id}`} className='w-full flex flex-col justify-center rounded-[inherit]'>
+            <p className='relative px-2 overflow-hidden overflow-ellipsis text-sm whitespace-nowrap'>{session.title}</p>
+          </Link>
+          <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+            <div className='h-auto flex flex-row pointer-events-none'>
+              <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
+                <Trash className='w-3.5 h-3.5 text-primary'/>
+              </Button>
+            </div>
           </div>
-        </Link>
+        </div>
       )}
     </>
   );
@@ -92,6 +102,10 @@ export default function SidebarChatHistory({
       }
     });
 
+    for (let i = 0; i < timeWindows.length; i++) {
+      timeWindows[i].entries.sort((a : toolchain_session, b : toolchain_session) => (b.time - a.time));
+    }
+
     console.log("Time Windows:", timeWindows);
 
     setInternalToolchainSessions(timeWindows);
@@ -101,15 +115,21 @@ export default function SidebarChatHistory({
   const deleteSession = (hash_id : string) => {
     // TODO : Implement delete session with API
     
-    // toolchainSessions.delete(hash_id)
-
     // setToolchainSessions(toolchainSessions);
-    toolchainSessions.delete(hash_id);
-    setToolchainSessions(toolchainSessions);
+    // toolchainSessions.delete(hash_id);
+    setToolchainSessions((prevSessions) => {
+      // Create a new Map from the previous one
+      const newMap = new Map(prevSessions);
+      // Update the new Map
+      newMap.delete(hash_id);
+      // Return the new Map to update the state
+      return newMap;
+    });
+    // setToolchainSessions(toolchainSessions.filter((session : toolchain_session) => (session.id !== hash_id)));
   };
   
   return (
-    <div className='pb-0'>
+    <div className='pb-0 overflow-hidden'>
       <div className='pb-2'>
         <Link href="/app/create">
           <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center">
@@ -127,12 +147,12 @@ export default function SidebarChatHistory({
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index} className='space-y-8'>
             {(chat_history_window.entries.length > 0) && (
-              <div className='space-y-1'>
-                <p className="w-full text-left text-base text-gray-700">
+              <div className='space-y-1 w-[280px]'>
+                <p className="w-full text-left text-sm text-primary/80">
                   {chat_history_window.title}
                 </p>
                 {chat_history_window.entries.map((value : toolchain_session, index : number) => (
-                  <SessionEntry key={index} session={value}/>
+                  <SessionEntry key={index} session={value} selected={(value.id === activeToolchainSession)}/>
                 ))}
               </div>
             )}

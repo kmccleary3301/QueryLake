@@ -246,7 +246,6 @@ export interface displayConfiguration {
 
 export interface toolchainNode {
     id: string;
-    is_event?: boolean;
     api_function?: string;
     input_arguments?: nodeInputArgument[];
     feed_mappings?: feedMapping[];

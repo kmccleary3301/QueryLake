@@ -118,7 +118,7 @@ export default function AppSidebar() {
                 </TabsContent>
                 <TabsContent value="history" className='mt-0 pt-2'>
                   <SidebarChatHistory
-                    scrollClassName='h-[calc(100vh-232px)] overflow-auto scrollbar-hide'
+                    scrollClassName='h-[calc(100vh-232px)] scrollbar-hide'
                     // userData={userData}
                     // toolchain_sessions={toolchainSessions}
                     // set_toolchain_sessions={setToolchainSessions}

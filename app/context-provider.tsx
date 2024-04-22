@@ -39,11 +39,11 @@ const Context = createContext<{
 	setSelectedCollections: Dispatch<SetStateAction<selectedCollectionsType>>;
 
 	toolchainSessions : Map<string, toolchain_session>,
-	setToolchainSessions : setStateOrCallback<Map<string, toolchain_session>>,
+	setToolchainSessions : React.Dispatch<React.SetStateAction<Map<string, toolchain_session>>>,
   refreshToolchainSessions : () => void,
 
-	activeToolchainSession : toolchain_session | undefined,
-	setActiveToolchainSession : setStateOrCallback<toolchain_session>,
+	activeToolchainSession : string | undefined,
+	setActiveToolchainSession : setStateOrCallback<string | undefined>,
 
 	selectedToolchain : toolchain_type | undefined,
 	setSelectedToolchain : setStateOrCallback<toolchain_type>,
@@ -122,7 +122,7 @@ export const ContextProvider = ({
 	const [collection_groups, set_collection_groups] = useState<collectionGroup[]>([]);
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
-	const [active_toolchain_session, set_active_toolchain_session] = useState<toolchain_session | undefined>(undefined);
+	const [active_toolchain_session, set_active_toolchain_session] = useState<string | undefined>(undefined);
 	const [selected_toolchain, set_selected_toolchain] = useState<toolchain_type | undefined>(undefined);
 
   const [selected_toolchain_full, set_selected_toolchain_full] = useState<ToolChain | undefined>(undefined);
@@ -195,7 +195,6 @@ export const ContextProvider = ({
     fetchToolchainSessions({
       auth: user_data?.auth as string,
       onFinish: (v : toolchain_session[]) => {
-        console.log("Toolchain Sessions Retrieved:", v)
         const newToolchainSessions = new Map<string, toolchain_session>();
         v.forEach((session : toolchain_session) => {
           newToolchainSessions.set(session.id, session);
