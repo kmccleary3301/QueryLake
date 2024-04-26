@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function NodeEditorPage() {
   return (
-    <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
+    <div className="h-[calc(100vh)] w-full pr-0 pl-0">
       <FlowDisplay/>
     </div>
   )

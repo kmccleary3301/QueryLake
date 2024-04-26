@@ -116,7 +116,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
                 <SidebarController />
                 <div className="relative flex h-screen w-full flex-col bg-background">
-                  <SiteHeader />
+                  {/* <SiteHeader /> */}
                   {/* <AnimatePresence initial={false} mode="popLayout"> */}
                     {/* <main className="flex-1">{children}</main> */}
                       {children}

@@ -17,7 +17,7 @@ export default function DocPage({ params, searchParams }: DocPageProps) {
   if (doc === undefined) {
     return (
       <>
-        <div className='w-full h-[calc(100vh-60px)] flex flex-col justify-center'>
+        <div className='w-full h-[calc(100vh)] flex flex-col justify-center'>
           <h1>Doc Not Found</h1>
           <p className='w-full text-base text-primary/80 break-words text-left'>
             The doc you are looking for does not exist.  

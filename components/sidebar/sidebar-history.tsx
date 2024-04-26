@@ -147,7 +147,7 @@ export default function SidebarChatHistory({
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index} className='space-y-8'>
             {(chat_history_window.entries.length > 0) && (
-              <div className='space-y-1 w-[280px]'>
+              <div className='space-y-1 w-[220px]'>
                 <p className="w-full text-left text-sm text-primary/80">
                   {chat_history_window.title}
                 </p>

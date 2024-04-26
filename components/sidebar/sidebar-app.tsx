@@ -87,7 +87,7 @@ export default function AppSidebar() {
   
 
 	return (
-    <SidebarTemplate width={"320px"} className='pl-4 pr-4'>
+    <SidebarTemplate width={"260px"} className='pl-4 pr-4'>
       {(userData !== undefined) && (
         <>
           <div className="w-full px-22 pb-0 flex-grow flex flex-col">
@@ -157,8 +157,8 @@ export default function AppSidebar() {
               </Link>
             </Button>
             <Button className="w-full justify-start p-0 h-8" variant="link">
-              <Link href="/settings">
-                User Settings
+              <Link href="/all_pages_panel">
+                All Pages
               </Link>
             </Button>
           </div>

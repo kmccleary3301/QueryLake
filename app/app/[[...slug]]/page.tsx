@@ -195,7 +195,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   }, [pathname, search_params, selectedToolchainFull]);
 
   return (
-    <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
+    <div className="h-[100vh] w-full pr-0 pl-0">
       {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && (
         <DivisibleSection
           section={selectedToolchainFull.display_configuration}

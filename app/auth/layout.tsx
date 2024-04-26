@@ -13,8 +13,8 @@ export default function CoverTestPage({ children }:{ children: React.ReactNode }
       <div>
         <WavyBackground 
           className="w-full mx-0 h-full"
-          containerClassName="transform-gpu w-full h-[calc(100vh-75px)]"
-          canvasClassName="h-[calc(100vh-57px)] w-[calc(100vw)] blur-[3px]"
+          containerClassName="transform-gpu w-full h-[calc(100vh)]"
+          canvasClassName="h-[calc(100vh)] w-[calc(100vw)] blur-[3px]"
           blur={3}
           waveWidth={4} 
           waveCount={20} 

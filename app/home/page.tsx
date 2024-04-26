@@ -41,7 +41,7 @@ const buttonProps : {header : string, content : string, link : string}[] = [
 
 export default function HomePage() {
   return (
-    <div className="w-full h-[calc(100vh-60px)] flex flex-col justify-center">
+    <div className="w-full h-[calc(100vh)] flex flex-col justify-center">
       <div className="w-full flex flex-row justify-center">
         <motion.div className="flex-shrink flex flex-col lg:flex-row justify-center space-y-2 lg:space-y-0 lg:space-x-2"
           variants={containerVariants}

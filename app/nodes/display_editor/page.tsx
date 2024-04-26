@@ -1,28 +1,23 @@
 "use client";
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { DivisibleSection } from "./components/section-divisible";
 import { displaySection } from "@/types/toolchain-interface";
 import { useNodeContextAction } from "../context-provider"
-
+import { usePathname } from 'next/navigation';
 
 export default function DisplayEditorPage() {
   const { 
     interfaceConfiguration, 
-    setInterfaceConfiguration
+    setInterfaceConfiguration,
+    getInterfaceConfiguration
   } = useNodeContextAction();
 
+  const pathname = usePathname();
+
   const [windowCount, setWindowCount] = useState(1);
-  const [section, setSection] = useState<displaySection>(JSON.parse(JSON.stringify(interfaceConfiguration)));
+  const [section, setSection] = useState<displaySection>(JSON.parse(JSON.stringify(getInterfaceConfiguration())));
 
-  
-
-  const sectionRef = useRef<displaySection>({
-    split: "none",
-    size: 100,
-    align: "center",
-    tailwind: "",
-    mappings: []
-  });
+  const sectionRef = useRef<displaySection>(JSON.parse(JSON.stringify(interfaceConfiguration)));
 
   const sectionUpdate = (sectionLocal : displaySection) => {
     sectionRef.current = sectionLocal;
@@ -31,9 +26,14 @@ export default function DisplayEditorPage() {
     // setInterfaceConfiguration(sectionLocal);
     // console.log(sectionLocal);
   }
-  
+
+  useEffect(() => {
+    setSection(JSON.parse(JSON.stringify(getInterfaceConfiguration())));
+
+  }, [pathname])
+
   return (
-    <div className="h-[calc(100vh-60px)] w-full pr-0 pl-0">
+    <div className="h-[100vh] w-full pr-0 pl-0">
       <DivisibleSection
         onCollapse={() => {}}
         onSectionUpdate={sectionUpdate}

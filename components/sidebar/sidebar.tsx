@@ -19,10 +19,10 @@ export default function SidebarController() {
 	const [sidebarAssignment, setSidebarAssignment] = useState<sidebar_assigned>("none");
 
 	useEffect(() => {
-		if (!authReviewed || !loginValid) {
-			setSidebarAssignment("none");
-			return;
-		}
+		// if (!authReviewed || !loginValid) {
+		// 	setSidebarAssignment("none");
+		// 	return;
+		// }
 		console.log("Pathname changed to", pathname, pathname?.startsWith("/app"), pathname?.startsWith("/nodes"));
 		if (pathname?.startsWith("/app") || 
 			pathname?.startsWith("/nodes") || 
@@ -45,14 +45,27 @@ export default function SidebarController() {
 	}, [sidebarAssignment])
 
 
-	switch(sidebarAssignment) {
-		case "app":
-			return <Sidebar/>
-		case "api":
-			return null
-		case "documentation":
-			return <DocSidebar/>
-		default:
-			return null;
-	}
+	// switch(sidebarAssignment) {
+	// 	case "app":
+	// 		return <Sidebar/>
+	// 	case "api":
+	// 		return null
+	// 	case "documentation":
+	// 		return <DocSidebar/>
+	// 	default:
+	// 		return null;
+	// }
+
+	return (
+		<>
+			{(pathname?.startsWith("/app") || 
+				pathname?.startsWith("/nodes") || 
+				pathname?.startsWith("/themes") ||
+				pathname?.startsWith("/collection")
+			) && authReviewed && loginValid && <Sidebar/>}
+			{(pathname?.startsWith("/docs")
+			) && authReviewed && loginValid && <DocSidebar/>}
+			{/* {sidebarAssignment === "api" && <DocSidebar/>} */}
+		</>
+	)
 }

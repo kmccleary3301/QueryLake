@@ -75,7 +75,11 @@ export default function SidebarTemplate({
 	return (
 
     <>
-      <motion.div id="SIDEBARBUTTON" className={`p-1 pl-2 absolute`} animate={controlSidebarButtonOffset}>
+      <motion.div 
+        id="SIDEBARBUTTON" 
+        className={`p-1 pl-2 absolute`}
+        initial={{translateX: 0, opacity: 1, zIndex: 52}}
+        animate={controlSidebarButtonOffset}>
         {(sidebarToggleVisible) ? (
           <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2`} onClick={() => {setSidebarOpened(true);}}>
             <Icon.Sidebar id="closed_sidebar_button" size={24}/>
@@ -97,9 +101,11 @@ export default function SidebarTemplate({
                       <Icon.Home size={24}/>
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
-                    <Icon.Settings size={24}/>
-                  </Button>
+                  <Link href="/settings">
+                    <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
+                      <Icon.Settings size={24}/>
+                    </Button>
+                  </Link>
                   <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2" onClick={() => {
                     // TODO: Toggle Sidebar
                     setSidebarOpened(false);

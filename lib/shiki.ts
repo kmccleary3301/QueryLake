@@ -177,7 +177,7 @@ const languages = [
   ["Vue HTML", "vue-html"],
   ["Vyper", "vyper", "vy"],
   ["WebAssembly", "wasm"],
-  ["Wenyan", "wenyan", ""],
+  ["Wenyan", "wenyan"],
   ["WGSL", "wgsl"],
   ["Wolfram", "wolfram", "wl"],
   ["XML", "xml"],

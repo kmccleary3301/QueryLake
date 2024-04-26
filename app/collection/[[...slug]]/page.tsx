@@ -348,8 +348,8 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   }
 
   return (
-    <ScrollArea className="w-full h-[calc(100vh-60px)]">
-      <div className="p-4 flex flex-col items-center w-full min-h-[calc(100vh-60px)]">
+    <ScrollArea className="w-full h-[calc(100vh)]">
+      <div className="p-4 flex flex-col items-center w-full min-h-[calc(100vh)]">
         <h1 className="text-3xl font-bold tracking-tight mb-4 text-center">
           {(CollectionMode === "create")?"Create a Document Collection":(CollectionMode === "edit")?"Edit Document Collection":(CollectionMode === "view")?"View Document Collection":"Bad URL!"}
         </h1>
