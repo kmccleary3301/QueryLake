@@ -35,6 +35,9 @@ export default class ToolchainSession {
 	private onFirstCallEnd: () => void;
 	public  socket: WebSocket; // Add socket as a type
 	private stream_mappings: Map<string, (string | number)[][]>;
+  private message_queue: Object[];
+  public currently_running: boolean;
+
 	// private stateChangeCounter: number;
   
 	constructor ( { onStateChange = undefined, 
@@ -58,6 +61,8 @@ export default class ToolchainSession {
     this.onSend = onSend || (() => {});
 		this.onOpen = onOpen || (() => {});
     this.onFirstCallEnd = onFirstCallEnd || (() => {});
+    this.message_queue = [];
+    this.currently_running = false;
 		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
@@ -99,14 +104,20 @@ export default class ToolchainSession {
 		}
 
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
-			// Rest this.stream_mappings to an empty map
+			// Reset this.stream_mappings to an empty map
 			this.stream_mappings = new Map<string, (string | number)[][]>();
-      this.onCallEnd(this);
+      this.message_queue = this.message_queue.slice(1);
+      if (this.message_queue.length > 0) {
+        this.onSend(this.message_queue[0]);
+        this.socket.send(JSON.stringify(this.message_queue[0]));
+      } else {
+        this.currently_running = false;
+        this.onCallEnd(this);
+      }
 		} else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
 			console.log(data);
 		} else if ("type" in data) {
-			// console.log("Data type:", data["type"]);
-
+      
 			if (data["type"] === "streaming_output_mapping") {
 				const data_typed = data as {"type" : "streaming_output_mapping", "stream_id" : string, "routes" : (string | number)[][]};
 				this.stream_mappings.set(data_typed["stream_id"], data_typed["routes"]);
@@ -122,49 +133,30 @@ export default class ToolchainSession {
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const { type , ...data_typed_type_removed } = data_typed;
         
-        // console.log("Running state diff:", data_typed);
-
-				// console.log("State before diff:", JSON.parse(JSON.stringify(this.state)));
-				// this.state = runStateDiff(this.state, data_typed_type_removed) as typeof this.state;
-				// console.log("State after diff:", JSON.parse(JSON.stringify(this.state)));
-
 				this.onStateChange(
           (prevState) => runStateDiff(prevState, data_typed_type_removed) as toolchainStateType
         );
-				// this.onTitleChange(get_value(this.getState(), "title") as string);
 			}
 		} else if (checkKeys(["s_id", "v"], Object.keys(data))) {
-      // console.log("Stream Token:", data);
-
 			const data_typed = data as { s_id : string, v : substituteAny };
-
-			// const routes_get: Array<Array<string | number>> = stream_mappings[parsedResponse["s_id"]];
 			const routes_get = this.stream_mappings.get(data_typed["s_id"]) as (string | number)[][];
 			for (const route_get of routes_get) {
-				// this.state = appendInRoute(this.state, route_get, data_typed["v"]) as toolchainStateType;
         this.onStateChange(
           (prevState) => appendInRoute(prevState, route_get, data_typed["v"]) as toolchainStateType
         )
-        // console.log(route_get, this.state, retrieveValueFromObj(this.state, route_get));
 			}
-
-			// this.onStateChange(this.state, this.stateChangeCounter);
-      // this.stateChangeCounter += 1;
-			// this.onTitleChange(get_value(this.state, "title") as string);
-
 		} else if (checkKeys(["event_result"], Object.keys(data))) {
-			// TODO: Find a way to return the event result.
-
 			const data_typed = data as { event_result : compositionObjectType };
-			// final_output = parsedResponse["event_result"];
 			console.log("Event result:", data_typed["event_result"]);
 		}
-
-    // console.log("State:", this.getState());
-    // return this.state;
 	}
 
 	send_message(message : { [key : string] : substituteAny }) {
+    this.message_queue.push(message);
+    if (this.currently_running) {
+      return;
+    }
+    this.currently_running = true;
     this.onSend(message);
 		this.socket.send(JSON.stringify(message));
 	}
