@@ -202,7 +202,7 @@ export const ContextProvider = ({
         set_toolchain_sessions(newToolchainSessions);
       }
     })
-  }, [user_data, auth_reviewed]);
+  }, [user_data?.auth, auth_reviewed]);
 
 
 
@@ -231,7 +231,7 @@ export const ContextProvider = ({
   useEffect(() => {
     if (user_data === undefined || !auth_reviewed) return;
     set_selected_toolchain(user_data.default_toolchain);
-  }, [user_data, auth_reviewed]);
+  }, [user_data?.auth, auth_reviewed]);
 	
 	return (
 		<Context.Provider value={{ 

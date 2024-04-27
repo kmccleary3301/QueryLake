@@ -179,7 +179,9 @@ export type userDataType = {
 	is_admin: boolean,
 	available_models: all_available_models,
 	available_toolchains: toolchainCategory[],
-  default_toolchain: toolchain_type
+  default_toolchain: toolchain_type,
+  user_set_providers: string[],
+  providers: string[],
 };
 
 

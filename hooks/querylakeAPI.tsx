@@ -618,3 +618,29 @@ export function fetchToolchainConfig(args : fetchToolchainConfigArgs) {
 		});
 	});
 }
+
+
+export function modifyUserExternalProviders(args :{
+  auth: string,
+  update?: object,
+  delete?: string[],
+  onFinish?: (result : boolean) => void
+}) {
+
+  const url = craftUrl(`/api/modify_user_external_providers`, {
+    "auth": args.auth,
+    ...(args.update)?{"update": args.update}:{},
+    ...(args.delete)?{"delete": args.delete}:{},
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean}) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(data.success);
+		});
+	});
+}

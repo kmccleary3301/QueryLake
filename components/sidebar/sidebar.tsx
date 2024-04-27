@@ -61,7 +61,8 @@ export default function SidebarController() {
 			{(pathname?.startsWith("/app") || 
 				pathname?.startsWith("/nodes") || 
 				pathname?.startsWith("/themes") ||
-				pathname?.startsWith("/collection")
+				pathname?.startsWith("/collection") ||
+				pathname?.startsWith("/settings")
 			) && authReviewed && loginValid && <Sidebar/>}
 			{(pathname?.startsWith("/docs")
 			) && authReviewed && loginValid && <DocSidebar/>}

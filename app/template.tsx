@@ -61,7 +61,7 @@ export default function RootTemplate({
     if (mounted && !authReviewed) {
       getUserData(userData, () => {setMounted(true);});
     }
-  }, [userData, mounted]);
+  }, [userData?.auth, mounted]);
   
   useEffect(() => {
     console.log("pathname changed to:", pathname);

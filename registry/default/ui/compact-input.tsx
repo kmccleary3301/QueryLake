@@ -9,11 +9,13 @@ const CompactInput = forwardRef(({
   className,
   type = "",
   placeholder,
+  hideText = false,
   ...props
 }: {
   className?: string;
   type?: string;
   placeholder?: string;
+  hideText?: boolean;
   [key: string]: any;
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -22,7 +24,7 @@ const CompactInput = forwardRef(({
 		(props.defaultValue && props.defaultValue !== "") ? true :
 		false
 	);
-	const [hidden, setHidden] = useState((type === "password") ? true : false);
+	const [hidden, setHidden] = useState((type === "password") ? true : hideText);
 	const buttonAvailable =  (type === "password") ? true : false;
 
 
@@ -47,7 +49,7 @@ const CompactInput = forwardRef(({
 				<div className='flex-grow overflow-hidden px-0'>
 					<input
 						className={
-							`${buttonAvailable ? "w-auto" : "w-full"} p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden`
+							`${buttonAvailable ? "w-full" : "w-full"} p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden`
 						}
 						// type={type}
 						type={hidden ? "password" : "text"}
@@ -71,7 +73,7 @@ const CompactInput = forwardRef(({
 					/>
 				</div>
 				{buttonAvailable && (
-					<div className='p-0 m-0 h-full rounded-l-none rounded-md pl-3'>
+					<div className='p-0 m-0 h-full rounded-l-none rounded-md'>
 					<Button variant={"ghost"} type="button" className={cn(
 						"border-[3.5px] border-transparent h-full w-full py-0 m-0 px-2",
 						(isFocused ? "rounded-md" : "rounded-sm"),
