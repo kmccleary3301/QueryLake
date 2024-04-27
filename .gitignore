@@ -31,6 +31,8 @@ documentation/Game Content
 documentation/Overview
 
 /public
+cache
 /.next
 
 
+public/cache/*
