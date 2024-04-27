@@ -35,4 +35,4 @@ cache
 /.next
 
 
-public/cache/*
+/public/cache
