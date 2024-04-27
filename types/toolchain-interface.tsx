@@ -27,9 +27,19 @@ export type inputComponentConfig = {
 	tailwind?: string,
 }
 
+
+/*  This is for the toolchain interface designer.
+ *  The fields config immediately below is for each input component.
+ *  Note that the hook `selected_collections` is a special hook 
+ *  that is used to send the selected collections to a toolchain event.
+ */
+
 export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
 	"file_upload": {
-		"hooks": ["on_upload"],
+		"hooks": [
+      "on_upload",
+      "selected_collections"
+    ],
 		"config": [
 			{
 				"name": "multiple",
@@ -39,7 +49,11 @@ export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentC
 		],
 	},
 	"chat_input": {
-		"hooks": ["on_upload", "on_submit"],
+		"hooks": [
+      "on_upload", 
+      "on_submit",
+      "selected_collections",
+    ],
 	},
 }
 
@@ -51,6 +65,7 @@ export type displayMapping = {
 export type inputEvent = {
   hook: string,
   target_event: string,
+  fire_index: number,
   // target_route: (string | number)[],
   store: boolean,
   target_route: string,

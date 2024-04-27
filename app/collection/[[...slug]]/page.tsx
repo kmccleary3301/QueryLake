@@ -63,13 +63,13 @@ export function FileDisplayType({
   onDelete?: () => void
 }) {
   return (
-    <div className="h-14 flex flex-row items-center justify-between border-b pt-2 pb-2">
-      <div className='pb-2 flex flex-col'>
+    <div className="w-[inherit] h-14 flex flex-row items-center justify-between pt-2 pb-2">
+      <div className='w-[70%] pb-2 flex flex-col'>
         {(onOpen === undefined)?(
-          <p className="font-medium max-w-[400px] whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
+          <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
         ):(
-          <Button variant="link" className="font-medium p-0 h-6]" onClick={onOpen}>
-            <p className="font-medium max-w-[50vw] md:max-w-[30vw] xl:max-w-[25vw] whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
+          <Button variant="link" className="font-medium p-0 h-6 justify-start" onClick={onOpen}>
+            <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
           </Button>
         )}
         {(subtext !== undefined) && (
@@ -77,13 +77,9 @@ export function FileDisplayType({
         )}
       </div>
       {progress !== undefined && (
-        // <div className="w-1/4 h-2 bg-gray-200 rounded-md">
-        //   {/* <div className="h-full bg-blue-500 rounded-md" style={{ width: `${progress}%` }} /> */}
-        //   <p>{progress.toString()}</p>
-        // </div>
-        // <div className=''>
-          <Progress value={progress} className='h-2 ml-10 mb-2 w-[100px]' />
-        // </div>
+        <div className="w-[30%] px-2">  
+          <Progress value={progress} className='h-2 mb-2 w-auto' />
+        </div>
       )}
       {(onDelete !== undefined) && (
         <Button size="icon" variant="ghost" onClick={onDelete}>
@@ -179,59 +175,6 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     }
   }
 
-
-  // const start_document_uploads = (collection_hash_id : string) => {
-  //   let url_2 = craftUrl("/upload/", {
-  //     "auth": userData?.auth as string,
-  //     "collection_hash_id": collection_hash_id
-  //   });
-    
-  //   const uploader = createUploader({
-  //     destination: {
-  //       method: "POST",
-  //       url: url_2.toString(),
-  //       filesParamName: "file",
-  //     },
-  //     autoUpload: true,
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_START, (item) => {
-  //     console.log(`item ${item.id} started uploading`);
-  //     // setFinishedUploads(finishedUploads => finishedUploads+1);
-  //     // setCurrentUploadProgress(0);
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_PROGRESS, (item) => {
-  //     console.log(`item ${item.id} progress ${JSON.stringify(item)}`);
-  //     let uploading_files = uploadingFiles;
-  //     console.log("uploading_files", uploading_files);
-
-  //     setUploadingFiles(files => [{...files[0], progress: item.completed}, ...files.slice(1)]);
-  //   });
-
-  //   uploader.on(UPLOADER_EVENTS.ITEM_FINISH, (item) => {
-  //     console.log(`item ${item.id} response:`, item.uploadResponse);
-  //     const new_uploading_files = uploadingFiles.slice(1);
-  //     setUploadingFiles(new_uploading_files);
-  //     if (new_uploading_files.length === 0) {
-  //       onFinishedUploads(collection_hash_id);
-  //     }
-  //   });
-
-  //   const files = Array.from(pendingUploadFiles as FileList);
-
-  //   for (let i = 0; i < files.length; i++) {
-  //     uploader.add(files[i]);
-  //   }
-  //     setUploadingFiles(files.map((file) => {
-  //       return {
-  //         title: file.name,
-  //         progress: 0
-  //       }
-  //     }))
-  //   setPublishStarted(true);
-  // };
-
   const start_document_uploads = async (collection_hash_id : string) => {
     if (pendingUploadFiles === null) return;
 
@@ -249,95 +192,43 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
       }
     }));
 
+    const totalCount = pendingUploadFiles.length;
+
     for (let i = 0; i < pendingUploadFiles.length; i++) {
       const file = pendingUploadFiles[i];
       const formData = new FormData();
       formData.append("file", file);
-  
+      
       try {
         const response = await axios.post(url_2.toString(), formData, {
           onUploadProgress: (progressEvent) => {
             const progress = Math.round((progressEvent.loaded / (progressEvent.total || 1)) * 100);
             console.log(`File ${file.name} upload progress: ${progress}%`, progress);
             setUploadingFiles(files => [{...files[0], progress: progress}, ...files.slice(1)]);
-
+            // setUploadingFiles(files => [...files.slice(0, i), {...files[i], progress: progress}, ...files.slice(i+1)]);
           },
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-        
-        console.log(`File ${file.name} upload response:`, response.data);
 
         const response_data = response.data as {success: false} | {success : true, result: fetch_collection_document_type};
-        // setUploadingFiles(files => [{...files[0], progress: 100}, ...files.slice(1)]);
 
         if (response_data.success) {
+          setUploadingFiles(files => files.slice(1));
           setCollectionDocuments((docs) => [response_data.result,...docs]);
+          if (i === totalCount - 1) {
+            onFinishedUploads(collection_hash_id);
+          }
         }
+        setPendingUploadFiles((files) => files?.filter((_, j) => j !== 0) || null)
+        console.log("Pending Uploading Files", pendingUploadFiles.length);
 
-        setPendingUploadFiles((files) => files?.filter((_, i) => i !== 0) || null)
-
-  
-        const new_uploading_files = uploadingFiles.filter((_, i) => i !== 0);
-        setUploadingFiles(new_uploading_files);
-        if (new_uploading_files.length === 0) {
-          onFinishedUploads(collection_hash_id);
-        }
       } catch (error) {
         console.error(`Failed to upload file ${file.name}:`, error);
       }
     }
   };
-
-
-  // THIS FUNCTION IS CONFIRMED WORKING WITH NETWORK
-  // HOWEVER IT DOESN'T SUPPORT PROGRESS TRACKING
-
-  // const start_document_uploads = async (collection_hash_id : string) => {
-  //   const url_2 = craftUrl("/upload/", {
-  //     "auth": userData?.auth as string,
-  //     "collection_hash_id": collection_hash_id
-  //   });
-  
-  //   // fetch("/api/upload/", {method: "POST"});
-
-  //   const files = Array.from(pendingUploadFiles as FileList);
-  
-  //   setPublishStarted(true);
-  
-  //   for (let i = 0; i < files.length; i++) {
-  //     const file = files[i];
-  //     const formData = new FormData();
-  //     formData.set("file", file);
-      
-  //     try {
-  //       const response = await fetch(url_2.toString(), {
-  //         method: 'POST',
-  //         body: formData,
-  //         // headers: {
-  //         //   'Content-Type': 'multipart/form-data'
-  //         // }
-  //       });
-  
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
-  
-  //       const data = await response.json();
-  
-  //       console.log(`File ${file.name} upload response:`, data);
-  
-  //       const new_uploading_files = uploadingFiles.slice(1);
-  //       setUploadingFiles(new_uploading_files);
-  //       if (new_uploading_files.length === 0) {
-  //         onFinishedUploads(collection_hash_id);
-  //       }
-  //     } catch (error) {
-  //       console.error(`Failed to upload file ${file.name}:`, error);
-  //     }
-  //   }
-  // };
 
   const onFinishedUploads = (collection_hash_id : string) => {
     setPublishStarted(false);
@@ -426,6 +317,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
             )}
             <div className="h-72 w-full rounded-md border flex-grow">
               <ScrollArea className="p-4 pt-2 text-sm h-full">
+                <div className='w-[inherit]'>
                 {(pendingUploadFiles !== null && !publishStarted) && pendingUploadFiles.map((file, index) => (
                   <FileDisplayType
                     key={index}
@@ -471,6 +363,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                     }):undefined}
                   />
                 ))}
+                </div>
               </ScrollArea>
             </div>
             {(CollectionMode === "create" || CollectionMode === "edit") && (

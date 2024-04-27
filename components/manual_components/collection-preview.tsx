@@ -56,36 +56,24 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 
 	return (
 		<div className={`w-full flex flex-col`}>
-			<div className="h-7 rounded-full flex flex-row">
-				<div className="flex flex-1 flex-row">
-					<div className="flex flex-col justify-center h-full">
-						<Button className="w-5 h-5 rounded-full bg-indigo-600 items-center justify-center flex p-0"
-							onClick={() => {
-								if (props.onToggleSelected) { props.onToggleSelected(!selected); }
-								setSelected(selected => !selected);
-						}}>
-							<motion.div animate={selectionCircleSize} className="rounded-full bg-[#23232D]"/>
-						</Button>
-					</div>
-					<div className="w-full h-full flex flex-col justify-center pl-2">
-						<div className="w-[83%] flex flex-row justify-start">
-							<Link href={`/collection/edit/${props.collectionId}`}>
-								<Button variant={"link"} className="text-base text-left pt-0 pb-0 pl-0 pr-0" onClick={props.onPress}>
-									{title}
-								</Button>
-							</Link>
-						</div>
-					</div>
-				</div>
-				<div className="flex flex-col justify-center pl-1 pr-[3px]">
-					<div className="w-11">
-						<div className="flex flex-col items-end rounded-md">
-							<p className="bg-[#E8E3E3] text-[#1F1F28] text-xs text-center flex items-end rounded-full pt-0.5 pb-0.5 pl-1.5 pr-1.5 align-bottom">
-								{(documentCount <= 999)?documentCount.toString():"999+"}
-							</p>
-						</div>
-					</div>
-				</div>
+			<div className="h-7 flex flex-row w-full space-x-2">
+        <div className='w-5 h-5'> 
+        <Button className="w-5 h-5 rounded-full bg-indigo-600 items-center justify-center flex p-0"
+          onClick={() => {
+            if (props.onToggleSelected) { props.onToggleSelected(!selected); }
+            setSelected(selected => !selected);
+        }}>
+          <motion.div animate={selectionCircleSize} className="rounded-full bg-[#23232D]"/>
+        </Button>
+        </div>
+        <Link className='flex-grow whitespace-nowrap overflow-hidden text-ellipsis' href={`/collection/edit/${props.collectionId}`}>
+          <Button variant={"link"} className="text-base text-left pt-0 pb-0 pl-0 pr-0 w-full h-auto justify-start" onClick={props.onPress}>
+          <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
+          </Button>
+        </Link>
+        <p className="bg-[#E8E3E3] w-5 h-5 text-[#1F1F28] text-xs text-center flex items-end rounded-full pt-0.5 pb-0.5 pl-1.5 pr-1.5 align-bottom">
+          {(documentCount <= 999)?documentCount.toString():"999+"}
+        </p>
 			</div>
 		</div>
 	);

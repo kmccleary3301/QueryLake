@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/registry/default/ui/form"
 // import { toast } from "@/registry/default/ui/use-toast";
-import { toast } from "sonner"
+import { toast } from "sonner";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import CompactInput from "@/registry/default/ui/compact-input";

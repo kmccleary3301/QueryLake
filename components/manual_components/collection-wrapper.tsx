@@ -26,16 +26,8 @@ type CollectionWrapperProps = {
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const [opened, setOpened] = useState(false);
-	// const [selected, setSelected] = useState(false);
-	// const [viewScrollable, setViewScrollable] = useState(false);
 	const [selected, setSelected] = useState(false);
   const [mixedSelection, setMixedSelection] = useState(true);
-	// const {children, title} = props;
-	
-	// const selectionCircleSize = useRef(new Animated.Value(0)).current;
-	// const boxHeight = useRef(new Animated.Value(42));
-
-
 	const controlHeight = useAnimation();
 	const selectionCircleSize = useAnimation();
 
@@ -53,12 +45,6 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
   }, [opened, props.collections, controlHeight]);
 
   useEffect(() => {
-    // Animated.timing(selectionCircleSize, {
-    //   toValue: selected?11:0,
-    //   duration: 100,
-		// 	easing: Easing.elastic(1),
-    //   useNativeDriver: false,
-    // }).start();
 		selectionCircleSize.start({
 			width: selected?11:0,
 			height: selected?11:0,
@@ -74,46 +60,40 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 
 		return (
 			
-			<div className={"flex flex-col pr-[16px] pl-[12px] bg-secondary rounded-md"}>
-				<div className="flex flex-row h-11">
-					<div className="flex flex-col justify-center h-full">
-						<Button variant={"default"} className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center p-0"
-						onClick={() => {
-	            setMixedSelection(false);
-	            for (let i = 0; i < props.collections.length; i++) {
-	              props.setCollectionSelected(props.collections[i].hash_id, !selected);
-	            }
-							setSelected(selected => !selected);
-							// if (props.onToggleSelected) { props.onToggleSelected(!selected); }
-						}}
-						>
-							{/* {selected && ( */}
-								<motion.div animate={selectionCircleSize} className="rounded-full bg-gray-800"/>
-							{/* )} */}
-						</Button>
-					</div>
-					<div className="flex flex-col flex-grow justify-center pl-[9px] whitespace-nowrap text-ellipsis overflow-hidden h-full">
-						<span className="text-left">
-							{props.title}
-						</span>
-					</div>
-					<div className="flex flex-col justify-center p-0 h-full">
-						<Button className="h-7 w-7 p-0 hover:bg-primary/20 active:bg-primary/10" variant={"ghost"}
-							onClick={() => {
-								if (props.onToggleCollapse) { props.onToggleCollapse(!opened); }
-								setOpened(opened => !opened);
-							}}
-						>
-							<Icon.ChevronDown
-								style={{
-									transform: opened?"rotate(0deg)":"rotate(90deg)"
-								}}
-							/>
-						</Button>
-					</div>
-				</div>
+			<div className={"flex flex-col px-3 bg-secondary rounded-md w-full"}>
+        <div className="h-11 flex flex-row w-full space-x-2">
+          <div className='w-5 h-auto flex flex-col justify-center'> 
+          <Button variant={"default"} className="w-5 h-5 rounded-full bg-indigo-600 flex items-center justify-center p-0" onClick={() => {
+            setMixedSelection(false);
+            for (let i = 0; i < props.collections.length; i++) {
+              props.setCollectionSelected(props.collections[i].hash_id, !selected);
+            }
+            setSelected(selected => !selected);
+          }}>
+            <motion.div animate={selectionCircleSize} className="rounded-full bg-gray-800"/>
+          </Button>
+          </div>
+          <div className="flex-grow flex flex-col justify-center h-auto">
+
+            <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">{props.title}</p>
+          </div>
+          <div className='h-auto flex flex-col justify-center'>
+            <Button className="h-7 w-7 p-0 rounded-full hover:bg-primary/20 active:bg-primary/10" variant={"ghost"}
+              onClick={() => {
+                if (props.onToggleCollapse) { props.onToggleCollapse(!opened); }
+                setOpened(opened => !opened);
+              }}
+            >
+              <Icon.ChevronDown
+                style={{
+                  transform: opened?"rotate(0deg)":"rotate(90deg)"
+                }}
+              />
+            </Button>
+          </div>
+        </div>
 				<motion.div animate={controlHeight} className="text-sm antialiased w-full overflow-hidden">
-					<div className="overflow-hidden space-y-3 pb-2 pt-2">
+					<div className="overflow-hidden space-y-3 pb-2 pt-2 pr-1">
 						{props.collections.map((value : collectionType, index: number) => (
 							<CollectionPreview
 								key={index}

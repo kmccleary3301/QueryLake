@@ -21,9 +21,11 @@ import {
 } from "@/registry/default/ui/dropdown-menu"
 import { ToggleGroup, ToggleGroupItem } from "@/registry/default/ui/toggle-group"
 import { INPUT_COMPONENT_FIELDS, configEntryFieldType, inputComponentConfig, inputComponents, inputEvent, inputMapping } from "@/types/toolchain-interface"
-import { Plus, Trash2 } from "lucide-react"
-import { useEffect, useRef, useState, Fragment, useCallback, ChangeEvent } from "react"
+import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
+import { useEffect, useState, Fragment, useCallback, ChangeEvent } from "react"
 import CompactInput from "@/registry/default/ui/compact-input"
+import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
+import { Separator } from "@/registry/default/ui/separator";
 
 export default function InputComponentSheet({
 	value,
@@ -51,7 +53,6 @@ export default function InputComponentSheet({
 			]
 		});
 	}, [actingValue]);
-
 
 	useEffect(() => {setComponentConfig(INPUT_COMPONENT_FIELDS[type])}, [type]);
 	useEffect(() => {resetActingValue()}, [value]);
@@ -89,7 +90,14 @@ export default function InputComponentSheet({
 							<DropdownMenuContent align="start">
 								{componentConfig.hooks.map((hook, index) => (
 									<DropdownMenuItem key={index} onClick={() => {
-										setHook({hook: hook, target_event: "", target_route: "", store: false}, actingValue.hooks.length);
+										setHook({
+                      hook: hook, 
+                      target_event: "", 
+                      fire_index: Math.max(...actingValue.hooks.map((e) => e.fire_index), 0) + 1,
+                      target_route: "", 
+                      store: false
+                    }, 
+                    actingValue.hooks.length);
 									}}>{hook}</DropdownMenuItem>
 								))}
 							</DropdownMenuContent>
@@ -97,12 +105,32 @@ export default function InputComponentSheet({
 					</div>
 				</div>
 				<ScrollArea className="flex-grow rounded-md border-[2px] border-secondary">
-					<div className="p-2 flex flex-col space-y-2">
+					<div className="p-2 pr-4 flex flex-col space-y-4">
 						{actingValue.hooks.map((hookLocal, index) => (
 							<Fragment key={index}>
-							<div className="flex flex-row justify-between h-10">
-								<p className="pb-1 pl-1 h-auto flex flex-col justify-center pt-2">{hookLocal.hook}</p>
-								<div className="flex flex-row space-x-1">
+							<div className="flex flex-wrap justify-between space-y-2">
+								<p id="Hook Title" className="pb-1 pl-1 h-auto flex flex-col justify-center pt-2">{hookLocal.hook}</p>
+
+                <HoverTextDiv hint="Order of hook firing. Can be used to fire inputs together." className="flex flex-row gap-2">
+                  <p className="flex flex-col justify-center w-8 text-right"><strong>{hookLocal.fire_index}</strong></p>
+                  <div className="flex flex-col justify-center">
+                    <Button className="p-0 m-0 h-4 w-6" variant="ghost" onClick={() => {
+                      const newIndex = (hookLocal.fire_index) % (actingValue.hooks.length);
+                      setHook({...hookLocal, fire_index: newIndex + 1}, index);
+                    }}>
+                      <ChevronUp className="w-4 h-4 text-primary"/>
+                    </Button>
+                    <Button className="p-0 m-0 h-4 w-6" variant="ghost" onClick={() => {
+                      const newIndex = (hookLocal.fire_index - 2 + actingValue.hooks.length) % (actingValue.hooks.length); 
+                      setHook({...hookLocal, fire_index: newIndex + 1}, index);
+                    }}>
+                      <ChevronDown className="w-4 h-4 text-primary"/>
+                    </Button>
+                  </div>
+                </HoverTextDiv>
+
+								<div id="Store and Delete" className="flex flex-row space-x-1">
+
 									<ToggleGroup
 										type="single"
 										onValueChange={(value : "" | "store") => {
@@ -128,9 +156,8 @@ export default function InputComponentSheet({
 										<Trash2 className="w-4 h-4 text-primary" />
 									</Button>
 								</div>
-							</div>
-							<div className="flex flex-row space-x-2">
 								<Input
+                  className="flex-shrink min-w-1/2"
 									value={hookLocal.target_event} 
 									onChange={(event) => {
 										setHook({...hookLocal, target_event: event.target.value}, index);
@@ -154,6 +181,9 @@ export default function InputComponentSheet({
 									spellCheck={false}
 								/>
 							</div>
+							{/* <div className="flex flex-row space-x-2"> */}
+							{/* </div> */}
+              {(index !== actingValue.hooks.length - 1) && <Separator/>}
 							</Fragment>
 						))}
 					</div>

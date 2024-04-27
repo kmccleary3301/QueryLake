@@ -11,6 +11,7 @@ import {
 } from "@/types/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 import { ToolChain } from "@/types/toolchains";
+import { toast } from "sonner";
 
 type getUserMembershipArgs = {
 	auth : string, 
@@ -60,7 +61,7 @@ export function getUserCollections(args: getUserCollectionsArgs) {
       // console.log("Data:", data);
       const retrieved = data.result.collections;
       if (data["success"] == false) {
-        console.error("Collection error:", data["note"]);
+        console.error("Collection error:", data["error"]);
         return;
       }
       try {
