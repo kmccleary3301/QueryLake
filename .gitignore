@@ -30,9 +30,5 @@ documentation/.obsidian
 documentation/Game Content
 documentation/Overview
 
-/public
-cache
+/public/cache/documentation
 /.next
-
-
-/public/cache
