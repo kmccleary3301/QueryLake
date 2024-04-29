@@ -1,9 +1,9 @@
 
 
-export type displayComponents = "chat" | "markdown" | "text" | "graph";
+export type displayComponents = "chat" | "markdown" | "text" | "graph" | "running_event_display";
 export type inputComponents = "file_upload" | "chat_input";
 
-export const DISPLAY_COMPONENTS : displayComponents[] = ["chat", "markdown", "text", "graph"];
+export const DISPLAY_COMPONENTS : displayComponents[] = ["chat", "markdown", "text", "graph", "running_event_display"];
 export const INPUT_COMPONENTS : inputComponents[] = ["file_upload", "chat_input"];
 
 

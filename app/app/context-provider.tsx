@@ -20,6 +20,9 @@ const ToolchainContext = createContext<{
   toolchainWebsocket: MutableRefObject<ToolchainSession | undefined> | undefined;
   sessionId: MutableRefObject<string> | undefined;
   callEvent: (auth: string, event: string, event_params: {[key : string]: substituteAny}) => void;
+  storedEventArguments: MutableRefObject<Map<string, {[key : string]: substituteAny}>> | undefined;
+  currentEvent: string | undefined;
+  setCurrentEvent: Dispatch<SetStateAction<string | undefined>>;
 }>({
   toolchainStateCounter: 0,
   setToolchainStateCounter: () => {},
@@ -28,6 +31,9 @@ const ToolchainContext = createContext<{
   toolchainWebsocket: undefined,
   sessionId: undefined,
   callEvent: () => {},
+  storedEventArguments: undefined,
+  currentEvent: undefined,
+  setCurrentEvent: () => {},
 });
 
 export const ToolchainContextProvider = ({
@@ -37,6 +43,8 @@ export const ToolchainContextProvider = ({
 	const [toolchain_state, set_toolchain_state] = useState<toolchainStateType>({});
   const toolchain_websocket = useRef<ToolchainSession | undefined>();
   const session_id = useRef<string>("");
+  const stored_event_arguments = useRef<Map<string, {[key : string]: substituteAny}>>(new Map());
+  const [current_event, set_current_event] = useState<string | undefined>();
 
   const call_event = (
     auth: string,
@@ -66,7 +74,10 @@ export const ToolchainContextProvider = ({
       setToolchainState: set_toolchain_state,
       toolchainWebsocket: toolchain_websocket,
       sessionId: session_id,
-      callEvent: call_event
+      callEvent: call_event,
+      storedEventArguments: stored_event_arguments,
+      currentEvent: current_event,
+      setCurrentEvent: set_current_event,
 		}}>
 			{children}
 		</ToolchainContext.Provider>

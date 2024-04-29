@@ -109,7 +109,6 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
 
-
   const {
     userData,
     refreshCollectionGroups,
@@ -136,7 +135,6 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   }, [CollectionMode])
 
   const onPublish = () => {
-
     const create_args = {
       auth: userData?.auth as string,
       title: collectionTitle,

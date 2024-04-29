@@ -21,6 +21,7 @@ import { Send, Trash } from "lucide-react";
 import { ChangeEvent, ChangeEventHandler, use, useEffect, useRef, useState } from "react";
 import { modifyUserExternalProviders } from "@/hooks/querylakeAPI";
 import { Input } from "@/registry/default/ui/input";
+import { toast } from "sonner";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
@@ -118,6 +119,7 @@ export default function SettingsPage() {
                         auth: userData?.auth as string,
                         update: {[`${currentProvider}`]: currentKeyInput},
                         onFinish: (success : boolean) => {
+                          toast(success?"Key successfully saved":"Key could not be saved");
                           if (success) {
                             setKeyAvailable(true);
                             if (userData) {
@@ -141,6 +143,7 @@ export default function SettingsPage() {
                       auth: userData?.auth as string,
                       delete: [currentProvider],
                       onFinish: (success : boolean) => {
+                        toast(success?"Key successfully deleted":"Key could not be deleted");
                         console.log("Delete result:", success);
                         if (success) {
                           setKeyAvailable(false);

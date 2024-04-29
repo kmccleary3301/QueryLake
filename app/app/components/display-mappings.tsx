@@ -10,6 +10,7 @@ import Chat from "@/components/toolchain_interface/chat";
 import Markdown from "@/components/toolchain_interface/markdown";
 import Text from "@/components/toolchain_interface/text";
 import { useToolchainContextAction } from "../context-provider";
+import CurrentEventDisplay from "@/components/toolchain_interface/current-event-display";
 export function ToolchainComponentMapper({
 	info
 }:{
@@ -39,6 +40,11 @@ export function ToolchainComponentMapper({
 					<h2>{"Graph (Not Implemented)"}</h2>
 				</div>
 			);
+    case "running_event_display":
+      return (
+        <CurrentEventDisplay configuration={info}/>
+      )
+
 
 
 		// Input Components

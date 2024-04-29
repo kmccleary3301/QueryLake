@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useContextAction } from "@/app/context-provider";
 import { Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HoverTextDiv } from '@/registry/default/ui/hover-text-div';
 
 
 function SessionEntry({
@@ -28,9 +29,9 @@ function SessionEntry({
           "bg-secondary text-secondary-foreground hover:bg-accent active:bg-secondary/60",
           'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
-          <div className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
+          <HoverTextDiv hint={session.title} className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
             <p className='relative px-2 overflow-hidden text-sm whitespace-nowrap'>{session.title}</p>
-          </div>
+          </HoverTextDiv>
           <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
             <div className='h-auto flex flex-row pointer-events-none'>
               <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
@@ -44,9 +45,11 @@ function SessionEntry({
           "hover:bg-accent active:bg-accent/70 hover:text-accent-foreground hover:text-accent-foreground/",
           'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
-          <Link href={`/app/session?s=${session.id}`} className='w-full flex flex-col justify-center rounded-[inherit]'>
-            <p className='relative px-2 overflow-hidden overflow-ellipsis text-sm whitespace-nowrap'>{session.title}</p>
-          </Link>
+          <HoverTextDiv hint={session.title} className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
+            <Link href={`/app/session?s=${session.id}`} className='rounded-[inherit] w-full'>
+              <p className='relative px-2 overflow-hidden overflow-ellipsis text-sm whitespace-nowrap'>{session.title}</p>
+            </Link>
+          </HoverTextDiv>
           <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
             <div className='h-auto flex flex-row pointer-events-none'>
               <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>

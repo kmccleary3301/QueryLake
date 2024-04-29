@@ -25,6 +25,7 @@ import { ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
 import { ChatSkeleton } from "@/components/toolchain_interface/chat";
 import { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
 import { TextSkeleton } from "@/components/toolchain_interface/text";
+import { CurrentEventDisplaySkeleton } from "@/components/toolchain_interface/current-event-display";
 
 export function DisplayComponentSkeletonMapper({
 	info,
@@ -53,7 +54,10 @@ export function DisplayComponentSkeletonMapper({
 					<h2>{"Graph (Not Implemented)"}</h2>
 				</div>
 			);
-
+    case "running_event_display":
+      return (
+        <CurrentEventDisplaySkeleton configuration={info}/>
+      )
 
 		// Input Components
 		case "chat_input":

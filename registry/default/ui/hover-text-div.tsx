@@ -1,11 +1,3 @@
-import { CalendarDays } from "lucide-react"
-
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "./avatar"
-import { Button } from "./button"
 import {
   HoverCard,
   HoverCardContent,
@@ -28,7 +20,7 @@ export function HoverTextDiv({
           {children}
         </div>
       </HoverCardTrigger>
-      <HoverCardContent>
+      <HoverCardContent className="w-auto max-w-[200px]">
         <p className="text-sm">
           {hint}
         </p>

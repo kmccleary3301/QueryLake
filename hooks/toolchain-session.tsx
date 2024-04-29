@@ -33,10 +33,12 @@ export default class ToolchainSession {
   private onSend: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
 	private onFirstCallEnd: () => void;
+  private onCurrentEventChange: (event: string | undefined) => void;
 	public  socket: WebSocket; // Add socket as a type
 	private stream_mappings: Map<string, (string | number)[][]>;
   private message_queue: Object[];
   public currently_running: boolean;
+  public current_event: undefined | string;
 
 	// private stateChangeCounter: number;
   
@@ -46,6 +48,7 @@ export default class ToolchainSession {
                   onSend = undefined,
 								  onOpen = undefined, 
                   onFirstCallEnd = undefined,
+                  onCurrentEventChange = undefined,
                 }:{ 
                   onStateChange?: stateSet, 
 								  onCallEnd?: sessionCallback,
@@ -53,6 +56,7 @@ export default class ToolchainSession {
                   onSend?: (message: object) => void,
 								  onOpen?: (session : ToolchainSession) => void,
                   onFirstCallEnd?: () => void,
+                  onCurrentEventChange?: (event: string | undefined) => void,
                 } ) {
 		
 		this.onStateChange = onStateChange || (() => {});
@@ -61,8 +65,10 @@ export default class ToolchainSession {
     this.onSend = onSend || (() => {});
 		this.onOpen = onOpen || (() => {});
     this.onFirstCallEnd = onFirstCallEnd || (() => {});
+    this.onCurrentEventChange = onCurrentEventChange || (() => {});
     this.message_queue = [];
     this.currently_running = false;
+    this.current_event = undefined;
 		
 		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
 		
@@ -103,6 +109,11 @@ export default class ToolchainSession {
 			this.onStateChange(state);
 		}
 
+    if (Object.prototype.hasOwnProperty.call(data, "type") && data.type === "node_execution_start") {
+      this.current_event = data.node_id as string;
+      this.onCurrentEventChange(this.current_event);
+    }
+
 		if (Object.prototype.hasOwnProperty.call(data, "ACTION") && get_value(data, "ACTION") === "END_WS_CALL") {
 			// Reset this.stream_mappings to an empty map
 			this.stream_mappings = new Map<string, (string | number)[][]>();
@@ -112,6 +123,8 @@ export default class ToolchainSession {
         this.socket.send(JSON.stringify(this.message_queue[0]));
       } else {
         this.currently_running = false;
+        this.current_event = undefined;
+        this.onCurrentEventChange(this.current_event);
         this.onCallEnd(this);
       }
 		} else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
@@ -273,7 +286,8 @@ export type handleToolchainMessageReturnType = {
 export function get_value(data: compositionType, 
                           index: number | string): substituteAny {
 	if (Array.isArray(data)) {
-		return data[index as number % data.length];
+    const indexWrapped = ((index as number >= 0)?index:(data.length + (index as number))) as number;
+		return data[indexWrapped];
 	} else if (data instanceof Map) {
 		if (typeof index !== "string") {
 			throw new Error("Index over a map must be a string");
@@ -400,11 +414,12 @@ export function retrieveValueFromObj(
 			let currentDict : compositionType = input;
 			for (const entry of directory) {
 					currentDict = get_value(currentDict, entry) as compositionType;
-			}
+			} 
 			return currentDict;
 		}
 	} catch (error) {
-		throw new Error("Key not found");
+		// throw new Error("Key not found");
+    return undefined;
 	}
 }
 

@@ -15,6 +15,7 @@ import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainSt
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 import { toolchain_session } from "@/types/globalTypes";
+import { toast } from "sonner";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
   const [isPending, startTransition] = useTransition();
@@ -34,7 +35,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     setToolchainState,
     toolchainWebsocket,
     sessionId,
-    callEvent
+    callEvent,
+    setCurrentEvent,
   } = useToolchainContextAction();
 
   const {
@@ -130,6 +132,9 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
+        if (message.error) {
+          toast(message.error);
+        }
       },
       onSend: (message : {command?: string}) => {
         if (message.command && message.command === "toolchain/event" && appMode) {
@@ -164,7 +169,8 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           }
           mounting.current = false;
         }
-      }
+      },
+      onCurrentEventChange: (event: string | undefined) => { setCurrentEvent(event); }
     });
   };
 
