@@ -26,9 +26,11 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   
   const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
   const appMode = useRef<app_mode_type>(app_mode_immediate);
+  const [appModeState, setAppModeState] = useState(app_mode_immediate);
   const mounting = useRef(true);
   const toolchainStateRef = useRef<toolchainStateType>({});
   const [firstEventRan, setFirstEventRan] = useState<boolean[]>([false, false]);
+  const [toolchainSelectedBySession, setToolchainSelectedBySession] = useState<string | undefined>(undefined);
 
   const {
     toolchainState,
@@ -41,6 +43,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
 
   const {
     userData,
+    setSelectedToolchain,
     selectedToolchainFull,
     toolchainSessions,
     setToolchainSessions,
@@ -59,6 +62,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       id: sessionId?.current as string,
       title: title || "Untitled Session"
     };
+
     setToolchainSessions((prevSessions) => {
       // Create a new Map from the previous one
       const newMap = new Map(prevSessions);
@@ -104,6 +108,9 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       startTransition(() => {
         window.history.pushState(null, '', `/app/session?s=${sessionId?.current}`);
       });
+
+      setToolchainSelectedBySession(selectedToolchainFull?.id);
+
       setFirstEventRan([false, false]);
       if (selectedToolchainFull?.first_event_follow_up)
         callEvent(userData?.auth as string, selectedToolchainFull.first_event_follow_up, {})
@@ -132,6 +139,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
+        if (message.toolchain_id !== undefined) {
+          console.log("Toolchain ID from loaded Toolchain:", [message.toolchain_id]);
+          setSelectedToolchain(message.toolchain_id);
+          // setToolchainSelectedBySession(message.toolchain_id);
+        }
+
         if (message.error) {
           toast(message.error);
         }
@@ -180,7 +193,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     console.log("URL Change", pathname, search_params?.get("s"));
     const url_mode = pathname?.replace(/^\/app\//, "").split("/")[0] as string;
     const new_mode = (["create", "session", "view"].indexOf(url_mode) > -1) ? url_mode as app_mode_type : undefined;
-    
+    setAppModeState(new_mode);
+
+    if (new_mode === "create") {
+      setToolchainSelectedBySession(selectedToolchainFull.id);
+    }
+
     if (new_mode === "session" && (sessionId !== undefined) && search_params?.get("s") !== sessionId?.current) {
       console.log("Session ID Change", search_params?.get("s"), sessionId?.current);
       sessionId.current = search_params?.get("s") as string;
@@ -202,7 +220,10 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
 
   return (
     <div className="h-[100vh] w-full pr-0 pl-0">
-      {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) && (
+      {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) &&
+      //  ((toolchainSelectedBySession === selectedToolchainFull.id) || 
+      //   (appModeState === "create")) && 
+        (
         <DivisibleSection
           section={selectedToolchainFull.display_configuration}
         />

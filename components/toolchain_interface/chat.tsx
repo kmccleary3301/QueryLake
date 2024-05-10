@@ -138,27 +138,29 @@ export default function Chat({
                         <p className="text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis">{source.document_name}</p>
                       </div>
                     </HoverCardTrigger>
-                    <HoverCardContent className="max-w-[300px] flex flex-col space-y-2 px-5">
+                    <HoverCardContent className="px-5 max-w-[320px]">
                       <h1 className="text-base">{source.document_name}</h1>
                       {source.rerank_score && (
-                        <p className="text-sm pb-2">Relevance Score: {source.rerank_score.toPrecision(2)}</p>
+                        <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
                       )}
                       {(source.website_url) ? (
-                        <Link href={source.website_url}>
-                          <Button variant={"ghost"} className="p-2 m-0 max-w-full h-auto">
-                            <div>
-                              <p className="text-xs text-primary/50 whitespace-normal text-left">{source.text}</p>
+                        <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
+                          <Button variant={"ghost"} className="p-2 m-0 h-auto">
+                            <div className="max-w-[260px]">
+                              <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{source.text}</p>
                             </div>
                           </Button>
                         </Link>
                       ):(
-                        <Button variant={"ghost"} className="p-2 m-0 max-w-full h-auto" onClick={()=>{
+                        <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
                           openDocument({
                             auth: userData?.auth as string,
                             document_id: source?.document_id as string,
                           })
                         }}>
-                          <p className="text-xs text-primary/50 whitespace-normal text-left">{source.text}</p>
+                          <div className="max-w-[260px]">
+                            <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{source.text}</p>
+                          </div>
                         </Button>
                       )}
                     </HoverCardContent>

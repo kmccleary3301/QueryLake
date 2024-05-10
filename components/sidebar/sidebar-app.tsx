@@ -17,16 +17,11 @@ import SidebarChatHistory from './sidebar-history';
 import Link from 'next/link';
 import { useContextAction } from "@/app/context-provider";
 import { deleteCookie } from '@/hooks/cookies';
-import { useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';
-// import { usePathname } from "next/navigation";
 import SidebarTemplate from './sidebar-template';
 
 export default function AppSidebar() {
-  // const pathname = usePathname();
-
-	
-	
+  
   const { 
     userData, 
     setUserData, 
@@ -44,16 +39,8 @@ export default function AppSidebar() {
   // Get all user data for sidebar. This includes chat history and collections
   useEffect(() => {
 		if (userData === undefined || !authReviewed || !loginValid) return;
-
-    // console.log("userdata:", userData);
-    // let chat_history_grabbed = false;
-    // let collections_grabbed = false;
-    // if (toolchainSessions.size == 0) {
-    //   chat_history_grabbed = true;
-    // }
     if (collectionGroups.length == 0) {
       refreshCollectionGroups();
-      // collections_grabbed = true;
     }
   }, [
     userData,
@@ -74,17 +61,6 @@ export default function AppSidebar() {
 	const setCollectionSelected = (collection_hash_id : string, value : boolean) => {
 		setSelectedCollections(selectedCollections.set(collection_hash_id, value));
   };
-
-
-  const controlsSidebarWidth = useAnimation();
-
-
-  // const [sidebarIsAvailable, setSidebarIsAvailable] = useState<boolean>(false);
-  const [sidebarOpened, setSidebarOpened] = useState<boolean>(false);
-  const [sidebarToggleVisible, setSidebarToggleVisible] = useState<boolean>(true);
-  // const [previousSidebarOpened, setPreviousSidebarOpened] = useState<boolean>(false);
-  
-  
 
 	return (
     <SidebarTemplate width={"260px"} className='pl-4 pr-4'>

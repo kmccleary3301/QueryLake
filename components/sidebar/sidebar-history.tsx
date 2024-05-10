@@ -29,9 +29,9 @@ function SessionEntry({
           "bg-secondary text-secondary-foreground hover:bg-accent active:bg-secondary/60",
           'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
-          <HoverTextDiv hint={session.title} className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
+          <div className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
             <p className='relative px-2 overflow-hidden text-sm whitespace-nowrap'>{session.title}</p>
-          </HoverTextDiv>
+          </div>
           <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
             <div className='h-auto flex flex-row pointer-events-none'>
               <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
@@ -151,7 +151,7 @@ export default function SidebarChatHistory({
           <div key={chat_history_index} className='space-y-8'>
             {(chat_history_window.entries.length > 0) && (
               <div className='space-y-1 w-[220px]'>
-                <p className="w-full text-left text-sm text-primary/80">
+                <p className="w-full text-left text-sm text-primary/50">
                   {chat_history_window.title}
                 </p>
                 {chat_history_window.entries.map((value : toolchain_session, index : number) => (

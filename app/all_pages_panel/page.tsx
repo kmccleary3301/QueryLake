@@ -66,6 +66,16 @@ const buttonProps : {header : string, content : string, link : string}[] = [
     header: "Home",
     content: "The home page",
     link: "/home"
+  },
+  {
+    header: "Test",
+    content: "Test components",
+    link: "/test"
+  },
+  {
+    header: "Test V2",
+    content: "Test more components",
+    link: "/test/v2"
   }
 ]
 

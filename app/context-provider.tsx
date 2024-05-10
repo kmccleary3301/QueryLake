@@ -45,8 +45,8 @@ const Context = createContext<{
 	activeToolchainSession : string | undefined,
 	setActiveToolchainSession : setStateOrCallback<string | undefined>,
 
-	selectedToolchain : toolchain_type | undefined,
-	setSelectedToolchain : setStateOrCallback<toolchain_type>,
+	selectedToolchain : string | undefined,
+	setSelectedToolchain : setStateOrCallback<string | undefined>,
 
   selectedToolchainFull : ToolChain | undefined,
 	setSelectedToolchainFull : setStateOrCallback<ToolChain>,
@@ -123,7 +123,7 @@ export const ContextProvider = ({
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
 	const [active_toolchain_session, set_active_toolchain_session] = useState<string | undefined>(undefined);
-	const [selected_toolchain, set_selected_toolchain] = useState<toolchain_type | undefined>(undefined);
+	const [selected_toolchain, set_selected_toolchain] = useState<string | undefined>(undefined);
 
   const [selected_toolchain_full, set_selected_toolchain_full] = useState<ToolChain | undefined>(undefined);
 
@@ -215,6 +215,7 @@ export const ContextProvider = ({
 
   const setFullToolchain = useCallback((toolchain_id : string) => {
     if (!auth_reviewed) return;
+    console.log("toolchain_id:", toolchain_id);
     fetchToolchainConfig({
       auth: user_data?.auth as string,
       toolchain_id: toolchain_id as string,
@@ -225,12 +226,12 @@ export const ContextProvider = ({
 
   useEffect(() => {
     if (selected_toolchain === undefined) return;
-    setFullToolchain(selected_toolchain.id as string);
+    setFullToolchain(selected_toolchain);
   }, [selected_toolchain, user_data?.auth, auth_reviewed]);
   
   useEffect(() => {
     if (user_data === undefined || !auth_reviewed) return;
-    set_selected_toolchain(user_data.default_toolchain);
+    set_selected_toolchain(user_data.default_toolchain.id);
   }, [user_data?.auth, auth_reviewed]);
 	
 	return (
