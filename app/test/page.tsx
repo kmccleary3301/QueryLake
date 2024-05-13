@@ -228,7 +228,7 @@ export default function TestPage() {
 
         <MarkdownRenderer input={markdownText} finished={false}/>
       </div>
-      <div className="w-full h-[20px] bg-indigo-500 rounded-md opacity-gradient-to-r from-100 from-80% ..."/>
+      <div className="w-full h-[20px] rounded-md bg-gradient-to-l from-indigo-500 from-80% ..."/>
     </div>
   );
 }

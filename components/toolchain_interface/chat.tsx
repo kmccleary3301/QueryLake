@@ -76,8 +76,6 @@ export default function Chat({
 
 
 	useEffect(() => {
-    // console.log("DISPLAY ROUTE:", configuration.display_route);
-    console.log("Toolchain State:", toolchainState);
 		if (toolchainWebsocket?.current === undefined) return;
     const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as chatEntry | chatEntry[] || [];
     // console.log("Chat newValue", JSON.parse(JSON.stringify(newValue)));

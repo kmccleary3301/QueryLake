@@ -26,23 +26,34 @@ function SessionEntry({
     <>
       {selected ? (
         <div className={cn(
-          "bg-secondary text-secondary-foreground hover:bg-accent active:bg-secondary/60",
+          "relative bg-secondary text-secondary-foreground hover:bg-accent active:bg-secondary/60",
           'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
           <div className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
             <p className='relative px-2 overflow-hidden text-sm whitespace-nowrap'>{session.title}</p>
           </div>
-          <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+          {/* <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
             <div className='h-auto flex flex-row pointer-events-none'>
               <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
                 <Trash className='w-3.5 h-3.5 text-primary'/>
               </Button>
             </div>
+          </div> */}
+          <Link href={`/app/session?s=${session.id}`} className="absolute w-[40px] h-8 rounded-r-[inherit] bg-gradient-to-l from-accent to-accent/0"/>
+          <div className='h-8 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+            <div className='h-auto flex flex-row rounded-r-[inherit]'>
+              <Link href={`/app/session?s=${session.id}`} className="w-[40px] h-auto rounded-md bg-gradient-to-l from-accent to-accent/0"/>
+              <div className="bg-accent rounded-r-[inherit] display-none">
+              <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
+                <Trash className='w-3.5 h-3.5 text-primary'/>
+              </Button>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
         <div className={cn(
-          "hover:bg-accent active:bg-accent/70 hover:text-accent-foreground hover:text-accent-foreground/",
+          "relative hover:bg-accent active:bg-accent/70 hover:text-accent-foreground hover:text-accent-foreground/",
           'p-0 w-full flex flex-row-reverse justify-between h-8 rounded-lg'
         )}>
           <HoverTextDiv hint={session.title} className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
@@ -50,11 +61,15 @@ function SessionEntry({
               <p className='relative px-2 overflow-hidden overflow-ellipsis text-sm whitespace-nowrap'>{session.title}</p>
             </Link>
           </HoverTextDiv>
-          <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
-            <div className='h-auto flex flex-row pointer-events-none'>
+          {/* <div className="h-8 absolute w-[50px] bg-indigo-500"/> */}
+          <div className='h-8 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+            <div className='h-auto flex flex-row rounded-r-[inherit]'>
+              <Link href={`/app/session?s=${session.id}`} className="w-[40px] h-auto rounded-md bg-gradient-to-l from-accent to-accent/0"/>
+              <div className="bg-accent rounded-r-[inherit] display-none">
               <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
                 <Trash className='w-3.5 h-3.5 text-primary'/>
               </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -109,7 +124,7 @@ export default function SidebarChatHistory({
       timeWindows[i].entries.sort((a : toolchain_session, b : toolchain_session) => (b.time - a.time));
     }
 
-    console.log("Time Windows:", timeWindows);
+    // console.log("Time Windows:", timeWindows);
 
     setInternalToolchainSessions(timeWindows);
   }, [toolchainSessions])
@@ -133,7 +148,7 @@ export default function SidebarChatHistory({
   
   return (
     <div className='pb-0 overflow-hidden'>
-      <div className='pb-2'>
+      <div className='pb-0'>
         <Link href="/app/create">
           <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center">
               <div style={{paddingRight: 5}}>
@@ -148,7 +163,7 @@ export default function SidebarChatHistory({
       <ScrollArea className={cn("pb-0 -mr-4", scrollClassName)}>
         <div className='space-y-6 pr-4'>
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
-          <div key={chat_history_index} className='space-y-8'>
+          <div key={chat_history_index}>
             {(chat_history_window.entries.length > 0) && (
               <div className='space-y-1 w-[220px]'>
                 <p className="w-full text-left text-sm text-primary/50">

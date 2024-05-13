@@ -27,7 +27,6 @@ function unescape_text(text : string) {
 
 function parseText(text : string) {
 	text = escape_text(text);
-  console.log("ESCAPE TEXT:", text);
 
 	const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\))/;
   let match : RegExpMatchArray | null = text.match(all_md_patterns);

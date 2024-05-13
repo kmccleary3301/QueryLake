@@ -1,55 +1,30 @@
 "use client";
-import { FC, CSSProperties } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from 'reactflow';
-import SonnerDemo from '@/registry/default/example/sonner-demo';
-import PopoverDemo from '@/registry/default/example/popover-demo';
+import React, { memo } from 'react';
+import { Handle, Position } from 'reactflow';
 
-
-const sourceHandleStyleA: CSSProperties = { top: 50 };
-const sourceHandleStyleB: CSSProperties = {
-  bottom: 50,
-  top: 'auto',
-};
-
-const CustomNode: FC<NodeProps> = ({ data, xPos, yPos }) => {
+function CustomNode({ data }:{
+  data:{
+    emoji: string,
+    name: string,
+    job: string
+  }
+}) {
   return (
-    <>
-      <NodeResizer />
-      <Handle type="target" position={Position.Left} />
-      <div>
-        <div>
-          Label: <strong>{data.label}</strong>
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400 text-black">
+      <div className="flex">
+        <div className="rounded-full w-12 h-12 flex justify-center items-center bg-gray-100">
+          {data.emoji}
         </div>
-        <div>
-          Position:{' '}
-          <strong>
-            {xPos.toFixed(2)},{yPos.toFixed(2)}
-          </strong>
+        <div className="ml-2">
+          <div className="text-lg font-bold">{data.name}</div>
+          <div className="text-gray-500">{data.job}</div>
         </div>
-      </div>
-      <div style={{
-        width: 100,
-        height: 100,
-        backgroundColor: 'red',
-      }}>
-        <SonnerDemo />
-        <PopoverDemo />
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="a"
-        style={sourceHandleStyleA}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="b"
-        style={sourceHandleStyleB}
-      />
-    </>
+      <Handle type="target" position={Position.Left} className="w-2 h-2 !bg-teal-500" />
+      <Handle type="source" position={Position.Right} className="w-2 h-2 !bg-teal-500" />
+    </div>
   );
-};
+}
 
-export default CustomNode;
+export default memo(CustomNode);

@@ -53,7 +53,7 @@ export default function ChatInput({
     console.log("ChatInput handleSubmission", text, files, collections, Array.from(selectedCollections.entries()));
     
     const hasOnUploadHook = configuration.hooks.some(hook => hook.hook === 'on_upload');
-    let file_upload_hashes : string[] = [];
+    let file_upload_hashes : {type: "<<||TOOLCHAIN_SESSION_FILE||>>", document_hash_id: string, name: string}[] = [];
     if (hasOnUploadHook && files.length > 0) {
       const uploadFileResponses = await uploadFiles({
         files: files,
@@ -65,7 +65,12 @@ export default function ChatInput({
         }
       });
       file_upload_hashes = uploadFileResponses.map((response : any) => response.hash_id)
-                                              .filter((hash : string) => hash !== undefined);
+                                              .filter((hash : string) => hash !== undefined)
+                                              .map((hash : string) => ({
+                                                type: "<<||TOOLCHAIN_SESSION_FILE||>>",
+                                                document_hash_id: hash,
+                                                name: "hi" //TODO: Change this to the actual file name
+                                              }));
     }
 
     configuration.hooks.forEach(hook => {
