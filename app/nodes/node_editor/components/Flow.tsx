@@ -4,12 +4,13 @@ import ReactFlow, { useNodesState, useEdgesState, addEdge, MiniMap, Controls, Co
 
 import 'reactflow/dist/base.css';
 
-// import './tailwind-config.js';
-import CustomNode from './CustomNode';
+import CustomNode, { ToolchainNodeReactFlow } from './CustomNode';
 import ContextMenuWrapper from './context-menu-wrapper';
+import { useNodeContextAction } from "../../context-provider"
 
 const nodeTypes = {
   custom: CustomNode,
+  toolchainNode: ToolchainNodeReactFlow
 };
 
 const initNodes = [
@@ -48,22 +49,34 @@ const initEdges = [
 ];
 
 const Flow = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
+  let id = 0;
+  const getId = () => `dndnode_${id++}`;
+
+  const { 
+    toolchainNodes,
+    setToolchainNodes,
+    onNodesChange,
+    toolchainEdges,
+    setToolchainEdges,
+    onEdgesChange
+  } = useNodeContextAction();
+
+  // const [nodes, setNodes, onNodesChange] = useNodesState<object>(initNodes);
+  // const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<any, any> | null>(null);
   const reactFlowWrapper = useRef(null);
 
 
-  const onConnect = useCallback((params :  Connection | Edge) => setEdges((eds) => addEdge(params, eds)), []);
+  const onConnect = useCallback((params :  Connection | Edge) => setToolchainEdges((eds) => addEdge(params, eds)), []);
 
   return (
     <div className="flex-grow text-xs">
-      <ContextMenuWrapper>
+      <ContextMenuWrapper reactFlowInstance={reactFlowInstance} setNodes={setToolchainNodes} getId={getId}>
         <ReactFlowProvider>
           <div className="reactflow-wrapper w-full h-full" ref={reactFlowWrapper}>
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={toolchainNodes}
+              edges={toolchainEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}

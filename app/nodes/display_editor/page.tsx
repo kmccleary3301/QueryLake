@@ -22,9 +22,6 @@ export default function DisplayEditorPage() {
   const sectionUpdate = (sectionLocal : displaySection) => {
     sectionRef.current = sectionLocal;
     setInterfaceConfiguration(sectionRef.current);
-
-    // setInterfaceConfiguration(sectionLocal);
-    // console.log(sectionLocal);
   }
 
   useEffect(() => {

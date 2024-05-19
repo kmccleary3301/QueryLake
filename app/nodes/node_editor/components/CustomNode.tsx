@@ -1,6 +1,38 @@
 "use client";
+import { nodeInputArgument, toolchainNode } from '@/types/toolchains';
 import React, { memo } from 'react';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, XYPosition } from 'reactflow';
+
+export type ToolchainNodeData = toolchainNode & {
+  position: XYPosition;
+}
+
+function ToolchainNodeReactFlowPrimitive({ data }:{
+  data: ToolchainNodeData
+}) {
+  return (
+    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400 text-black">
+      {/* <div className="flex">
+        <div className="rounded-full w-12 h-12 flex justify-center items-center bg-gray-100">
+          {data.emoji}
+        </div>
+        <div className="ml-2">
+          <div className="text-lg font-bold">{data.name}</div>
+          <div className="text-gray-500">{data.job}</div>
+        </div>
+      </div> */}
+
+
+      {data.input_arguments?.map((input : nodeInputArgument, index : number) => (
+        <Handle key={index} type="target" position={Position.Left} className="px-2 py-2 !bg-teal-500">
+          <p>{input.key}</p>
+        </Handle>
+      ))}
+
+      {/* <Handle type="source" position={Position.Right} className="w-2 h-2 !bg-teal-500" /> */}
+    </div>
+  );
+}
 
 function CustomNode({ data }:{
   data:{
@@ -26,5 +58,7 @@ function CustomNode({ data }:{
     </div>
   );
 }
+
+export const ToolchainNodeReactFlow = memo(ToolchainNodeReactFlowPrimitive);
 
 export default memo(CustomNode);
