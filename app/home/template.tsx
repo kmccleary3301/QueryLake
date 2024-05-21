@@ -11,9 +11,9 @@ export default function Template({
     children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  useEffect(() => {
-    console.log("pathname changed to:", pathname);
-  }, [pathname]);
+  // useEffect(() => {
+  //   console.log("pathname changed to:", pathname);
+  // }, [pathname]);
   
   return (
     <motion.div 

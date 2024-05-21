@@ -23,13 +23,13 @@ export default function SidebarController() {
 		// 	setSidebarAssignment("none");
 		// 	return;
 		// }
-		console.log("Pathname changed to", pathname, pathname?.startsWith("/app"), pathname?.startsWith("/nodes"));
+		// console.log("Pathname changed to", pathname, pathname?.startsWith("/app"), pathname?.startsWith("/nodes"));
 		if (pathname?.startsWith("/app") || 
 			pathname?.startsWith("/nodes") || 
 			pathname?.startsWith("/themes") ||
 			pathname?.startsWith("/collection")
 		) {
-			console.log("Setting sidebar assignment to app");
+			// console.log("Setting sidebar assignment to app");
 			setSidebarAssignment("app");
 		} else if (pathname?.startsWith("/docs")) {
 			setSidebarAssignment("documentation");
@@ -40,9 +40,9 @@ export default function SidebarController() {
 		}
 	}, [pathname, authReviewed, loginValid])
 
-	useEffect(() => {
-		console.log("Sidebar: sidebarAssignment changed to", sidebarAssignment);
-	}, [sidebarAssignment])
+	// useEffect(() => {
+	// 	console.log("Sidebar: sidebarAssignment changed to", sidebarAssignment);
+	// }, [sidebarAssignment])
 
 
 	// switch(sidebarAssignment) {

@@ -57,14 +57,14 @@ export default function RootTemplate({
   }, []);
 
   useEffect(() => {
-    console.log("Calling effect with userdata and mount change")
+    // console.log("Calling effect with userdata and mount change")
     if (mounted && !authReviewed) {
       getUserData(userData, () => {setMounted(true);});
     }
   }, [userData?.auth, mounted]);
   
   useEffect(() => {
-    console.log("pathname changed to:", pathname);
+    // console.log("pathname changed to:", pathname);
   }, [pathname]);
   
   // Redirect to login page if not logged in, redirect to home page if logged in and attempting to log in.

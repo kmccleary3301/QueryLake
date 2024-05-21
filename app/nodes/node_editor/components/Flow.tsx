@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import ReactFlow, { useNodesState, useEdgesState, addEdge, MiniMap, Controls, Connection, Edge, Background, ReactFlowInstance, ReactFlowProvider } from 'reactflow';
 
 import 'reactflow/dist/base.css';
@@ -8,47 +8,12 @@ import CustomNode, { ToolchainNodeReactFlow } from './CustomNode';
 import ContextMenuWrapper from './context-menu-wrapper';
 import { useNodeContextAction } from "../../context-provider"
 
-const nodeTypes = {
-  custom: CustomNode,
-  toolchainNode: ToolchainNodeReactFlow
-};
+// const nodeTypes = {
+//   custom: CustomNode,
+//   toolchainNode: ToolchainNodeReactFlow
+// };
 
-const initNodes = [
-  {
-    id: '1',
-    type: 'custom',
-    data: { name: 'Jane Doe', job: 'CEO', emoji: '😎' },
-    position: { x: 0, y: 50 },
-  },
-  {
-    id: '2',
-    type: 'custom',
-    data: { name: 'Tyler Weary', job: 'Designer', emoji: '🤓' },
-
-    position: { x: -200, y: 200 },
-  },
-  {
-    id: '3',
-    type: 'custom',
-    data: { name: 'Kristi Price', job: 'Developer', emoji: '🤩' },
-    position: { x: 200, y: 200 },
-  },
-];
-
-const initEdges = [
-  {
-    id: 'e1-2',
-    source: '1',
-    target: '2',
-  },
-  {
-    id: 'e1-3',
-    source: '1',
-    target: '3',
-  },
-];
-
-const Flow = () => {
+export default function Flow() {
   let id = 0;
   const getId = () => `dndnode_${id++}`;
 
@@ -68,6 +33,14 @@ const Flow = () => {
 
 
   const onConnect = useCallback((params :  Connection | Edge) => setToolchainEdges((eds) => addEdge(params, eds)), []);
+
+  const nodeTypes = useMemo(
+    () => ({
+      custom: CustomNode,
+      toolchainNode: ToolchainNodeReactFlow
+    }),
+    [],
+  );
 
   return (
     <div className="flex-grow text-xs">
@@ -97,4 +70,4 @@ const Flow = () => {
   );
 };
 
-export default Flow;
+// export default Flow;

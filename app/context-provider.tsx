@@ -215,7 +215,7 @@ export const ContextProvider = ({
 
   const setFullToolchain = useCallback((toolchain_id : string) => {
     if (!auth_reviewed) return;
-    console.log("toolchain_id:", toolchain_id);
+    // console.log("toolchain_id:", toolchain_id);
     fetchToolchainConfig({
       auth: user_data?.auth as string,
       toolchain_id: toolchain_id as string,

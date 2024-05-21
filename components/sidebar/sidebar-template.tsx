@@ -55,12 +55,6 @@ export default function SidebarTemplate({
     };
 	}, [userData, sidebarOpened, controlsSidebarWidth, controlSidebarButtonOffset]);
 
-
-  useEffect(() => {
-    console.log("TOGGLE VISIBLE:", sidebarToggleVisible)
-  }, [sidebarToggleVisible, pathname]);
-
-
   useEffect(() => {
     // const sidebar_value = (sidebarIsAvailable && sidebarOpened)?true:false;
 

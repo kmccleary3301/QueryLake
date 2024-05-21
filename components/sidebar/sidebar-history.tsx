@@ -32,13 +32,6 @@ function SessionEntry({
           <div className='w-full text-left flex flex-col justify-center rounded-[inherit]'>
             <p className='relative px-2 overflow-hidden text-sm whitespace-nowrap'>{session.title}</p>
           </div>
-          {/* <div className='h-8 absolute flex flex-col justify-center bg-accent opacity-0 hover:opacity-100 rounded-r-[inherit]'>
-            <div className='h-auto flex flex-row pointer-events-none'>
-              <Button className='h-6 w-6 rounded-full p-0 m-0' variant={"ghost"} onClick={onDelete}>
-                <Trash className='w-3.5 h-3.5 text-primary'/>
-              </Button>
-            </div>
-          </div> */}
           <Link href={`/app/session?s=${session.id}`} className="absolute w-[40px] h-8 rounded-r-[inherit] bg-gradient-to-l from-accent to-accent/0"/>
           <div className='h-8 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
             <div className='h-auto flex flex-row rounded-r-[inherit]'>
