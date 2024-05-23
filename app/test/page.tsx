@@ -180,55 +180,65 @@ export default function TestPage() {
 
   
   return (
-    <div className="flex flex-col space-y-2">
-      <Button onClick={testWebsocket}>
-        Test websocket.
-      </Button>
-      <Button onClick={sendMessage1}>
-        Send message 1.
-      </Button>
-      <Button onClick={sendMessage2}>
-        Question 1
-      </Button>
-      <Button onClick={sendMessage3}>
-        Question 2
-      </Button>
-      <Button onClick={sendMessage4}>
-        Question 3
-      </Button>
-      <Button onClick={startTyping}>
-        Start Typing
-      </Button>
+    <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
+				<ScrollArea className="w-full">
+					<div className="flex flex-row justify-center pt-10">
+						<div className="max-w-[85vw] md:max-w-[70vw] lg:max-w-[45vw]">
+							
+              <div className="flex flex-col space-y-2">
+                <Button onClick={testWebsocket}>
+                  Test websocket.
+                </Button>
+                <Button onClick={sendMessage1}>
+                  Send message 1.
+                </Button>
+                <Button onClick={sendMessage2}>
+                  Question 1
+                </Button>
+                <Button onClick={sendMessage3}>
+                  Question 2
+                </Button>
+                <Button onClick={sendMessage4}>
+                  Question 3
+                </Button>
+                <Button onClick={startTyping}>
+                  Start Typing
+                </Button>
 
-      <ChatBarInput/>
+                <ChatBarInput/>
 
-      <FileDropzone onFile={(file) => console.log(file)} />
-      <ScrollArea className="w-auto h-[200px] rounded-md border-[2px] border-secondary">
-        <Textarea 
-          className="w-full h-full scrollbar-hide"
-          value={JSON.stringify(toolchainState, null, "\t")} 
-          onChange={() => {}}
-        />
-        {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
+                <FileDropzone onFile={(file) => console.log(file)} />
+                <ScrollArea className="w-auto h-[200px] rounded-md border-[2px] border-secondary">
+                  <Textarea 
+                    className="w-full h-full scrollbar-hide"
+                    value={JSON.stringify(toolchainState, null, "\t")} 
+                    onChange={() => {}}
+                  />
+                  {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
+                </ScrollArea>
+                <div className="border-[2px] border-red-500 w-[400px] h-[500px]">
+                  <Button onClick={() => setExpanded(!expanded)}>
+                    Expand
+                  </Button>
+                  <ScrollAreaHorizontal className="p-4 border-[2px] border-teal-500">
+                    <motion.div
+                      className="h-[40px] bg-green-500"
+                      initial={{width: 20}}
+                      animate={{
+                        width: expanded ? 1700 : 20
+                      }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </ScrollAreaHorizontal>
+
+                  <MarkdownRenderer input={markdownText} finished={false}/>
+                </div>
+                <div className="w-full h-[20px] rounded-md bg-gradient-to-l from-indigo-500 from-80% ..."/>
+              </div>
+            <div className="h-[100px]"/>
+          </div>
+        </div>
       </ScrollArea>
-      <div className="border-[2px] border-red-500 w-[400px] h-[500px]">
-        <Button onClick={() => setExpanded(!expanded)}>
-          Expand
-        </Button>
-        <ScrollAreaHorizontal className="p-4 border-[2px] border-teal-500">
-          <motion.div
-            className="h-[40px] bg-green-500"
-            initial={{width: 20}}
-            animate={{
-              width: expanded ? 1700 : 20
-            }}
-            transition={{ duration: 0.5 }}
-          />
-        </ScrollAreaHorizontal>
-
-        <MarkdownRenderer input={markdownText} finished={false}/>
-      </div>
-      <div className="w-full h-[20px] rounded-md bg-gradient-to-l from-indigo-500 from-80% ..."/>
     </div>
   );
 }

@@ -35,40 +35,22 @@ export default function ContextMenuWrapper({
     (event : MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
       // event.preventDefault();
       if (!reactFlowInstance) {
+        console.log("No reactFlowInstance; exiting");
         return;
       }
-
-      // const type = event.dataTransfer.getData('application/reactflow');
-
-      // check if the dropped element is valid
-      // if (typeof type === 'undefined' || !type) {
-      //   return;
-      // }
-
-      // reactFlowInstance.project was renamed to reactFlowInstance.screenToFlowPosition
-      // and you don't need to subtract the reactFlowBounds.left/top anymore
-      // details: https://reactflow.dev/whats-new/2023-11-10
-      // console.log("Event called with:", event);
-
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
-      // const newNode = {
-      //   id: getId(),
-      //   ,
-      //   position,
-      //   data: { label: `${type} node` },
-      // };
 
       const newNode = {
         id: getId(),
-        type: 'custom',
-        data: { name: 'New Node', job: 'Beginner', emoji: '😎' },
         position: position,
+        data: { icon: <div/>, title: 'fullBundle' },
+        type: 'turbo',
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => [...nds, newNode]);
     },
     [reactFlowInstance],
   );

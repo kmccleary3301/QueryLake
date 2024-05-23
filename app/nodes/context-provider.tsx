@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 import { displaySection } from '@/types/toolchain-interface';
-import { useNodesState, useEdgesState, Edge, Node, NodeChange, EdgeChange } from 'reactflow';
+import { useNodesState, useEdgesState, Edge, Node, NodeChange, EdgeChange, ReactFlowInstance } from 'reactflow';
 import CustomNode, { ToolchainNodeData, ToolchainNodeReactFlow } from './node_editor/components/CustomNode';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { fetchToolchainConfig } from '@/hooks/querylakeAPI';
@@ -45,11 +45,6 @@ const get_feed_route = (route : Array<sequenceAction>) => {
     return route[route.length - 1] as string | number;
   }
 }
-
-const nodeTypes = {
-  custom: CustomNode,
-  toolchainNode: ToolchainNodeReactFlow
-};
 
 const initNodes = [
   {
@@ -96,7 +91,8 @@ const NodeContext = createContext<{
   toolchainEdges: Edge<any>[];
   setToolchainEdges: Dispatch<SetStateAction<Edge<any>[]>>;
   onEdgesChange: OnChange<EdgeChange>;
-
+  reactFlowInstance: ReactFlowInstance<any, any> | null;
+  setReactFlowInstance: Dispatch<SetStateAction<ReactFlowInstance<any, any> | null>>;
 }>({
 	interfaceConfiguration: {
 		split: "none",
@@ -129,6 +125,8 @@ const NodeContext = createContext<{
   toolchainEdges: [],
   setToolchainEdges: () => [],
   onEdgesChange: () => [],
+  reactFlowInstance: null,
+  setReactFlowInstance: () => {},
 });
 
 export const NodeContextProvider = ({
@@ -156,6 +154,7 @@ export const NodeContextProvider = ({
   });
   const [nodes, set_nodes, on_nodes_change] = useNodesState<object>(initNodes);
   const [edges, set_edges, on_edges_change] = useEdgesState(initEdges);
+  const [react_flow_instance, set_react_flow_instance] = useState<ReactFlowInstance<any, any> | null>(null);
   const [referenceToolchain, setReferenceToolchain] = useState<ToolChain | null>(null);
   const referenceToolchainID = useRef<string | null>(null);
 
@@ -182,7 +181,7 @@ export const NodeContextProvider = ({
     for (let i = 0; i < toolchain.nodes.length; i++) {
       toolchain_nodes.push({
         id: toolchain.nodes[i].id,
-        type: "toolchainNode",
+        type: "toolchain",
         data: toolchain.nodes[i],
         position: {x: i*200, y: 200},
       });
@@ -198,6 +197,7 @@ export const NodeContextProvider = ({
         console.log(feed_route);
 
         toolchain_edges.push({
+          type: 'turbo',
           id: `e${i}-${j}`,
           source: toolchain.nodes[i].id,
           sourceHandle: `feed-${j}`,
@@ -206,7 +206,7 @@ export const NodeContextProvider = ({
         });
       }
     }
-    
+
     set_nodes((prevNodes) => [
       // ...prevNodes, 
       ...toolchain_nodes
@@ -256,7 +256,6 @@ export const NodeContextProvider = ({
     }
   }, [searchArgs]);
 
-
 	return (
 		<NodeContext.Provider value={{ 
 			interfaceConfiguration: interface_configuration.current,
@@ -268,6 +267,8 @@ export const NodeContextProvider = ({
       toolchainEdges: edges,
       setToolchainEdges: set_edges,
       onEdgesChange: on_edges_change,
+      reactFlowInstance: react_flow_instance,
+      setReactFlowInstance: set_react_flow_instance,
 		}}>
 			{children}
 		</NodeContext.Provider>

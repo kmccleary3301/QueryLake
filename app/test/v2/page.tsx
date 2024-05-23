@@ -186,34 +186,43 @@ export default function TestPage() {
 
   
   return (
-    <div className="flex flex-col space-y-2">
-      {/* <Button onClick={testWebsocket}>
-        Test websocket.
-      </Button> */}
-      <Button onClick={sendMessage1}>
-        Send message 1.
-      </Button>
-      <Button onClick={sendMessage2}>
-        Question 1
-      </Button>
-      <Button onClick={sendMessage3}>
-        Question 2
-      </Button>
-      <Button onClick={sendMessage4}>
-        Question 3
-      </Button>
+    <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
+      <ScrollArea className="w-full">
+        <div className="flex flex-row justify-center pt-10">
+          <div className="max-w-[85vw] md:max-w-[70vw] lg:max-w-[45vw]">
+            
+            <div className="flex flex-col space-y-2">
+              {/* <Button onClick={testWebsocket}>
+                Test websocket.
+              </Button> */}
+              <Button onClick={sendMessage1}>
+                Send message 1.
+              </Button>
+              <Button onClick={sendMessage2}>
+                Question 1
+              </Button>
+              <Button onClick={sendMessage3}>
+                Question 2
+              </Button>
+              <Button onClick={sendMessage4}>
+                Question 3
+              </Button>
 
-      <ChatBarInput/>
+              <ChatBarInput/>
 
-      <FileDropzone onFile={(file) => console.log(file)} />
+              <FileDropzone onFile={(file) => console.log(file)} />
 
-      <ScrollArea className="w-auto h-[200px] rounded-md border-[2px] border-secondary">
-        <Textarea 
-          className="w-full h-full scrollbar-hide"
-          value={JSON.stringify(toolchainState, null, "\t")} 
-          onChange={() => {}}
-        />
-        {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
+              <ScrollArea className="w-auto h-[200px] rounded-md border-[2px] border-secondary">
+                <Textarea 
+                  className="w-full h-full scrollbar-hide"
+                  value={JSON.stringify(toolchainState, null, "\t")} 
+                  onChange={() => {}}
+                />
+                {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
+              </ScrollArea>
+            </div>
+          </div>
+        </div>
       </ScrollArea>
     </div>
   );

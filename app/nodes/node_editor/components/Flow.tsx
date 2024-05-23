@@ -6,7 +6,13 @@ import 'reactflow/dist/base.css';
 
 import CustomNode, { ToolchainNodeReactFlow } from './CustomNode';
 import ContextMenuWrapper from './context-menu-wrapper';
-import { useNodeContextAction } from "../../context-provider"
+import { useNodeContextAction } from "../../context-provider";
+
+import 'reactflow/dist/base.css';
+import './turbo_style.css';
+import TurboNode, { TurboNodeData } from './TurboNode';
+import TurboEdge from './TurboEdge';
+import ToolchainNode from './ToolchainNode';
 
 // const nodeTypes = {
 //   custom: CustomNode,
@@ -14,8 +20,8 @@ import { useNodeContextAction } from "../../context-provider"
 // };
 
 export default function Flow() {
-  let id = 0;
-  const getId = () => `dndnode_${id++}`;
+  let id = 50;
+  const getId = () => `dndnode_test_${id++}`;
 
   const { 
     toolchainNodes,
@@ -23,21 +29,38 @@ export default function Flow() {
     onNodesChange,
     toolchainEdges,
     setToolchainEdges,
-    onEdgesChange
+    onEdgesChange,
+    reactFlowInstance,
+    setReactFlowInstance,
   } = useNodeContextAction();
 
   // const [nodes, setNodes, onNodesChange] = useNodesState<object>(initNodes);
   // const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<any, any> | null>(null);
   const reactFlowWrapper = useRef(null);
-
 
   const onConnect = useCallback((params :  Connection | Edge) => setToolchainEdges((eds) => addEdge(params, eds)), []);
 
   const nodeTypes = useMemo(
     () => ({
       custom: CustomNode,
-      toolchainNode: ToolchainNodeReactFlow
+      // toolchainNode: ToolchainNodeReactFlow,
+      toolchain: ToolchainNode,
+      turbo: TurboNode,
+    }),
+    [],
+  );
+
+  const edgeTypes = useMemo(
+    () => ({
+      turbo: TurboEdge,
+    }),
+    [],
+  );
+
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      type: 'turbo',
+      markerEnd: 'edge-circle',
     }),
     [],
   );
@@ -47,13 +70,54 @@ export default function Flow() {
       <ContextMenuWrapper reactFlowInstance={reactFlowInstance} setNodes={setToolchainNodes} getId={getId}>
         <ReactFlowProvider>
           <div className="reactflow-wrapper w-full h-full" ref={reactFlowWrapper}>
-            <ReactFlow
+          <ReactFlow
+            nodes={toolchainNodes}
+            edges={toolchainEdges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            defaultEdgeOptions={defaultEdgeOptions}
+            onInit={setReactFlowInstance}
+          >
+            <MiniMap color='#222' className='bg-background' zoomable pannable/>
+            <Controls />
+            <Background gap={16}/>
+            {/* <Controls showInteractive={false} /> */}
+            <svg>
+              <defs>
+                <linearGradient id="edge-gradient">
+                  <stop offset="0%" stopColor="#ae53ba" />
+                  <stop offset="100%" stopColor="#2a8af6" />
+                </linearGradient>
+
+                <marker
+                  id="edge-circle"
+                  viewBox="-5 -5 10 10"
+                  refX="0"
+                  refY="0"
+                  markerUnits="strokeWidth"
+                  markerWidth="10"
+                  markerHeight="10"
+                  orient="auto"
+                >
+                  <circle stroke="#2a8af6" strokeOpacity="0.75" r="2" cx="0" cy="0" />
+                </marker>
+              </defs>
+            </svg>
+          </ReactFlow>
+            {/* <ReactFlow
               nodes={toolchainNodes}
               edges={toolchainEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              defaultEdgeOptions={defaultEdgeOptions}
+              
               fitView
               onInit={setReactFlowInstance}
               // className="bg-teal-50"
@@ -62,7 +126,7 @@ export default function Flow() {
               <MiniMap zoomable pannable/>
               <Controls />
               <Background color="#aaa" gap={16}/>
-            </ReactFlow>
+            </ReactFlow> */}
           </div>
         </ReactFlowProvider>
       </ContextMenuWrapper>
