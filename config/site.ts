@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "shadcn/ui",
+  name: "QueryLake",
   url: "https://ui.shadcn.com",
   ogImage: "https://ui.shadcn.com/og.jpg",
   description:

@@ -41,9 +41,8 @@ const get_feed_route = (route : Array<sequenceAction>) => {
     if (current_obj.route && current_obj.route.length > 0) {
       return current_obj.route[0];
     }
-  } else {
-    return route[route.length - 1] as string | number;
   }
+  return undefined;
 }
 
 const initNodes = [
@@ -188,7 +187,8 @@ export const NodeContextProvider = ({
       
       for (let j = 0; j < (toolchain.nodes[i].feed_mappings || []).length; j++) {
         const feed : feedMapping = (toolchain.nodes[i].feed_mappings || [])[j];
-        const feed_route = get_feed_route(feed.sequence || []);
+        const feed_route = get_feed_route(feed.sequence || []) || "||UNCLASSIFIED||";
+
         if (feed.destination === "<<STATE>>" || feed.destination === "<<USER>>") {
           continue;
         }

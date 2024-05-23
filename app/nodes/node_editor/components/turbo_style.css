@@ -192,6 +192,22 @@
   z-index: 1;
 }
 
+.react-flow__node-toolchain .cloudinput {
+  border-radius: 100%;
+  width: 30px;
+  height: 30px;
+  /* right: 0; */
+  position: absolute;
+  /* top: 0; */
+  /* transform: translate(25%, -25%); */
+  display: flex;
+  transform-origin: center center;
+  padding: 2px;
+  overflow: hidden;
+  box-shadow: var(--node-box-shadow);
+  z-index: 1;
+}
+
 .react-flow__node-turbo .cloud div {
   background-color: var(--bg-color);
   flex-grow: 1;
@@ -203,6 +219,16 @@
 }
 
 .react-flow__node-toolchain .cloud div {
+  background-color: var(--bg-color);
+  flex-grow: 1;
+  border-radius: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.react-flow__node-toolchain .cloudinput div {
   background-color: var(--bg-color);
   flex-grow: 1;
   border-radius: 100%;
