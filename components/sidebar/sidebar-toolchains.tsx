@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { HoverTextDiv } from '@/registry/default/ui/hover-text-div';
 import Link from 'next/link';
 import { Copy, Pencil, Trash } from 'lucide-react';
+import SidebarEntry from '../manual_components/sidebar-entry-fade';
 
 type SidebarToolchainsProps = {
   userData: userDataType,
@@ -28,72 +29,93 @@ function ToolchainEntry({
   selected?: boolean,
   onSelect?: () => void,
 }) {
-  return (
-    <div className={cn(
-      "relative hover:bg-accent hover:text-accent-foreground hover:text-accent-foreground/",
-      'p-0 w-full flex flex-row-reverse justify-between h-10 rounded-lg'
-    )}>
-      <div className='w-full h-full text-left flex flex-row rounded-[inherit] bg-gradient-to-r to-transparent'>
-        <button className="w-full h-full flex flex-row rounded-[inherit] overflow-hidden" onClick={onSelect}>
-          <div className="w-7 h-full flex flex-col justify-center rounded-[inherit]">
-              <div className='w-7 flex flex-row justify-center'>
-            {(selected) && (
-                <Icon.Check className='w-3 h-3 text-[#7968D9]'/>
-              )}
-              </div>
-          </div>
-          <div className='rounded-[inherit] w-auto flex flex-col justify-center h-full'>
-            <div className='flex flex-row'>
-
-              <p className='relative pr-2 overflow-hidden text-nowrap text-sm'>{toolchain.title}</p>
-            </div>
-          </div>
-        </button>
-      </div>
-      <div className='h-10 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
-        <div className='h-auto flex flex-row rounded-r-[inherit]'>
-          <div onClick={onSelect} className="w-[20px] h-auto rounded-md bg-gradient-to-l from-accent to-accent/0"/>
-          <div className="rounded-r-[inherit] display-none bg-accent">
-            <div className='space-x-2 pr-2'>
-              <Link href={`/nodes/node_editor?mode=create&ref=${toolchain.id}`}>
-                <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
-                  <Copy className='w-3.5 h-3.5'/>
-                </Button>
-              </Link>
-              <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain.id}`}>
-                <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
-                  <Pencil className='w-3.5 h-3.5'/>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
   // return (
-  //   <div className="relative not-prose h-auto opacity-100 text-sm">
-  //     <div className="group relative rounded-lg active:opacity-90 hover:bg-token-sidebar-surface-secondary">
-  //       <a className="flex items-center gap-2 p-2">
-  //         <div className="relative grow overflow-hidden whitespace-nowrap select-none">
-  //           {toolchain.title}
-  //           <div className="absolute bottom-0 right-0 top-0 bg-gradient-to-l to-transparent from-token-sidebar-surface-primary from-token-sidebar-surface-primary group-hover:from-token-sidebar-surface-secondary  w-8 from-0% group-hover:w-20 group-hover:from-60% juice:group-hover:w-10">
+  //   <div className={cn(
+  //     "relative hover:bg-accent hover:text-accent-foreground hover:text-accent-foreground/",
+  //     'p-0 w-full flex flex-row-reverse justify-between h-10 rounded-lg'
+  //   )}>
+  //     <div className='w-full h-full text-left flex flex-row rounded-[inherit] bg-gradient-to-r to-transparent'>
+  //       <button className="w-full h-full flex flex-row rounded-[inherit] overflow-hidden" onClick={onSelect}>
+  //         <div className="w-7 h-full flex flex-col justify-center rounded-[inherit]">
+  //             <div className='w-7 flex flex-row justify-center'>
+  //           {(selected) && (
+  //               <Icon.Check className='w-3 h-3 text-[#7968D9]'/>
+  //             )}
+  //             </div>
+  //         </div>
+  //         <div className='rounded-[inherit] w-auto flex flex-col justify-center h-full'>
+  //           <div className='flex flex-row'>
+
+  //             <p className='relative pr-2 overflow-hidden text-nowrap text-sm'>{toolchain.title}</p>
   //           </div>
   //         </div>
-  //       </a>
-  //       <div className="absolute bottom-0 right-0 top-0 items-center gap-1.5 pr-2 hidden group-hover:flex group-hover">
-  //         <span className="flex flex-row">
-  //           <button className="flex items-center justify-center text-token-text-primary transition hover:text-token-text-secondary radix-state-open:text-token-text-secondary juice:text-token-text-secondary juice:hover:text-token-text-primary" type="button" id="radix-:r1k:" aria-haspopup="menu" aria-expanded="false" data-state="closed">
-  //             <Pencil className='w-3.5 h-3.5 text-primary'/>
-  //           </button>
-  //           <button className="flex items-center justify-center text-token-text-primary transition hover:text-token-text-secondary radix-state-open:text-token-text-secondary juice:text-token-text-secondary juice:hover:text-token-text-primary" type="button" id="radix-:r1k:" aria-haspopup="menu" aria-expanded="false" data-state="closed">
-  //             <Pencil className='w-3.5 h-3.5 text-primary'/>
-  //           </button>
-  //         </span>
+  //       </button>
+  //     </div>
+  //     <div className='h-10 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
+  //       <div className='h-auto flex flex-row rounded-r-[inherit]'>
+  //         <div onClick={onSelect} className="w-[20px] h-auto rounded-md bg-gradient-to-l from-accent to-accent/0"/>
+  //         <div className="rounded-r-[inherit] display-none bg-accent">
+  //           <div className='space-x-2 pr-2'>
+  //             <Link href={`/nodes/node_editor?mode=create&ref=${toolchain.id}`}>
+  //               <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
+  //                 <Copy className='w-3.5 h-3.5'/>
+  //               </Button>
+  //             </Link>
+  //             <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain.id}`}>
+  //               <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
+  //                 <Pencil className='w-3.5 h-3.5'/>
+  //               </Button>
+  //             </Link>
+  //           </div>
+  //         </div>
   //       </div>
   //     </div>
   //   </div>
-  // )
+  // );
+  return (
+    <div className="relative not-prose h-10 opacity-100 text-sm rounded-lg hover:bg-accent">
+      <div className="group h-full relative rounded-lg flex flex-col justify-center z-5">
+        <div className="absolute h-full w-full rounded-[inherit] hover:bg-accent"/>
+        <div className="absolute h-full w-full rounded-[inherit] overflow-hidden whitespace-nowrap" onClick={onSelect}>
+          <Button variant={"ghost"} className="w-full h-full flex flex-row justify-start p-0 m-0 hover:bg-accent" onClick={onSelect}>
+            <div className="w-7 h-full flex flex-col justify-center">
+              <div className='w-7 flex flex-row justify-center'>
+                {(selected) && (
+                  <Icon.Check className='w-3 h-3 text-[#7968D9]'/>
+                )}
+              </div>
+            </div>
+            <div className='rounded-[inherit] w-auto flex flex-col justify-center h-full'>
+              <div className='flex flex-row'>
+
+                <p className='relative pr-2 overflow-hidden text-nowrap text-sm'>{toolchain.title}</p>
+              </div>
+            </div>
+          </Button>
+        </div>
+        <div className="absolute h-full w-full bottom-0 right-0 top-0 items-center gap-1.5 rounded-[inherit] overflow-hidden flex flex-row-reverse pointer-events-none">
+          <div className='h-full w-full bg-gradient-to-r from-accent/0 from-[calc(100%-80px)] to-background hover:to-accent'/>
+        </div>
+        <div className="absolute h-full rounded-r-[inherit] w-full hidden group-hover:flex group-hover flex-row-reverse overflow-hidden pointer-events-none">
+          <div className='h-full flex flex-col justify-center bg-accent z-10'>
+            <span className="flex flex-row justify-center pointer-events-auto gap-x-2 pr-2">
+              <Link href={`/nodes/node_editor?mode=create&ref=${toolchain.id}`}>
+                <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
+                  <Copy className='w-3.5 h-3.5'/>
+                </button>
+              </Link>
+              <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain.id}`}>
+                <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
+                  <Pencil className='w-3.5 h-3.5'/>
+                </button>
+              </Link>
+            </span>
+          </div>
+          <div className='h-full w-[80px] bg-gradient-to-r from-accent/0 to-accent'/>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function SidebarToolchains(props: SidebarToolchainsProps) {
@@ -122,39 +144,33 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
               {toolchain_category.category}
             </p>
             {toolchain_category.entries.map((toolchain_entry : toolchain_type, index : number) => (
-              // <div className="w-full flex flex-row justify-start" key={index}>
-              //   <Button variant={"ghost"} className="py-0 px-[6px] w-full flex flex-row justify-start"
-              //     onClick={() => {
-              //       if (toolchain_entry.id !== props.selected_toolchain && pathname?.startsWith("/app/session")) {
-              //         router.push(`/app/create`);
-              //       }
-              //       setSelectedToolchain(toolchain_entry.id);
-              //     }}>
-              //     <div className="flex flex-row justify-start">
-              //       <div className="w-6 h-auto flex flex-col justify-center">
-              //         {((props.selected_toolchain !== undefined && props.selected_toolchain !== null) && props.selected_toolchain === toolchain_entry.id) && (
-              //           <Icon.Check style={{paddingLeft: 2}} size={16} color="#7968D9"/>
-              //         )}
-              //       </div>
-              //       <p className="text-left text-sm h-auto flex flex-col justify-center">
-              //         {toolchain_entry.title}
-              //       </p>
-              //     </div>
-              //   </Button>
-              // </div>
-              <div className='w-[220px]'>
-
-                <ToolchainEntry key={index} toolchain={toolchain_entry} 
-                  selected={((props.selected_toolchain !== undefined && props.selected_toolchain !== null) && 
-                  props.selected_toolchain === toolchain_entry.id)}
-                  onSelect={() => {
-                    if (toolchain_entry.id !== props.selected_toolchain && pathname?.startsWith("/app/session")) {
-                      router.push(`/app/create`);
-                    }
-                    setSelectedToolchain(toolchain_entry.id);
-                  }}
-                />
-              </div>
+              <SidebarEntry
+                key={index}
+                className='w-[220px]' 
+                title={toolchain_entry.title} 
+                displaySelected 
+                selected={((props.selected_toolchain !== undefined && props.selected_toolchain !== null) && 
+                            props.selected_toolchain === toolchain_entry.id)}
+                onSelect={() => {
+                  if (toolchain_entry.id !== props.selected_toolchain && pathname?.startsWith("/app/session")) {
+                    router.push(`/app/create`);
+                  }
+                  setSelectedToolchain(toolchain_entry.id);
+                }}
+              >
+                <span className="flex flex-row justify-center pointer-events-auto gap-x-2 pr-2">
+                  <Link href={`/nodes/node_editor?mode=create&ref=${toolchain_entry.id}`}>
+                    <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
+                      <Copy className='w-3.5 h-3.5'/>
+                    </button>
+                  </Link>
+                  <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain_entry.id}`}>
+                    <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
+                      <Pencil className='w-3.5 h-3.5'/>
+                    </button>
+                  </Link>
+                </span>
+              </SidebarEntry>
             ))}
             </>
           )}
