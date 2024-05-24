@@ -175,6 +175,14 @@ export const NodeContextProvider = ({
 
     if (toolchain.display_configuration) {
       set_interface_configuration(toolchain.display_configuration);
+    } else {
+      set_interface_configuration({
+        split: "none",
+        size: 100,
+        align: "center",
+        tailwind: "",
+        mappings: []
+      });
     }
 
     for (let i = 0; i < toolchain.nodes.length; i++) {
@@ -242,6 +250,12 @@ export const NodeContextProvider = ({
     } else if (searchArgs.mode === "edit" && 
                searchArgs.toolchainId) {
       get_id = searchArgs.toolchainId;
+    } else if (searchArgs.mode === "create") {
+      get_id = null;
+      referenceToolchainID.current = get_id;
+      set_edges([]);
+      set_nodes([]);
+      return;
     }
 
     if (get_id && (get_id !== referenceToolchainID.current || referenceToolchainID.current === null)) {

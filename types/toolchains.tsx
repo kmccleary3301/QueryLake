@@ -48,7 +48,7 @@ export interface getFiles {
     getText?: boolean;
 }
 
-export interface indexRouteRetrievedStateValue {
+export type indexRouteRetrievedStateValue = {
     getFromState: stateValue;
 }
 
@@ -64,7 +64,7 @@ export interface indexRouteRetrievedFile {
     getFiles: getFiles;
 }
 
-export interface indexRouteRetrieved {
+export type indexRouteRetrieved = {
     type?: "indexRouteRetrieved";
     getFrom: valueObj;
 }
@@ -83,7 +83,7 @@ export interface rootActionType {
 }
 
 export interface createAction extends rootActionType {
-    type?: "createAction";
+    type: "createAction";
     initialValue?: valueObj;
     insertion_values?: (valueObj | null)[];
     insertions?: staticRouteElementType[][];
@@ -91,19 +91,19 @@ export interface createAction extends rootActionType {
 }
 
 export interface deleteAction extends rootActionType {
-    type?: "deleteAction";
+    type: "deleteAction";
     route?: staticRoute | null;
     routes?: staticRoute[] | null;
 }
 
 export interface updateAction extends rootActionType {
-    type?: "updateAction";
+    type: "updateAction";
     route: staticRoute;
     value?: valueObj | null;
 }
 
 export interface appendAction extends rootActionType {
-    type?: "appendAction";
+    type: "appendAction";
     initialValue?: valueObj | null;
     insertion_values?: (valueObj | null)[];
     insertions?: staticRouteElementType[][];
@@ -111,19 +111,19 @@ export interface appendAction extends rootActionType {
 }
 
 export interface operatorAction extends rootActionType {
-    type?: "operatorAction";
+    type: "operatorAction";
     action: "+" | "-";
     value?: valueObj | null;
     route: staticRoute;
 }
 
 export interface backOut extends rootActionType {
-    type?: "backOut";
+    type: "backOut";
     count?: number;
 }
 
 export interface insertAction extends rootActionType {
-    type?: "insertSequenceAction";
+    type: "insertSequenceAction";
     route: staticRoute;
     replace?: boolean;
 }
@@ -137,6 +137,7 @@ export type staticRouteElementType = number | string | indexRouteRetrievedNew;
 export type staticRoute = Array<staticRouteElementType>;
 
 export type sequenceAction = staticRouteElementType | createAction | updateAction | appendAction | deleteAction | operatorAction | backOut;
+export type sequenceActionNonStatic = createAction | updateAction | appendAction | deleteAction | operatorAction | backOut;
 
 export interface conditionBasic {
     variableOne?: valueObj | null;

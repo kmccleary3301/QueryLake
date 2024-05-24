@@ -141,7 +141,7 @@ export default function SidebarChatHistory({
   
   return (
     <div className='pb-0 overflow-hidden'>
-      <div className='pb-0'>
+      <div className='pb-0 pt-2'>
         <Link href="/app/create">
           <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center">
               <div style={{paddingRight: 5}}>
@@ -153,7 +153,7 @@ export default function SidebarChatHistory({
           </Button>
         </Link>
       </div>
-      <ScrollArea className={cn("pb-0 -mr-4", scrollClassName)}>
+      <ScrollArea className={cn("pb-0 -mr-4 pt-2", scrollClassName)}>
         <div className='space-y-6 pr-4'>
         {internalToolchainSessions.map((chat_history_window : timeWindowType, chat_history_index : number) => (
           <div key={chat_history_index}>

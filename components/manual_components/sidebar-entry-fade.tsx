@@ -7,6 +7,7 @@ export default function SidebarEntry({
   title,
   children,
   className = "",
+  href = undefined,
   displaySelected = true,
   selected = false,
   onSelect = () => {},
@@ -14,6 +15,7 @@ export default function SidebarEntry({
   title: string,
   children?: React.ReactNode,
   className?: string,
+  href?: string,
   displaySelected: boolean,
   selected?: boolean,
   onSelect?: () => void,
@@ -65,8 +67,8 @@ export default function SidebarEntry({
     <div className={cn("relative not-prose h-10 opacity-100 text-sm rounded-lg hover:bg-accent", className)}>
       <div className="group h-full relative rounded-lg flex flex-col justify-center z-5">
         <div className="absolute h-full w-full rounded-[inherit] hover:bg-accent"/>
-        <a className="absolute h-full w-full rounded-[inherit] overflow-hidden whitespace-nowrap" onClick={onSelect}>
-          <Button variant={"ghost"} className="w-full h-full flex flex-row justify-start p-0 m-0 hover:bg-accent" onClick={onSelect}>
+        <a className="absolute h-full w-full rounded-[inherit] overflow-hidden whitespace-nowrap" href={href}>
+          <Button variant={"ghost"} className="w-full h-full flex flex-row justify-start p-0 m-0 hover:bg-accent" onMouseDown={onSelect}>
             {displaySelected && (
               <div className="w-7 h-full flex flex-col justify-center">
                 <div className='w-7 flex flex-row justify-center'>

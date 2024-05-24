@@ -104,7 +104,7 @@ export default function AppSidebar() {
                 </TabsContent>
                 <TabsContent value="tools" className='mt-0 pt-2'>
                   <SidebarToolchains
-                    scrollClassName='h-[calc(100vh-201px)] overflow-auto scrollbar-hide'
+                    scrollClassName='h-[calc(100vh-232px)] overflow-auto scrollbar-hide'
                     userData={userData}
                     setUserData={setUserData}
                     selected_toolchain={selectedToolchain}

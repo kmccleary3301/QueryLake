@@ -48,15 +48,15 @@ type scoped_text = {
 export default function MarkdownCodeBlock({
   className = "",
   text,
-  unProcessedText,
+  unProcessedText = "",
   lang,
-  finished,
+  finished = true,
 }:{
   className?: string,
   text : string,
-  unProcessedText: string,
+  unProcessedText?: string,
   lang: string,
-  finished: boolean
+  finished?: boolean
 }){
   const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
@@ -135,7 +135,7 @@ export default function MarkdownCodeBlock({
           ))}
         </code>
         <ScrollAreaHorizontal className='min-w-auto'>
-          <div className='pl-[5px] pt-[0px] pb-[20px]' dangerouslySetInnerHTML={{__html: codeHTML}}>
+          <div className='pl-[5px] pt-[0px] pb-[20px] pr-[8px]' dangerouslySetInnerHTML={{__html: codeHTML}}>
             {/* <code className='bg-transparent' ></code> */}
           </div>
         </ScrollAreaHorizontal>

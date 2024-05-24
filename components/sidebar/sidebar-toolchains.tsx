@@ -29,49 +29,6 @@ function ToolchainEntry({
   selected?: boolean,
   onSelect?: () => void,
 }) {
-  // return (
-  //   <div className={cn(
-  //     "relative hover:bg-accent hover:text-accent-foreground hover:text-accent-foreground/",
-  //     'p-0 w-full flex flex-row-reverse justify-between h-10 rounded-lg'
-  //   )}>
-  //     <div className='w-full h-full text-left flex flex-row rounded-[inherit] bg-gradient-to-r to-transparent'>
-  //       <button className="w-full h-full flex flex-row rounded-[inherit] overflow-hidden" onClick={onSelect}>
-  //         <div className="w-7 h-full flex flex-col justify-center rounded-[inherit]">
-  //             <div className='w-7 flex flex-row justify-center'>
-  //           {(selected) && (
-  //               <Icon.Check className='w-3 h-3 text-[#7968D9]'/>
-  //             )}
-  //             </div>
-  //         </div>
-  //         <div className='rounded-[inherit] w-auto flex flex-col justify-center h-full'>
-  //           <div className='flex flex-row'>
-
-  //             <p className='relative pr-2 overflow-hidden text-nowrap text-sm'>{toolchain.title}</p>
-  //           </div>
-  //         </div>
-  //       </button>
-  //     </div>
-  //     <div className='h-10 absolute flex flex-col justify-center opacity-0 hover:opacity-100 rounded-r-[inherit]'>
-  //       <div className='h-auto flex flex-row rounded-r-[inherit]'>
-  //         <div onClick={onSelect} className="w-[20px] h-auto rounded-md bg-gradient-to-l from-accent to-accent/0"/>
-  //         <div className="rounded-r-[inherit] display-none bg-accent">
-  //           <div className='space-x-2 pr-2'>
-  //             <Link href={`/nodes/node_editor?mode=create&ref=${toolchain.id}`}>
-  //               <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
-  //                 <Copy className='w-3.5 h-3.5'/>
-  //               </Button>
-  //             </Link>
-  //             <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain.id}`}>
-  //               <Button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70' variant={"ghost"}>
-  //                 <Pencil className='w-3.5 h-3.5'/>
-  //               </Button>
-  //             </Link>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
   return (
     <div className="relative not-prose h-10 opacity-100 text-sm rounded-lg hover:bg-accent">
       <div className="group h-full relative rounded-lg flex flex-col justify-center z-5">
@@ -135,6 +92,17 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
   };
 
   return (
+    <>
+    <div className='pb-0 pt-2'>
+      <Link href="/nodes/node_editor?mode=create">
+        <Button variant={"ghost"} className="w-full flex flex-row rounded-2xl h-9 items-center justify-center">
+          <Icon.Plus className='text-primary pr-[5px]'/>
+          <div style={{alignSelf: 'center', justifyContent: 'center'}}>
+            <p>{"New Toolchain"}</p>
+          </div>
+        </Button>
+      </Link>
+    </div>
     <ScrollArea className={cn("w-full px-[4px] space-y-2", props.scrollClassName)}>
       {props.userData.available_toolchains.map((toolchain_category : toolchainCategory, category_index : number) => (
         <div key={category_index} className='space-y-1'>
@@ -177,5 +145,6 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
         </div>
       ))}
     </ScrollArea>
+    </>
   );
 }
