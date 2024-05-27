@@ -20,12 +20,14 @@ import {
 	DropdownMenuItem
 } from "@/registry/default/ui/dropdown-menu"
 import { ToggleGroup, ToggleGroupItem } from "@/registry/default/ui/toggle-group"
-import { INPUT_COMPONENT_FIELDS, configEntryFieldType, inputComponentConfig, inputComponents, inputEvent, inputMapping } from "@/types/toolchain-interface"
+import { INPUT_COMPONENT_FIELDS, configEntry, configEntryFieldType, inputComponentConfig, inputComponents, inputEvent, inputMapping } from "@/types/toolchain-interface"
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
-import { useEffect, useState, Fragment, useCallback, ChangeEvent } from "react"
+import { useEffect, useState, Fragment, useCallback, ChangeEvent, use } from "react"
 import CompactInput from "@/registry/default/ui/compact-input"
 import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
 import { Separator } from "@/registry/default/ui/separator";
+import { Textarea } from "@/registry/default/ui/textarea";
+import { Toggle } from "@/registry/default/ui/toggle";
 
 export default function InputComponentSheet({
 	value,
@@ -40,8 +42,27 @@ export default function InputComponentSheet({
 	onDelete: () => void,
 	children: React.ReactNode
 }) {
-	const [actingValue, setActingValue] = useState<inputMapping>(JSON.parse(JSON.stringify(value)));
-	const [componentConfig, setComponentConfig] = useState<inputComponentConfig>(INPUT_COMPONENT_FIELDS[type]);
+	
+	const [componentConfigFields, setComponentConfigFields] = useState<inputComponentConfig>(INPUT_COMPONENT_FIELDS[type]);
+  // const 
+
+  const updateConfigFields = (input_mapping_value : inputMapping) => {
+    let newConfigFields : {[key: string]: configEntry} = {};
+    (INPUT_COMPONENT_FIELDS[type].config || []).forEach((c : configEntryFieldType) => {
+      newConfigFields[c.name] = {name : c.name, value: c.default};
+    });
+    input_mapping_value.config.forEach((c : configEntry) => {
+      newConfigFields[c.name] = {name : c.name, value: c.value};
+    });
+
+    return {
+      ...input_mapping_value,
+      config: (INPUT_COMPONENT_FIELDS[type].config || []).map((c : configEntryFieldType) => (newConfigFields[c.name]))
+    };
+  }
+
+  const [actingValue, setActingValue] = useState<inputMapping>(updateConfigFields(JSON.parse(JSON.stringify(value)) as inputMapping));
+
 	const resetActingValue = useCallback(() => {setActingValue(JSON.parse(JSON.stringify(value)))}, [value]);
 	const setHook = useCallback((hook : inputEvent, index : number) => {
 		setActingValue({
@@ -54,15 +75,31 @@ export default function InputComponentSheet({
 		});
 	}, [actingValue]);
 
-	useEffect(() => {setComponentConfig(INPUT_COMPONENT_FIELDS[type])}, [type]);
-	useEffect(() => {resetActingValue()}, [value]);
+  const setConfigValue = (p : boolean | string | number, index : number) => {
+    const field_name = (INPUT_COMPONENT_FIELDS[type].config || [])[index].name;
+    if (!field_name) return;
 
+    setActingValue((oldValue : inputMapping) => {return {
+      ...oldValue, 
+      config: [
+        ...oldValue.config.slice(0, index),
+        {name: field_name, value: p},
+        ...oldValue.config.slice(index+1)
+      ]
+    }});
+  };
+
+	useEffect(() => {setComponentConfigFields(INPUT_COMPONENT_FIELDS[type])}, [type]);
+	useEffect(() => {resetActingValue()}, [value]);
+  useEffect(() => {console.log("Acting Value:", actingValue)}, [actingValue]);
+
+  
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
 				{children}
 			</SheetTrigger>
-			<SheetContent className="h-full flex flex-col">
+			<SheetContent className="h-full flex flex-col" onContextMenu={(e) => {e.preventDefault()}}>
 				<SheetHeader>
 					<SheetTitle>{`Configure \`${type}\` Component`}</SheetTitle>
 					<SheetDescription>
@@ -77,8 +114,6 @@ export default function InputComponentSheet({
 						className='h-10 w-full'
 						defaultValue={actingValue.tailwind}
 					/>
-				{/* </div> */}
-
 					<div className="h-10 flex flex-row w-full justify-between">
 						<Label className="h-full flex flex-col justify-center">Hooks</Label>
 						<DropdownMenu>
@@ -88,7 +123,7 @@ export default function InputComponentSheet({
 								{/* </Button> */}
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="start">
-								{componentConfig.hooks.map((hook, index) => (
+								{componentConfigFields.hooks.map((hook, index) => (
 									<DropdownMenuItem key={index} onClick={() => {
 										setHook({
                       hook: hook, 
@@ -188,34 +223,44 @@ export default function InputComponentSheet({
 						))}
 					</div>
 				</ScrollArea>
-				<div className="flex-4 flex flex-col space-y-1">
-				{componentConfig.config && (
-					<>
-						<Label className="h-full">Config</Label>
-						{componentConfig.config.map((configEntry : configEntryFieldType, index) => (
-							<Fragment key={index}>
-								{configEntry.type === "boolean"  && (
-									<ToggleGroup
-										type="single"
-										// onValueChange={(value : boolean) => {
-										// 	setEntryType((value === "number") ? "number" : "string");
-										// }}
-										// className='flex flex-row justify-between'
-										// value={(entryType === "number") ? "number" : ""}
-									>
-										<ToggleGroupItem value="number" aria-label="Align center" variant={"outline"}>
-											{configEntry.name}
-										</ToggleGroupItem>
-									</ToggleGroup>
-								)}
-								{configEntry.type === "string"  && (
-									<CompactInput placeholder={configEntry.name}/>
-								)}
-							</Fragment>
-						))}
-					</>
-				)}
-				</div>
+        <Label className="flex-shrink flex flex-col justify-center">Config</Label>
+        <ScrollArea className="flex-5 rounded-md border-[2px] border-secondary">
+          <div className="flex flex-wrap p-2 pr-4 gap-x-2 gap-y-4">
+            {componentConfigFields.config && (
+              <>
+                {componentConfigFields.config.map((configEntry : configEntryFieldType, index : number) => (
+                  <Fragment key={index}>
+                    {configEntry.type === "boolean"  && (
+                      <Toggle className="max-w-[45%]" pressed={actingValue.config[index]?.value as boolean} onPressedChange={(p : boolean) => {
+                        setConfigValue(p, index);
+                      }}>
+                        {configEntry.name}
+                      </Toggle>
+                    )}
+                    {configEntry.type === "string"  && (
+                      <CompactInput className="w-[45%]" value={actingValue.config[index]?.value as string} placeholder={configEntry.name} onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        setConfigValue(e.target.value, index);
+                      }}/>
+                    )}
+                    {configEntry.type === "long_string"  && (
+                      // <CompactInput className="w-[45%]" placeholder={configEntry.name}/>
+                      <Textarea className="w-full resize-none" spellCheck={false} value={actingValue.config[index]?.value as string} placeholder={configEntry.name}
+                        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+                          setConfigValue(e.target.value, index);
+                      }}/>
+                    )}
+                    {configEntry.type === "number"  && (
+                      <CompactInput className="w-[45%]" value={actingValue.config[index]?.value as number} placeholder={configEntry.name} type="number" onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        // console.log("Number field set to:", [parseFloat(e.target.value)]);
+                        setConfigValue(parseFloat(e.target.value), index);
+                      }}/>
+                    )}
+                  </Fragment>
+                ))}
+              </>
+            )}
+          </div>
+        </ScrollArea>
 
 				<SheetFooter>
 					<SheetClose asChild>

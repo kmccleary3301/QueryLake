@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react';
+import { HTMLInputTypeAttribute, forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/registry/default/ui/button';
@@ -7,13 +7,13 @@ import { AspectRatio } from './aspect-ratio';
 
 const CompactInput = forwardRef(({
   className,
-  type = "",
+  type = "text",
   placeholder,
   hideText = false,
   ...props
 }: {
   className?: string;
-  type?: string;
+  type?: HTMLInputTypeAttribute;
   placeholder?: string;
   hideText?: boolean;
   [key: string]: any;
@@ -52,7 +52,7 @@ const CompactInput = forwardRef(({
 							`${buttonAvailable ? "w-full" : "w-full"} p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden`
 						}
 						// type={type}
-						type={hidden ? "password" : "text"}
+						type={hidden ? "password" : type}
 						{...props}
 						onFocus={(e) => {
 							setIsFocused(true);

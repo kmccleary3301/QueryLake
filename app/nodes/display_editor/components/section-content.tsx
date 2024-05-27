@@ -5,14 +5,16 @@ import {
 import ScrollSection from "@/components/manual_components/scrollable-bottom-stick/custom-scroll-section";
 import {
   contentSection,
+  contentDiv,
   alignType,
 	contentMapping
 } from "@/types/toolchain-interface";
 import DisplayMappings from "./display-mappings";
-import { useState, useRef } from "react";
+import { useState, useRef, Fragment } from "react";
 // import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { ContentDiv } from "./section-div";
 
 export function ContentSection({
 	onSplit,
@@ -47,7 +49,7 @@ export function ContentSection({
 
   return (
     <ContextMenuViewportWrapper
-			onSplit={onSplit} 
+			onSplit={onSplit}
 			onCollapse={onCollapse}
 			onAlign={(a : alignType) => {
 				updateSection({...section, align: a} as contentSection);
@@ -74,20 +76,38 @@ export function ContentSection({
 						tailwindToObject(["flex flex-col", section.tailwind], breakpoint)
 					}>
 						{section.mappings.map((mapping, index) => (
-							<DisplayMappings 
-								key={index} 
-								info={mapping}
-								onDelete={() => {updateSection({
-									...section, 
-									mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
-								} as contentSection)}}
-								setInfo={(value : contentMapping) => {
-									updateSection({
-										...section, 
-										mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
-									} as contentSection);
-								}}
-							/>
+              <Fragment key={index}>
+                {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
+                  <ContentDiv
+                    onSplit={onSplit}
+                    onCollapse={() => {updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                    } as contentSection)}}
+                    onSectionUpdate={(value : contentDiv) => {
+                      updateSection({
+                        ...section, 
+                        mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                      } as contentSection);
+                    }}
+                    sectionInfo={mapping as contentDiv}
+                  />
+                ) : (
+                  <DisplayMappings
+                    info={mapping as contentMapping}
+                    onDelete={() => {updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                    } as contentSection)}}
+                    setInfo={(value : contentMapping) => {
+                      updateSection({
+                        ...section, 
+                        mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                      } as contentSection);
+                    }}
+                  />
+                )}
+              </Fragment>
 						))}
 					</div>
 				</div>

@@ -69,7 +69,11 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
         onHoverEnd={() => setHover(false)}
       >
         <div className="pb-2 pt-2 flex flex-col">
-            <Tabs defaultValue={pathname} onValueChange={(value : string) => {console.log("Value changed to", value)}}>
+            <Tabs value={
+              pathname.startsWith("/nodes/node_editor") ? "/nodes/node_editor" : 
+              pathname.startsWith("/nodes/display_editor") ? "/nodes/display_editor" :
+              undefined
+            } onValueChange={(value : string) => {console.log("Value changed to", value)}}>
               <TabsList className="grid w-full grid-cols-2 rounded-none">
                 {examples.map((example, index) => (
                   <TabsTrigger key={index} value={example.href}>

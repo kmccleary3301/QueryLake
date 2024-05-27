@@ -38,15 +38,15 @@ export function DisplayComponentSkeletonMapper({
 		// Display Components
 		case "chat":
 			return (
-				<ChatSkeleton configuration={info}/>
+				<ChatSkeleton configuration={(info as displayMapping)}/>
 			);
 		case "markdown":
 			return (
-				<MarkdownSkeleton	configuration={info}/>
+				<MarkdownSkeleton	configuration={(info as displayMapping)}/>
 			);
 		case "text":
 			return (
-				<TextSkeleton configuration={info}/>
+				<TextSkeleton configuration={(info as displayMapping)}/>
 			);
 		case "graph":
 			return (
@@ -56,7 +56,7 @@ export function DisplayComponentSkeletonMapper({
 			);
     case "running_event_display":
       return (
-        <CurrentEventDisplaySkeleton configuration={info}/>
+        <CurrentEventDisplaySkeleton configuration={(info as displayMapping)}/>
       )
 
 		// Input Components
@@ -159,8 +159,6 @@ export default function DisplayMappings({
 					{/* </Button> */}
 					</div>
 				</DisplayComponentSkeletonMapper>
-				
-				
 			</div>
 		)}
 		</>

@@ -49,6 +49,8 @@ const arbitrarySupportedClasses = {
   text: 'color',
   'min-w': 'min-width',
   'max-w': 'max-width',
+  'min-h': 'min-height',
+  'max-h': 'max-height',
 };
 
 let styles: Record<string, Record<string, string>>;
@@ -113,7 +115,12 @@ export default function tailwindToObject(tailwind_strings: ClassValue[], breakpo
 
         let s = termPartitions[termPartitions.length - 1];
 
-        const segments = s.split('-');
+        let segments = s.split('-');
+        if (segments[0] === "min") {
+          segments = segments.slice(1);
+          segments[0] = `min-${segments[0]}`;
+        }
+
         if (segments[0] === "space" && segments.length === 3) {
           // Object.assign(
           //   styleAttr,
@@ -177,7 +184,6 @@ export default function tailwindToObject(tailwind_strings: ClassValue[], breakpo
         }
       } catch (e) {}
     });
-  
 
   // console.log("Breakpoint Styles:", stylesByBreakpoint);
   
@@ -187,7 +193,7 @@ export default function tailwindToObject(tailwind_strings: ClassValue[], breakpo
 		// console.log("styleAttrBreakpointAware:", JSON.parse(JSON.stringify(styleAttrBreakpointAware)));
 	}
 
-	// console.log("Breakpoint Style Compiled:", styleAttrBreakpointAware);
+	// console.log("Breakpoint Style Compiled:", styleAttr);
 
   return styleAttr;
 	// return styleAttrBreakpointAware;

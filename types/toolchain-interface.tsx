@@ -6,7 +6,6 @@ export type inputComponents = "file_upload" | "chat_input";
 export const DISPLAY_COMPONENTS : displayComponents[] = ["chat", "markdown", "text", "graph", "running_event_display"];
 export const INPUT_COMPONENTS : inputComponents[] = ["file_upload", "chat_input"];
 
-
 export type configEntryFieldType = {
   name: string,
   type: "boolean",
@@ -19,6 +18,10 @@ export type configEntryFieldType = {
   name: string,
   type: "number",
   default: number
+} | {
+  name: string,
+  type: "long_string",
+  default: string
 }
 
 export type inputComponentConfig = {
@@ -54,6 +57,43 @@ export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentC
       "on_submit",
       "selected_collections",
     ],
+    "config": [
+			{
+				"name": "test_1_boolean",
+				"type": "boolean",
+        "default": false
+			},
+      {
+				"name": "test_2_boolean",
+				"type": "boolean",
+        "default": true
+			},
+      {
+				"name": "test_3_number",
+				"type": "number",
+        "default": 3
+			},
+      {
+				"name": "test_4_number",
+				"type": "number",
+        "default": 4
+			},
+      {
+				"name": "test_5_string",
+				"type": "string",
+        "default": ""
+			},
+      {
+				"name": "test_6_string",
+				"type": "string",
+        "default": "6ix"
+			},
+      {
+				"name": "test_7_long_string",
+				"type": "long_string",
+        "default": "6ix"
+			}
+		],
 	},
 }
 
@@ -76,29 +116,48 @@ export type configEntry = {
   value: string | number | boolean
 }
 
-export type inputMappingProto = {
+// export type inputMappingProto = {
+//   hooks: inputEvent[],
+//   config: configEntry[],
+//   tailwind: string,
+// }
+
+// export type fileUploadMapping = inputMappingProto & {
+//   display_as: "file_upload"
+// }
+
+// export type chatInputMapping = inputMappingProto & {
+//   display_as: "chat_input"
+// }
+
+
+
+// export type inputMapping = fileUploadMapping | chatInputMapping;
+
+export type inputMapping = {
+  display_as: string,
   hooks: inputEvent[],
   config: configEntry[],
   tailwind: string,
 }
 
-export type fileUploadMapping = inputMappingProto & {
-  display_as: "file_upload"
-}
-
-export type chatInputMapping = inputMappingProto & {
-  display_as: "chat_input"
-}
-
-export type inputMapping = fileUploadMapping | chatInputMapping;
 export type contentMapping = displayMapping | inputMapping;
+
+export type alignType = "left" | "center" | "right" | "justify";
+
+export type contentDiv = {
+  type: "div",
+  align: alignType,
+  tailwind: string,
+  mappings: (contentMapping | contentDiv)[]
+}
 
 export type contentSection = {
   split: "none",
   size: number,
   align: alignType,
   tailwind: string,
-  mappings: contentMapping[],
+  mappings: (contentMapping | contentDiv)[],
   header?: headerSection,
   footer?: headerSection
 }
@@ -111,7 +170,6 @@ export type divisionSection = {
   footer?: headerSection
 }
 
-export type alignType = "left" | "center" | "right" | "justify";
 
 export type headerSection = {
   align: alignType,

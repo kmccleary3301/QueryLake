@@ -28,7 +28,10 @@ import {
 	displayMapping,
 	DISPLAY_COMPONENTS,
 	INPUT_COMPONENTS,
-	contentMapping
+	contentMapping,
+  contentDiv,
+  INPUT_COMPONENT_FIELDS,
+  configEntryFieldType
 } from '@/types/toolchain-interface';
 import CompactInput from '@/registry/default/ui/compact-input';
 import { ChangeEvent, useRef } from 'react';
@@ -51,7 +54,7 @@ export function ContextMenuViewportWrapper({
 	onCollapse : () => void,
 	onAlign: (a : alignType) => void,
 	setTailwind: (t : string) => void,
-	addComponent: (component : contentMapping) => void,
+	addComponent: (component : contentMapping | contentDiv) => void,
 	align: alignType,
 	tailwind: string,
 	headerAvailable?: boolean,
@@ -59,7 +62,7 @@ export function ContextMenuViewportWrapper({
 	children: React.ReactNode,
 }) {
 	const tailwindRef= useRef("");
-	
+
   return (
 		<ContextMenu>
 			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
@@ -101,6 +104,14 @@ export function ContextMenuViewportWrapper({
 					<p className='text-primary/0 text-xs'>.</p>Add Display
 					</ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
+            <ContextMenuItem inset onClick={() => (addComponent({
+              type: "div",
+              align: "center",
+              tailwind: "min-w-[20px] min-h-[20px]", 
+              mappings: []
+            }))}>
+              Div
+            </ContextMenuItem>
 						{DISPLAY_COMPONENTS.map((component, index) => (
 							<ContextMenuItem inset key={index} onClick={() => (addComponent({
 								display_route: [],
@@ -120,7 +131,10 @@ export function ContextMenuViewportWrapper({
 							<ContextMenuItem inset key={index} onClick={() => (addComponent({
 								display_as: component,
 								hooks: [],
-								config: [],
+								config: (INPUT_COMPONENT_FIELDS[component].config || []).map((c : configEntryFieldType) => ({
+                  name: c.name,
+                  value: c.default
+                })),
 								tailwind: ""
 							}))}>
 								{component}

@@ -159,6 +159,7 @@ export const NodeContextProvider = ({
 
 	const interface_configuration = useRef<displaySection>(interfaceConfiguration);
 	const set_interface_configuration = (value: displaySection) => {
+    // console.log("Setting interface configuration", value);
 		interface_configuration.current = value;
 	};
 	const get_interface_configuration : () => displaySection = () => {

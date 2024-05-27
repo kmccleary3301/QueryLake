@@ -49,6 +49,7 @@ export function DivisibleSection({
 
   const onSplit = (splitType : "horizontal" | "vertical" | "header" | "footer", count: number) => {
     if (splitType == "horizontal" || splitType == "vertical") {
+
       let sections_array : contentSection[] = Array(count).fill({
         split: "none",
         size: Math.min(100/count, 100),
@@ -60,9 +61,9 @@ export function DivisibleSection({
       sizes.current = Array(count).fill(Math.min(100/count, 100));
       
       sections_array[0] = JSON.parse(JSON.stringify(sectionRef.current)) as contentSection;
+      sections_array[0].size = Math.min(100/count, 100);
       sections_array[0].header = undefined;
       sections_array[0].footer = undefined;
-
 
       const { mappings, ...sectionInfoReduced } = sectionRef.current as contentSection;
 
@@ -159,18 +160,7 @@ export function DivisibleSection({
         }}>
           {(section as divisionSection).sections.map((split_section, index) => (
             <Fragment key={index}>
-              <ResizablePanel
-                defaultSize={split_section.size}
-                // onResize={(size : number, prevSize : number) => {
-                //   // onSectionUpdate({...sectionInfo as divisionSection, sections: [
-                //   //   ...(sectionInfo as divisionSection).sections.slice(0, index),
-                //   //   {...split_section, size : size},
-                //   //   ...(sectionInfo as divisionSection).sections.slice(index+1)
-                //   // ]});
-                //   sizes.current[index] = size;
-                //   console.log(`Panel ${index} resized from ${prevSize} to ${size}`)
-                // }}
-              >
+              <ResizablePanel defaultSize={split_section.size}>
                 <DivisibleSection
                   onCollapse={() => {resetSection(index)}}
                   onSectionUpdate={(sectionLocal) => {
