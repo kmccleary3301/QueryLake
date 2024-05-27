@@ -47,7 +47,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           <Handle
             key={index} 
             type="source" 
-            // isConnectable={!(feed.destination === "<<STATE>>" || feed.destination === "<<USER>>")} 
+            isConnectable={!(feed.destination === "<<STATE>>" || feed.destination === "<<USER>>")} 
             id={`feed-${index}`} 
             position={Position.Right}
             style={{
@@ -61,7 +61,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
             onContextMenu={(e) => e.preventDefault()}
             // onClick={(e) => {if (e.button === 2) e.preventDefault();}}
           >
-            <ModifyFeedMapSheet data={feed}>
+            <ModifyFeedMapSheet data={feed} className='pointer-events-auto'>
               <button className='absolute p-0 m-0 h-full flex flex-col justify-center w-3 rounded-full -ml-5 text-primary active:text-primary/70'>
                 <ChevronRight className='w-3 h-3'/>
               </button>

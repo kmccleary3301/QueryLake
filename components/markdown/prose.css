@@ -592,7 +592,8 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     counter-increment: list-number;
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: flex-start;
+    /* justify-content: start; */
     margin-bottom: 0.25rem;
     margin-top: 0.25rem;
     /* min-height: 1.75rem; */
@@ -652,7 +653,8 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     counter-increment: list-number;
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: flex-start;
+    /* justify-content: start; */
     margin-bottom: 0.125rem;
     margin-top: 0.125rem;
     /* min-height: 1.75rem; */
