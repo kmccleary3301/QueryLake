@@ -41,7 +41,6 @@ export function ContentSection({
                   />
                 ) : (
                   <DisplayMappings
-                    key={index}
                     info={(mapping) as contentMapping}
                   />
                 )}

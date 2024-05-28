@@ -22,30 +22,28 @@ export function ContentDiv({
   } = useContextAction();
 
   return (
-    <div className={`w-auto flex flex-row justify-${
+    <div className={`flex flex-row justify-${
       (section.align === "justify") ? "around" :
       (section.align === "left") ?    "start"   :
       (section.align === "center") ?  "center"  :
       "end"
     }`}>
-      <div style={tailwindToObject([section.tailwind], breakpoint)}>
-        <div style={tailwindToObject(["flex flex-col", section.tailwind], breakpoint)}>
-          {section.mappings.map((mapping, index) => (
-            <Fragment key={index}>
-              {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
-                <ContentDiv
-                  section={mapping as contentDiv}
-                />
-              ) : (
-                <DisplayMappings
-                  info={mapping as contentMapping}
-                />
-              )}
-            </Fragment>
-          ))}
-        </div>
+      <div className="" style={tailwindToObject([section.tailwind], breakpoint)}>
+        {section.mappings.map((mapping, index) => (
+          <Fragment key={index}>
+            {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
+              <ContentDiv
+                section={mapping as contentDiv}
+              />
+            ) : (
+              <DisplayMappings
+                info={mapping as contentMapping}
+              />
+
+            )}
+          </Fragment>
+        ))}
       </div>
     </div>
   );
 }
-

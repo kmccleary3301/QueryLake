@@ -1,10 +1,14 @@
 "use client";
 import {
+  contentDiv,
+	contentMapping,
 	headerSection
 } from "@/types/toolchain-interface";
 import DisplayMappings from "./display-mappings";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { Fragment } from "react";
+import { ContentDiv } from "./section-div";
 
 export function HeaderSection({
 	section = {align: "justify", tailwind: "", mappings: []},
@@ -32,10 +36,17 @@ export function HeaderSection({
 
 					{section.mappings.map((mapping, index) => (
 							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
-							<DisplayMappings
-								key={index}
-                info={mapping}
-							/>
+							// <DisplayMappings
+							// 	key={index}
+              //   info={mapping}
+							// />
+              <Fragment key={index}>
+                {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
+                  <ContentDiv section={mapping as contentDiv}/>
+                ) : (
+                  <DisplayMappings info={mapping as contentMapping}/>
+                )}
+              </Fragment>
 						))}
 				</div>
 		</div>

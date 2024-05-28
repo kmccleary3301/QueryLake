@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { inputMapping } from "@/types/toolchain-interface";
+import { configEntriesMap, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
@@ -9,8 +9,10 @@ import { substituteAny } from "@/types/toolchains";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
+import { Switch } from "@/registry/default/ui/switch";
+import { Label } from "@/registry/default/ui/label";
 
-export function FileUploadSkeleton({
+export function SwitchInputSkeleton({
 	configuration,
   children
 }:{
@@ -30,18 +32,19 @@ export function FileUploadSkeleton({
 }
 
 
-export default function FileUpload({
+export default function SwitchInput({
 	configuration,
-  // sendEvent = () => {},
+  entriesMap,
 }:{
 	configuration: inputMapping,
-  // sendEvent?: (event: string, event_params: {[key : string]: substituteAny}) => void
+  entriesMap: configEntriesMap
 }) {
   const { 
     userData, 
     breakpoint, 
     selectedCollections
   } = useContextAction();
+
   const { 
     callEvent,
     storedEventArguments,
@@ -52,30 +55,10 @@ export default function FileUpload({
     const fire_queue : {[key : string]: object}[]= 
     Array(Math.max(...configuration.hooks.map(hook => hook.fire_index))).fill({});
     
-    const hasOnUploadHook = configuration.hooks.some(hook => hook.hook === 'on_upload');
-    let file_upload_hashes : string[] = [];
-    if (hasOnUploadHook && files.length > 0) {
-      const uploadFileResponses = await uploadFiles({
-        files: files,
-        url: "/upload/",
-        parameters: {
-          "auth": userData?.auth as string,
-          "collection_hash_id": sessionId?.current as string,
-          "collection_type" : "toolchain_session"
-        }
-      });
-      file_upload_hashes = uploadFileResponses.map((response : any) => response.hash_id)
-                                              .filter((hash : string) => hash !== undefined);
-    }
-
     configuration.hooks.forEach(hook => {
       let new_args = {};
 
-      if (hook.hook === "on_upload") {
-        new_args = {
-          [`${hook.target_route}`]: file_upload_hashes,
-        }
-      } else if (hook.hook === "selected_collections") {
+      if (hook.hook === "selected_collections") {
         const collections = Array.from(selectedCollections.keys()).filter((key) => selectedCollections.get(key) === true);
         new_args = {
           [`${hook.target_route}`]: collections,
@@ -99,6 +82,13 @@ export default function FileUpload({
   }
 
   return (
-    <FileDropzone onFile={handleSubmission} style={tailwindToObject([configuration.tailwind], breakpoint)}/>
+    <div style={tailwindToObject([configuration.tailwind], breakpoint)}>
+      <div className="flex flex-row">
+        <Switch className="" onCheckedChange={(c : boolean) => {}}/>
+        <div className="h-auto flex flex-col justify-center pl-2">
+          <Label>{entriesMap.get("Label")?.value as string}</Label>
+        </div>
+      </div>
+    </div>
   )
 }

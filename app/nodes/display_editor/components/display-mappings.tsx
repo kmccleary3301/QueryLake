@@ -26,6 +26,7 @@ import { ChatSkeleton } from "@/components/toolchain_interface/chat";
 import { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
 import { TextSkeleton } from "@/components/toolchain_interface/text";
 import { CurrentEventDisplaySkeleton } from "@/components/toolchain_interface/current-event-display";
+import { SwitchInputSkeleton } from "@/components/toolchain_interface/switch";
 
 export function DisplayComponentSkeletonMapper({
 	info,
@@ -72,6 +73,12 @@ export function DisplayComponentSkeletonMapper({
 					{children}
 				</FileUploadSkeleton>
 			);
+    case "switch":
+      return (
+        <SwitchInputSkeleton configuration={info}>
+          {children}
+        </SwitchInputSkeleton>
+      );
 	}
 }
 

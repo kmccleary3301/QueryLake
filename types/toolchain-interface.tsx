@@ -1,10 +1,10 @@
 
 
 export type displayComponents = "chat" | "markdown" | "text" | "graph" | "running_event_display";
-export type inputComponents = "file_upload" | "chat_input";
+export type inputComponents = "file_upload" | "chat_input" | "switch";
 
 export const DISPLAY_COMPONENTS : displayComponents[] = ["chat", "markdown", "text", "graph", "running_event_display"];
-export const INPUT_COMPONENTS : inputComponents[] = ["file_upload", "chat_input"];
+export const INPUT_COMPONENTS : inputComponents[] = ["file_upload", "chat_input", "switch"];
 
 export type configEntryFieldType = {
   name: string,
@@ -58,40 +58,22 @@ export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentC
       "selected_collections",
     ],
     "config": [
-			{
-				"name": "test_1_boolean",
-				"type": "boolean",
-        "default": false
-			},
-      {
-				"name": "test_2_boolean",
-				"type": "boolean",
-        "default": true
-			},
-      {
-				"name": "test_3_number",
-				"type": "number",
-        "default": 3
-			},
-      {
-				"name": "test_4_number",
-				"type": "number",
-        "default": 4
-			},
-      {
-				"name": "test_5_string",
-				"type": "string",
-        "default": ""
-			},
-      {
-				"name": "test_6_string",
-				"type": "string",
-        "default": "6ix"
-			},
       {
 				"name": "test_7_long_string",
 				"type": "long_string",
         "default": "6ix"
+			}
+		],
+	},
+  "switch": {
+		"hooks": [
+      "value_map",
+    ],
+    "config": [
+      {
+				"name": "Label",
+				"type": "string",
+        "default": ""
 			}
 		],
 	},
@@ -116,6 +98,8 @@ export type configEntry = {
   value: string | number | boolean
 }
 
+export type configEntriesMap = Map<string, configEntry>;
+
 // export type inputMappingProto = {
 //   hooks: inputEvent[],
 //   config: configEntry[],
@@ -135,7 +119,7 @@ export type configEntry = {
 // export type inputMapping = fileUploadMapping | chatInputMapping;
 
 export type inputMapping = {
-  display_as: string,
+  display_as: inputComponents,
   hooks: inputEvent[],
   config: configEntry[],
   tailwind: string,
