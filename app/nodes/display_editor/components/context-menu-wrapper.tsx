@@ -36,6 +36,7 @@ import {
 import CompactInput from '@/registry/default/ui/compact-input';
 import { ChangeEvent, useRef } from 'react';
 import { config } from 'process';
+import { cn } from '@/lib/utils';
 
 
 export function ContextMenuViewportWrapper({
@@ -48,6 +49,7 @@ export function ContextMenuViewportWrapper({
 	tailwind,
 	headerAvailable = true,
 	footerAvailable = true,
+  className = "",
 	children
 }: {
 	onSplit : (split_type : "horizontal" | "vertical" | "header" | "footer", count: number) => void,
@@ -59,13 +61,14 @@ export function ContextMenuViewportWrapper({
 	tailwind: string,
 	headerAvailable?: boolean,
 	footerAvailable?: boolean,
+  className?: string,
 	children: React.ReactNode,
 }) {
 	const tailwindRef= useRef("");
 
   return (
 		<ContextMenu>
-			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
+			<ContextMenuTrigger className={cn("z-5 items-center justify-center text-sm", className)}>
 				{children}
 			</ContextMenuTrigger>
 			<ContextMenuContent className="space-y-1 pt-6 p-2">
@@ -191,14 +194,16 @@ export function ContextMenuHeaderWrapper({
 	addComponent,
 	align,
 	tailwind,
+  className = "",
 	children
 }: {
 	onCollapse : () => void,
 	onAlign: (a : alignType) => void,
 	setTailwind: (t : string) => void,
-	addComponent: (component : contentMapping) => void,
+	addComponent: (component : (contentMapping | contentDiv)) => void,
 	align: alignType,
 	tailwind: string,
+  className?: string,
 	children: React.ReactNode,
 }) {
 
@@ -206,7 +211,7 @@ export function ContextMenuHeaderWrapper({
 
   return (
 		<ContextMenu>
-			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center text-sm">
+			<ContextMenuTrigger className={cn("flex z-5 items-center justify-center text-sm", className)}>
 				{children}
 			</ContextMenuTrigger>
 			<ContextMenuContent className="space-y-2 pt-4 p-2">
@@ -248,6 +253,14 @@ export function ContextMenuHeaderWrapper({
 					<p className='text-primary/0 text-xs'>.</p>Add Display
 					</ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
+            <ContextMenuItem inset onClick={() => (addComponent({
+              type: "div",
+              align: "center",
+              tailwind: "min-w-[20px] min-h-[20px]", 
+              mappings: []
+            }))}>
+              Div
+            </ContextMenuItem>
 						{DISPLAY_COMPONENTS.map((component, index) => (
 							<ContextMenuItem inset key={index} onClick={() => (addComponent({
 								display_route: [],

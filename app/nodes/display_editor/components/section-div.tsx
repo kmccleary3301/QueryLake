@@ -14,14 +14,13 @@ import { useState, useRef, Fragment } from "react";
 // import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { cn } from "@/lib/utils";
 
 export function ContentDiv({
-	onSplit,
   onCollapse, // Delete this section
   onSectionUpdate,
   sectionInfo = {type: "div", align: "center", tailwind: "min-w-[20px] min-h-[20px]", mappings: []}
 }:{
-	onSplit: (split_type : "horizontal" | "vertical" | "header" | "footer", count: number) => void,
   onCollapse: () => void,
   onSectionUpdate: (section : contentDiv) => void,
   sectionInfo: contentDiv,
@@ -47,9 +46,16 @@ export function ContentDiv({
 	// useEffect(() => {console.log(cn(section.tailwind, "flex flex-col"))}, [section.tailwind]);
 
   return (
-    <div onContextMenu={(e) => {e.preventDefault(); e.stopPropagation()}}>
+    // <div className="border-2 border-dashed border-green-500" onContextMenu={(e) => {e.preventDefault(); e.stopPropagation()}}>
+    <div className={`flex flex-row justify-${
+      (section.align === "justify") ? "around" :
+      (section.align === "left") ?    "start"   :
+      (section.align === "center") ?  "center"  :
+      "end"
+    }`}>
       <ContextMenuViewportWrapper
-        onSplit={onSplit} 
+        className="inline-block"
+        onSplit={() => {}} 
         onCollapse={onCollapse}
         onAlign={(a : alignType) => {
           updateSection({...section, align: a} as contentDiv);
@@ -66,53 +72,44 @@ export function ContentDiv({
         footerAvailable={false}
       >
         <div className="border-2 border-dashed border-red-500" style={tailwindToObject([section.tailwind], breakpoint)}>
-          <div className={`flex flex-row justify-${
-            (section.align === "justify") ? "around" :
-            (section.align === "left") ?    "start"   :
-            (section.align === "center") ?  "center"  :
-            "end"
-          }`}>
-            <div style={tailwindToObject(["flex flex-col", section.tailwind], breakpoint)}>
-              {section.mappings.map((mapping, index) => (
-                <Fragment key={index}>
-                  {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
-                    <ContentDiv
-                      onSplit={onSplit}
-                      onCollapse={() => {updateSection({
-                        ...section, 
-                        mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
-                      } as contentDiv)}}
-                      onSectionUpdate={(value : contentDiv) => {
-                        updateSection({
-                          ...section, 
-                          mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
-                        } as contentDiv);
-                      }}
-                      sectionInfo={mapping as contentDiv}
-                    />
-                  ) : (
-                    <DisplayMappings
-                      info={mapping as contentMapping}
-                      onDelete={() => {updateSection({
-                        ...section, 
-                        mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
-                      } as contentDiv)}}
-                      setInfo={(value : contentMapping) => {
-                        updateSection({
-                          ...section, 
-                          mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
-                        } as contentDiv);
-                      }}
-                    />
+          {section.mappings.map((mapping, index) => (
+            <Fragment key={index}>
+              {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
+                <ContentDiv
+                  onCollapse={() => {updateSection({
+                    ...section, 
+                    mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                  } as contentDiv)}}
+                  onSectionUpdate={(value : contentDiv) => {
+                    updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                    } as contentDiv);
+                  }}
+                  sectionInfo={mapping as contentDiv}
+                />
+              ) : (
+                <DisplayMappings
+                  info={mapping as contentMapping}
+                  onDelete={() => {updateSection({
+                    ...section, 
+                    mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                  } as contentDiv)}}
+                  setInfo={(value : contentMapping) => {
+                    updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                    } as contentDiv);
+                  }}
+                />
 
-                  )}
-                </Fragment>
-              ))}
-            </div>
-          </div>
+              )}
+            </Fragment>
+          ))}
         </div>
       </ContextMenuViewportWrapper>
-    </div>
+      </div>
+    // </div>
   );
 }
 

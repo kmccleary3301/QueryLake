@@ -49,6 +49,7 @@ export function ContentSection({
 
   return (
     <ContextMenuViewportWrapper
+      className="h-full w-full"
 			onSplit={onSplit}
 			onCollapse={onCollapse}
 			onAlign={(a : alignType) => {
@@ -79,7 +80,6 @@ export function ContentSection({
               <Fragment key={index}>
                 {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
                   <ContentDiv
-                    onSplit={onSplit}
                     onCollapse={() => {updateSection({
                       ...section, 
                       mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]

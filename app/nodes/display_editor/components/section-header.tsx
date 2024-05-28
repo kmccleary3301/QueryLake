@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import {
   ContextMenuHeaderWrapper
 } from "./context-menu-wrapper";
 import {
 	alignType,
+	contentDiv,
 	contentMapping,
 	contentSection,
 	headerSection
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 import DisplayMappings from "./display-mappings";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
+import { ContentDiv } from "./section-div";
 
 export function HeaderSection({
 	onCollapse,
@@ -53,6 +55,7 @@ export function HeaderSection({
 		(typeof sectionInfo.tailwind === "string") &&
 		<div className={`text-center flex flex-row`}>
 			<ContextMenuHeaderWrapper 
+        className="h-full w-full"
 				onCollapse={onCollapse} 
 				onAlign={(a : alignType) => {
 					updateSection({...section, align: a})
@@ -76,20 +79,51 @@ export function HeaderSection({
 
 					{section.mappings.map((mapping, index) => (
 							// <div key={index} className="h-[50px]">{mapping.display_as}</div>
-							<DisplayMappings 
-								key={index} 
-								info={mapping}
-								onDelete={() => {updateSection({
-									...section, 
-									mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
-								} as contentSection)}}
-								setInfo={(value : contentMapping) => {
-									updateSection({
-										...section, 
-										mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
-									} as contentSection);
-								}}
-							/>
+							// <DisplayMappings 
+							// 	key={index} 
+							// 	info={mapping}
+							// 	onDelete={() => {updateSection({
+							// 		...section, 
+							// 		mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+							// 	} as contentSection)}}
+							// 	setInfo={(value : contentMapping) => {
+							// 		updateSection({
+							// 			...section, 
+							// 			mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+							// 		} as contentSection);
+							// 	}}
+							// />
+              <Fragment key={index}>
+                {((mapping as contentDiv).type && (mapping as contentDiv).type === "div") ? (
+                  <ContentDiv
+                    onCollapse={() => {updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                    } as contentSection)}}
+                    onSectionUpdate={(value : contentDiv) => {
+                      updateSection({
+                        ...section, 
+                        mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                      } as contentSection);
+                    }}
+                    sectionInfo={mapping as contentDiv}
+                  />
+                ) : (
+                  <DisplayMappings
+                    info={mapping as contentMapping}
+                    onDelete={() => {updateSection({
+                      ...section, 
+                      mappings: [...section.mappings.slice(0, index), ...section.mappings.slice(index+1)]
+                    } as contentSection)}}
+                    setInfo={(value : contentMapping) => {
+                      updateSection({
+                        ...section, 
+                        mappings: [...section.mappings.slice(0, index), value, ...section.mappings.slice(index+1)]
+                      } as contentSection);
+                    }}
+                  />
+                )}
+              </Fragment>
 						))}
 				</div>
 			</ContextMenuHeaderWrapper>

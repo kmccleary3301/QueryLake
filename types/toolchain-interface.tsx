@@ -174,7 +174,7 @@ export type divisionSection = {
 export type headerSection = {
   align: alignType,
   tailwind: string,
-  mappings: contentMapping[]
+  mappings: (contentMapping | contentDiv)[]
 }
 
 export type displaySection = contentSection | divisionSection
