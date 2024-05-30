@@ -19,10 +19,12 @@ import { set } from "date-fns";
 
 export function FolderViewer({ 
 	content,
+  pathname,
 	route = [],
 	topLevel = true,
 }:{ 
 	content: object,
+  pathname: string,
 	route?: string[],
 	topLevel?: boolean
 }) {
@@ -66,15 +68,19 @@ export function FolderViewer({
 						<div key={key}>
 							{(value === null)?(
 								<Link 
-									href={`/docs/${route.map((s : string) => toVariableName(s)).join("/")}/${toVariableName(key)}`} 
+									href={`/docs/${[...route, key].map((s : string) => toVariableName(s)).join("/")}`} 
 									className="flex items-center space-x-2"
 								>
-									<Button variant={"ghost"} className="whitespace-nowrap h-9 px-2">
-										{key}
+									<Button variant={
+                    (pathname.startsWith(`/docs/${[...route, key].map((s : string) => toVariableName(s)).join("/")}`)) ?
+                    "secondary" : 
+                    "ghost"
+                  } className="whitespace-nowrap h-9 px-2 w-full">
+										<p className="w-full text-left pl-2">{key}</p>
 									</Button>
 								</Link>
 							):(
-								<FolderViewer key={key} content={value} topLevel={false} route={[...route, key]} />
+								<FolderViewer key={key} content={value} pathname={pathname} topLevel={false} route={[...route, key]} />
 							)}
 						
 						</div>
@@ -88,15 +94,15 @@ export function FolderViewer({
 }
 
 export default function DocSidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
 
 	return (
-    <SidebarTemplate width={"260px"} buttonsClassName="pl-4 pr-4">
+    <SidebarTemplate width={"220px"} buttonsClassName="px-4">
       <div className={cn("flex flex-col w-full h-full", fontSans.className)}>
 				<div className="flex flex-col w-full h-full">
-					<ScrollArea className="pl-2 pr-2">
-						<div className="pb-[15px]">
-						<FolderViewer content={folder_structure}/>
+					<ScrollArea className="">
+						<div className="pb-[15px] w-[220px] -ml-2 px-2">
+						<FolderViewer content={folder_structure} pathname={pathname}/>
 						</div>
 					</ScrollArea>
 				</div>

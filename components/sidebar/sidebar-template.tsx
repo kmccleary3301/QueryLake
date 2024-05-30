@@ -7,6 +7,7 @@ import { motion, useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Home, Settings, Sidebar } from "lucide-react";
 
 export default function SidebarTemplate({ 
 	children,
@@ -75,8 +76,10 @@ export default function SidebarTemplate({
         initial={{translateX: 0, opacity: 1, zIndex: 52}}
         animate={controlSidebarButtonOffset}>
         {(sidebarToggleVisible) ? (
-          <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2`} onClick={() => {setSidebarOpened(true);}}>
-            <Icon.Sidebar id="closed_sidebar_button" size={24}/>
+          <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70`} onClick={() => {
+            setSidebarOpened(true);
+          }}>
+            <Sidebar id="closed_sidebar_button" size={24}/>
           </Button> 
         ):null}
       </motion.div>
@@ -91,21 +94,21 @@ export default function SidebarTemplate({
               {/* <div className="flex-grow px-0 flex flex-col"> */}
                 <div className={cn("flex flex-row pt-1 pb-[7.5px] px-30 items-center w-full justify-between", buttonsClassName)}>
                   <Link href="/home">
-                    <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
-                      <Icon.Home size={24}/>
+                    <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70">
+                      <Home size={24}/>
                     </Button>
                   </Link>
                   <Link href="/settings">
-                    <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2">
-                      <Icon.Settings size={24}/>
+                    <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70">
+                      <Settings size={24}/>
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2" onClick={() => {
+                  <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70" onClick={() => {
                     // TODO: Toggle Sidebar
                     setSidebarOpened(false);
                   }}>
                     {/* <Icon.Sidebar size={24} color="#E8E3E3" /> */}
-                    <Icon.Sidebar size={24}/>
+                    <Sidebar size={24}/>
                   </Button>
                 </div>
                 <div className='w-full h-[calc(100vh-52px)] flex flex-col'>

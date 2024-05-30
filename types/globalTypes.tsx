@@ -200,6 +200,6 @@ export type QueryLakeApiKey = {
 	key_preview: string,
 	created: number,
   created_string?: string,
-	last_used: number,
+	last_used: number | null,
   last_used_string?: string,
 };

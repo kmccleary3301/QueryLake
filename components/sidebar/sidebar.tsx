@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./sidebar-app";
 import { useEffect, useState } from "react";
 import DocSidebar from "./sidebar-docs";
+import ApiSidebar from "./sidebar-api";
 
 
 type sidebar_assigned = "app" | "api" | "documentation" | "none"
@@ -63,9 +64,15 @@ export default function SidebarController() {
 				pathname?.startsWith("/themes") ||
 				pathname?.startsWith("/collection") ||
 				pathname?.startsWith("/settings")
-			) && authReviewed && loginValid && <Sidebar/>}
-			{(pathname?.startsWith("/docs")
-			) && authReviewed && loginValid && <DocSidebar/>}
+			) && authReviewed && loginValid && 
+				<Sidebar/>
+			}
+			{(pathname?.startsWith("/docs")) && authReviewed && loginValid && 
+				<DocSidebar/>
+			}
+      {(pathname?.startsWith("/platform")) && authReviewed && loginValid && 
+				<ApiSidebar/>
+			}
 			{/* {sidebarAssignment === "api" && <DocSidebar/>} */}
 		</>
 	)

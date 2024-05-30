@@ -12,7 +12,7 @@ import { createApiKey, fetchApiKeys } from "@/hooks/querylakeAPI";
 import { useContextAction } from "@/app/context-provider";
 import { toast } from "sonner";
 import { ScrollArea } from "@/registry/default/ui/scroll-area";
-import { Pencil, Trash } from "lucide-react";
+import { LockKeyhole, Pencil, Trash } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/registry/default/ui/dialog";
 import { Label } from "@/registry/default/ui/label";
 import { Input } from "@/registry/default/ui/input";
@@ -36,10 +36,16 @@ export default function Component() {
 				if (data !== false) {
 					const keys_with_date_strings : QueryLakeApiKey[] = data.map((key : QueryLakeApiKey) => {
 						const create_date = (new Date(key.created * 1000));
-					const created_string = `${MONTH_NAMES[create_date.getMonth()]} ${create_date.getDate()}, ${create_date.getFullYear()}`;
+					  const created_string = `${MONTH_NAMES[create_date.getMonth()]} ${create_date.getDate()}, ${create_date.getFullYear()}`;
+            const last_used_date = (key.last_used === null)?null:(new Date(key.last_used * 1000));
+            const last_used_string = (last_used_date === null)?
+              "Never" :
+              `${MONTH_NAMES[last_used_date.getMonth()]} ${last_used_date.getDate()}, ${last_used_date.getFullYear()}`;
+            
 						return {
 							...key,
-							created_string: created_string
+							created_string: created_string,
+              last_used_string: last_used_string
 						}
 					});
 					setApiKeys(keys_with_date_strings);
@@ -58,7 +64,7 @@ export default function Component() {
 				if (data !== false) {
 					const create_date = (new Date(data.created * 1000));
 					const created_string = `${MONTH_NAMES[create_date.getMonth()]} ${create_date.getDate()}, ${create_date.getFullYear()}`;
-					setApiKeys((old_keys) => [...old_keys, {...data, created_string: created_string}]);
+					setApiKeys((old_keys) => [...old_keys, {...data, created_string: created_string, last_used_string: "Never"}]);
 					setCreatedApiKey(data.api_key);
 				} else {
 					toast("Failed to create API key");
@@ -67,41 +73,79 @@ export default function Component() {
 		})
 	}
 
+  const CreateApiKeyButton = () => {
+    return (
+      <Dialog onOpenChange={(open : boolean) => {if (open) setCreatedApiKey(undefined);}}>
+        <DialogTrigger asChild>
+          <Button>+ Create new secret key</Button>
+        </DialogTrigger>
+        <DialogContent className="">
+          <DialogHeader>
+            <DialogTitle>Create a new API key</DialogTitle>
+            <DialogDescription>
+              Add a new API key for use with the server API.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-4">
+              <Label htmlFor="name" className="">
+                Name (Optional)
+              </Label>
+              <Input id="name" onChange={(e) => {createApiKeyTitle.current = e.target.value;}} className="col-span-1" />
+            </div>
+            {/* <div className="flex flex-col gap-4">
+              <Label htmlFor="username" className="">
+                Username
+              </Label>
+              <Input id="username" value="@peduarte" className="col-span-3" />
+            </div> */}
+          </div>
+          {createdApiKey && (
+            <p className="text-xs text-nowrap">{createdApiKey}</p>
+          )}
+          <DialogFooter>
+            <div className="flex flex-row space-x-4">
+              {/* <DialogClose>
+                <Button type="button" variant="secondary">
+                  Cancel
+                </Button>
+              </DialogClose> */}
+              {/* {(createdApiKey === undefined) && ( */}
+                <Button type="submit" onClick={() => {
+                  createApiKeyHook(createApiKeyTitle.current || "");
+                }}>Create API Key</Button>
+              {/* )} */}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
 		<div className="w-full h-[calc(100vh)] flex flex-row justify-center">
+      {(ApiKeys.length > 0) ? (
+
+      
       <ScrollArea className="w-full">
-				<div className="p-8 px-16">
-					<h1 className="text-3xl font-semibold mb-4">All project API keys</h1>
-					{/* <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
-						<p className="font-bold">Project API keys have replaced user API keys.</p>
-						<p>
-							We recommend using project based API keys for more granular control over your resources.{" "}
-							<a className="underline text-blue-800" href="#">
-								Learn more
-							</a>
-						</p>
-					</div> */}
+				<div className="pb-8 pt-4 px-16 md:pl-24 space-y-8">
+					<h1 className="text-4xl font-semibold mb-4">All project API keys</h1>
+					
 					<p className="mb-4">
 						Do not share your API key with others, or expose it in the browser or other client-side code.
 					</p>
-					{/* <p className="mb-6">
-						View usage per API key on the{" "}
-						<a className="underline text-blue-800" href="#">
-							Usage page
-						</a>
-						.
-					</p> */}
+
 					<Table>
 						<TableHeader>
 							<TableRow>
 								<TableHead className="text-nowrap w-full">NAME</TableHead>
 								<TableHead className="text-nowrap pr-10">SECRET KEY</TableHead>
-								<TableHead className="text-nowrap pr-10">CREATED</TableHead>
-								<TableHead className="text-nowrap pr-10">LAST USED</TableHead>
-								<TableHead className="text-nowrap pr-10">PROJECT ACCESS</TableHead>
-								<TableHead className="text-nowrap pr-10">CREATED BY</TableHead>
-								<TableHead className="text-nowrap pr-10">PERMISSIONS</TableHead>
-								<TableHead className="text-nowrap w-[40px]"><div className=""/></TableHead>
+								<TableHead className="text-nowrap sm:pr-10 hidden sm:table-cell">CREATED</TableHead>
+								<TableHead className="text-nowrap sm:pr-10 hidden md:table-cell">LAST USED</TableHead>
+								<TableHead className="text-nowrap pr-10 hidden lg:table-cell">PROJECT ACCESS</TableHead>
+								<TableHead className="text-nowrap pr-10 hidden lg:table-cell">CREATED BY</TableHead>
+								<TableHead className="text-nowrap lg:pr-10 hidden xl:table-cell">PERMISSIONS</TableHead>
+								<TableHead className="text-nowrap w-[40px] hidden xl:table-cell"><div className="min-w-[10px]"/></TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -109,18 +153,26 @@ export default function Component() {
 								<TableRow key={index}>
 									<TableCell><p className="text-nowrap">{api_key.title}</p></TableCell>
 									<TableCell><p className="text-nowrap">{api_key.key_preview}</p></TableCell>
-									<TableCell><p className="text-nowrap">{api_key.created_string}</p></TableCell>
-									<TableCell><p className="text-nowrap">May 17, 2024</p></TableCell>
-									<TableCell><p className="text-nowrap">Default Project</p></TableCell>
-									<TableCell><p className="text-nowrap">{userData?.username}</p></TableCell>
-									<TableCell className="text-nowrap">
+									<TableCell className="hidden sm:table-cell">
+                    <p className="text-nowrap">{api_key.created_string}</p>
+                  </TableCell>
+									<TableCell className="hidden md:table-cell">
+                    <p className="text-nowrap">{api_key.last_used_string}</p>
+                  </TableCell>
+									<TableCell className="hidden lg:table-cell">
+                    <p className="text-nowrap">Default Project</p>
+                  </TableCell>
+									<TableCell className="hidden lg:table-cell">
+                    <p className="text-nowrap">{userData?.username}</p>
+                  </TableCell>
+									<TableCell className="text-nowrap hidden xl:table-cell">
 										<div className="flex items-center">
 											All
 											{/* <PencilIcon className="ml-2 h-4 w-4 text-gray-600" />
 											<TrashIcon className="ml-2 h-4 w-4 text-gray-600" /> */}
 										</div>
 									</TableCell>
-									<TableCell className="text-nowrap py-0">
+									<TableCell className="text-nowrap py-0 hidden xl:table-cell">
 										<div className="flex flex-row space-x-4">
 											<Button variant={"ghost"} className="h-8 w-8 p-0 rounded-full text-primary active:text-primary/70">
 												<Pencil className="w-4 h-4"/>
@@ -135,57 +187,34 @@ export default function Component() {
 						</TableBody>
 					</Table>
 					<div className="mt-6">
-						<Dialog onOpenChange={(open : boolean) => {if (open) setCreatedApiKey(undefined);}}>
-							<DialogTrigger asChild>
-								<Button>+ Create new secret key</Button>
-							</DialogTrigger>
-							<DialogContent className="">
-								<DialogHeader>
-									<DialogTitle>Create a new API key</DialogTitle>
-									<DialogDescription>
-										Add a new API key for use with the server API.
-									</DialogDescription>
-								</DialogHeader>
-								<div className="grid gap-4 py-4">
-									<div className="flex flex-col gap-4">
-										<Label htmlFor="name" className="">
-											Name (Optional)
-										</Label>
-										<Input id="name" onChange={(e) => {createApiKeyTitle.current = e.target.value;}} className="col-span-1" />
-									</div>
-									{/* <div className="flex flex-col gap-4">
-										<Label htmlFor="username" className="">
-											Username
-										</Label>
-										<Input id="username" value="@peduarte" className="col-span-3" />
-									</div> */}
-								</div>
-								{createdApiKey && (
-									<p className="text-xs text-nowrap">{createdApiKey}</p>
-								)}
-								<DialogFooter>
-									<div className="flex flex-row space-x-4">
-										<DialogClose asChild>
-											<Button type="button" variant="secondary">
-												Cancel
-											</Button>
-										</DialogClose>
-										{(createdApiKey === undefined) && (
-											<Button onClick={() => {
-												createApiKeyHook(createApiKeyTitle.current || "");
-											}}>Create API Key</Button>
-										)}
-									</div>
-								</DialogFooter>
-							</DialogContent>
-						</Dialog>
-						
+						<CreateApiKeyButton />
 						<Button className="ml-4" variant="outline">
 							View user API keys
 						</Button>
 					</div>
 				</div>
 			</ScrollArea>
+      ) : (
+        <div className="pb-8 pt-10 px-16 md:pl-24 w-full space-y-8">
+					<h1 className="text-3xl font-semibold mb-4 text-wrap">All project API keys</h1>
+					<p className="mb-4">
+						Do not share your API key with others, or expose it in the browser or other client-side code.
+					</p>
+          <div className="w-full flex flex-row justify-center p-8 px-16">
+            <div className="flex flex-col gap-4">
+              <div className="w-auto flex flex-row justify-center">
+                <div className="p-2 rounded-md bg-accent flex-shrink">
+                  <LockKeyhole className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+              <p className="text-md text-center">Create an API key to access this QueryLake deployment's API</p>
+              <div className="w-auto flex flex-row justify-center">
+                <CreateApiKeyButton />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
