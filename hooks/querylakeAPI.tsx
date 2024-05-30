@@ -8,6 +8,7 @@ import {
   membershipType,
   toolchain_session,
   setStateOrCallback,
+  QueryLakeApiKey,
 } from "@/types/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 import { ToolChain } from "@/types/toolchains";
@@ -642,6 +643,51 @@ export function modifyUserExternalProviders(args :{
         return;
 			}
 			if (args.onFinish) args.onFinish(data.success);
+		});
+	});
+}
+
+
+export function fetchApiKeys(args :{
+  auth: string,
+  onFinish?: (result : QueryLakeApiKey[] | false) => void
+}) {
+
+  const url = craftUrl(`/api/fetch_api_keys`, {
+    "auth": args.auth,
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean, result?: {api_keys: QueryLakeApiKey[]}}) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result.api_keys);
+		});
+	});
+}
+
+export function createApiKey(args :{
+  auth: string,
+  name?: string,
+  onFinish?: (result : QueryLakeApiKey & {api_key : string} | false) => void
+}) {
+
+  const url = craftUrl(`/api/create_api_key`, {
+    "auth": args.auth,
+    ...(args.name)?{"title": args.name}:{}
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean, result?: QueryLakeApiKey & {api_key : string}}) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result);
 		});
 	});
 }

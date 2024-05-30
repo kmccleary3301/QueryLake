@@ -7,6 +7,7 @@ import ChatBarInput from "@/components/manual_components/chat-input-bar";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Textarea } from "@/registry/default/ui/textarea";
+import { WavyCircularDisplay } from "./components/wavy-circular";
 // import { produce } from 'immer';
 
 export default function TestPage() {
@@ -55,20 +56,20 @@ export default function TestPage() {
   useEffect(() => {
     if (toolchainWebsocket.current) { return; }
 
-    const ws = new ToolchainSession({
-      onStateChange: updateState,
-      onTitleChange: () => {},
-      onMessage: (message : ToolchainSessionMessage) => {
-        // console.log(message);
-        if (message.toolchain_session_id !== undefined) {
-          sessionId.current = message.toolchain_session_id;
-        }
-      }
-    });
-    toolchainWebsocket.current = ws;
+    // const ws = new ToolchainSession({
+    //   onStateChange: updateState,
+    //   onTitleChange: () => {},
+    //   onMessage: (message : ToolchainSessionMessage) => {
+    //     // console.log(message);
+    //     if (message.toolchain_session_id !== undefined) {
+    //       sessionId.current = message.toolchain_session_id;
+    //     }
+    //   }
+    // });
+    // toolchainWebsocket.current = ws;
 
 
-    return () => { toolchainWebsocket.current?.socket.close(); toolchainWebsocket.current = undefined;}
+    // return () => { toolchainWebsocket.current?.socket.close(); toolchainWebsocket.current = undefined;}
   }, []);
 
   useEffect(() => {
@@ -220,6 +221,21 @@ export default function TestPage() {
                 />
                 {/* <p>{JSON.stringify(toolchainState, null, "\t")}</p> */}
               </ScrollArea>
+              <WavyCircularDisplay 
+                className="w-[400px] h-[400px] mx-0"
+                containerClassName="transform-gpu w-[400px] h-[400px]"
+                canvasClassName="w-[400px] h-[400px] blur-[0px]"
+                blur={0}
+                waveWidth={4} 
+                waveCount={4} 
+                waveAmplitude={0.1}
+                wavePinchEnd={0}
+                wavePinchMiddle={0.064}
+                speed={14}
+                backgroundFill="primary"
+              >
+                <div className="w-400 h-400"/>
+              </WavyCircularDisplay>
             </div>
           </div>
         </div>

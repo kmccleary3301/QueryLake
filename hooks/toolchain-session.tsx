@@ -7,6 +7,7 @@ import {
   compositionType,
   substituteAny 
 } from "@/types/toolchains";
+import { toast } from "sonner";
 
 export type toolchainStateType = {title?: string, [key : string]: substituteAny};
 
@@ -99,6 +100,10 @@ export default class ToolchainSession {
 		this.socket.onopen = () => {
 			console.log("Connected to server");
 			this.onOpen(this);
+		}
+
+		this.socket.onclose = () => {
+		  toast("Connection to server closed");
 		}
 	}
   

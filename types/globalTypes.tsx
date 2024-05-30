@@ -192,4 +192,14 @@ export type timeWindowType = {
   title: string,
   cutoff: number,
   entries: toolchain_session[]
-}
+};
+
+export type QueryLakeApiKey = {
+	id: string, 
+	title: string, 
+	key_preview: string,
+	created: number,
+  created_string?: string,
+	last_used: number,
+  last_used_string?: string,
+};
