@@ -114,7 +114,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Email" autoComplete="email" {...field} />
+                    <CompactInput className="h-11" backgroundColor="#09090B" placeholder="Email" autoComplete="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +129,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Username" autoComplete="username" {...field} />
+                    <CompactInput className="h-11" backgroundColor="#09090B" placeholder="Username" autoComplete="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +144,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Password" type="password" autoComplete="new-password" {...field} />
+                    <CompactInput className="h-11" backgroundColor="#09090B" placeholder="Password" type="password" autoComplete="new-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,7 +159,7 @@ export default function Component() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Confirm Password" type="password" autoComplete="new-password" {...field} />
+                    <CompactInput className="h-11" backgroundColor="#09090B" placeholder="Confirm Password" type="password" autoComplete="new-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

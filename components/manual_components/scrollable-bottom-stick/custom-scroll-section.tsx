@@ -169,7 +169,7 @@ export default function ScrollSection({
 												setAnimateScroll(true);
 												scrollToBottomHook({});
 											}
-										}} className="rounded-full z-5 p-0 w-10 h-10 items-center" variant={"secondary"}>
+										}} className="rounded-full z-5 p-0 w-10 h-10 items-center bg-border hover:bg-border/60 active:bg-border/40" variant={"secondary"}>
 											<Icon.ChevronDown className="text-primary w-[50%] h-[50%]" />
 										</Button>
 									)}

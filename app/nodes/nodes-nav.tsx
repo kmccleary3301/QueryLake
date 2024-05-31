@@ -58,7 +58,7 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
   return (
     <div className="">
       <motion.div
-        className="overflow-hidden bg-secondary rounded-b-md"
+        className="overflow-hidden bg-secondary rounded-b-md border-[0.1rem] border-t-0 border-muted-foreground"
         initial={{ height: 20 }}
         animate={ (hover) ? 
           { height: 'auto'} : 
@@ -69,14 +69,14 @@ export function NodesNav({ className, ...props }: ExamplesNavProps) {
         onHoverEnd={() => setHover(false)}
       >
         <div className="pb-2 pt-2 flex flex-col">
-            <Tabs value={
+            <Tabs className="bg-secondary" value={
               pathname.startsWith("/nodes/node_editor") ? "/nodes/node_editor" : 
               pathname.startsWith("/nodes/display_editor") ? "/nodes/display_editor" :
               undefined
             } onValueChange={(value : string) => {console.log("Value changed to", value)}}>
-              <TabsList className="grid w-full grid-cols-2 rounded-none">
+              <TabsList className="grid w-full grid-cols-2 rounded-none bg-secondary">
                 {examples.map((example, index) => (
-                  <TabsTrigger key={index} value={example.href}>
+                  <TabsTrigger className="data-[state=active]:bg-accent" key={index} value={example.href}>
                     <Link href={example.href+linkAppend}>
                       {example.name}
                     </Link>

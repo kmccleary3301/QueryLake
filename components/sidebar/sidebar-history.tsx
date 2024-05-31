@@ -11,6 +11,7 @@ import { useContextAction } from "@/app/context-provider";
 import { Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HoverTextDiv } from '@/registry/default/ui/hover-text-div';
+import SidebarEntry from '../manual_components/sidebar-entry-fade';
 
 
 function SessionEntry({
@@ -163,7 +164,14 @@ export default function SidebarChatHistory({
                   {chat_history_window.title}
                 </p>
                 {chat_history_window.entries.map((value : toolchain_session, index : number) => (
-                  <SessionEntry key={index} session={value} selected={(value.id === activeToolchainSession)}/>
+                  // <SessionEntry key={index} session={value} selected={(value.id === activeToolchainSession)}/>
+                  <SidebarEntry key={index} href={`/app/session?s=${value.id}`} title={value.title}>
+                    <span className="flex flex-row justify-center pointer-events-auto gap-x-2 pr-2">
+                      <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
+                        <Trash className='w-3.5 h-3.5'/>
+                      </button>
+                    </span>
+                  </SidebarEntry>
                 ))}
               </div>
             )}

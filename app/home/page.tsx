@@ -53,9 +53,9 @@ export default function HomePage() {
             <motion.div className="h-[160px] lg:h-[400px] w-[300px] " variants={childVariants} key={index}>
               <Link href={button.link}>
                 <Button variant="ghost" className="h-full w-full rounded-xl overflow-auto whitespace-normal items-center py-2 lg:py-6 px-4 lg:px-8">
-                  <div className="h-full w-full flex flex-col justify-center lg:justify-start space-y-3">
+                  <div className="h-full w-full flex flex-col justify-center lg:justify-start space-y-3 bg-inherit">
                     <p className="w-[90%] text-lg lg:text-xl text-left"><strong>{button.header}</strong></p>
-                    <div className="bg-secondary rounded-full w-[90%] h-[2px]"/>
+                    <div className="rounded-full w-[90%] h-[2px] bg-accent active:bg-inherit"/>
                     <p className="w-[90%] text-sm lg:text-base break-words text-left">{button.content}</p>
                   </div>
                 </Button>

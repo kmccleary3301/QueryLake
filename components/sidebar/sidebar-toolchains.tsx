@@ -51,7 +51,7 @@ function ToolchainEntry({
           </Button>
         </div>
         <div className="absolute h-full w-full bottom-0 right-0 top-0 items-center gap-1.5 rounded-[inherit] overflow-hidden flex flex-row-reverse pointer-events-none">
-          <div className='h-full w-full bg-gradient-to-r from-accent/0 from-[calc(100%-80px)] to-background hover:to-accent'/>
+          {/* <div className='h-full w-full bg-gradient-to-r from-accent/0 from-[calc(100%-80px)] to-card hover:to-accent'/> */}
         </div>
         <div className="absolute h-full rounded-r-[inherit] w-full hidden group-hover:flex group-hover flex-row-reverse overflow-hidden pointer-events-none">
           <div className='h-full flex flex-col justify-center bg-accent z-10'>
@@ -68,7 +68,7 @@ function ToolchainEntry({
               </Link>
             </span>
           </div>
-          <div className='h-full w-[80px] bg-gradient-to-r from-accent/0 to-accent'/>
+          {/* <div className='h-full w-[80px] bg-gradient-to-r from-accent/0 to-card'/> */}
         </div>
       </div>
     </div>

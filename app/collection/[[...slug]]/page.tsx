@@ -93,7 +93,7 @@ export function FileDisplayType({
         )}
       </div>
       {progress !== undefined && (
-        <div className="w-[30%] px-2">  
+        <div className="w-[30%] px-2 pr-4">  
           <Progress value={progress} className='h-2 mb-2 w-auto' />
         </div>
       )}

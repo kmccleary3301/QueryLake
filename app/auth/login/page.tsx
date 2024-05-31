@@ -104,7 +104,7 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11 outline-none" placeholder="Username or Email" autoComplete="username" {...field} />
+                    <CompactInput className="h-11 outline-none" backgroundColor="#09090B" placeholder="Username or Email" autoComplete="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,7 +119,7 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <CompactInput className="h-11" placeholder="Password" type="password" autoComplete="current-password" {...field} />
+                    <CompactInput className="h-11" backgroundColor="#09090B" placeholder="Password" type="password" autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

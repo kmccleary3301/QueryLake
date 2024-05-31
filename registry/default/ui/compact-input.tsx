@@ -9,12 +9,14 @@ const CompactInput = forwardRef(({
   className,
   type = "text",
   placeholder,
+  backgroundColor = undefined,
   hideText = false,
   ...props
 }: {
   className?: string;
   type?: HTMLInputTypeAttribute;
   placeholder?: string;
+  backgroundColor?: string;
   hideText?: boolean;
   [key: string]: any;
 }, ref) => {
@@ -39,7 +41,9 @@ const CompactInput = forwardRef(({
   return (
     <div 
 			className={cn(
-				"bg-background flex h-10 rounded-md border border-input ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50",
+				`bg-${(backgroundColor)?"["+backgroundColor+"]":"background"} flex h-10 rounded-md border border-input ring-offset-background file:border-0`,
+        "file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2",
+        "focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50",
 				className, 
 				"flex flex-col-reverse mx-0 px-0",
 				isFocused ? "border-primary" : "",
@@ -100,7 +104,7 @@ const CompactInput = forwardRef(({
 						animate={animatePlaceholderStyle(placeHolderMoved)}
 						transition={{ duration: 0.2 }}
 					>
-						<span className={cn("placeholder bg-background px-1 rounded-sm", isFocused?"text-primary":"text-muted-foreground")}>{placeholder}</span>
+						<span className={cn(`placeholder bg-${(backgroundColor)?"["+backgroundColor+"]":"background"} px-1 rounded-sm`, isFocused?"text-primary":"text-muted-foreground")}>{placeholder}</span>
 					</motion.div>
 				</div>
 			</div>

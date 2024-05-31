@@ -15,7 +15,7 @@ export default function LoginBox({children, delay = 0} : {children: React.ReactN
 					id="Login box" 
 					className="pb-[20px] pt-[20px] flex flex-col items-center justify-between"
 				>
-					<div className="p-4 w-[320px] bg-background/85 rounded-md border-2 border-accent">
+					<div className="p-4 w-[320px] bg-[#09090B]/85 rounded-md border-2 border-accent">
 						{children}
 					</div>
 				</div>

@@ -85,7 +85,7 @@ export default function SidebarTemplate({
       </motion.div>
       
       <div className="h-screen">
-        <motion.div className="bg-background h-full flex flex-col p-0 z-54" initial={{width: 0}} animate={controlsSidebarWidth} >
+        <motion.div className="h-full bg-card flex flex-col p-0 z-54" initial={{width: 0}} animate={controlsSidebarWidth} >
           {(userData === undefined) ? (
             null
           ) : (
