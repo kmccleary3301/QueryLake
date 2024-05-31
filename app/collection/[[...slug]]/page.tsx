@@ -36,6 +36,8 @@ import { useContextAction } from "@/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/registry/default/ui/progress';
+import { LucideLoader2 } from 'lucide-react';
+import "./spin.css";
 
 const file_size_as_string = (size : number) => {
   if (size < 1024) {
@@ -50,13 +52,15 @@ const file_size_as_string = (size : number) => {
 }
 
 export function FileDisplayType({ 
-  name, 
+  name,
+  finishedProcessing,
   subtext = undefined,
   progress = undefined,
   onOpen = undefined,
   onDelete = undefined
 } : { 
-  name: string, 
+  name: string,
+  finishedProcessing: boolean,
   subtext?: string[],
   progress?: number,
   onOpen?: () => void,
@@ -64,7 +68,7 @@ export function FileDisplayType({
 }) {
   return (
     <div className="w-[inherit] h-14 flex flex-row items-center justify-between pt-2 pb-2">
-      <div className='w-[70%] pb-2 flex flex-col'>
+      <div className='w-[70%] pb-2 flex flex-col space-y-1'>
         {(onOpen === undefined)?(
           <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
         ):(
@@ -73,7 +77,19 @@ export function FileDisplayType({
           </Button>
         )}
         {(subtext !== undefined) && (
-          <p className={`text-xs text-primary/35`}>{subtext.join(" | ")}</p>
+          <div className='h-4 flex flex-row space-x-4'>
+            <p className={`text-xs text-primary/35 h-auto flex flex-col justify-center`}>{subtext.join(" | ")}</p>
+            {(!finishedProcessing) && (
+              <div className="h-4 bg-accent flex flex-row space-x-1 text-nowrap px-2 rounded-full">
+                <div className='h-auto flex flex-col justify-center'  style={{
+                  animation: 'spin 1.5s linear infinite'
+                }}>
+                  <LucideLoader2 className="w-3 h-3 text-primary" />
+                </div>
+                <p className='text-xs h-auto flex flex-col justify-center'>Processing</p>
+              </div>
+            )}
+          </div>
         )}
       </div>
       {progress !== undefined && (
@@ -114,22 +130,42 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     refreshCollectionGroups,
   } = useContextAction();
 
+  const fetchCollectionCallback = () => {
+    if (!params["slug"][1]) return;
+
+    fetchCollection({
+      auth: userData?.auth as string,
+      collection_id: params["slug"][1],
+      onFinish: (data) => {
+        if (data !== undefined) {
+          setCollectionTitle(data.title);
+          setCollectionDescription(data.description);
+          setCollectionDocuments(data.document_list);
+          setCollectionIsPublic(data.public);
+        }
+      }
+    })
+  };
+
+  useEffect(() => { // Keep refreshing collection documents every 5s if they are still processing
+    let documents_processing = false;
+    collectionDocuments.forEach(doc => {
+      if (!doc.finished_processing) {
+        documents_processing = true;
+      }
+    });
+    if (documents_processing) {
+      setTimeout(() => {
+        fetchCollectionCallback();
+      }, 5000)
+    }
+  }, [collectionDocuments]);
+
   useEffect(() => {
     if ( userData?.auth !== undefined) {
       if (CollectionMode === "edit" || CollectionMode === "view") {
         // setCollectionMode(collection_mode_immediate)
-        fetchCollection({
-          auth: userData?.auth,
-          collection_id: params["slug"][1],
-          onFinish: (data) => {
-            if (data !== undefined) {
-              setCollectionTitle(data.title);
-              setCollectionDescription(data.description);
-              setCollectionDocuments(data.document_list);
-              setCollectionIsPublic(data.public);
-            }
-          }
-        })
+        fetchCollectionCallback();
       }
     }
   }, [CollectionMode])
@@ -319,6 +355,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 {(pendingUploadFiles !== null && !publishStarted) && pendingUploadFiles.map((file, index) => (
                   <FileDisplayType
                     key={index}
+                    finishedProcessing={true}
                     name={file.name}
                     subtext={[file_size_as_string(file.size)]}
                     onDelete={() => {
@@ -330,6 +367,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 {uploadingFiles.map((file, index) => (
                   <FileDisplayType
                     key={index}
+                    finishedProcessing={true}
                     name={file.title}
                     progress={file.progress} 
                   />
@@ -337,6 +375,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 {collectionDocuments.map((doc, index) => (
                   <FileDisplayType
                     key={index} 
+                    finishedProcessing={doc.finished_processing}
                     name={doc.title}
                     onOpen={() => {
                       openDocument({

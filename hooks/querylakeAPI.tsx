@@ -130,6 +130,7 @@ export type fetch_collection_document_type = {
   hash_id: string,
   size: string,
   length: string,
+  finished_processing: boolean,
 }
 
 type collectionResponse = {

@@ -111,8 +111,10 @@ export default function Component() {
                 </Button>
               </DialogClose> */}
               {/* {(createdApiKey === undefined) && ( */}
-                <Button type="submit" onClick={() => {
+                <Button type="submit" onClick={(e) => {
                   createApiKeyHook(createApiKeyTitle.current || "");
+                  e.stopPropagation();
+                  e.preventDefault();
                 }}>Create API Key</Button>
               {/* )} */}
             </div>
