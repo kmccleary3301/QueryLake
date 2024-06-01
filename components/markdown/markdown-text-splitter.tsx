@@ -72,10 +72,14 @@ function parseText(text : string) {
 			});
 		}
 		else if (match[0].length > 4 && match[0].slice(0, 1) === "[" && match[0].length > 2) {
-			const textMatch = match[0].match(/\[.*?\]/);
-			const linkMatch = match[0].match(/\(.*?\)/);
-			if (textMatch && linkMatch) {
-				let text = textMatch[0];
+			const linkMatch = match[0].match(/\([^\)]*\)$/);
+			
+			if (linkMatch) {
+				const textMatch = match[0].slice(0, match[0].length - linkMatch[0].length);
+				console.log("ANCHOR PARSED:", match[0], match[0].length, linkMatch[0].length);
+				console.log("ANCHOR PARSED:", textMatch[0], linkMatch[0]);
+				console.log("Text match:", textMatch);
+				let text = textMatch;
 				text = text.slice(1, text.length - 1);
 				let link = linkMatch[0];
 				link = link.slice(1, link.length - 1);

@@ -165,7 +165,7 @@ export default function SidebarChatHistory({
                 </p>
                 {chat_history_window.entries.map((value : toolchain_session, index : number) => (
                   // <SessionEntry key={index} session={value} selected={(value.id === activeToolchainSession)}/>
-                  <SidebarEntry key={index} href={`/app/session?s=${value.id}`} title={value.title}>
+                  <SidebarEntry key={index} href={`/app/session?s=${value.id}`} title={value.title} className='pl-4' displaySelected={false}>
                     <span className="flex flex-row justify-center pointer-events-auto gap-x-2 pr-2">
                       <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
                         <Trash className='w-3.5 h-3.5'/>

@@ -12,6 +12,7 @@ import { getLanguage, highlight } from '@/lib/shiki';
 // import ScrollSection from '../manual_components/scrollable-bottom-stick/custom-scroll-section';
 import { Copy } from 'lucide-react';
 import { BundledLanguage } from 'shiki/langs';
+import { useContextAction } from "@/app/context-provider";
 // import { renderToHtml } from "shiki";
 // import codeToHTML
 // import { codeToHtml } from 'shiki/index.mjs';
@@ -58,6 +59,11 @@ export default function MarkdownCodeBlock({
   lang: string,
   finished?: boolean
 }){
+
+  const {
+    shikiTheme
+  } = useContextAction();
+
   const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
       return;
@@ -101,14 +107,14 @@ export default function MarkdownCodeBlock({
     
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, 'tokyo-night', language_get.value).then((html) => {
+      highlight(raw_code, shikiTheme, language_get.value).then((html) => {
         setCodeHTML(html);
       });
       
     } else {
       setUnprocessedText(unprocessed_text.split("\n"));
     }
-  }, [text, unProcessedText, finished, lang]);
+  }, [text, unProcessedText, finished, lang, shikiTheme]);
 
   return (
     <div className={cn(

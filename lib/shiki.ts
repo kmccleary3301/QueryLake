@@ -187,6 +187,57 @@ const languages = [
   ["Zig", "zig"]
 ];
 
+const SHIKI_BUNDLED_THEMES : {value: BundledTheme}[] = [
+  {"value": 'andromeeda'},
+  {"value": 'aurora-x'},
+  {"value": 'ayu-dark'},
+  {"value": 'catppuccin-frappe'},
+  {"value": 'catppuccin-latte'},
+  {"value": 'catppuccin-macchiato'},
+  {"value": 'catppuccin-mocha'},
+  {"value": 'dark-plus'},
+  {"value": 'dracula'},
+  {"value": 'dracula-soft'},
+  {"value": 'github-dark'},
+  {"value": 'github-dark-default'},
+  {"value": 'github-dark-dimmed'},
+  {"value": 'github-light'},
+  {"value": 'github-light-default'},
+  {"value": 'houston'},
+  {"value": 'light-plus'},
+  {"value": 'material-theme'},
+  {"value": 'material-theme-darker'},
+  {"value": 'material-theme-lighter'},
+  {"value": 'material-theme-ocean'},
+  {"value": 'material-theme-palenight'},
+  {"value": 'min-dark'},
+  {"value": 'min-light'},
+  {"value": 'monokai'},
+  {"value": 'night-owl'},
+  {"value": 'nord'},
+  {"value": 'one-dark-pro'},
+  {"value": 'poimandres'},
+  {"value": 'red'},
+  {"value": 'rose-pine'},
+  {"value": 'rose-pine-dawn'},
+  {"value": 'rose-pine-moon'},
+  {"value": 'slack-dark'},
+  {"value": 'slack-ochin'},
+  {"value": 'solarized-dark'},
+  {"value": 'solarized-light'},
+  {"value": 'synthwave-84'},
+  {"value": 'tokyo-night'},
+  {"value": 'vesper'},
+  {"value": 'vitesse-black'},
+  {"value": 'vitesse-dark'},
+  {"value": 'vitesse-light'}
+];
+
+export const SHIKI_THEMES : {value: BundledTheme, label: string}[] = SHIKI_BUNDLED_THEMES.map(theme => ({
+  value: theme.value as BundledTheme,
+  label: theme.value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+}));
+
 let LANGUAGES_MAP_PRE = new Map<string, {value: BundledLanguage, preview: string}>();
 
 // Loop through each language pair

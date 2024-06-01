@@ -24,6 +24,7 @@ import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
 import { fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
 import { ToolChain } from '@/types/toolchains';
+import { BundledTheme } from 'shiki/themes';
 
 export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
@@ -57,6 +58,9 @@ const Context = createContext<{
 	loginValid : boolean,
 	setLoginValid : setStateOrCallback<boolean>,
 
+  shikiTheme : BundledTheme,
+  setShikiTheme : setStateOrCallback<BundledTheme>,
+
 	getUserData : (user_data_input : userDataType | undefined, onFinish : () => void) => void,
 
 	breakpoint : breakpointType,
@@ -89,6 +93,9 @@ const Context = createContext<{
 
 	loginValid: false,
 	setLoginValid: () => false,
+
+  shikiTheme: 'tokyo-night',
+  setShikiTheme: () => 'tokyo-night',
 
 	getUserData: () => undefined,
 
@@ -130,6 +137,7 @@ export const ContextProvider = ({
 	const [auth_reviewed, set_auth_reviewed] = useState<boolean>(false);
 	const [login_valid, set_login_valid] = useState<boolean>(false);
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
+  const [shiki_theme, set_shiki_theme] = useState<BundledTheme>('tokyo-night');
 
 	useEffect(() => {
     const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
@@ -256,6 +264,8 @@ export const ContextProvider = ({
 			setAuthReviewed : set_auth_reviewed,
 			loginValid : login_valid,
 			setLoginValid : set_login_valid,
+      shikiTheme : shiki_theme,
+      setShikiTheme : set_shiki_theme,
 			getUserData : get_user_data,
 			breakpoint : break_point,
 		}}>
