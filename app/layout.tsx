@@ -5,7 +5,8 @@ import { siteConfig } from "@/config/site"
 import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { Analytics } from "@/components/inherited/analytics"
-import { ThemeProvider } from "@/components/inherited/providers"
+// import { ThemeProvider } from "@/components/inherited/providers"
+import { ThemeProvider } from "./theme-provider";
 import { SiteFooter } from "@/components/inherited/site-footer"
 import { SiteHeader } from "@/components/inherited/site-header"
 import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
@@ -14,7 +15,7 @@ import { Toaster as DefaultToaster } from "@/registry/default/ui/toaster"
 import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner"
 import { Toaster as NewYorkToaster } from "@/registry/new-york/ui/toaster"
 import { ContextProvider } from "./context-provider"
-import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
+// import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
 import SidebarController from "@/components/sidebar/sidebar"
 
 // import { useRouter } from "next/navigation"
@@ -100,22 +101,23 @@ export default function RootLayout({ children }: RootLayoutProps) {
           )}
         >
           {/* <ThemeWrapper> */}
-          <ThemeProvider
+          {/* <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             // disableTransitionOnChange
-          >
+          > */}
             <div vaul-drawer-wrapper="">
               <ContextProvider 
                 userData={undefined} 
                 selectedCollections={new Map()}
                 toolchainSessions={new Map()}
               >
+              <ThemeProvider>
               <div className="relative flex h-screen w-screen flex-row bg-background">
                 {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
                 <SidebarController />
-                <div className="relative flex h-screen w-full flex-col bg-background">
+                <div className="relative flex h-screen w-full flex-col bg-background text-foreground">
                   {/* <SiteHeader /> */}
                   {/* <AnimatePresence initial={false} mode="popLayout"> */}
                     {/* <main className="flex-1">{children}</main> */}
@@ -125,6 +127,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   {/* <SiteFooter /> */}
                 </div>
               </div>
+              </ThemeProvider>
               </ContextProvider>
             </div>
             <TailwindIndicator />
@@ -133,7 +136,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <NewYorkToaster />
             <DefaultToaster />
             <NewYorkSonner />
-          </ThemeProvider>
+          {/* </ThemeProvider> */}
           {/* </ThemeWrapper> */}
         </body>
       </html>

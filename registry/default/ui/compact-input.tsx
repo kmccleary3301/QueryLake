@@ -41,14 +41,16 @@ const CompactInput = forwardRef(({
   return (
     <div 
 			className={cn(
-				`bg-${(backgroundColor)?"["+backgroundColor+"]":"background"} flex h-10 rounded-md border border-input ring-offset-background file:border-0`,
+				`bg-background flex h-10 rounded-md border border-input ring-offset-background file:border-0`,
         "file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2",
         "focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50",
 				className, 
 				"flex flex-col-reverse mx-0 px-0",
 				isFocused ? "border-primary" : "",
 			)}
-		>
+      style={
+        (backgroundColor) ? {backgroundColor: backgroundColor} : {}
+      }>
 			<div className='flex flex-row py-0 px-0 h-full rounded-md w-auto max-w-full'>
 				<div className='flex-grow overflow-hidden px-0'>
 					<input
@@ -96,7 +98,7 @@ const CompactInput = forwardRef(({
 				<div className={cn(
 					"h-10 px-3 py-0",
 					className,
-					"bg-transparent pl-0 text-inherit placeholde-inherit w-auto"
+					"pl-0 text-inherit placeholde-inherit w-auto"
 				)} onFocus={()=>{console.log("Focus Called!")}}>
 					<motion.div
 						className='h-full'
@@ -104,7 +106,9 @@ const CompactInput = forwardRef(({
 						animate={animatePlaceholderStyle(placeHolderMoved)}
 						transition={{ duration: 0.2 }}
 					>
-						<span className={cn(`placeholder bg-${(backgroundColor)?"["+backgroundColor+"]":"background"} px-1 rounded-sm`, isFocused?"text-primary":"text-muted-foreground")}>{placeholder}</span>
+						<span className={cn(`placeholder bg-background px-1 rounded-sm`, isFocused?"text-primary":"text-muted-foreground")} style={
+              (backgroundColor) ? {backgroundColor: backgroundColor} : {}
+            }>{placeholder}</span>
 					</motion.div>
 				</div>
 			</div>

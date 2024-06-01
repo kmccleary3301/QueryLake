@@ -49,7 +49,7 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 				className="h-full w-full flex flex-col items-center justify-around overflow-x-scroll scrollbar-hide"
 			>
 				{/* <div /> */}
-				<div className="w-full pt-[20px] pb-[20px]">
+				<div className="w-full pt-[20px] pb-[20px] text-white">
 					<MoveLeftWrapper className="pb-[0px]">
 						<TextGenerateEffect
 							initialDelay={0.5}
@@ -58,7 +58,7 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 							spring={true}
 							words="QueryLake"
 							// words="Test"
-							className="inline-block text-2xl md:text-4xl lg:text-6xl text-white font-bold"
+							className="inline-block text-2xl md:text-4xl lg:text-6xl font-bold"
 						/>
 					</MoveLeftWrapper>
 					<MoveLeftWrapper className="pt-[2px] pb-[8px]">
@@ -67,7 +67,7 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 							staggerDelay={0.05}
 							words="An AI platform for everyone"
 							// words="Test"
-							className="inline-block text-base md:text-base mt-4 text-white font-normal inter-var"
+							className="inline-block text-base md:text-base mt-4 font-normal inter-var"
 						/>
 					</MoveLeftWrapper>
 					<LoginBox delay={5}>{children}</LoginBox>
