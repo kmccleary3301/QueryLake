@@ -10,8 +10,13 @@ export function ThemeSwitcher() {
   const segment = useSelectedLayoutSegment()
 
   React.useEffect(() => {
+    console.log("CONFIG UPDATED:", config);
+    
     document.body.classList.forEach((className) => {
       if (className.match(/^theme.*/)) {
+
+        const currentClassList = document.body.classList;
+        console.log("CURRENT CLASS LIST:", currentClassList);
         document.body.classList.remove(className)
       }
     })

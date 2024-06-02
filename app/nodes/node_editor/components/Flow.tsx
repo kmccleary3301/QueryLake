@@ -7,6 +7,7 @@ import 'reactflow/dist/base.css';
 import CustomNode, { ToolchainNodeReactFlow } from './CustomNode';
 import ContextMenuWrapper from './context-menu-wrapper';
 import { useNodeContextAction } from "../../context-provider";
+import { useThemeContextAction } from '@/app/theme-provider';
 
 import 'reactflow/dist/base.css';
 import './turbo_style.css';
@@ -33,6 +34,10 @@ export default function Flow() {
     reactFlowInstance,
     setReactFlowInstance,
   } = useNodeContextAction();
+
+  const {
+    theme
+  } = useThemeContextAction();
 
   // const [nodes, setNodes, onNodesChange] = useNodesState<object>(initNodes);
   // const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
@@ -82,9 +87,9 @@ export default function Flow() {
             defaultEdgeOptions={defaultEdgeOptions}
             onInit={setReactFlowInstance}
           >
-            <MiniMap color='#222' className='bg-background' zoomable pannable/>
+            <MiniMap color="#F00" className='bg-background' zoomable pannable/>
             <Controls />
-            <Background gap={16}/>
+            <Background style={{backgroundColor: theme.primary}} gap={16}/>
             {/* <Controls showInteractive={false} /> */}
             <svg>
               <defs>

@@ -21,6 +21,8 @@ type getUserMembershipArgs = {
 	set_admin?: React.Dispatch<React.SetStateAction<boolean>> | ((admin : boolean) => void)
 }
 
+type DataResponse<T> = {success : true, result: T} | {success : false, error : string};
+
 /**
  * Retrieves user memberships from the API.
  * @param args - The arguments for retrieving user memberships.
@@ -180,11 +182,12 @@ export function openDocument(args : openDocumentArgs) {
 
   fetch(url_doc_access).then((response) => {
     console.log(response);
-    response.json().then((data) => {
+    response.json().then((data : DataResponse<{access_encrypted: string, file_name: string}>) => {
       if (data["success"] == false) {
+        toast("Failed to fetch document");
         return;
       }
-      const url_actual = craftUrl("/api/fetch_document", {
+      const url_actual = craftUrl(`/api/fetch_document/${data.result.file_name}`, {
         "document_auth_access": data.result.access_encrypted
       })
       // Linking.openURL(url_actual.toString());

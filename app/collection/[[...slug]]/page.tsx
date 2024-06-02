@@ -81,10 +81,12 @@ export function FileDisplayType({
             <p className={`text-xs text-primary/35 h-auto flex flex-col justify-center`}>{subtext.join(" | ")}</p>
             {(!finishedProcessing) && (
               <div className="h-4 bg-accent flex flex-row space-x-1 text-nowrap px-2 rounded-full">
-                <div className='h-auto flex flex-col justify-center'  style={{
-                  animation: 'spin 1.5s linear infinite'
-                }}>
-                  <LucideLoader2 className="w-3 h-3 text-primary" />
+                <div className='h-auto flex flex-col justify-center'>
+                  <div style={{
+                    animation: 'spin 1.5s linear infinite'
+                  }}>
+                    <LucideLoader2 className="w-3 h-3 text-primary" />
+                  </div>
                 </div>
                 <p className='text-xs h-auto flex flex-col justify-center'>Processing</p>
               </div>
@@ -130,7 +132,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     refreshCollectionGroups,
   } = useContextAction();
 
-  const fetchCollectionCallback = () => {
+  const fetchCollectionCallback = (only_documents : boolean) => {
     if (!params["slug"][1]) return;
 
     fetchCollection({
@@ -138,10 +140,12 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
       collection_id: params["slug"][1],
       onFinish: (data) => {
         if (data !== undefined) {
-          setCollectionTitle(data.title);
-          setCollectionDescription(data.description);
           setCollectionDocuments(data.document_list);
-          setCollectionIsPublic(data.public);
+          if (!only_documents) {
+            setCollectionTitle(data.title);
+            setCollectionDescription(data.description);
+            setCollectionIsPublic(data.public);
+          }
         }
       }
     })
@@ -156,7 +160,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     });
     if (documents_processing) {
       setTimeout(() => {
-        fetchCollectionCallback();
+        fetchCollectionCallback(true);
       }, 5000)
     }
   }, [collectionDocuments]);
@@ -165,7 +169,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     if ( userData?.auth !== undefined) {
       if (CollectionMode === "edit" || CollectionMode === "view") {
         // setCollectionMode(collection_mode_immediate)
-        fetchCollectionCallback();
+        fetchCollectionCallback(false);
       }
     }
   }, [CollectionMode])
@@ -327,7 +331,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
             <div className="w-full items-center gap-1.5 flex-grow flex flex-col">
               <Label htmlFor="description" className='w-full text-left'>Description</Label>
               <Textarea
-                className='flex-grow'
+                className='flex-grow resize-none'
                 id="description"
                 value={collectionDescription}
                 disabled={(params["slug"][0] === "view")}
@@ -342,14 +346,14 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
             {(CollectionMode === "create" || CollectionMode === "edit") && (
               <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="document">Upload Document</Label>
-                <Input id="document" type="file" multiple onChange={(event) =>{
+                <Input id="document" className='items-center text-center pb-0' type="file" multiple onChange={(event) =>{
                   if (event.target.files !== null) {
                     setPendingUploadFiles(Array.from(event.target.files));
                   }
                 }}/>
               </div>
             )}
-            <div className="h-72 w-full rounded-md border flex-grow">
+            <div className="h-72 w-full rounded-md border border-input flex-grow">
               <ScrollArea className="p-4 pt-2 text-sm h-full">
                 <div className='w-[inherit]'>
                 {(pendingUploadFiles !== null && !publishStarted) && pendingUploadFiles.map((file, index) => (

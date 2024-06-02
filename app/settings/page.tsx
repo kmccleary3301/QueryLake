@@ -14,6 +14,7 @@ import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
 import { ThemesTabs } from "@/app/themes/tabs"
 import { ScrollArea } from "@/registry/default/ui/scroll-area"
 import { useContextAction } from "@/app/context-provider";
+import { REGISTRY_THEMES, ThemeProviderWrapper, themeType, useThemeContextAction } from "../theme-provider";
 import { ComboBox, ComboBoxScroll } from "@/registry/default/ui/combo-box"
 import CompactInput from "@/registry/default/ui/compact-input";
 import { Button } from "@/registry/default/ui/button";
@@ -25,14 +26,14 @@ import { toast } from "sonner";
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
 import { SHIKI_THEMES, SHIKI_THEMES_BACKGROUND_COLORS } from "@/lib/shiki";
 import { BundledTheme } from "shiki/themes";
+import { COMBOBOX_THEMES } from "../theme-provider";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
 //   description: "Hand-picked themes that you can copy and paste into your apps.",
 // }
 
-const DEMO_CODE = `
-function torusMat(t, t_2, t_3) {
+const DEMO_CODE = `function torusMat(t, t_2, t_3) {
   "use strict";
   var phi = (1+Math.sqrt(5))/2;
   var ca = Math.cos(t);
@@ -51,8 +52,7 @@ function torusMat(t, t_2, t_3) {
       [ 0,  sa*sb, -ca*sb,   0, 0, -sa*cb,  ca*cb,    0 ],
       [ 0,      0,      0, s2b, 0,      0,      0,  c2b ],
   ];
-}
-`;
+}`;
 
 export default function SettingsPage() {
   const {
@@ -62,16 +62,14 @@ export default function SettingsPage() {
     setShikiTheme,
   } = useContextAction();
 
+  const {
+    theme,
+    setTheme,
+  } = useThemeContextAction();
+
   const [keyAvailable, setKeyAvailable] = useState(false);
   const [currentKeyInput, setCurrentKeyInput] = useState("");
-
-
-  // useEffect(() => {
-  //   console.log("Key Available:", keyAvailable);
-  //   setCurrentKeyInput(keyAvailable?"...........":"");
-  // }, [keyAvailable]);
-  // useEffect(() => {console.log("User Data:", userData)}, [userData]);
-
+  
   const [currentProvider, setCurrentProvider] = useState("");
 
   useEffect(() => {
@@ -89,16 +87,15 @@ export default function SettingsPage() {
     console.log("User set providers:", userData?.user_set_providers);
   }, [userData?.user_set_providers]);
 
-
-
   return (
+    <ThemeProviderWrapper>
     <ScrollArea className="w-full h-screen">
       <div className="w-full flex flex-row justify-center">
         <div className="flex flex-col w-[85vw] md:w-[70vw] pb-[120px]">
-          <ThemeWrapper
+          {/* <ThemeWrapper
             defaultTheme="zinc"
             className="relative flex flex-col items-start md:flex-row md:items-center gap-8"
-          >
+          > */}
             <div className="w-full flex flex-col items-center">
               <PageHeader className="gap-8">
                 <PageHeaderHeading className="hidden md:block">
@@ -114,12 +111,27 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="flex flex-col justify-center space-y-2">
                   <div className="flex flex-row justify-between gap-6">
+                    <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
+                    <ComboBox
+                      values={COMBOBOX_THEMES}
+                      placeholder="Select Theme..."
+                      searchPlaceholder="Search Themes..."
+                      value={shikiTheme.theme}
+                      onChange={(value, _) => {
+                        const theme = REGISTRY_THEMES.get(value) as {light: themeType, dark: themeType} | undefined;
+                        if (theme) {
+                          setTheme(theme.dark);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Code Highlighter Theme</h1>
                     <ComboBox
                       values={SHIKI_THEMES}
                       placeholder="Select Code Theme..."
                       searchPlaceholder="Search Themes..."
-                      value={shikiTheme.theme}
+                      // value={shikiTheme.theme}
                       onChange={(value, _) => setShikiTheme({
                         theme: value as BundledTheme, 
                         backgroundColor: SHIKI_THEMES_BACKGROUND_COLORS.get(value as BundledTheme)
@@ -209,11 +221,12 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-          </ThemeWrapper>
+          {/* </ThemeWrapper> */}
           
           {/* <ThemesTabs /> */}
         </div>
       </div>
     </ScrollArea>
+    </ThemeProviderWrapper>
   )
 }

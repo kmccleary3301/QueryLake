@@ -15,13 +15,11 @@ function ThemeController({
 }:{
   children: React.ReactNode
 }) {
-  // const [primaryColor, setPrimaryColor] = useState('0, 100%, 50%'); // Initial Red
-  // const [secondaryColor, setSecondaryColor] = useState('120, 100%, 50%'); // Initial Green
   const [override, setOverride] = useState(false);
 
   const handleChangeColors = () => {
-    // setPrimaryColor(primaryColor === '0, 100%, 50%' ? '0, 50%, 50%' : '0, 100%, 50%'); // Toggle between Red and Blue
-    // setSecondaryColor(secondaryColor === '120, 100%, 50%' ? '120, 50%, 50%' : '120, 100%, 50%'); // Toggle between Green and Magenta
+    // const currentClassList = document.body.classList;
+    // console.log("CURRENT CLASS LIST:", currentClassList);
     setOverride((override) => !override);
   };
 
@@ -55,7 +53,6 @@ function ThemeController({
     </div>
   );
 }
-
 
 export default function ThemeTestPage() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);

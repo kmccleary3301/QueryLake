@@ -71,7 +71,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
           <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
           </Button>
         </Link>
-        <p className="bg-[#E8E3E3] w-5 h-5 text-[#1F1F28] text-xs text-center flex items-end rounded-full pt-0.5 pb-0.5 pl-1.5 pr-1.5 align-bottom">
+        <p className="bg-[#E8E3E3] min-w-5 h-5 text-[#1F1F28] text-xs text-center rounded-full flex flex-col justify-center px-1">
           {(documentCount <= 999)?documentCount.toString():"999+"}
         </p>
 			</div>

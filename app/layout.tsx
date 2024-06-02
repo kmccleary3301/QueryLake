@@ -6,7 +6,7 @@ import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { Analytics } from "@/components/inherited/analytics"
 import { ThemeProvider } from "@/components/inherited/providers"
-// import { ThemeProvider } from "./theme-provider";
+import { StateThemeProvider, ThemeProviderWrapper } from "./theme-provider";
 import { SiteFooter } from "@/components/inherited/site-footer"
 import { SiteHeader } from "@/components/inherited/site-header"
 import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
@@ -113,7 +113,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 selectedCollections={new Map()}
                 toolchainSessions={new Map()}
               >
-              {/* <ThemeProvider> */}
+              <StateThemeProvider>
+              <ThemeProviderWrapper>
               <div className="relative flex h-screen w-screen flex-row bg-background">
                 {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
                 <SidebarController />
@@ -127,7 +128,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   {/* <SiteFooter /> */}
                 </div>
               </div>
-              {/* </ThemeProvider> */}
+              </ThemeProviderWrapper>
+              </StateThemeProvider>
               </ContextProvider>
             </div>
             <TailwindIndicator />
