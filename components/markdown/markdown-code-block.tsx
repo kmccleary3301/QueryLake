@@ -107,7 +107,7 @@ export default function MarkdownCodeBlock({
     
     if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, shikiTheme, language_get.value).then((html) => {
+      highlight(raw_code, shikiTheme.theme, language_get.value).then((html) => {
         setCodeHTML(html);
       });
       
@@ -118,10 +118,10 @@ export default function MarkdownCodeBlock({
 
   return (
     <div className={cn(
-      'not-prose rounded-lg bg-[#0E0E0E] flex flex-col font-consolas text-white my-3', 
+      'not-prose rounded-lg flex flex-col font-consolas text-white my-3', 
       fontConsolas.className,
       className
-    )}>
+    )} style={{backgroundColor: (shikiTheme.backgroundColor || "#000000")}}>
       <div className='mr-5 ml-9 my-2 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language.preview}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {

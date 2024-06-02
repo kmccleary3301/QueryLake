@@ -5,8 +5,8 @@ import { siteConfig } from "@/config/site"
 import { fontSans } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { Analytics } from "@/components/inherited/analytics"
-// import { ThemeProvider } from "@/components/inherited/providers"
-import { ThemeProvider } from "./theme-provider";
+import { ThemeProvider } from "@/components/inherited/providers"
+// import { ThemeProvider } from "./theme-provider";
 import { SiteFooter } from "@/components/inherited/site-footer"
 import { SiteHeader } from "@/components/inherited/site-header"
 import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
@@ -101,19 +101,19 @@ export default function RootLayout({ children }: RootLayoutProps) {
           )}
         >
           {/* <ThemeWrapper> */}
-          {/* <ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             // disableTransitionOnChange
-          > */}
+          >
             <div vaul-drawer-wrapper="">
               <ContextProvider 
                 userData={undefined} 
                 selectedCollections={new Map()}
                 toolchainSessions={new Map()}
               >
-              <ThemeProvider>
+              {/* <ThemeProvider> */}
               <div className="relative flex h-screen w-screen flex-row bg-background">
                 {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
                 <SidebarController />
@@ -127,7 +127,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   {/* <SiteFooter /> */}
                 </div>
               </div>
-              </ThemeProvider>
+              {/* </ThemeProvider> */}
               </ContextProvider>
             </div>
             <TailwindIndicator />
@@ -136,7 +136,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <NewYorkToaster />
             <DefaultToaster />
             <NewYorkSonner />
-          {/* </ThemeProvider> */}
+          </ThemeProvider>
           {/* </ThemeWrapper> */}
         </body>
       </html>

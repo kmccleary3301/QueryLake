@@ -23,7 +23,7 @@ import { modifyUserExternalProviders } from "@/hooks/querylakeAPI";
 import { Input } from "@/registry/default/ui/input";
 import { toast } from "sonner";
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
-import { SHIKI_THEMES } from "@/lib/shiki";
+import { SHIKI_THEMES, SHIKI_THEMES_BACKGROUND_COLORS } from "@/lib/shiki";
 import { BundledTheme } from "shiki/themes";
 
 // export const metadata: Metadata = {
@@ -119,8 +119,11 @@ export default function SettingsPage() {
                       values={SHIKI_THEMES}
                       placeholder="Select Code Theme..."
                       searchPlaceholder="Search Themes..."
-                      value={shikiTheme}
-                      onChange={(value, _) => setShikiTheme(value as BundledTheme)}
+                      value={shikiTheme.theme}
+                      onChange={(value, _) => setShikiTheme({
+                        theme: value as BundledTheme, 
+                        backgroundColor: SHIKI_THEMES_BACKGROUND_COLORS.get(value as BundledTheme)
+                      })}
                     />
                   </div>
                   <MarkdownCodeBlock text={DEMO_CODE} lang="javascript"/>

@@ -22,7 +22,7 @@ const childVariants = {
 const buttonProps : {header : string, content : string, link : string}[] = [
   {
     header: "Documentation",
-    content: "Need help or want ideas on what to do? View QueryLake documentation, written by Kyle McCleary.",
+    content: "Need help or want ideas on what to do? View QueryLake documentation written by Kyle McCleary.",
     link: "/docs"
   },
   {
@@ -53,9 +53,9 @@ export default function HomePage() {
             <motion.div className="h-[160px] lg:h-[400px] w-[300px] " variants={childVariants} key={index}>
               <Link href={button.link}>
                 <Button variant="ghost" className="h-full w-full rounded-xl overflow-auto whitespace-normal items-center py-2 lg:py-6 px-4 lg:px-8">
-                  <div className="h-full w-full flex flex-col justify-center lg:justify-start space-y-3 bg-inherit">
+                  <div className="h-full w-full flex flex-col justify-center lg:justify-start space-y-3">
                     <p className="w-[90%] text-lg lg:text-xl text-left"><strong>{button.header}</strong></p>
-                    <div className="rounded-full w-[90%] h-[2px] bg-accent active:bg-inherit"/>
+                    {/* <div className="rounded-full w-[90%] h-[2px] bg-accent"/> */}
                     <p className="w-[90%] text-sm lg:text-base break-words text-left">{button.content}</p>
                   </div>
                 </Button>

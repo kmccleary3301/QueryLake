@@ -119,7 +119,7 @@ export default function ChatInput({
   return (
 
     <div className={cn(
-      "max-h-[200px] flex w-full rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground",
+      "max-h-[200px] flex w-full rounded-md bg-input text-sm ring-offset-background placeholder:text-muted-foreground",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed",
       className
     )} 
@@ -151,7 +151,7 @@ export default function ChatInput({
               </div>
             )}
             <textarea
-              className={"border-none border-transparent flex-grow overflow-hidden outline-none h-auto resize-none bg-primary/0 border-0 ring-0 focus-visible:border-0 focus-visible:ring-0 ring-offset-0"}
+              className={"border-none border-transparent flex-grow overflow-hidden outline-none h-auto min-h-[20px] resize-none bg-primary/0 border-0 ring-0 focus-visible:border-0 focus-visible:ring-0 ring-offset-0"}
               id="review-text"
               onChange={handleChange}
               placeholder="Message"

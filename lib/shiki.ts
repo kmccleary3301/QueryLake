@@ -187,56 +187,62 @@ const languages = [
   ["Zig", "zig"]
 ];
 
-const SHIKI_BUNDLED_THEMES : {value: BundledTheme}[] = [
-  {"value": 'andromeeda'},
-  {"value": 'aurora-x'},
-  {"value": 'ayu-dark'},
-  {"value": 'catppuccin-frappe'},
-  {"value": 'catppuccin-latte'},
-  {"value": 'catppuccin-macchiato'},
-  {"value": 'catppuccin-mocha'},
-  {"value": 'dark-plus'},
-  {"value": 'dracula'},
-  {"value": 'dracula-soft'},
-  {"value": 'github-dark'},
-  {"value": 'github-dark-default'},
-  {"value": 'github-dark-dimmed'},
-  {"value": 'github-light'},
-  {"value": 'github-light-default'},
-  {"value": 'houston'},
-  {"value": 'light-plus'},
-  {"value": 'material-theme'},
-  {"value": 'material-theme-darker'},
-  {"value": 'material-theme-lighter'},
-  {"value": 'material-theme-ocean'},
-  {"value": 'material-theme-palenight'},
-  {"value": 'min-dark'},
-  {"value": 'min-light'},
-  {"value": 'monokai'},
-  {"value": 'night-owl'},
-  {"value": 'nord'},
-  {"value": 'one-dark-pro'},
-  {"value": 'poimandres'},
-  {"value": 'red'},
-  {"value": 'rose-pine'},
-  {"value": 'rose-pine-dawn'},
-  {"value": 'rose-pine-moon'},
-  {"value": 'slack-dark'},
-  {"value": 'slack-ochin'},
-  {"value": 'solarized-dark'},
-  {"value": 'solarized-light'},
-  {"value": 'synthwave-84'},
-  {"value": 'tokyo-night'},
-  {"value": 'vesper'},
-  {"value": 'vitesse-black'},
-  {"value": 'vitesse-dark'},
-  {"value": 'vitesse-light'}
+const SHIKI_BUNDLED_THEMES : {value: BundledTheme, backgroundColor: string}[] = [
+  { "value": "andromeeda", "backgroundColor": "#23262E" },
+  { "value": "aurora-x", "backgroundColor": "#07090F" },
+  { "value": "ayu-dark", "backgroundColor": "#0b0e14" },
+  { "value": "catppuccin-frappe", "backgroundColor": "#303446" },
+  { "value": "catppuccin-latte", "backgroundColor": "#eff1f5" },
+  { "value": "catppuccin-macchiato", "backgroundColor": "#24273a" },
+  { "value": "catppuccin-mocha", "backgroundColor": "#1e1e2e" },
+  { "value": "dark-plus", "backgroundColor": "#1E1E1E" },
+  { "value": "dracula", "backgroundColor": "#282A36" },
+  { "value": "dracula-soft", "backgroundColor": "#282A36" },
+  { "value": "github-dark", "backgroundColor": "#24292e" },
+  { "value": "github-dark-default", "backgroundColor": "#0d1117" },
+  { "value": "github-dark-dimmed", "backgroundColor": "#22272e" },
+  { "value": "github-light", "backgroundColor": "#fff" },
+  { "value": "github-light-default", "backgroundColor": "#ffffff" },
+  { "value": "houston", "backgroundColor": "#17191e" },
+  { "value": "light-plus", "backgroundColor": "#FFFFFF" },
+  { "value": "material-theme", "backgroundColor": "#263238" },
+  { "value": "material-theme-darker", "backgroundColor": "#212121" },
+  { "value": "material-theme-lighter", "backgroundColor": "#FAFAFA" },
+  { "value": "material-theme-ocean", "backgroundColor": "#0F111A" },
+  { "value": "material-theme-palenight", "backgroundColor": "#292D3E" },
+  { "value": "min-dark", "backgroundColor": "#1f1f1f" },
+  { "value": "min-light", "backgroundColor": "#ffffff" },
+  { "value": "monokai", "backgroundColor": "#272822" },
+  { "value": "night-owl", "backgroundColor": "#011627" },
+  { "value": "nord", "backgroundColor": "#2e3440ff" },
+  { "value": "one-dark-pro", "backgroundColor": "#282c34" },
+  { "value": "poimandres", "backgroundColor": "#1b1e28" },
+  { "value": "red", "backgroundColor": "#390000" },
+  { "value": "rose-pine", "backgroundColor": "#191724" },
+  { "value": "rose-pine-dawn", "backgroundColor": "#faf4ed" },
+  { "value": "rose-pine-moon", "backgroundColor": "#232136" },
+  { "value": "slack-dark", "backgroundColor": "#222222" },
+  { "value": "slack-ochin", "backgroundColor": "#FFF" },
+  { "value": "solarized-dark", "backgroundColor": "#002B36" },
+  { "value": "solarized-light", "backgroundColor": "#FDF6E3" },
+  { "value": "synthwave-84", "backgroundColor": "#262335" },
+  { "value": "tokyo-night", "backgroundColor": "#1a1b26" },
+  { "value": "vesper", "backgroundColor": "#101010" },
+  { "value": "vitesse-black", "backgroundColor": "#000" },
+  { "value": "vitesse-dark", "backgroundColor": "#121212" },
+  { "value": "vitesse-light", "backgroundColor": "#ffffff" }
 ];
 
 export const SHIKI_THEMES : {value: BundledTheme, label: string}[] = SHIKI_BUNDLED_THEMES.map(theme => ({
   value: theme.value as BundledTheme,
   label: theme.value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }));
+
+let SHIKI_THEMES_BACKGROUND_COLORS_PRE = new Map<BundledTheme, string>();
+for (const theme of SHIKI_BUNDLED_THEMES) {
+  SHIKI_THEMES_BACKGROUND_COLORS_PRE.set(theme.value as BundledTheme, theme.backgroundColor);
+}
+export const SHIKI_THEMES_BACKGROUND_COLORS = SHIKI_THEMES_BACKGROUND_COLORS_PRE;
 
 let LANGUAGES_MAP_PRE = new Map<string, {value: BundledLanguage, preview: string}>();
 
@@ -260,7 +266,7 @@ for (let value_set of languages) {
 const LANGUAGES_MAP = LANGUAGES_MAP_PRE;
 
 export function getLanguage(lang: string) : {value: BundledLanguage | "text", preview: string} {
-	const langSimple = lang.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+	const langSimple = (lang || "").replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 	// console.log(LANGUAGES_MAP);
 	// console.log("Searching for", langSimple, "got:", LANGUAGES_MAP.get(langSimple));
 	return LANGUAGES_MAP.get(langSimple) || {value: "text", preview: "Text"};
@@ -270,10 +276,41 @@ export async function highlight(code: string, theme: BundledTheme, lang: string)
 	const html = await codeToHtml(code, {
 		lang: lang as BundledLanguage,
 		theme: theme,
-		colorReplacements: {
-			"#1a1b26": "#00000000"
-		},
-
-	})
+		// colorReplacements: {
+		// 	"#1a1b26": "#00000000"
+		// },
+	});
   return html.replace(/^<pre[^>]*>/i, '<pre>');
+}
+
+const test_code = `
+print("Hello, World!")
+`
+
+export async function get_all_language_backgrounds() {
+  const backgrounds = new Map<string, string>();
+  let background_entries = new Array<{value: BundledTheme, backgroundColor: string}>();
+  
+  for (const e of SHIKI_BUNDLED_THEMES) {
+    const html = await codeToHtml("test", {
+      lang: "python",
+      theme: e.value,
+      // colorReplacements: {
+      //   "#1a1b26": "#00000000"
+      // },
+    })
+    const background = html.match(/^<pre[^>]*>/i);
+    const backgroundColor = background?background[0].match(/background\-color\:\#[a-fA-F0-9]+/i):undefined;
+    if (backgroundColor) {
+      const color_entry = backgroundColor[0].split(":")[1];
+      console.log(color_entry);
+      // backgrounds.set(e.value, background[1]);
+      background_entries.push({value: e.value, backgroundColor: color_entry});
+    }
+  }
+  // const languageBackgrounds = Object.fromEntries(backgrounds) as { [key: BundledLanguage]: string };
+  // return languageBackgrounds;
+  console.log("Shiki background values:", background_entries);
+
+  return backgrounds;
 }

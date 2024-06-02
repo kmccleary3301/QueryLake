@@ -6,6 +6,7 @@ import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import { editor } from "monaco-editor-core";
 import { Button } from "@/registry/default/ui/button";
+import { get_all_language_backgrounds } from "@/lib/shiki";
 // import { getHighlighter } from 'shiki';
 // import * as monaco from 'monaco-editor';
 
@@ -14,23 +15,42 @@ function ThemeController({
 }:{
   children: React.ReactNode
 }) {
-  const [primaryColor, setPrimaryColor] = useState('0, 100%, 50%'); // Initial Red
-  const [secondaryColor, setSecondaryColor] = useState('120, 100%, 50%'); // Initial Green
+  // const [primaryColor, setPrimaryColor] = useState('0, 100%, 50%'); // Initial Red
+  // const [secondaryColor, setSecondaryColor] = useState('120, 100%, 50%'); // Initial Green
+  const [override, setOverride] = useState(false);
 
   const handleChangeColors = () => {
-    setPrimaryColor(primaryColor === '0, 100%, 50%' ? '0, 50%, 50%' : '0, 100%, 50%'); // Toggle between Red and Blue
-    setSecondaryColor(secondaryColor === '120, 100%, 50%' ? '120, 50%, 50%' : '120, 100%, 50%'); // Toggle between Green and Magenta
+    // setPrimaryColor(primaryColor === '0, 100%, 50%' ? '0, 50%, 50%' : '0, 100%, 50%'); // Toggle between Red and Blue
+    // setSecondaryColor(secondaryColor === '120, 100%, 50%' ? '120, 50%, 50%' : '120, 100%, 50%'); // Toggle between Green and Magenta
+    setOverride((override) => !override);
   };
 
   return (
     <div
-      style={{
-        // '--background': primaryColor,
-        // '--secondary': secondaryColor,
-      } as React.CSSProperties} // Add type assertion to accept custom CSS properties
+      style={(override)?({
+        '--background': '0, 100%, 50%',
+        '--foreground': '0, 100%, 50%',
+        '--card': '0, 100%, 50%',
+        '--card-foreground': '0, 100%, 50%',
+        '--popover': '0, 100%, 50%',
+        '--popover-foreground': '0, 100%, 50%',
+        '--primary': '0, 100%, 50%',
+        '--primary-foreground': '0, 100%, 50%',
+        '--secondary': '0, 100%, 50%',
+        '--secondary-foreground': '0, 100%, 50%',
+        '--muted': '0, 100%, 50%',
+        '--muted-foreground': '0, 100%, 50%',
+        '--accent': '0, 100%, 50%',
+        '--accent-foreground': '0, 100%, 50%',
+        '--destructive': '0, 100%, 50%',
+        '--destructive-foreground': '0, 100%, 50%',
+        '--border': '0, 100%, 50%',
+        '--input': '0, 100%, 50%',
+      } as React.CSSProperties):{}} // Add type assertion to accept custom CSS properties
       className="custom-colors bg-primary-color text-secondary-color p-4"
     >
       <Button onClick={handleChangeColors}>Change Colors</Button>
+      <Button onClick={get_all_language_backgrounds}>Get all language backgrounds</Button>
       {children}
     </div>
   );
@@ -48,35 +68,71 @@ export default function ThemeTestPage() {
 
   return (
     <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
-				<ScrollArea className="w-full">
-					<div className="flex flex-row justify-center">
-						<div className="w-[85vw] md:w-[70vw] lg:w-[45vw]">
-              <ThemeController>
-                <div className="flex flex-wrap justify-center gap-6 py-[100px]">
-                  <div className="w-[100px] h-[100px] bg-background border-8 border-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-foreground border-8 border-background"/>
-                  <div className="w-[100px] h-[100px] bg-card border-8 border-card-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-card-foreground border-8 border-card"/>
-                  <div className="w-[100px] h-[100px] bg-popover border-8 border-popover-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-popover-foreground border-8 border-popover"/>
-                  <div className="w-[100px] h-[100px] bg-primary border-8 border-primary-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-primary-foreground border-8 border-primary"/>
-                  <div className="w-[100px] h-[100px] bg-secondary border-8 border-secondary-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-secondary-foreground border-8 border-secondary"/>
-                  <div className="w-[100px] h-[100px] bg-muted border-8 border-muted-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-muted-foreground border-8 border-muted"/>
-                  <div className="w-[100px] h-[100px] bg-accent border-8 border-accent-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-accent-foreground border-8 border-accent"/>
-                  <div className="w-[100px] h-[100px] bg-destructive border-8 border-destructive-foreground"/>
-                  <div className="w-[100px] h-[100px] bg-destructive-foreground border-8 border-destructive"/>
-                  <div className="w-[100px] h-[100px] bg-border border-8 border-background"/>
-                  <div className="w-[100px] h-[100px] bg-input border-8 border-background"/>
+      <ScrollArea className="w-full">
+        <div className="flex flex-row justify-center">
+          <div className="w-[85vw] md:w-[70vw] lg:w-[45vw]">
+            <ThemeController>
+              <div className="flex flex-wrap justify-center gap-6 py-[100px]">
+                <div className="w-[100px] h-[100px] bg-background border-8 border-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">background</p>
                 </div>
-              </ThemeController>
-						</div>
-					</div>
-				</ScrollArea>
-			</div>
+                <div className="w-[100px] h-[100px] bg-foreground border-8 border-background">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-card border-8 border-card-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">card</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-card-foreground border-8 border-card">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">card foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-popover border-8 border-popover-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">popover</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-popover-foreground border-8 border-popover">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">popover foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-primary border-8 border-primary-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">primary</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-primary-foreground border-8 border-primary">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">primary foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-secondary border-8 border-secondary-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">secondary</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-secondary-foreground border-8 border-secondary">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">secondary-foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-muted border-8 border-muted-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">muted</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-muted-foreground border-8 border-muted">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">muted foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-accent border-8 border-accent-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">accent</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-accent-foreground border-8 border-accent">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">accent foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-destructive border-8 border-destructive-foreground">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">destructive</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-destructive-foreground border-8 border-destructive">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">destructive foreground</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-border border-8 border-background">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">border</p>
+                </div>
+                <div className="w-[100px] h-[100px] bg-input border-8 border-background">
+                  <p className="w-auto h-auto flex flex-col justify-center bg-white text-black text-center text-xs">input</p>
+                </div>
+              </div>
+            </ThemeController>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }
 

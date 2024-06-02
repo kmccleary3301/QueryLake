@@ -28,6 +28,8 @@ import { BundledTheme } from 'shiki/themes';
 
 export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
+export type codeThemePreferenceType = {theme: BundledTheme, backgroundColor?: string};
+
 const Context = createContext<{
 	userData: userDataType | undefined;
 	setUserData: Dispatch<SetStateAction<userDataType | undefined>>;
@@ -58,8 +60,8 @@ const Context = createContext<{
 	loginValid : boolean,
 	setLoginValid : setStateOrCallback<boolean>,
 
-  shikiTheme : BundledTheme,
-  setShikiTheme : setStateOrCallback<BundledTheme>,
+  shikiTheme : codeThemePreferenceType,
+  setShikiTheme : setStateOrCallback<codeThemePreferenceType>,
 
 	getUserData : (user_data_input : userDataType | undefined, onFinish : () => void) => void,
 
@@ -94,8 +96,8 @@ const Context = createContext<{
 	loginValid: false,
 	setLoginValid: () => false,
 
-  shikiTheme: 'tokyo-night',
-  setShikiTheme: () => 'tokyo-night',
+  shikiTheme: {theme: 'tokyo-night', backgroundColor: undefined},
+  setShikiTheme: () => {return {theme: 'tokyo-night', backgroundColor: undefined}},
 
 	getUserData: () => undefined,
 
@@ -137,7 +139,7 @@ export const ContextProvider = ({
 	const [auth_reviewed, set_auth_reviewed] = useState<boolean>(false);
 	const [login_valid, set_login_valid] = useState<boolean>(false);
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
-  const [shiki_theme, set_shiki_theme] = useState<BundledTheme>('tokyo-night');
+  const [shiki_theme, set_shiki_theme] = useState<codeThemePreferenceType>({theme: 'tokyo-night', backgroundColor: undefined});
 
 	useEffect(() => {
     const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
