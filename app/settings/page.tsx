@@ -14,7 +14,7 @@ import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
 import { ThemesTabs } from "@/app/themes/tabs"
 import { ScrollArea } from "@/registry/default/ui/scroll-area"
 import { useContextAction } from "@/app/context-provider";
-import { REGISTRY_THEMES, ThemeProviderWrapper, themeType, useThemeContextAction } from "../theme-provider";
+import { REGISTRY_THEMES, REGISTRY_THEMES_MAP, ThemeProviderWrapper, registryThemeEntry, themeType, useThemeContextAction } from "../theme-provider";
 import { ComboBox, ComboBoxScroll } from "@/registry/default/ui/combo-box"
 import CompactInput from "@/registry/default/ui/compact-input";
 import { Button } from "@/registry/default/ui/button";
@@ -24,9 +24,12 @@ import { modifyUserExternalProviders } from "@/hooks/querylakeAPI";
 import { Input } from "@/registry/default/ui/input";
 import { toast } from "sonner";
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
-import { SHIKI_THEMES, SHIKI_THEMES_BACKGROUND_COLORS } from "@/lib/shiki";
+import { SHIKI_THEMES, SHIKI_THEMES_BACKGROUND_COLORS, SHIKI_THEMES_TEXT_COLORS } from "@/lib/shiki";
 import { BundledTheme } from "shiki/themes";
 import { COMBOBOX_THEMES } from "../theme-provider";
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/registry/default/ui/table";
+import { ColorPicker } from "@/registry/default/ui/color-picker";
+import { hexToRgb, hslStringToHsl, hslStringToRGBHex, hslToRgb, rgbToHex } from "@/hooks/rgb-hsl-functions";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
@@ -105,7 +108,7 @@ export default function SettingsPage() {
                   User Settings
                 </PageHeaderHeading>
                 <PageActions>
-                  <ThemeCustomizer />
+                  {/* <ThemeCustomizer /> */}
                 </PageActions>
               </PageHeader>
               <div className="space-y-6">
@@ -118,7 +121,7 @@ export default function SettingsPage() {
                       searchPlaceholder="Search Themes..."
                       value={shikiTheme.theme}
                       onChange={(value, _) => {
-                        const theme = REGISTRY_THEMES.get(value) as {light: themeType, dark: themeType} | undefined;
+                        const theme = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
                         if (theme) {
                           setTheme(theme.dark);
                         }
@@ -134,11 +137,14 @@ export default function SettingsPage() {
                       // value={shikiTheme.theme}
                       onChange={(value, _) => setShikiTheme({
                         theme: value as BundledTheme, 
-                        backgroundColor: SHIKI_THEMES_BACKGROUND_COLORS.get(value as BundledTheme)
+                        backgroundColor: SHIKI_THEMES_BACKGROUND_COLORS.get(value as BundledTheme),
+                        textColor: SHIKI_THEMES_TEXT_COLORS.get(value as BundledTheme)
                       })}
                     />
                   </div>
-                  <MarkdownCodeBlock text={DEMO_CODE} lang="javascript"/>
+                  <div className="flex flex-row justify-center w-auto">
+                    <MarkdownCodeBlock text={DEMO_CODE} lang="javascript" className="max-w-[400px]"/>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex flex-row justify-between gap-6">
@@ -219,6 +225,43 @@ export default function SettingsPage() {
                   </Button>
                   </div>
                 </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                    <TableHead></TableHead>
+                    {Object.keys(REGISTRY_THEMES[0].stylesheet).map((value : string) => (
+                      <TableHead className="">
+                        {/* <p className="text-xs text-wrap max-w-[20px]">{value}</p> */}
+                      </TableHead>
+                    ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {REGISTRY_THEMES.map((theme_entry : registryThemeEntry, index : number) => (
+                      <TableRow key={index} className="border-none">
+                        <TableCell className="text-nowrap">{theme_entry.label}</TableCell>
+                        {Object.values(theme_entry.stylesheet).map((value : string, index_2: number) => (
+                          <TableCell key={index_2} className="p-0 m-0">
+                            <div className="w-auto h-[40px] -ml-[1px]" style={{
+                              backgroundColor: `hsl(${value})`
+                              // backgroundColor: `${hslStringToRGBHex(value)}`
+                            }}>
+
+                            </div>
+
+                            {/* <ColorPicker value={"#FF0000"} onChange={()=>{}}/> */}
+                            
+                          </TableCell>
+                        ))}
+                        {/* <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell className="text-right"></TableCell> */}
+                      </TableRow>
+                      
+                      
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           {/* </ThemeWrapper> */}

@@ -118,16 +118,20 @@ export default function MarkdownCodeBlock({
 
   return (
     <div className={cn(
-      'not-prose rounded-lg flex flex-col font-consolas text-white my-3', 
+      'not-prose rounded-lg flex flex-col font-consolas my-3', 
       fontConsolas.className,
       className
-    )} style={{backgroundColor: (shikiTheme.backgroundColor || "#000000")}}>
+    )} style={{
+      backgroundColor: (shikiTheme.backgroundColor || "#000000"), 
+      color: (shikiTheme.textColor || "#FFFFFF"),
+      // "--border": "#FFFFFF"
+    } as React.CSSProperties}>
       <div className='mr-5 ml-9 my-2 flex flex-row justify-between text-sm'>
         <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language.preview}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
           handleCopy(text + unProcessedText);
         }}>
-          <Copy className="w-4 h-4 text-primary"/>
+          <Copy className="w-4 h-4"/>
           <p className='pl-[9px]'>{"Copy"}</p>
         </Button>
       </div>

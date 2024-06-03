@@ -28,7 +28,7 @@ import { BundledTheme } from 'shiki/themes';
 
 export type breakpointType = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
-export type codeThemePreferenceType = {theme: BundledTheme, backgroundColor?: string};
+export type codeThemePreferenceType = {theme: BundledTheme, backgroundColor?: string, textColor?: string};
 
 const Context = createContext<{
 	userData: userDataType | undefined;
