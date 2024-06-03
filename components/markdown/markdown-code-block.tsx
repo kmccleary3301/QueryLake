@@ -118,7 +118,7 @@ export default function MarkdownCodeBlock({
 
   return (
     <div className={cn(
-      'not-prose rounded-lg flex flex-col font-consolas my-3', 
+      'not-prose rounded-lg flex flex-col font-consolas my-3 border border-input', 
       fontConsolas.className,
       className
     )} style={{
@@ -126,17 +126,20 @@ export default function MarkdownCodeBlock({
       color: (shikiTheme.textColor || "#FFFFFF"),
       // "--border": "#FFFFFF"
     } as React.CSSProperties}>
-      <div className='mr-5 ml-9 my-2 flex flex-row justify-between text-sm'>
-        <p className='font-consolas h-8 text-center flex flex-col justify-center border-none'>{language.preview}</p>
+      <div className='pr-5 pl-9 py-2 pb-1 rounded-t-md flex flex-row justify-between text-sm bg-input' style={{
+        // color: (shikiTheme.backgroundColor || "#000000"), 
+        // backgroundColor: (shikiTheme.textColor || "#FFFFFF"),
+      }}>
+        <p className='font-consolas h-8 text-center flex flex-col justify-center text-primary border-none'>{language.preview}</p>
         <Button className='m-0 h-8' variant="ghost" onClick={() => {
           handleCopy(text + unProcessedText);
         }}>
-          <Copy className="w-4 h-4"/>
-          <p className='pl-[9px]'>{"Copy"}</p>
+          <Copy className="w-4 h-4 text-primary"/>
+          <p className='pl-[9px] text-primary'>{"Copy"}</p>
         </Button>
       </div>
-      <pre className="p-0 flex flex-row rounded-lg text-sm ">
-        <code className="pt-[0px] pb-[20px] pl-[7px] pr-[7px] text-white/50 !whitespace-pre select-none border-opacity-100 border-secondary">
+      <pre className="p-0 pt-1 flex flex-row rounded-lg text-sm ">
+        <code className="pt-[0px] pb-[20px] pl-[7px] pr-[7px] !whitespace-pre select-none border-opacity-100 border-secondary">
           {Array(lineCount).fill(20).map((e, line_number: number) => (
             <span key={line_number}>
               {line_number + 1}

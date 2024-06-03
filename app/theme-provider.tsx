@@ -31,6 +31,7 @@ export const COMBOBOX_THEMES : {label : string, value: string}[] = themes.map((t
 export type themeType = {
   "theme-one": string,
   background: string;
+  "background-sidebar": string;
   foreground: string;
   card: string;
   cardForeground: string;
@@ -135,6 +136,7 @@ export function ThemeProviderWrapper({children}:{children: React.ReactNode}) {
       <div style={{
         '--theme-one': theme["theme-one"],
         '--background': theme.background,
+        '--background-sidebar': theme["background-sidebar"],
         '--foreground': theme.foreground,
         '--card': theme.card,
         '--card-foreground': theme.cardForeground,

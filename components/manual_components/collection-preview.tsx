@@ -58,12 +58,12 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
 		<div className={`w-full flex flex-col`}>
 			<div className="h-7 flex flex-row w-full space-x-2">
         <div className='w-5 h-5'> 
-        <Button className="w-5 h-5 rounded-full bg-indigo-600 items-center justify-center flex p-0"
+        <Button className="w-5 h-5 rounded-full bg-theme-one items-center justify-center flex p-0"
           onClick={() => {
             if (props.onToggleSelected) { props.onToggleSelected(!selected); }
             setSelected(selected => !selected);
         }}>
-          <motion.div animate={selectionCircleSize} className="rounded-full bg-[#23232D]"/>
+          <motion.div animate={selectionCircleSize} className="rounded-full bg-background"/>
         </Button>
         </div>
         <Link className='flex-grow whitespace-nowrap overflow-hidden text-ellipsis' href={`/collection/edit/${props.collectionId}`}>
@@ -71,7 +71,7 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
           <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">{title}</p>
           </Button>
         </Link>
-        <p className="bg-[#E8E3E3] min-w-5 h-5 text-[#1F1F28] text-xs text-center rounded-full flex flex-col justify-center px-1">
+        <p className="bg-foreground min-w-5 h-5 text-background text-xs text-center rounded-full flex flex-col justify-center px-1">
           {(documentCount <= 999)?documentCount.toString():"999+"}
         </p>
 			</div>

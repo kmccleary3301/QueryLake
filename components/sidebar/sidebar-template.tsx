@@ -85,11 +85,11 @@ export default function SidebarTemplate({
       </motion.div>
       
       <div className="h-screen">
-        <motion.div className="h-full bg-card flex flex-col p-0 z-54" initial={{width: 0}} animate={controlsSidebarWidth} >
+        <motion.div className="h-full bg-background-sidebar flex flex-col p-0 z-54" initial={{width: 0}} animate={controlsSidebarWidth} >
           {(userData === undefined) ? (
             null
           ) : (
-          <div className='w-full h-full border-r-[1px] border-accent'>
+          <div className='w-full h-full border-accent'>
             <div className={cn('max-h-screen h-full flex flex-col', `w-${width_as_string}`, className)}>
               {/* <div className="flex-grow px-0 flex flex-col"> */}
                 <div className={cn("flex flex-row pt-1 pb-[7.5px] px-30 items-center w-full justify-between", buttonsClassName)}>

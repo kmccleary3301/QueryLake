@@ -56,7 +56,7 @@ export default function SidebarEntry({
               <div className="w-7 h-full flex flex-col justify-center">
                 <div className='w-7 flex flex-row justify-center'>
                   {(selected) && (
-                    <Check className='w-3 h-3 text-[#7968D9]'/>
+                    <Check className='w-3 h-3 text-theme-one'/>
                   )}
                 </div>
               </div>
@@ -69,7 +69,7 @@ export default function SidebarEntry({
           </Button>
         </LinkOptional>
         <div className="absolute h-full w-full bottom-0 right-0 top-0 items-center gap-1.5 rounded-[inherit] overflow-hidden flex flex-row-reverse pointer-events-none">
-          <div className='h-full w-full bg-gradient-to-r from-accent/0 from-[calc(100%-30px)] to-card hover:to-accent'/>
+          <div className='h-full w-full bg-gradient-to-r from-accent/0 from-[calc(100%-30px)] to-background-sidebar hover:to-accent'/>
         </div>
         <div className="absolute h-full rounded-r-[inherit] w-full hidden group-hover:flex group-hover flex-row-reverse overflow-hidden pointer-events-none">
           <div className="pointer-events-none">

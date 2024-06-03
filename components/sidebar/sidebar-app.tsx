@@ -68,7 +68,7 @@ export default function AppSidebar() {
         <>
           <div className="w-full px-22 pb-0 flex-grow flex flex-col">
             <Tabs className="flex-grow flex flex-col" defaultValue={"collections"}>
-              <TabsList className="bg-[#7968D9] grid w-full h-auto grid-cols-3 bottom p-0 m-0 border-0">
+              <TabsList className="bg-theme-one grid w-full h-auto grid-cols-3 bottom p-0 m-0 border-0">
                 <TabsTrigger className="data-[state=active]:bg-[#E8E3E3] rounded-[inherit]" value="collections">
                   <Icon.Folder size={20} color="#17181D" />
                 </TabsTrigger>

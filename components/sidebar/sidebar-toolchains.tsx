@@ -38,7 +38,7 @@ function ToolchainEntry({
             <div className="w-7 h-full flex flex-col justify-center">
               <div className='w-7 flex flex-row justify-center'>
                 {(selected) && (
-                  <Icon.Check className='w-3 h-3 text-[#7968D9]'/>
+                  <Icon.Check className='w-3 h-3 text-theme-one'/>
                 )}
               </div>
             </div>

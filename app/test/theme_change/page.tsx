@@ -7,6 +7,7 @@ import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import { editor } from "monaco-editor-core";
 import { Button } from "@/registry/default/ui/button";
 import { get_all_language_backgrounds } from "@/lib/shiki";
+import { hslStringToHsl, hslStringToRGBHex, hslToHslString, hslToRgb, rgbToHex, rgbToHsl } from "@/hooks/rgb-hsl-functions";
 // import { getHighlighter } from 'shiki';
 // import * as monaco from 'monaco-editor';
 
@@ -48,7 +49,22 @@ function ThemeController({
       className="custom-colors bg-primary-color text-secondary-color p-4"
     >
       <Button onClick={handleChangeColors}>Change Colors</Button>
-      <Button onClick={get_all_language_backgrounds}>Get all language backgrounds</Button>
+      <Button onClick={() => {
+        const hsl_test = "240 100% 50%";
+        console.log("hsl_test:", hsl_test);
+        const c_1 = hslStringToHsl(hsl_test) as number[];
+        console.log("c_1:", c_1);
+        const c_2 = hslToRgb(c_1);
+        console.log("c_2:", c_2);
+        const c_3 = rgbToHex(c_2);
+        console.log("c_3:", c_3);
+        const c_4 = rgbToHsl(c_2);
+        console.log("c_4:", c_4);
+        const c_5 = hslToHslString(c_4);
+        console.log("c_5:", c_5);
+        const c_6 = hslStringToRGBHex(hsl_test);
+        console.log("c_6:", c_6);
+      }}>Get all language backgrounds</Button>
       {children}
     </div>
   );

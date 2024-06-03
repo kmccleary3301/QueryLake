@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useMemo, useState } from 'react';
-import { HexColorPicker } from 'react-colorful';
+import { HexColorPicker, HslColorPicker } from 'react-colorful';
 import { cn } from '@/lib/utils';
 import { useForwardedRef } from '@/lib/use-forwarded-ref';
 import type { ButtonProps } from './button';
@@ -12,6 +12,10 @@ import {
   PopoverTrigger,
 } from './popover';
 import { Input } from './input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
+import { Label } from './label';
+import { rbgHexToHslString } from '@/hooks/rgb-hsl-functions';
 
 interface ColorPickerProps {
   value: string;
@@ -29,6 +33,10 @@ const ColorPicker = forwardRef<
   ) => {
     const ref = useForwardedRef(forwardedRef);
     const [open, setOpen] = useState(false);
+    const [editorMode, setEditorMode] = useState<'hex' | 'hsl'>('hex');
+    
+
+
 
     const parsedValue = useMemo(() => {
       return value || '#FFFFFF';

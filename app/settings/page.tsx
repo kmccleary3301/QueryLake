@@ -229,8 +229,8 @@ export default function SettingsPage() {
                   <TableHeader>
                     <TableRow>
                     <TableHead></TableHead>
-                    {Object.keys(REGISTRY_THEMES[0].stylesheet).map((value : string) => (
-                      <TableHead className="">
+                    {Object.keys(REGISTRY_THEMES[0].stylesheet).map((value : string, index : number) => (
+                      <TableHead key={index} className="">
                         {/* <p className="text-xs text-wrap max-w-[20px]">{value}</p> */}
                       </TableHead>
                     ))}
@@ -242,14 +242,7 @@ export default function SettingsPage() {
                         <TableCell className="text-nowrap">{theme_entry.label}</TableCell>
                         {Object.values(theme_entry.stylesheet).map((value : string, index_2: number) => (
                           <TableCell key={index_2} className="p-0 m-0">
-                            <div className="w-auto h-[40px] -ml-[1px]" style={{
-                              backgroundColor: `hsl(${value})`
-                              // backgroundColor: `${hslStringToRGBHex(value)}`
-                            }}>
-
-                            </div>
-
-                            {/* <ColorPicker value={"#FF0000"} onChange={()=>{}}/> */}
+                            <ColorPicker value={hslStringToRGBHex(value) as string} onChange={()=>{}}/>
                             
                           </TableCell>
                         ))}
