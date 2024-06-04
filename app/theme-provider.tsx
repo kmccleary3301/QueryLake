@@ -1,6 +1,6 @@
 // ThemeProvider.tsx
 'use client';
-import {
+import React, {
 	Dispatch,
 	PropsWithChildren,
 	SetStateAction,
@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { themes } from '@/registry/themes';
 import exp from 'constants';
+import { useTheme } from "next-themes"
 
 const REGISTRY_THEMES_PRE = new Map<string, object>();
 
@@ -65,54 +66,71 @@ export const REGISTRY_THEMES : registryThemeEntry[] = Array(themes.length*2).fil
   };
 }) as unknown as registryThemeEntry[];
 
-// [...themes.map((theme) => {
-//   let result = {...theme.cssVars.light, radius: 2}
-//   if (result.radius) delete (result as {radius: unknown})?.radius;
-//   return {
-//     label: `${theme.label} (Light)`,
-//     mode: "light",
-//     value: theme.name,
-//     stylesheet: result
-//   };
-// }), ...themes.map((theme) => {
-//   let result = {...theme.cssVars.light, radius: 2}
-//   if (result.radius) delete (result as {radius: unknown})?.radius;
-//   return {
-//     label: `${theme.label} (Dark)`,
-//     mode: "dark",
-//     value: theme.name,
-//     stylesheet: result
-//   };
-// })] as unknown as registryThemeEntry[];
-
-// export const REGISTRY_THEMES : registryThemeEntry[] = Array(REGISTRY_THEMES_PRE_2.length).fill(0).map((_, i) => {
-//   const index = Math.floor(i / 2) + ((i % 2 === 0) ? themes.length : 0);
-//   return REGISTRY_THEMES_PRE_2[index];
-// });
-
 const DEFAULT_THEME_ID = "openai";
 const DEFAULT_THEME = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: themeType, dark: themeType};
 
 const Context = createContext<{
 	theme: themeType;
   setTheme: Dispatch<SetStateAction<themeType>>;
+  themeStylesheet: React.CSSProperties;
+  setThemeStylesheet: Dispatch<SetStateAction<React.CSSProperties>>;
 }>({
 	theme: DEFAULT_THEME.dark,
   setTheme: () => {},
+  themeStylesheet: {},
+  setThemeStylesheet: () => {},
 });
 
 export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
+  const system_mode_theme = useTheme().theme;
+
+  const generate_stylesheet = (theme: themeType) => {
+    return {
+      '--theme-one': theme["theme-one"],
+      '--background': theme.background,
+      '--background-sidebar': theme["background-sidebar"],
+      '--foreground': theme.foreground,
+      '--card': theme.card,
+      '--card-foreground': theme.cardForeground,
+      '--popover': theme.popover,
+      '--popover-foreground': theme.popoverForeground,
+      '--primary': theme.primary,
+      '--primary-foreground': theme.primaryForeground,
+      '--secondary': theme.secondary,
+      '--secondary-foreground': theme.secondaryForeground,
+      '--muted': theme.muted,
+      '--muted-foreground': theme.mutedForeground,
+      '--accent': theme.accent,
+      '--accent-foreground': theme.accentForeground,
+      '--destructive': theme.destructive,
+      '--destructive-foreground': theme.destructiveForeground,
+      '--border': theme.border,
+      '--input': theme.input,
+    } as React.CSSProperties;
+  }
+
 	const [theme_i, set_theme_i] = useState(DEFAULT_THEME.dark);
+  const [theme_stylesheet_i, set_theme_stylesheet_i] = useState<React.CSSProperties>(generate_stylesheet(DEFAULT_THEME.dark));
 
   useEffect(() => {
     const theme = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: themeType, dark: themeType};
     set_theme_i(theme.dark);
   }, []);
 
+  useEffect(() => {
+    set_theme_stylesheet_i(generate_stylesheet(theme_i));
+  }, [theme_i]);
+
+  useEffect(() => {
+    console.log("SYSTEM THEME:", system_mode_theme);
+  }, [system_mode_theme]);
+
 	return (
 		<Context.Provider value={{ 
 			theme: theme_i,
       setTheme: set_theme_i,
+      themeStylesheet: theme_stylesheet_i,
+      setThemeStylesheet: set_theme_stylesheet_i,
 		}}>
       <div style={{
       } as React.CSSProperties}>
@@ -128,33 +146,12 @@ export const useThemeContextAction = () => {
 
 export function ThemeProviderWrapper({children}:{children: React.ReactNode}) {
   const {
-    theme
+    themeStylesheet
   } = useThemeContextAction();
 
   return (
     // <ThemeProvider>
-      <div style={{
-        '--theme-one': theme["theme-one"],
-        '--background': theme.background,
-        '--background-sidebar': theme["background-sidebar"],
-        '--foreground': theme.foreground,
-        '--card': theme.card,
-        '--card-foreground': theme.cardForeground,
-        '--popover': theme.popover,
-        '--popover-foreground': theme.popoverForeground,
-        '--primary': theme.primary,
-        '--primary-foreground': theme.primaryForeground,
-        '--secondary': theme.secondary,
-        '--secondary-foreground': theme.secondaryForeground,
-        '--muted': theme.muted,
-        '--muted-foreground': theme.mutedForeground,
-        '--accent': theme.accent,
-        '--accent-foreground': theme.accentForeground,
-        '--destructive': theme.destructive,
-        '--destructive-foreground': theme.destructiveForeground,
-        '--border': theme.border,
-        '--input': theme.input,
-      } as React.CSSProperties}>
+      <div style={themeStylesheet}>
         {children}
       </div>
     // </ThemeProvider>

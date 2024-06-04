@@ -30,6 +30,7 @@ import { COMBOBOX_THEMES } from "../theme-provider";
 import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/registry/default/ui/table";
 import { ColorPicker } from "@/registry/default/ui/color-picker";
 import { hexToRgb, hslStringToHsl, hslStringToRGBHex, hslToRgb, rgbToHex } from "@/hooks/rgb-hsl-functions";
+import { ModeToggle } from "@/components/inherited/mode-toggle";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
@@ -115,18 +116,21 @@ export default function SettingsPage() {
                 <div className="flex flex-col justify-center space-y-2">
                   <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
-                    <ComboBox
-                      values={COMBOBOX_THEMES}
-                      placeholder="Select Theme..."
-                      searchPlaceholder="Search Themes..."
-                      value={shikiTheme.theme}
-                      onChange={(value, _) => {
-                        const theme = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
-                        if (theme) {
-                          setTheme(theme.dark);
-                        }
-                      }}
-                    />
+                    <div className="flex flex-row space-x-2">
+                      {/* <ModeToggle/> */}
+                      <ComboBox
+                        values={COMBOBOX_THEMES}
+                        placeholder="Select Theme..."
+                        searchPlaceholder="Search Themes..."
+                        value={shikiTheme.theme}
+                        onChange={(value, _) => {
+                          const theme = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
+                          if (theme) {
+                            setTheme(theme.dark);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Code Highlighter Theme</h1>

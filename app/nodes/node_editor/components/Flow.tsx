@@ -14,6 +14,7 @@ import './turbo_style.css';
 import TurboNode, { TurboNodeData } from './TurboNode';
 import TurboEdge from './TurboEdge';
 import ToolchainNode from './ToolchainNode';
+import { hslStringToRGBHex } from '@/hooks/rgb-hsl-functions';
 
 // const nodeTypes = {
 //   custom: CustomNode,
@@ -89,7 +90,11 @@ export default function Flow() {
           >
             <MiniMap color="#F00" className='bg-background' zoomable pannable/>
             <Controls />
-            <Background style={{backgroundColor: theme.primary}} gap={16}/>
+            <Background 
+              color={hslStringToRGBHex(theme.foreground) as string} 
+              style={{backgroundColor: hslStringToRGBHex(theme.background) as string}}
+              gap={16}
+            />
             {/* <Controls showInteractive={false} /> */}
             <svg>
               <defs>

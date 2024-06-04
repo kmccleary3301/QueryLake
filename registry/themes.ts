@@ -95,7 +95,7 @@ export const themes = [
         foreground: "0 0% 98%",
         card: "0 0% 9%",
         "card-foreground": "0 0% 98%",
-        popover: "240 10% 3.9%",
+        popover: "0 0% 12.9%",
         "popover-foreground": "0 0% 98%",
         primary: "0 0% 98%",
         "primary-foreground": "0 0% 9%",
@@ -205,7 +205,8 @@ export const themes = [
       dark: {
         "theme-one": "210 40% 98%",
         background: "222.2 84% 4.9%",
-        foreground: "210 40% 1%",
+        "background-sidebar": "222.2 84% 1%",
+        foreground: "0 0% 100%",
         card: "222.2 84% 4.9%",
         "card-foreground": "210 40% 98%",
         popover: "222.2 84% 4.9%",
