@@ -184,7 +184,6 @@ export default function TestPage() {
 				<ScrollArea className="w-full">
 					<div className="flex flex-row justify-center pt-10">
 						<div className="max-w-[85vw] md:max-w-[70vw] lg:max-w-[45vw]">
-							
               <div className="flex flex-col space-y-2">
                 <Button onClick={testWebsocket}>
                   Test websocket.

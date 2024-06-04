@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, ChangeEvent } from "react";
 import useAutosizeTextArea from "@/hooks/use-autosize-text-area";
-import { ScrollBar } from "./scroll-area";
+import { ScrollArea, ScrollBar } from "./scroll-area";
 import { cn } from "@/lib/utils";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 import { Button } from "./button";
@@ -37,13 +37,13 @@ export function FilePreview({
             {/* </div> */}
             {hover && (
               <div className="flex flex-row space-x-1">
-                <Button
-                  variant={"ghost"}
+                <button
+                  // variant={"ghost"}
                   className="h-4 w-4 p-0 m-0"
                   onClick={onDelete}
                   >
-                  <Trash className="h-4 w-4 text-primary" />
-                </Button>
+                  <Trash className="h-4 w-4" />
+                </button>
               </div>
             )}
           </div>
@@ -131,17 +131,19 @@ export default function ChatInput({
     onDragOver={(e) => {
       e.preventDefault();
     }}>
-      <ScrollAreaPrimitive.Root className={cn("relative overflow-hidden rounded-[inherit]", "flex-grow pl-3 pr-2.5 py-1 gap-x-0 items-start flex flex-row")}>
-        <ScrollAreaPrimitive.Viewport className="h-full flex-grow rounded-[inherit] pb-0 flex flex-col justify-center">
-          <div 
-            className="w-auto h-full flex flex-col justify-center pr-1"
-          >
+      <div className={cn(
+        "w-full relative overflow-hidden rounded-[inherit]", 
+        "flex-grow pl-3 pr-2.5 py-1 gap-x-0 items-start flex flex-row justify-between"
+      )}>
+        <ScrollArea className="h-full flex-grow rounded-[inherit] pb-0 flex flex-col justify-center">
+          <div className="w-auto min-h-[30px] flex flex-col justify-center pr-2">
+          {/* <div className="w-auto"> */}
             {(files.length > 0) && (
               <div className="w-auto flex flex-wrap gap-x-2 gap-y-1 pb-1">
                 {files.map((file, index) => (
                   <FilePreview
                     key={index}
-                    className="w-auto rounded-full bg-secondary px-2 text-sm max-w-[100px]" 
+                    className="w-auto rounded-full bg-background px-2 text-sm text-primary max-w-[100px]" 
                     fileName={file.name}
                     onDelete={() => {
                       setFiles(files.filter((_, i) => i !== index));
@@ -151,7 +153,8 @@ export default function ChatInput({
               </div>
             )}
             <textarea
-              className={"border-none border-transparent flex-grow overflow-hidden outline-none h-auto min-h-[20px] resize-none bg-primary/0 border-0 ring-0 focus-visible:border-0 focus-visible:ring-0 ring-offset-0"}
+              className={"border-none pt-[calc(6px)] p-0 m-0 border-transparent flex-grow overflow-hidden outline-none resize-none bg-primary/0 border-0 ring-0 focus-visible:border-0 focus-visible:ring-0 ring-offset-0"}
+              // className="items-center pt-[6px]"
               id="review-text"
               onChange={handleChange}
               placeholder="Message"
@@ -161,8 +164,9 @@ export default function ChatInput({
               spellCheck={false}
               onKeyDown={onKeyDown}
             />
+          {/* </div> */}
           </div>
-        </ScrollAreaPrimitive.Viewport>
+        </ScrollArea>
         <div className="h-full flex flex-col justify-center">
           <div className="flex grid-flow-col space-x-1">
             {upload && (
@@ -197,9 +201,7 @@ export default function ChatInput({
             </Button>
           </div>
         </div>
-        <ScrollBar />
-        <ScrollAreaPrimitive.Corner />
-      </ScrollAreaPrimitive.Root>
+      </div>
     </div>
   );
 }

@@ -253,7 +253,8 @@ let LANGUAGES_MAP_PRE = new Map<string, {value: BundledLanguage, preview: string
 for (let value_set of languages) {
   // Strip non-alphanumeric characters and force to lowercase
 	for (let value of value_set) {
-		const cleanKey = value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+		// const cleanKey = value.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const cleanKey = value.toLowerCase();
 		// Add the cleaned key-value pair to the map
 
 		for (let i = 1; i < cleanKey.length-1; i++) {

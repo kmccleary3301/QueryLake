@@ -107,7 +107,7 @@ export const themes = [
         "accent-foreground": "0 0% 98%",
         destructive: "0 62.8% 30.6%",
         "destructive-foreground": "0 85.7% 97.3%",
-        border: "233.7 9.9% 37.5%",
+        border: "0 0% 22.0%",
         input: "0 0% 18.4%",
         ring: "240 4.9% 83.9%",
       },
@@ -148,7 +148,7 @@ export const themes = [
       dark: {
         "theme-one": "0 0% 98%",
         background: "240 10% 3.9%",
-        "background-sidebar": "240 10% 7.8%",
+        "background-sidebar": "240 10% 0%",
         foreground: "0 0% 98%",
         card: "240 10% 3.9%",
         "card-foreground": "0 0% 98%",
@@ -205,7 +205,7 @@ export const themes = [
       dark: {
         "theme-one": "210 40% 98%",
         background: "222.2 84% 4.9%",
-        foreground: "210 40% 98%",
+        foreground: "210 40% 1%",
         card: "222.2 84% 4.9%",
         "card-foreground": "210 40% 98%",
         popover: "222.2 84% 4.9%",
@@ -261,7 +261,7 @@ export const themes = [
       dark: {
         "theme-one": "60 9.1% 97.8%",
         background: "20 14.3% 4.1%",
-        "background-sidebar": "20 14.3% 8%",
+        "background-sidebar": "20 14.3% 0.2%",
         foreground: "60 9.1% 97.8%",
         card: "20 14.3% 4.1%",
         "card-foreground": "60 9.1% 97.8%",
@@ -318,7 +318,7 @@ export const themes = [
       dark: {
         "theme-one": "210 20% 98%",
         background: "224 71.4% 4.1%",
-        "background-sidebar": "224 71.4% 8%",
+        "background-sidebar": "224 71.4% 0.2",
         foreground: "210 20% 98%",
         card: "224 71.4% 4.1%",
         "card-foreground": "210 20% 98%",
@@ -374,6 +374,7 @@ export const themes = [
       dark: {
         "theme-one": "0 0% 98%",
         background: "0 0% 3.9%",
+        "background-sidebar": "0 0% 0%",
         foreground: "0 0% 98%",
         card: "0 0% 3.9%",
         "card-foreground": "0 0% 98%",
@@ -430,6 +431,7 @@ export const themes = [
       dark: {
         "theme-one": "0 72.2% 50.6%",
         background: "0 0% 3.9%",
+        "background-sidebar": "0 0% 0%",
         foreground: "0 0% 98%",
         card: "0 0% 3.9%",
         "card-foreground": "0 0% 98%",
@@ -485,8 +487,8 @@ export const themes = [
       },
       dark: {
         "theme-one": "346.8 77.2% 49.8%",
-        background: "20 14.3% 4.1%",
-        "background-sidebar": "20 14.3% 8%",
+        background: "20 14.3% 8%",
+        "background-sidebar": "20 14.3% 4.1%",
         foreground: "0 0% 95%",
         popover: "0 0% 9%",
         "popover-foreground": "0 0% 95%",
@@ -542,8 +544,8 @@ export const themes = [
       },
       dark: {
         "theme-one": "20.5 90.2% 48.2%",
-        background: "20 14.3% 4.1%",
-        "background-sidebar": "20 14.3% 8%",
+        background: "20 14.3% 8%",
+        "background-sidebar": "20 14.3% 4.1%",
         foreground: "60 9.1% 97.8%",
         card: "20 14.3% 4.1%",
         "card-foreground": "60 9.1% 97.8%",

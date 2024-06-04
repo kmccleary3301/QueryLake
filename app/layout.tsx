@@ -118,12 +118,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <div className="relative flex h-screen w-screen flex-row bg-background">
                 {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
                 <SidebarController />
-                <div className="relative flex h-screen w-full flex-col bg-background text-foreground">
+                <div className="relative flex h-screen w-full flex-col bg-background text-primary">
                   {/* <SiteHeader /> */}
                   {/* <AnimatePresence initial={false} mode="popLayout"> */}
                     {/* <main className="flex-1">{children}</main> */}
                       {children}
                     
+                      {/* <NewYorkToaster /> */}
+                      {/* <DefaultToaster /> */}
+                      <NewYorkSonner />
                   {/* </AnimatePresence> */}
                   {/* <SiteFooter /> */}
                 </div>
@@ -135,9 +138,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <TailwindIndicator />
             <ThemeSwitcher />
             <Analytics />
-            <NewYorkToaster />
-            <DefaultToaster />
-            <NewYorkSonner />
+            
+            
           </ThemeProvider>
           {/* </ThemeWrapper> */}
         </body>

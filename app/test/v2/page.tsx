@@ -8,6 +8,7 @@ import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Textarea } from "@/registry/default/ui/textarea";
 import { WavyCircularDisplay } from "./components/wavy-circular";
+import { QueryLakeLogo } from "@/components/logo";
 // import { produce } from 'immer';
 
 export default function TestPage() {
@@ -188,7 +189,7 @@ export default function TestPage() {
   
   return (
     <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
-      <ScrollArea className="w-full">
+				<ScrollArea className="w-full">
         <div className="flex flex-row justify-center pt-10">
           <div className="max-w-[85vw] md:max-w-[70vw] lg:max-w-[45vw]">
             
@@ -236,6 +237,21 @@ export default function TestPage() {
               >
                 <div className="w-400 h-400"/>
               </WavyCircularDisplay>
+              <QueryLakeLogo 
+                className="w-[400px] h-[400px] mx-0"
+                containerClassName="transform-gpu w-[400px] h-[400px]"
+                canvasClassName="w-[400px] h-[400px] blur-[0px]"
+                blur={0}
+                waveWidth={4} 
+                waveCount={20} 
+                waveAmplitude={0.8}
+                wavePinchEnd={0}
+                wavePinchMiddle={0.064}
+                speed={14}
+                backgroundFill="primary"
+              >
+                <div className="w-400 h-400"/>
+              </QueryLakeLogo>
             </div>
           </div>
         </div>
