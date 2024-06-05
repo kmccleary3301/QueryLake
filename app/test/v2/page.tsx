@@ -8,8 +8,43 @@ import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Textarea } from "@/registry/default/ui/textarea";
 import { WavyCircularDisplay } from "./components/wavy-circular";
-import { QueryLakeLogo } from "@/components/logo";
+import { QueryLakeLogo, create_logo_svg } from "@/components/logo";
+import "./components/logo_css.css";
+import { Trash } from "lucide-react";
 // import { produce } from 'immer';
+
+const SvgComponent = ({
+  className = ""
+}:{
+  className?: string
+}) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="272.2931" height="272.2931" viewBox="0 0 272.2931 272.2931">
+    <polygon fill="currentColor" points="235.7624 177.4088 272.2931 140.878 272.2931 192.5403 235.7624 229.071 235.7624 177.4088 235.7624 177.4088"/>
+    <polygon fill="currentColor" points="177.4088 235.7624 229.071 235.7624 192.5403 272.2931 140.878 272.2931 177.4088 235.7624 177.4088 235.7624"/>
+    <polygon fill="currentColor" points="94.8843 235.7624 131.4151 272.2931 79.7528 272.2931 43.2221 235.7624 94.8843 235.7624 94.8843 235.7624"/>
+    <polygon fill="currentColor" points="36.5307 177.4088 36.5307 229.071 0 192.5403 0 140.878 36.5307 177.4088 36.5307 177.4088"/>
+    <polygon fill="currentColor" points="36.5307 94.8843 0 131.4151 0 79.7528 36.5307 43.2221 36.5307 94.8843 36.5307 94.8843"/>
+    <polygon fill="currentColor" points="94.8843 36.5307 43.2221 36.5307 79.7528 0 131.4151 0 94.8843 36.5307 94.8843 36.5307"/>
+    <polygon fill="currentColor" points="177.4088 36.5307 140.878 0 192.5403 0 229.071 36.5307 177.4088 36.5307 177.4088 36.5307"/>
+    <polygon fill="currentColor" points="235.7624 94.8843 235.7624 43.2221 272.2931 79.7528 272.2931 131.4151 235.7624 94.8843 235.7624 94.8843"/>
+    <polygon fill="currentColor" points="179.0324 179.0323 179.0324 230.6946 230.6946 230.6946 230.6946 179.0323 179.0324 179.0323 179.0324 179.0323"/>
+    <polygon fill="currentColor" points="136.1465 196.7962 99.6158 233.327 136.1465 269.8577 172.6773 233.327 136.1465 196.7962 136.1465 196.7962"/>
+    <polygon fill="currentColor" points="93.2607 179.0323 41.5985 179.0323 41.5985 230.6946 93.2607 230.6946 93.2607 179.0323 93.2607 179.0323"/>
+    <polygon fill="currentColor" points="75.4969 136.1465 38.9661 99.6158 2.4354 136.1465 38.9661 172.6773 75.4969 136.1465 75.4969 136.1465"/>
+    <polygon fill="currentColor" points="93.2607 93.2607 93.2607 41.5985 41.5985 41.5985 41.5985 93.2607 93.2607 93.2607 93.2607 93.2607"/>
+    <polygon fill="currentColor" points="136.1465 75.4969 172.6773 38.9661 136.1465 2.4354 99.6158 38.9661 136.1465 75.4969 136.1465 75.4969"/>
+    <polygon fill="currentColor" points="179.0324 93.2607 230.6946 93.2607 230.6946 41.5985 179.0324 41.5985 179.0324 93.2607 179.0324 93.2607"/>
+    <polygon fill="currentColor" points="196.7962 136.1465 233.327 172.6773 269.8577 136.1465 233.327 99.6158 196.7962 136.1465 196.7962 136.1465"/>
+    <polygon fill="currentColor" points="140.0662 137.7701 191.7285 137.7701 228.2592 174.3009 176.597 174.3009 140.0662 137.7701 140.0662 137.7701"/>
+    <polygon fill="currentColor" points="137.7701 140.0662 174.3009 176.597 174.3009 228.2592 137.7701 191.7285 137.7701 140.0662 137.7701 140.0662"/>
+    <polygon fill="currentColor" points="134.523 140.0662 134.523 191.7285 97.9922 228.2592 97.9922 176.597 134.523 140.0662 134.523 140.0662"/>
+    <polygon fill="currentColor" points="132.2269 137.7701 95.6961 174.3009 44.0339 174.3009 80.5646 137.7701 132.2269 137.7701 132.2269 137.7701"/>
+    <polygon fill="currentColor" points="132.2269 134.5229 80.5646 134.5229 44.0339 97.9922 95.6961 97.9922 132.2269 134.5229 132.2269 134.5229"/>
+    <polygon fill="currentColor" points="134.523 132.2269 97.9922 95.6961 97.9922 44.0339 134.523 80.5646 134.523 132.2269 134.523 132.2269"/>
+    <polygon fill="currentColor" points="137.7701 132.2269 137.7701 80.5646 174.3009 44.0339 174.3009 95.6961 137.7701 132.2269 137.7701 132.2269"/>
+    <polygon fill="currentColor" points="140.0662 134.5229 176.597 97.9922 228.2592 97.9922 191.7285 134.5229 140.0662 134.5229 140.0662 134.5229"/>
+  </svg>
+);
 
 export default function TestPage() {
   const {
@@ -209,6 +244,9 @@ export default function TestPage() {
               <Button onClick={sendMessage4}>
                 Question 3
               </Button>
+              <Button onClick={create_logo_svg}>
+                Create SVG Logo
+              </Button>
 
               <ChatBarInput/>
 
@@ -243,7 +281,7 @@ export default function TestPage() {
                 canvasClassName="w-[400px] h-[400px] blur-[0px]"
                 blur={0}
                 waveWidth={4} 
-                waveCount={20} 
+                waveCount={8} 
                 waveAmplitude={0.8}
                 wavePinchEnd={0}
                 wavePinchMiddle={0.064}
@@ -252,6 +290,8 @@ export default function TestPage() {
               >
                 <div className="w-400 h-400"/>
               </QueryLakeLogo>
+              <SvgComponent/>
+              <Trash/>
             </div>
           </div>
         </div>
