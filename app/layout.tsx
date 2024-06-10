@@ -7,17 +7,15 @@ import { cn } from "@/lib/utils"
 import { Analytics } from "@/components/inherited/analytics"
 import { ThemeProvider } from "@/components/inherited/providers"
 import { StateThemeProvider, ThemeProviderWrapper } from "./theme-provider";
-// import { SiteFooter } from "@/components/inherited/site-footer"
-// import { SiteHeader } from "@/components/inherited/site-header"
 import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
 import { ThemeSwitcher } from "@/components/inherited/theme-switcher"
 import { Toaster as DefaultToaster } from "@/registry/default/ui/toaster"
 import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner"
 import { Toaster as NewYorkToaster } from "@/registry/new-york/ui/toaster"
 import { ContextProvider } from "./context-provider"
-// import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
 import SidebarController from "@/components/sidebar/sidebar"
-
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 // import { useRouter } from "next/navigation"
 // import { AppProps } from "next/app"
 // import { AppProps, useRouter } from 'next/app'
@@ -92,13 +90,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
         <head />
         <body
           className={cn(
-            "min-h-screen bg-background font-soehne antialiased",
-            fontSans.className
+            "min-h-screen bg-background antialiased font-geist-sans font-normal",
+            GeistSans.className,
           )}
+          style={{ scrollBehavior: "smooth"}}
         >
           {/* <ThemeWrapper> */}
           <ThemeProvider

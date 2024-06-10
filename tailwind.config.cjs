@@ -17,6 +17,11 @@ module.exports = {
       },
     },
     extend: {
+      fontWeight: {
+        'normal': '300',
+        'bold': '600',
+        // 'strong': '700',
+      },
       colors: {
         theme: {
           one: "hsl(var(--theme-one))",
@@ -70,6 +75,8 @@ module.exports = {
         sans: fontFamily.soehne,
         soehne: fontFamily.soehne,
         consolas: fontFamily.consolas,
+        "geist-sans": ['var(--font-geist-sans)'],
+        "geist-mono": ['var(--font-geist-mono)'],
         // sans: ["var(--font-geist-sans)", ...fontFamily.sans],
         // mono: ["var(--font-mono)", ...fontFamily.mono],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],

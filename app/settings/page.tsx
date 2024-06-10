@@ -117,7 +117,7 @@ export default function SettingsPage() {
                   <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
                     <div className="flex flex-row space-x-2">
-                      {/* <ModeToggle/> */}
+                      
                       <ComboBox
                         values={COMBOBOX_THEMES}
                         placeholder="Select Theme..."

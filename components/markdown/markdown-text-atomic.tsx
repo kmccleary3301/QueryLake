@@ -24,7 +24,7 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
       );
     case "bold":
       return (
-        <strong>{props.textSeg.text}</strong>
+        <strong className="font-bold">{props.textSeg.text}</strong>
       );
     case "italic":
       return (
@@ -32,7 +32,7 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
       );
     case "bolditalic":
       return (
-        <em><strong>{props.textSeg.text}</strong></em>
+        <em><strong className="font-bold">{props.textSeg.text}</strong></em>
       );
     case "regular":
       return (

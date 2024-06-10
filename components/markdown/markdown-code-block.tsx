@@ -131,11 +131,11 @@ export default function MarkdownCodeBlock({
         // backgroundColor: (shikiTheme.textColor || "#FFFFFF"),
       }}>
         <p className='font-consolas h-8 text-center flex flex-col justify-center text-primary border-none'>{language.preview}</p>
-        <Button className='m-0 h-8' variant="ghost" onClick={() => {
+        <Button className='m-0 h-8 text-primary hover:text-primary/75 active:text-primary/50 bg-transparent hover:bg-transparent active:bg-transparent' onClick={() => {
           handleCopy(text + unProcessedText);
         }}>
-          <Copy className="w-4 h-4 text-primary"/>
-          <p className='pl-[9px] text-primary'>{"Copy"}</p>
+          <Copy className="w-4 h-4"/>
+          <p className='pl-[9px]'>{"Copy"}</p>
         </Button>
       </div>
       <pre className="p-0 pt-1 flex flex-row rounded-lg text-sm ">

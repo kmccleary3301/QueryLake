@@ -268,7 +268,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
             ))}
           </>
         ):(
-          <div className={cn("prose markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
+          <div className={cn("prose font-geist-sans markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
             <MarkdownRenderer 
               className={className}
               unpacked={true}

@@ -1,7 +1,7 @@
 // import { JetBrains_Mono as FontMono, Inter as FontSans } from "next/font/google"
 import { JetBrains_Mono as FontMono } from "next/font/google"
 // import { GeistMono } from "geist/font/mono"
-import { GeistSans } from "geist/font/sans"
+// import { GeistSans } from "geist/font/sans"
 import localFont from 'next/font/local'
 
 
@@ -14,20 +14,20 @@ import localFont from 'next/font/local'
 
 
 
-
 // export const fontSans = GeistSans
 
 export const fontSans = localFont({
   src: [
     {
       path: '../assets/fonts/Geist/Geist-Regular.woff2',
-      weight: '400',
+      weight: '300',
       style: 'normal',
     },
     {
       path: '../assets/fonts/Geist/Geist-Bold.woff2',
       weight: '700',
-      style: 'normal',
+      // style: 'normal',
+      style: 'bold',
     }
   ],
   variable: "--font-sans",
@@ -37,7 +37,7 @@ export const fontSoehne = localFont({
   src: [
     {
       path: '../assets/fonts/Soehne/soehne-buch.woff2',
-      weight: '400',
+      weight: '300',
       style: 'normal',
     },
     {
@@ -58,7 +58,7 @@ export const fontConsolas = localFont({
   src: [
     {
       path: '../assets/fonts/Consolas/Consolas.ttf',
-      weight: '400',
+      weight: '300',
       style: 'normal',
     }
   ],
