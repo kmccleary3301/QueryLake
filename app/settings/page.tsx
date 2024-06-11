@@ -91,6 +91,10 @@ export default function SettingsPage() {
     console.log("User set providers:", userData?.user_set_providers);
   }, [userData?.user_set_providers]);
 
+  useEffect(() => {
+    console.log("Theme Selected ID:", theme);
+  }, []);
+
   return (
     <ThemeProviderWrapper>
     <ScrollArea className="w-full h-screen">
@@ -122,11 +126,12 @@ export default function SettingsPage() {
                         values={COMBOBOX_THEMES}
                         placeholder="Select Theme..."
                         searchPlaceholder="Search Themes..."
-                        value={shikiTheme.theme}
+                        value={theme["theme-select-id"]}
                         onChange={(value, _) => {
-                          const theme = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
-                          if (theme) {
-                            setTheme(theme.dark);
+                          const themeGet = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
+                          if (themeGet) {
+                            console.log("Setting theme:", themeGet);
+                            setTheme(themeGet.dark);
                           }
                         }}
                       />

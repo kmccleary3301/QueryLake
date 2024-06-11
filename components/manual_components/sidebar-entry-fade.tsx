@@ -2,26 +2,41 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/registry/default/ui/button";
 import { Check, Copy, Pencil } from "lucide-react";
 import Link from "next/link";
+import { motion, useAnimation } from "framer-motion";
+import { useEffect, useState } from "react";
 // import Link from "next/link";
 
 function LinkOptional({
   href,
   className,
-  children
+  children,
+  onHold = () => {},
 }:{
   href?: string, 
   className?: string,
-  children?: React.ReactNode
+  children?: React.ReactNode,
+  onHold?: (pressed : boolean) => void,
 }) {
   if (href) {
     return (
-      <Link href={href} className={className}>
+      <Link 
+        href={href} 
+        className={className} 
+        onMouseDown={() => {onHold(true)}} 
+        onMouseUp={() => {onHold(false)}}
+        onMouseOut={() => {onHold(false)}}
+      >
         {children}
       </Link>
     )
   } else {
     return (
-      <a className={className}>
+      <a 
+        className={className} 
+        onMouseDown={() => {onHold(true)}} 
+        onMouseUp={() => {onHold(false)}} 
+        onMouseOut={() => {onHold(false)}}
+      >
         {children}
       </a>
     )
@@ -46,11 +61,24 @@ export default function SidebarEntry({
   onSelect?: () => void,
 }) {
 
+  const [pressed, setPressed] = useState(false);
+  const pressOpacity = useAnimation();
+
+  useEffect(() => {
+    pressOpacity.start({
+      opacity: pressed?0.7:1,
+      transition: { duration: 0.1 }
+    });
+  }, [pressed, pressOpacity]);
+
+
   return (
-    <div className={cn("relative not-prose h-10 opacity-100 text-sm rounded-lg hover:bg-accent")}>
+    <motion.div animate={pressOpacity} initial={{
+      opacity: 1
+    }} className={cn("relative not-prose h-10 text-sm rounded-lg hover:bg-accent")}>
       <div className="group h-full relative rounded-lg flex flex-col justify-center z-5">
         <div className="absolute h-full w-full rounded-[inherit] hover:bg-accent"/>
-        <LinkOptional className="absolute h-full w-full rounded-[inherit] overflow-hidden whitespace-nowrap" href={href}>
+        <LinkOptional className="absolute h-full w-full rounded-[inherit] overflow-hidden whitespace-nowrap" href={href} onHold={setPressed}>
           <Button variant={"ghost"} className={cn("w-full h-full flex flex-row justify-start p-0 m-0 hover:bg-accent", className)} onMouseDown={onSelect}>
             {displaySelected && (
               <div className="w-7 h-full flex flex-col justify-center">
@@ -77,11 +105,11 @@ export default function SidebarEntry({
               {children}
             </div>
           </div>
-          <LinkOptional href={href} className='h-full w-[30px] bg-gradient-to-r from-accent/0 to-accent'/>
+          <LinkOptional href={href} className='h-full w-[30px] bg-gradient-to-r from-accent/0 to-accent' onHold={setPressed}/>
             {/* {(href) && (<Link href={href} className="w-inherit h-inherit"/>)}
           </a> */}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

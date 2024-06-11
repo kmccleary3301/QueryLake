@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, ReactNode, useCallback } from 'react';
 import { selectedCollectionsType } from '@/types/globalTypes';
 import { Button } from '@/registry/default/ui/button';
 import { motion, useAnimation } from "framer-motion";
@@ -26,11 +26,20 @@ type CollectionWrapperProps = {
 
 export default function CollectionWrapper(props: CollectionWrapperProps) {
 	const [opened, setOpened] = useState(false);
-	const [selected, setSelected] = useState(false);
-  const [mixedSelection, setMixedSelection] = useState(true);
+	
+  
 	const controlHeight = useAnimation();
 	const selectionCircleSize = useAnimation();
 
+  const countSelected = useCallback(() => {
+    const mapped_selected = props.collections.map((value) => props.collectionSelected.get(value.hash_id)).filter(Boolean).length;
+    return mapped_selected;
+  }, []);
+
+  const [selectedCount, setSelectedCount] = useState<number>(countSelected());
+  const [selected, setSelected] = useState(() => (selectedCount === props.collections.length));
+  const [mixedSelection, setMixedSelection] = useState(true);
+  
 	useEffect(() => {
 		controlHeight.set({
 			height: 0
@@ -53,6 +62,12 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 		});
   }, [selected, selectionCircleSize]);
 
+  useEffect(() => {
+    // console.log("SELECTED COUNT:", selectedCount);
+    if (selectedCount === props.collections.length) {
+      setSelected(true);
+    }
+  }, [props.collectionSelected, selectedCount]);
 
 	// useEffect(() => {
 	// 	console.log("PROP COLLECTIONS:", props.collections);
@@ -68,9 +83,13 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
             for (let i = 0; i < props.collections.length; i++) {
               props.setCollectionSelected(props.collections[i].hash_id, !selected);
             }
+            setSelectedCount((prevCount) => (selected)?0:props.collections.length);
             setSelected(selected => !selected);
           }}>
-            <motion.div animate={selectionCircleSize} className="rounded-full bg-background"/>
+            <motion.div animate={selectionCircleSize} initial={{
+              width: selected?11:0,
+              height: selected?11:0,
+            }} className="rounded-full bg-background"/>
           </Button>
           </div>
           <div className="flex-grow flex flex-col justify-center h-auto">
@@ -102,6 +121,8 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
 								collectionId={value.hash_id}
 								onToggleSelected={(collection_selected: boolean) => {
 									props.setCollectionSelected(value.hash_id, collection_selected);
+                  setSelectedCount((prevCount) => prevCount + ((collection_selected)?1:-1));
+                  
 									if (selected && !collection_selected) {
 										// selected_values[index][1](false);
 										setMixedSelection(true);

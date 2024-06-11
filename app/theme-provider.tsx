@@ -10,18 +10,28 @@ import React, {
 	useState,
 } from 'react';
 import { themes } from '@/registry/themes';
-import exp from 'constants';
 import { useTheme } from "next-themes"
 
 const REGISTRY_THEMES_PRE = new Map<string, object>();
 
 for (const theme of themes) {
-  REGISTRY_THEMES_PRE.set(theme.name, theme.cssVars);
+  REGISTRY_THEMES_PRE.set(theme.name, {
+    "theme-select-id": theme.name, 
+    ...theme.cssVars,
+    light: {
+      "theme-select-id": theme.name,
+      ...theme.cssVars.light
+    },
+    dark: {
+      "theme-select-id": theme.name,
+      ...theme.cssVars.dark
+    }
+  });
 }
 
 export const REGISTRY_THEMES_MAP = REGISTRY_THEMES_PRE;
 export const COMBOBOX_THEMES : {label : string, value: string}[] = themes.map((theme) => ({
-  label: theme.label, 
+  label: theme.label,
   value: theme.name
 }));
 // expport const REGISTRY
@@ -30,6 +40,7 @@ export const COMBOBOX_THEMES : {label : string, value: string}[] = themes.map((t
 
 
 export type themeType = {
+  "theme-select-id": string,
   "theme-one": string,
   background: string;
   "background-sidebar": string;
@@ -58,11 +69,12 @@ export const REGISTRY_THEMES : registryThemeEntry[] = Array(themes.length*2).fil
   const themes_i = themes[Math.floor(i / 2)];
   let result = {...(i % 2 == 0)?themes_i.cssVars.light:themes_i.cssVars.dark, radius: 2}
   if (result.radius) delete (result as {radius: unknown})?.radius;
+  
   return {
     label: `${themes_i.label} (${(i % 2 == 0)?"Light":"Dark"})`,
     mode: (i % 2 == 0)?"light":"dark",
     value: themes_i.name,
-    stylesheet: result
+    stylesheet: {"theme-select-id": themes_i.name, ...result}
   };
 }) as unknown as registryThemeEntry[];
 
@@ -82,7 +94,9 @@ const Context = createContext<{
 });
 
 export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
-  const system_mode_theme = useTheme().theme;
+  const used_theme_next = useTheme();
+  const system_mode_theme = used_theme_next.theme,
+        system_mode_setTheme = used_theme_next.setTheme;
 
   const generate_stylesheet = (theme: themeType) => {
     return {
@@ -150,10 +164,8 @@ export function ThemeProviderWrapper({children}:{children: React.ReactNode}) {
   } = useThemeContextAction();
 
   return (
-    // <ThemeProvider>
-      <div style={themeStylesheet}>
-        {children}
-      </div>
-    // </ThemeProvider>
+    <div style={themeStylesheet}>
+      {children}
+    </div>
   );
 }
