@@ -51,7 +51,7 @@ export function DEMO({
 }
 
 export default function Component({
-	configuration,
+	configuration, //Hello, , , ,, 
 }:{
 	configuration: inputMapping,
 }) {

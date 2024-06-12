@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { configEntriesMap, inputMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, configEntriesMap, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
@@ -11,6 +11,25 @@ import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
 import { Switch } from "@/registry/default/ui/switch";
 import { Label } from "@/registry/default/ui/label";
+
+export const METADATA : componentMetaDataType = {
+  label: "Switch",
+  category: "ShadCN Components",
+  description: "A simple toggle switch.",
+  config: {
+    hooks: [
+      "value_map",
+    ],
+    config: [
+      {
+        "name": "Label",
+        "type": "string",
+        "default": ""
+      }
+    ],
+  }
+};
+
 
 export function SwitchInputSkeleton({
 	configuration,
@@ -30,7 +49,6 @@ export function SwitchInputSkeleton({
     </Skeleton>
   )
 }
-
 
 export default function SwitchInput({
 	configuration,

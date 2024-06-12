@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "npm run build:docs && next dev -p 3001",
+    "dev": "npm run build:docs && npm run build:toolchain-components && next dev -p 3001",
     "build": "npm run build:docs && npm run build:registry && next build",
     "build:registry": "tsx --tsconfig ./tsconfig.scripts.json ./scripts/build-registry.ts",
     "seed:tasks": "tsx --tsconfig ./tsconfig.scripts.json ./app/examples/tasks/data/seed.ts",
@@ -15,6 +15,7 @@
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
     "format:check": "prettier --check \"***.{ts,tsx,mdx}\" --cache",
     "build:docs": "node ./lib/build-documentation.js",
+    "build:toolchain-components": "node ./lib/build-toolchain-components.js",
     "build:themes": "node ./lib/build-themes.js"
   },
   "dependencies": {
@@ -82,6 +83,7 @@
     "framer-motion": "^11.0.8",
     "geist": "^1.1.0",
     "highlight.js": "^11.9.0",
+    "hjson": "^3.2.2",
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^2.0.6",
     "immer": "^10.0.4",

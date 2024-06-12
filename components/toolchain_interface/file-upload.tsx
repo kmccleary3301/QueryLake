@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { inputMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
@@ -9,6 +9,26 @@ import { substituteAny } from "@/types/toolchains";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
+
+export const METADATA : componentMetaDataType = {
+  label: "File Upload",
+  category: "Input",
+  description: "A dropzone box for file uploads that immediately triggers on upload.",
+  config: {
+		"hooks": [
+      "on_upload",
+      "selected_collections"
+    ],
+		"config": [
+			{
+				"name": "multiple",
+				"type": "boolean",
+        "default": false
+			}
+		],
+	}
+};
+
 
 export function FileUploadSkeleton({
 	configuration,
