@@ -31,6 +31,7 @@ import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, Tabl
 import { ColorPicker } from "@/registry/default/ui/color-picker";
 import { hexToRgb, hslStringToHsl, hslStringToRGBHex, hslToRgb, rgbToHex } from "@/hooks/rgb-hsl-functions";
 import { ModeToggle } from "@/components/inherited/mode-toggle";
+import { useTheme } from "next-themes";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
@@ -70,6 +71,8 @@ export default function SettingsPage() {
     theme,
     setTheme,
   } = useThemeContextAction();
+
+  const system_mode_theme = useTheme().theme;
 
   const [keyAvailable, setKeyAvailable] = useState(false);
   const [currentKeyInput, setCurrentKeyInput] = useState("");
@@ -121,7 +124,7 @@ export default function SettingsPage() {
                   <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
                     <div className="flex flex-row space-x-2">
-                      
+                      <ModeToggle/>
                       <ComboBox
                         values={COMBOBOX_THEMES}
                         placeholder="Select Theme..."
@@ -131,7 +134,8 @@ export default function SettingsPage() {
                           const themeGet = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
                           if (themeGet) {
                             console.log("Setting theme:", themeGet);
-                            setTheme(themeGet.dark);
+                            const dark = (system_mode_theme === "light")?false:true;
+                            setTheme(dark?themeGet.dark:themeGet.light);
                           }
                         }}
                       />

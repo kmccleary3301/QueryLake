@@ -15,13 +15,13 @@ import {
 	CircleEllipsis
 } from 'lucide-react';
 import { Button } from "@/registry/default/ui/button";
-import RouteSetter from "./route-setter";
-import RouteAddSheet from "./route-add-sheet";
+import RouteSetter from "@/app/nodes/display_editor/components/route-setter";
+import RouteAddSheet from "@/app/nodes/display_editor/components/route-add-sheet";
 import SheetDemo from "@/registry/default/example/sheet-demo";
-import InputComponentSheet from "./input-component-sheet";
+import InputComponentSheet from "@/app/nodes/display_editor/components/input-component-sheet";
 import { BreadcrumbEllipsis } from "@/registry/default/ui/breadcrumb";
 import { FileUploadSkeleton } from "@/components/toolchain_interface/file-upload";
-import { ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
+import { DEMO as ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
 import { ChatSkeleton } from "@/components/toolchain_interface/chat";
 import { MarkdownSkeleton } from "@/components/toolchain_interface/markdown";
 import { TextSkeleton } from "@/components/toolchain_interface/text";

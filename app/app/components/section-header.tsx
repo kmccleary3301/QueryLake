@@ -4,7 +4,7 @@ import {
 	contentMapping,
 	headerSection
 } from "@/types/toolchain-interface";
-import DisplayMappings from "./display-mappings";
+import DisplayMappings from "@/components/toolchain-display-mappings-app";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import { Fragment } from "react";

@@ -37,6 +37,13 @@ export type inputComponentConfig = {
  *  that is used to send the selected collections to a toolchain event.
  */
 
+export type componentMetaDataType = {
+  label: string,
+  category: string,
+  description?: string,
+  config?: inputComponentConfig
+}
+
 export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
 	"file_upload": {
 		"hooks": [

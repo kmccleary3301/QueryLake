@@ -11,7 +11,7 @@ import {
 	headerSection
 } from "@/types/toolchain-interface";
 import { cn } from "@/lib/utils";
-import DisplayMappings from "./display-mappings";
+import DisplayMappings from "@/components/toolchain-display-mappings-editor";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import { ContentDiv } from "./section-div";

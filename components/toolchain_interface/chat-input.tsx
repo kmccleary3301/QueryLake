@@ -1,6 +1,6 @@
 "use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { inputMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
@@ -10,7 +10,28 @@ import { useToolchainContextAction } from "@/app/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";
 import uploadFiles from "@/hooks/upload-files";
 
-export function ChatInputSkeleton({
+export const METADATA : componentMetaDataType = {
+  label: "Chat Input",
+  category: "Text",
+  description: "A chat input component that optionally supports file uploads.",
+  config: {
+		"hooks": [
+      "on_upload", 
+      "on_submit",
+      "selected_collections",
+    ],
+    "config": [
+      {
+				"name": "test_7_long_string",
+				"type": "long_string",
+        "default": "6ix"
+			}
+		],
+	}
+};
+
+
+export function DEMO({
 	configuration,
   children
 }:{
@@ -29,8 +50,7 @@ export function ChatInputSkeleton({
   )
 }
 
-
-export default function ChatInput({
+export default function Component({
 	configuration,
 }:{
 	configuration: inputMapping,

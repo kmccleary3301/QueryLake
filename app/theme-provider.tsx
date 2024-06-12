@@ -25,7 +25,7 @@ for (const theme of themes) {
     dark: {
       "theme-select-id": theme.name,
       ...theme.cssVars.dark
-    }
+    } 
   });
 }
 
@@ -126,17 +126,22 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
 	const [theme_i, set_theme_i] = useState(DEFAULT_THEME.dark);
   const [theme_stylesheet_i, set_theme_stylesheet_i] = useState<React.CSSProperties>(generate_stylesheet(DEFAULT_THEME.dark));
 
-  useEffect(() => {
-    const theme = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: themeType, dark: themeType};
-    set_theme_i(theme.dark);
-  }, []);
+  // useEffect(() => {
+  //   const dark = (system_mode_theme === "light")?false:true;
+  //   const themeGet = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: themeType, dark: themeType};
+  //   set_theme_i(dark?themeGet.dark:themeGet.light);
+  // }, []);
 
   useEffect(() => {
     set_theme_stylesheet_i(generate_stylesheet(theme_i));
   }, [theme_i]);
 
   useEffect(() => {
-    console.log("SYSTEM THEME:", system_mode_theme);
+    // console.log("SYSTEM THEME:", system_mode_theme);
+    const dark = (system_mode_theme === "light")?false:true;
+    // console.log("DARK:", dark);
+    const themeGet = REGISTRY_THEMES_MAP.get(theme_i['theme-select-id']) as {light: themeType, dark: themeType};
+    set_theme_i(dark?themeGet.dark:themeGet.light);
   }, [system_mode_theme]);
 
 	return (
