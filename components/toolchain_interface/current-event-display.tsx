@@ -50,23 +50,29 @@ export type chatEntry = {
 }
 
 export default function CurrentEventDisplay({
-	configuration
+	configuration,
+  demo = false
 }:{
-	configuration: displayMapping
+	configuration: displayMapping,
+  demo?: boolean
 }) {
 	
 	const { currentEvent } = useToolchainContextAction();
 
   return (
     <>
-      {(currentEvent !== undefined) && (
+      {(currentEvent !== undefined || demo) && (
         <div className="w-auto h-11 flex flex-row justify-center gap-2">
           <div className="h-auto flex flex-col justify-center">
             <div className="">
               <BounceLoader size={20} color="rgb(20 184 166)" className="h-2 w-2 text-primary"/>
             </div>
           </div>
-          <p className="h-auto flex flex-col justify-center">Running Event Node: {currentEvent}</p>
+          <p className="h-auto flex flex-col justify-center">{
+            demo ?
+            "Running Event Node: sample_node" :
+            `Running Event Node: ${currentEvent}`
+          }</p>
         </div>
       )}
     </>

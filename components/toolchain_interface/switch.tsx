@@ -30,7 +30,6 @@ export const METADATA : componentMetaDataType = {
   }
 };
 
-
 export function SKELETON({
 	configuration,
   children
@@ -53,9 +52,11 @@ export function SKELETON({
 export default function SwitchInput({
 	configuration,
   entriesMap,
+  demo = false
 }:{
 	configuration: inputMapping,
-  entriesMap: configEntriesMap
+  entriesMap: configEntriesMap,
+  demo?: boolean
 }) {
   const { 
     userData, 
@@ -67,9 +68,11 @@ export default function SwitchInput({
     callEvent,
     storedEventArguments,
     sessionId,
-  } = useToolchainContextAction();
+  } = (demo)?useToolchainContextAction():{callEvent: () => {}, storedEventArguments: null, sessionId: null};
 
   const handleSubmission = async (files: File[]) => {
+    if (demo) return;
+
     const fire_queue : {[key : string]: object}[]= 
     Array(Math.max(...configuration.hooks.map(hook => hook.fire_index))).fill({});
     
@@ -101,7 +104,7 @@ export default function SwitchInput({
 
   return (
     <div style={tailwindToObject([configuration.tailwind], breakpoint)}>
-      <div className="flex flex-row">
+      <div className="inline-flex flex-row flex-shrink">
         <Switch className="" onCheckedChange={(c : boolean) => {}}/>
         <div className="h-auto flex flex-col justify-center pl-2">
           <Label>{entriesMap.get("Label")?.value as string}</Label>

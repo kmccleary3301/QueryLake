@@ -1,8 +1,13 @@
 "use client";
-import { toolchainStateType } from "@/hooks/toolchain-session";
+import { retrieveValueFromObj, toolchainStateType } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
+import MarkdownRenderer from "../markdown/markdown-renderer";
+import { useToolchainContextAction } from "@/app/app/context-provider";
+import { useContextAction } from "@/app/context-provider";
+import { useEffect, useState } from "react";
+import MARKDOWN_SAMPLE_TEXT from "../markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
 	label: "Markdown",
@@ -27,14 +32,35 @@ export function SKELETON({
 
 export default function Markdown({
 	configuration,
-	toolchainState
+  demo = false
 }:{
 	configuration: displayMapping,
-	toolchainState: toolchainStateType
+  demo?: boolean
 }) {
-  
+
+  const { toolchainState, toolchainWebsocket } = useToolchainContextAction();
+  const { userData } = useContextAction();
+
+	const [currentValue, setCurrentValue] = useState<string>(
+    demo ?
+    MARKDOWN_SAMPLE_TEXT :
+    retrieveValueFromObj(toolchainState, configuration.display_route) as string || ""
+	);
+
+  useEffect(() => {
+		if (toolchainWebsocket?.current === undefined || demo) return;
+    const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as string || "";
+    // console.log("Chat newValue", JSON.parse(JSON.stringify(newValue)));
+		setCurrentValue(newValue);
+	}, [toolchainState]);
+
   return (
-    <>
-    </>
+    <div className="max-w-full p-0 -mt-1.5">
+      <MarkdownRenderer
+        // disableRender={(value.role === "user")}
+        input={currentValue} 
+        finished={false}
+      />
+	  </div>
   );
 }

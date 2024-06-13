@@ -23,9 +23,9 @@ export function ToolchainComponentMapper({
 	info: contentMapping
 }) {
   
-	const {
-    toolchainState,
-  } = useToolchainContextAction();
+	// const {
+  //   toolchainState,
+  // } = useToolchainContextAction();
 
   const getEffectiveConfig = (info : inputMapping) => {
     let effectiveConfig : configEntriesMap = new Map();

@@ -242,7 +242,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
       {(disableRender)?(
         <>
           {input.split('\n').map((line, i) => (
-            <p key={i}>
+            <p className="prose" key={i}>
               {line}
             </p>
           ))}

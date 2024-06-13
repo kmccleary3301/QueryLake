@@ -25,10 +25,6 @@ export function ToolchainComponentMapper({
 }:{
 	info: contentMapping
 }) {
-  
-	const {
-    toolchainState,
-  } = useToolchainContextAction();
 
   const getEffectiveConfig = (info : inputMapping) => {
     let effectiveConfig : configEntriesMap = new Map();
@@ -46,13 +42,12 @@ export function ToolchainComponentMapper({
   }
   
 	switch(info.display_as) {
-		
     
     case "chat":
       return (
         <Chat configuration={(info as displayMapping)}/>
       );
-
+    // Hello there
     case "current-event-display":
       return (
         <CurrentEventDisplay configuration={(info as displayMapping)}/>
@@ -60,12 +55,12 @@ export function ToolchainComponentMapper({
 
     case "markdown":
       return (
-        <Markdown configuration={(info as displayMapping)} toolchainState={toolchainState}/>
+        <Markdown configuration={(info as displayMapping)}/>
       );
 
     case "text":
       return (
-        <Text configuration={(info as displayMapping)} toolchainState={toolchainState}/>
+        <Text configuration={(info as displayMapping)}/>
       );
 
     case "chat-input":

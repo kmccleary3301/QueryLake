@@ -2,6 +2,7 @@
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { 
 	DISPLAY_COMPONENTS, 
+	configEntriesMap, 
 	contentMapping, 
 	displayComponents, 
 	displayMapping, 
@@ -28,6 +29,19 @@ import { SKELETON as SKELETON_FileUpload } from '@/components/toolchain_interfac
 import { SKELETON as SKELETON_Markdown } from '@/components/toolchain_interface/markdown';
 import { SKELETON as SKELETON_Switch } from '@/components/toolchain_interface/switch';
 import { SKELETON as SKELETON_Text } from '@/components/toolchain_interface/text';
+
+import ChatInput, { METADATA as METADATA_ChatInput } from '@/components/toolchain_interface/chat-input';
+import Chat, { METADATA as METADATA_Chat } from '@/components/toolchain_interface/chat';
+import CurrentEventDisplay, { METADATA as METADATA_CurrentEventDisplay } from '@/components/toolchain_interface/current-event-display';
+import FileUpload, { METADATA as METADATA_FileUpload } from '@/components/toolchain_interface/file-upload';
+import Markdown, { METADATA as METADATA_Markdown } from '@/components/toolchain_interface/markdown';
+import Switch, { METADATA as METADATA_Switch } from '@/components/toolchain_interface/switch';
+import Text, { METADATA as METADATA_Text } from '@/components/toolchain_interface/text';
+
+import "@/lib/sine-opacity.css";
+import { INPUT_COMPONENT_FIELDS } from "./toolchain-component-types";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
+
 export function DisplayComponentSkeletonMapper({
 	info,
 	children
@@ -35,50 +49,59 @@ export function DisplayComponentSkeletonMapper({
 	info: contentMapping,
 	children?: React.ReactNode
 }) {
+
+  const getEffectiveConfig = (info : inputMapping) => {
+    let effectiveConfig : configEntriesMap = new Map();
+    const default_fields = INPUT_COMPONENT_FIELDS[info.display_as];
+    if (default_fields.config) {
+      for (const entry of default_fields.config) {
+        effectiveConfig.set(entry.name, {name: entry.name, value: entry.default});
+      }
+    }
+    for (const entry of info.config) {
+      effectiveConfig.set(entry.name, entry);
+    }
+
+    return effectiveConfig;
+  }
+
 	switch(info.display_as) {
 		
-    
     case "chat":
       return (
-        <SKELETON_Chat configuration={(info as displayMapping)}/>
+        <Chat demo configuration={(info as displayMapping)}/>
       );
 
     case "current-event-display":
       return (
-        <SKELETON_CurrentEventDisplay configuration={(info as displayMapping)}/>
+        <CurrentEventDisplay demo configuration={(info as displayMapping)}/>
       );
 
     case "markdown":
       return (
-        <SKELETON_Markdown configuration={(info as displayMapping)}/>
+        <Markdown demo configuration={(info as displayMapping)}/>
       );
 
     case "text":
       return (
-        <SKELETON_Text configuration={(info as displayMapping)}/>
+        <Text demo configuration={(info as displayMapping)}/>
       );
 
     case "chat-input":
       return (
-        <SKELETON_ChatInput configuration={info}>
-          {children}
-        </SKELETON_ChatInput>
+        <ChatInput configuration={info}/>
       );
 
     case "file-upload":
       return (
-        <SKELETON_FileUpload configuration={info}>
-          {children}
-        </SKELETON_FileUpload>
+        <FileUpload configuration={info}/>
       );
 
     case "switch":
       return (
-        <SKELETON_Switch configuration={info}>
-          {children}
-        </SKELETON_Switch>
+        <Switch configuration={info} entriesMap={getEffectiveConfig(info)}/>
       );    
-	}
+  }
 }
 
 export default function DisplayMappings({
@@ -97,7 +120,9 @@ export default function DisplayMappings({
 
 	return (
 		<>
-		{(DISPLAY_COMPONENTS.includes(info.display_as as displayComponents)) ? ( // Display Component
+		{(DISPLAY_COMPONENTS.includes(info.display_as as displayComponents)) ? ( 
+      // Display Component
+
 			<div className="flex-grow flex flex-col pt-4 space-y-2">
 				<div className="w-auto flex flex-row space-x-2 justify-between">
 					<div className="flex-grow h-auto flex flex-col justify-center text-base">
@@ -131,40 +156,45 @@ export default function DisplayMappings({
 						</RouteAddSheet>
 					{/* </div> */}
 				</div>
-				<DisplayComponentSkeletonMapper info={info}/>
+        <div className="sine-opacity-med disabled pointer-events-none">
+				  <DisplayComponentSkeletonMapper info={info}/>
+        </div>
 			</div>
-		) : ( // Input Component
-			<div className="flex flex-row space-x-2 w-auto">
-				<DisplayComponentSkeletonMapper info={info}>
-					<div className="flex flex-row space-x-1 w-auto justify-between">
-					<InputComponentSheet
-						value={info as inputMapping}
-						type={info.display_as as inputComponents}
-						onChange={(value : inputMapping) => {
-							setInfo(value);
-						}}
-						onDelete={onDelete}
-					>
-						{/* <Button size="icon" variant="ghost"> */}
-						<div className="w-10 flex flex-col justify-center">
-							<div className="w-auto flex flex-row justify-center">
-								<BreadcrumbEllipsis className="w-4 h-4 text-primary" />
-							</div>
-						</div>
-						{/* </Button> */}
-					</InputComponentSheet>
-					<p className="flex-grow text-center select-none h-auto flex flex-col justify-center">
-						{info.display_as}
-					</p>
-					{/* <Button size="icon" variant="ghost" onClick={onDelete}> */}
-					<div className="w-10 flex flex-col justify-center">
-						<div className="w-auto flex flex-row justify-center">
-							<Trash2 className="w-4 h-4 text-primary" onClick={onDelete} />
-						</div>
-					</div>
-					{/* </Button> */}
-					</div>
-				</DisplayComponentSkeletonMapper>
+		) : (
+      // Input Component
+			// <div className="flex flex-row space-x-2 w-auto">
+
+      <div>
+
+        <div className="group h-full relative inline-flex flex-col justify-center z-5">
+          <div className="sine-opacity-med disabled pointer-events-none">
+            <DisplayComponentSkeletonMapper info={info}/>
+          </div>
+
+          <div className="absolute h-full bg-primary/10 opacity-0 hover:opacity-100 rounded-r-[inherit] w-full hidden group-hover:flex group-hover flex-row-reverse justify-around pointer-events-auto">
+            <div className="flex min-w-full rounded-lg flex-row px-2 gap-1 justify-between">
+            <InputComponentSheet
+              value={info as inputMapping}
+              type={info.display_as as inputComponents}
+              onChange={(value : inputMapping) => {
+                setInfo(value);
+              }}
+              onDelete={onDelete}
+            >
+              <div className="h-auto flex flex-col justify-center">
+                <Button variant={"transparent"} className="p-0 m-0">
+                  <BreadcrumbEllipsis className="w-4 h-4 text-primary" />
+                </Button>
+              </div>
+            </InputComponentSheet>
+            <div className="w-10 flex flex-col justify-center">
+              <Button variant={"transparent"} className="p-0 m-0" onClick={onDelete}>
+                <Trash2 className="w-4 h-4 text-primary" />
+              </Button>
+            </div>
+            </div>
+          </div>
+        </div>
 			</div>
 		)}
 		</>

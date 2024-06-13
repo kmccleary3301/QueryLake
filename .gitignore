@@ -31,4 +31,5 @@ documentation/Game Content
 documentation/Overview
 
 /public/cache/documentation
+/public/cache/toolchains
 /.next

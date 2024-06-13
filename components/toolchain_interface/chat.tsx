@@ -13,6 +13,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/defaul
 import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "../logo";
+import MARKDOWN_SAMPLE_TEXT from "../markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -38,6 +39,11 @@ export function SKELETON({
 		</div>
 	);
 }
+
+export const DEMO_DATA = [
+  {role: "user", "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."},
+  {role: "assistant", "content": MARKDOWN_SAMPLE_TEXT},
+] as chatEntry[];
 
 type documentEmbeddingSpecialFields1 ={
   collection_type: string;
@@ -68,22 +74,24 @@ export type chatEntry = {
 }
 
 export default function Chat({
-	configuration
+	configuration,
+  demo = false,
 }:{
-	configuration: displayMapping
+	configuration: displayMapping,
+  demo?: boolean
 }) {
 	
 	const { toolchainState, toolchainWebsocket } = useToolchainContextAction();
   const { userData } = useContextAction();
 
 	const [currentValue, setCurrentValue] = useState<chatEntry | chatEntry[]>(
-		retrieveValueFromObj(toolchainState, configuration.display_route) as chatEntry | chatEntry[] || []
+    demo ?
+    DEMO_DATA :
+    retrieveValueFromObj(toolchainState, configuration.display_route) as chatEntry | chatEntry[] || []
 	);
 
-
-
 	useEffect(() => {
-		if (toolchainWebsocket?.current === undefined) return;
+		if (toolchainWebsocket?.current === undefined || demo) return;
     const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as chatEntry | chatEntry[] || [];
     // console.log("Chat newValue", JSON.parse(JSON.stringify(newValue)));
 		setCurrentValue(newValue);
