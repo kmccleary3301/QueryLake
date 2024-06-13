@@ -31,7 +31,7 @@ export const METADATA : componentMetaDataType = {
 };
 
 
-export function DEMO({
+export function SKELETON({
 	configuration,
   children
 }:{

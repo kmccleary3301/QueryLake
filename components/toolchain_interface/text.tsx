@@ -1,10 +1,16 @@
 "use client";
 import { toolchainStateType } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { displayMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
 
-export function TextSkeleton({
+export const METADATA : componentMetaDataType = {
+  label: "Text",
+  category: "Text Display",
+  description: "Displays text as-is, without rendering it as markdown or processing it in any way.",
+};
+
+export function SKELETON({
 	configuration
 }:{
 	configuration: displayMapping

@@ -30,7 +30,7 @@ export const METADATA : componentMetaDataType = {
 };
 
 
-export function FileUploadSkeleton({
+export function SKELETON({
 	configuration,
   children
 }:{

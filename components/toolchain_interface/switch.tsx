@@ -31,7 +31,7 @@ export const METADATA : componentMetaDataType = {
 };
 
 
-export function SwitchInputSkeleton({
+export function SKELETON({
 	configuration,
   children
 }:{

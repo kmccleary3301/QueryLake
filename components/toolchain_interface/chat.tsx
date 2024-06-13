@@ -1,7 +1,7 @@
 "use client";
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { displayMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { Fragment, useEffect, useState } from "react";
 import MarkdownRenderer from "../markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
@@ -14,7 +14,13 @@ import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "../logo";
 
-export function ChatSkeleton({
+export const METADATA : componentMetaDataType = {
+  label: "Chat",
+  category: "Text Display",
+  description: "A user and assistant chat display component that renders markdown, similar to OpenAI's ChatGPT.",
+};
+
+export function SKELETON({
 	configuration
 }:{
 	configuration: displayMapping

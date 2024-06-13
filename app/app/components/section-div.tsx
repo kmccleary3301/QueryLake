@@ -6,7 +6,8 @@ import {
   alignType,
 	contentMapping
 } from "@/types/toolchain-interface";
-import DisplayMappings from "@/components/toolchain-display-mappings-app";
+// import DisplayMappings from "@/components/toolchain-display-mappings-app";
+import DisplayMappings from "@/public/cache/toolchains/toolchain-app-mappings";
 import { useState, useRef, Fragment } from "react";
 // import tailwindToStyle from "@/hooks/tailwind-to-obj/tailwind-to-style-obj";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";

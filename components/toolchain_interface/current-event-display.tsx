@@ -1,10 +1,16 @@
 "use client";
 import { Skeleton } from "@/registry/default/ui/skeleton";
-import { displayMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import BounceLoader from "react-spinners/BounceLoader";
 
-export function CurrentEventDisplaySkeleton({
+export const METADATA : componentMetaDataType = {
+  label: "Active Node Indicator",
+  category: "Debugging",
+  description: "Displays the current active node in the toolchain while running.",
+};
+
+export function SKELETON({
 	configuration
 }:{
 	configuration: displayMapping

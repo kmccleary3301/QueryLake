@@ -1,10 +1,18 @@
 
+import { 
+  displayComponents as displayComponentsGenerated,
+  inputComponents as inputComponentsGenerated,
+  DISPLAY_COMPONENTS as DISPLAY_COMPONENTS_GENERATED,
+  INPUT_COMPONENTS as INPUT_COMPONENTS_GENERATED,
+  INPUT_COMPONENT_FIELDS as INPUT_COMPONENT_FIELDS_GENERATED,
+} from "@/public/cache/toolchains/toolchain-component-types"
 
-export type displayComponents = "chat" | "markdown" | "text" | "graph" | "running_event_display";
-export type inputComponents = "file_upload" | "chat_input" | "switch";
 
-export const DISPLAY_COMPONENTS : displayComponents[] = ["chat", "markdown", "text", "graph", "running_event_display"];
-export const INPUT_COMPONENTS : inputComponents[] = ["file_upload", "chat_input", "switch"];
+export type displayComponents = displayComponentsGenerated;
+export type inputComponents = inputComponentsGenerated;
+
+export const DISPLAY_COMPONENTS : displayComponents[] = DISPLAY_COMPONENTS_GENERATED;
+export const INPUT_COMPONENTS : inputComponents[] = INPUT_COMPONENTS_GENERATED;
 
 export type configEntryFieldType = {
   name: string,
@@ -44,47 +52,48 @@ export type componentMetaDataType = {
   config?: inputComponentConfig
 }
 
-export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
-	"file_upload": {
-		"hooks": [
-      "on_upload",
-      "selected_collections"
-    ],
-		"config": [
-			{
-				"name": "multiple",
-				"type": "boolean",
-        "default": false
-			}
-		],
-	},
-	"chat_input": {
-		"hooks": [
-      "on_upload", 
-      "on_submit",
-      "selected_collections",
-    ],
-    "config": [
-      {
-				"name": "test_7_long_string",
-				"type": "long_string",
-        "default": "6ix"
-			}
-		],
-	},
-  "switch": {
-		"hooks": [
-      "value_map",
-    ],
-    "config": [
-      {
-				"name": "Label",
-				"type": "string",
-        "default": ""
-			}
-		],
-	},
-}
+// export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
+// 	"file_upload": {
+// 		"hooks": [
+//       "on_upload",
+//       "selected_collections"
+//     ],
+// 		"config": [
+// 			{
+// 				"name": "multiple",
+// 				"type": "boolean",
+//         "default": false
+// 			}
+// 		],
+// 	},
+// 	"chat_input": {
+// 		"hooks": [
+//       "on_upload", 
+//       "on_submit",
+//       "selected_collections",
+//     ],
+//     "config": [
+//       {
+// 				"name": "test_7_long_string",
+// 				"type": "long_string",
+//         "default": "6ix"
+// 			}
+// 		],
+// 	},
+//   "switch": {
+// 		"hooks": [
+//       "value_map",
+//     ],
+//     "config": [
+//       {
+// 				"name": "Label",
+// 				"type": "string",
+//         "default": ""
+// 			}
+// 		],
+// 	},
+// }
+export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = INPUT_COMPONENT_FIELDS_GENERATED;
 
 export type displayMapping = {
   display_route: (string | number)[],
