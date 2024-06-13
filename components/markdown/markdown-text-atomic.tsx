@@ -49,12 +49,9 @@ export default function MarkdownTextAtomic(props : MarkdownTextAtomicProps){
         <del>{props.textSeg.text}</del>
       );
     case "anchor":
-      console.log("Markdown hyperlink:", props.textSeg);
       return (
         <a href={props.textSeg.link as string} className="p-0 m-0 text-[#A68AEB] underline-offset-4 hover:underline active:text-[#A68AEB]/90">
-          {/* <Button variant="link" className="p-0 m-0 text-[#A68AEB] h-auto">
-            <p className="prose"> */}
-              {props.textSeg.text}
+            {props.textSeg.text}
         </a>
       );
   }

@@ -10,13 +10,13 @@ import {
   inputMapping,
 } from "@/types/toolchain-interface";
 
-import ChatInput, { METADATA as METADATA_ChatInput } from '@/components/toolchain_interface/chat-input';
-import Chat, { METADATA as METADATA_Chat } from '@/components/toolchain_interface/chat';
-import CurrentEventDisplay, { METADATA as METADATA_CurrentEventDisplay } from '@/components/toolchain_interface/current-event-display';
-import FileUpload, { METADATA as METADATA_FileUpload } from '@/components/toolchain_interface/file-upload';
-import Markdown, { METADATA as METADATA_Markdown } from '@/components/toolchain_interface/markdown';
-import Switch, { METADATA as METADATA_Switch } from '@/components/toolchain_interface/switch';
-import Text, { METADATA as METADATA_Text } from '@/components/toolchain_interface/text';
+import ChatInput from '@/components/toolchain_interface/chat-input';
+import Chat from '@/components/toolchain_interface/chat';
+import CurrentEventDisplay from '@/components/toolchain_interface/current-event-display';
+import FileUpload from '@/components/toolchain_interface/file-upload';
+import Markdown from '@/components/toolchain_interface/markdown';
+import Switch from '@/components/toolchain_interface/switch';
+import Text from '@/components/toolchain_interface/text';
 
 import { useToolchainContextAction } from "@/app/app/context-provider";
 
@@ -25,6 +25,10 @@ export function ToolchainComponentMapper({
 }:{
 	info: contentMapping
 }) {
+  
+	// const {
+  //   toolchainState,
+  // } = useToolchainContextAction();
 
   const getEffectiveConfig = (info : inputMapping) => {
     let effectiveConfig : configEntriesMap = new Map();
@@ -42,12 +46,13 @@ export function ToolchainComponentMapper({
   }
   
 	switch(info.display_as) {
+		
     
     case "chat":
       return (
         <Chat configuration={(info as displayMapping)}/>
       );
-    // Hello there
+
     case "current-event-display":
       return (
         <CurrentEventDisplay configuration={(info as displayMapping)}/>

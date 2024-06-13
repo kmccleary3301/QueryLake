@@ -76,9 +76,6 @@ function parseText(text : string) {
 			
 			if (linkMatch) {
 				const textMatch = match[0].slice(0, match[0].length - linkMatch[0].length);
-				console.log("ANCHOR PARSED:", match[0], match[0].length, linkMatch[0].length);
-				console.log("ANCHOR PARSED:", textMatch[0], linkMatch[0]);
-				console.log("Text match:", textMatch);
 				let text = textMatch;
 				text = text.slice(1, text.length - 1);
 				let link = linkMatch[0];
@@ -98,9 +95,6 @@ function parseText(text : string) {
 		}
 		
 		else if (match[0].length > 2 && match[0].slice(0, 1) === "$" && match[0][match[0].length-2] !== " " && match[0][1] !== " ") {
-			console.log("MATHJAX:", [match[0]]);
-			console.log("INLINE MATHJAX:", [unescape_text(match[0].slice(1, match[0].length-1))]);
-
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
 				type: "mathjax_inline"
