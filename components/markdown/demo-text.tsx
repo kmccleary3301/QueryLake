@@ -62,4 +62,11 @@ print("Accuracy:", accuracy)
 \`\`\`
 `
 
+export const MARKDOWN_CHAT_SAMPLE_TEXT = `
+## Lorem Ipsum
+
+dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+`
+
+// export MARKDOWN_CHAT_SAMPLE_TEXT;
 export default MARKDOWN_SAMPLE_TEXT;

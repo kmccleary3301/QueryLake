@@ -78,7 +78,7 @@ function parseText(text : string) {
 				type: "strikethrough"
 			});
 		}
-    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\\[") {
+    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\[") {
       string_segments.push({
         text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
@@ -86,7 +86,7 @@ function parseText(text : string) {
       });
       console.log("Got square brackets:", string_segments[string_segments.length-1]);
     }
-    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\\[") {
+    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\(") {
       string_segments.push({
         text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
@@ -146,7 +146,7 @@ function parseText(text : string) {
 		const new_index = index+match[0].length+match.index;
 		const new_match = text.slice(new_index).match(all_md_patterns);
 		if (new_match === null && new_index < text.length) {
-      console.log("Pushing remaining text:", text.slice(new_index));
+    //   console.log("Pushing remaining text:", text.slice(new_index));
 			string_segments.push({
 				text: unescape_text(text.slice(new_index)),
         raw_text: unescape_text(text.slice(new_index)),
@@ -185,15 +185,9 @@ export default function MarkdownTextSplitter({
   config?: "obsidian" | "chat",
 }){
 
-  const segments = parseText(text);
-
-  useEffect(() => {
-    console.log("segments", segments);
-  }, [text])
-
   return (
     <>
-      {segments.map((v : textSegment, k : number) => (
+      {parseText(text).map((v : textSegment, k : number) => (
         <MarkdownTextAtomic key={k} textSeg={v} config={config}/>
       ))}
     </>

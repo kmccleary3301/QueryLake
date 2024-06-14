@@ -135,14 +135,45 @@ function MarkdownMapComponent({
     case 'hr':
       return (null);
     case 'blockquote':
+      console.log("Blockquote text:", token);
       return (
-        <blockquote className={className}>
-          <MarkdownTextSplitter 
+        <blockquote className={cn(className, "pl-6 flex flex-col space-y-2")}>
+          {/* <MarkdownTextSplitter 
             selectable={true} 
             className={`text-left ${defaultFontSize}`} 
             text={token.text + unProcessedText}
             config={config}
-          />
+          /> */}
+          {(token.tokens)?(
+            <>
+              {token.tokens.map((v : Token, k : number) => (
+                <MarkdownMapComponent
+                  className={v.type === "list" ? "ml-[2rem]" : ""}
+                  finished={finished}
+                  key={k}
+                  unProcessedText={""}
+                  token={v}
+                  config={config}
+                />
+              ))}
+            </>
+          ):(
+            <MarkdownTextSplitter 
+              selectable={true} 
+              className={`text-left ${defaultFontSize}`} 
+              text={token.text + unProcessedText}
+              config={config}
+            />
+          )}
+          
+          {/* <MarkdownRenderer 
+            unpacked={true}
+            className={`text-left ml-3 ${defaultFontSize}`} 
+            input={token.text + unProcessedText} 
+            finished={finished} 
+            disableRender={false}
+            config={config}
+          /> */}
         </blockquote>
       );
     case 'list':
@@ -244,7 +275,8 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay,
   disableRender = false,
   finished,
-  config = "obsidian"
+  config = "obsidian",
+  list_in_block = false,
 } : {
   className?: string,
   unpacked?: boolean,
@@ -253,6 +285,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   disableRender?: boolean,
   finished: boolean,
   config?: "obsidian" | "chat"
+  list_in_block?: boolean
 }) {
   const lexer = new marked.Lexer();
   const lexed_input = lexer.lex(sanitizeMarkdown(input));
@@ -278,7 +311,9 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
                     (lexed_input[0].ordered) ?
                       "ml-[1.25rem]" : 
                       "ml-[1.25rem]" :
-                    ""
+                    (list_in_block) ?
+                      "ml-[1.25rem]" :
+                      ""
                 }
                 key={k} 
                 finished={finished}

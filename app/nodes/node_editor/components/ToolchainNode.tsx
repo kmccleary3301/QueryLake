@@ -19,7 +19,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
   useEffect(() => {
     console.log("Got data", data);
   }, [data]);
-
+  
   return (
     <>
       <Handle type="target" id={"||UNCLASSIFIED||"} position={Position.Left} style={{top:0}} onContextMenu={(e) => e.preventDefault()} 
@@ -42,6 +42,24 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           </Handle>
         </React.Fragment>
       ))}
+      {(
+        <Handle 
+          type="target" 
+          id={"||ADD_ARG_BUTTON||"} 
+          isConnectable={false} 
+          position={Position.Left} 
+          style={{top:30*((data.input_arguments || []).length) + 75}} 
+          className='w-5 h-5 rounded-full overflow-visible z-10' 
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <AddFeedMapSheet>
+            <Button className='h-5 w-5 rounded-full p-0 m-0 pointer-events-auto border-2 border-[#2a8af6] border-dashed text-[#2a8af6] active:text-[#2a8af6]/70 active:border-[#2a8af6]/70' variant={"ghost"}>
+              <Plus className='w-4 h-4'/>
+            </Button>
+          </AddFeedMapSheet>
+        </Handle>
+      )}
+
       {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (
         <React.Fragment key={index}>
           <Handle
@@ -56,7 +74,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
                             '#fed734' : (feed.destination === "<<USER>>") ?
                             '#2a8af6' : 
                             '#e92a67',
-                          }} 
+            }} 
             className='w-5 h-5 rounded-full border-2 z-10'
             onContextMenu={(e) => e.preventDefault()}
             // onClick={(e) => {if (e.button === 2) e.preventDefault();}}
@@ -72,16 +90,22 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           </Handle>
         </React.Fragment>
       ))}
-      <Handle type="source" id={"||ADD_BUTTON||"} isConnectable={false} position={Position.Right} style={{top:30*((data.feed_mappings || []).length) + 75}} 
-        className='w-5 h-5 rounded-full overflow-visible z-10' onContextMenu={(e) => e.preventDefault()}>
+      <Handle 
+        type="source" 
+        id={"||ADD_BUTTON||"} 
+        isConnectable={false} 
+        position={Position.Right} 
+        style={{top:30*((data.feed_mappings || []).length) + 75}} 
+        className='w-5 h-5 rounded-full overflow-visible z-10' onContextMenu={(e) => e.preventDefault()}
+      >
         <AddFeedMapSheet>
           <Button className='h-5 w-5 rounded-full p-0 m-0 pointer-events-auto border-2 border-[#2a8af6] border-dashed text-[#2a8af6] active:text-[#2a8af6]/70 active:border-[#2a8af6]/70' variant={"ghost"}>
             <Plus className='w-4 h-4'/>
           </Button>
         </AddFeedMapSheet>
       </Handle>
-      <div className="wrapper gradient" onContextMenu={(e) => e.preventDefault()}>
-        <div className="px-4 py-2 shadow-md rounded-lg bg-background text-primary">
+      <div className="wrapper gradient rounded-2xl bg-transparent" onContextMenu={(e) => e.preventDefault()}>
+        <div className="px-4 py-2 shadow-md bg-background text-primary rounded-lg">
           <div className="flex h-[50px]">
             <div className='flex flex-row'>
               <p className='h-5 flex flex-col justify-center pr-2'>{"id: "}</p>
@@ -94,14 +118,14 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           </div>
           
           <div className='flex flex-row'>
-            <div className='flex flex-col w-20 mr-2'style={{height: 30*(data.input_arguments || [])?.length - 0}}>
+            <div className='flex flex-col w-20 mr-2'style={{height: 30*(1+(data.input_arguments || [])?.length) + 0}}>
               {data.input_arguments?.map((input : nodeInputArgument, index : number) => (
                 <React.Fragment key={index}>
                   <p className='text-nowrap text-primary/0 text-xs select-none' style={{top:30*index + 10}}>{input.key}</p>
                 </React.Fragment>
               ))}
             </div>
-            <div className='flex flex-row-reverse justify-start w-full' style={{height: 30*(1+(data.feed_mappings || [])?.length) - 0}}>
+            <div className='flex flex-row-reverse justify-start w-full' style={{height: 30*(1+(data.feed_mappings || [])?.length) + 0}}>
               {/* {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (
                 <div className='absolute text-nowrap text-primary text-xs select-none' style={{top:30*index + 65}} onContextMenu={(e) => e.preventDefault()}>
                   <ModifyFeedMapSheet data={feed} className='h-5 w-5 select-none rounded-full flex flex-col justify-center bg-none text-xs text-primary translate-x-[2px] border-2 border-pink-500'>

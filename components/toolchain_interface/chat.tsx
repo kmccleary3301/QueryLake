@@ -13,7 +13,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/defaul
 import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "../logo";
-import MARKDOWN_SAMPLE_TEXT from "../markdown/demo-text";
+import MARKDOWN_SAMPLE_TEXT, { MARKDOWN_CHAT_SAMPLE_TEXT } from "../markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -42,7 +42,7 @@ export function SKELETON({
 
 export const DEMO_DATA = [
   {role: "user", "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."},
-  {role: "assistant", "content": MARKDOWN_SAMPLE_TEXT},
+  {role: "assistant", "content": MARKDOWN_CHAT_SAMPLE_TEXT},
 ] as chatEntry[];
 
 type documentEmbeddingSpecialFields1 ={

@@ -20,8 +20,6 @@ export default function MarkdownTextAtomic({
 
   const text_segment_lookup = config_map[textSeg.type];
 
-  useEffect(() => {console.log("config:", config)}, []);
-
   switch(text_segment_lookup) {
     case "bold":
       return (
