@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import MarkdownTextAtomic from "./markdown-text-atomic";
 import { cn } from "@/lib/utils";
+import { segment_types } from "./configs";
 
 const escape_replace = [
 	[/\%/g, "%"],
@@ -24,19 +25,20 @@ function unescape_text(text : string) {
 	return text;
 }
 
+const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\)|\\\[.*?\\\]|\\\(.*?\\\))/;
 
 function parseText(text : string) {
 	text = escape_text(text);
 
-	const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\))/;
   let match : RegExpMatchArray | null = text.match(all_md_patterns);
   let index = 0;
   const string_segments : textSegment[] = [];
   if (match === null) {
-      string_segments.push({
-          text: unescape_text(text),
-          type: "regular"
-      });
+    string_segments.push({
+      text: unescape_text(text),
+      raw_text: unescape_text(text),
+      type: "regular"
+    });
   }
   while (match !== null && match !== undefined && match.index !== undefined) {
 		// console.log("match:", match);
@@ -44,34 +46,57 @@ function parseText(text : string) {
 			// console.log()
 			string_segments.push({
 				text: unescape_text(text.slice(index, index+match.index)),
+        raw_text: unescape_text(text.slice(index, index+match.index)),
 				type: "regular"
 			})
 		}
 		if (match[0].length > 6 && match[0].slice(0, 3) === "***") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(3, match[0].length-3)),
+        raw_text: unescape_text(match[0]),
 				type: "bolditalic"
 			});
 		}
 		else if (match[0].length > 4 && match[0].slice(0, 2) === "**") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
+        raw_text: unescape_text(match[0]),
 				type: "bold"
 			});
 		}
 		else if (match[0].length > 4 && match[0].slice(0, 2) === "$$") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
-				type: "mathjax_newline"
+        raw_text: unescape_text(match[0]),
+				type: "double_dollar"
 			});
 		}
 		else if (match[0].length > 4 && match[0].slice(0, 2) === "~~") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
+        raw_text: unescape_text(match[0]),
 				type: "strikethrough"
 			});
 		}
+    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\\[") {
+      string_segments.push({
+        text: unescape_text(match[0].slice(2, match[0].length-2)),
+        raw_text: unescape_text(match[0]),
+				type: "escaped_square_brackets"
+      });
+      console.log("Got square brackets:", string_segments[string_segments.length-1]);
+    }
+    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\\[") {
+      string_segments.push({
+        text: unescape_text(match[0].slice(2, match[0].length-2)),
+        raw_text: unescape_text(match[0]),
+				type: "escaped_parentheses"
+        });
+      console.log("Got parentheses:", string_segments[string_segments.length-1]);
+    }
 		else if (match[0].length > 4 && match[0].slice(0, 1) === "[" && match[0].length > 2) {
+      // Link case.
+
 			const linkMatch = match[0].match(/\([^\)]*\)$/);
 			
 			if (linkMatch) {
@@ -82,6 +107,7 @@ function parseText(text : string) {
 				link = link.slice(1, link.length - 1);
 				string_segments.push({
 					text: text,
+          raw_text: unescape_text(match[0]),
 					link: link,
 					type: "anchor"
 				});
@@ -90,33 +116,40 @@ function parseText(text : string) {
 		else if (match[0].length > 2 && match[0].slice(0, 1) === "*") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
+        raw_text: unescape_text(match[0]),
 				type: "italic"
 			});
 		}
-		
 		else if (match[0].length > 2 && match[0].slice(0, 1) === "$" && match[0][match[0].length-2] !== " " && match[0][1] !== " ") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
-				type: "mathjax_inline"
+        raw_text: unescape_text(match[0]),
+				type: "single_dollar"
 			});
 		}
 		else if (match[0].length > 2 && match[0].slice(0, 1) === "`") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
+        raw_text: unescape_text(match[0]),
 				type: "codespan"
 			});
 		} else {
 			string_segments.push({
 				text: unescape_text(match[0]),
+        raw_text: unescape_text(match[0]),
 				type: "regular"
 			});
 		}
+
+
 		// if (match === undefined) {}
 		const new_index = index+match[0].length+match.index;
 		const new_match = text.slice(new_index).match(all_md_patterns);
 		if (new_match === null && new_index < text.length) {
+      console.log("Pushing remaining text:", text.slice(new_index));
 			string_segments.push({
 				text: unescape_text(text.slice(new_index)),
+        raw_text: unescape_text(text.slice(new_index)),
 				type: "regular"
 			})
 		}
@@ -128,29 +161,40 @@ function parseText(text : string) {
 }
 
 type MarkdownTextSplitterProps = {
-    selectable?: boolean,
-    className?: string,
-    text: string,
+  selectable?: boolean,
+  className?: string,
+  text: string,
 }
 
 export type textSegment = {
     text: string,
+    raw_text: string,
     link?: string
-    type: "regular" | "bold" | "italic" | "bolditalic" | "mathjax_newline" | "mathjax_inline" | "codespan" | "anchor" | "strikethrough"
+    type: segment_types
 }
 
-export default function MarkdownTextSplitter(props : MarkdownTextSplitterProps){
-//   const [textSplit, setTextSplit] = useState<textSegment[]>([]);
-//   useEffect(() => {
-//     const string_segments = parseText(props.text);
-//     // console.log("Text splitter got text:", props.text, string_segments);
-//     setTextSplit(string_segments);
-//   }, [props.text]);
+export default function MarkdownTextSplitter({
+  selectable = true,
+  className = "",
+  text,
+  config = "obsidian",
+}:{
+  selectable?: boolean,
+  className?: string,
+  text: string,
+  config?: "obsidian" | "chat",
+}){
+
+  const segments = parseText(text);
+
+  useEffect(() => {
+    console.log("segments", segments);
+  }, [text])
 
   return (
     <>
-      {parseText(props.text).map((v : textSegment, k : number) => (
-        <MarkdownTextAtomic key={k} textSeg={v}/>
+      {segments.map((v : textSegment, k : number) => (
+        <MarkdownTextAtomic key={k} textSeg={v} config={config}/>
       ))}
     </>
   );

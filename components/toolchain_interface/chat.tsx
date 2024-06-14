@@ -139,6 +139,7 @@ export default function Chat({
                   disableRender={(value.role === "user")}
                   input={(value || {}).content || ""} 
                   finished={false}
+                  config="chat"
                 />
               </div>
               {(value.role === "assistant" && value.sources) && (

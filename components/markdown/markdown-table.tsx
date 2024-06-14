@@ -29,12 +29,14 @@ function MarkdownTable({
   rows,
   unProcessedText,
   fontSize,
+  config = "obsidian",
 }:{
   className?: string,
   header: textSegment[],
   rows: textSegment[][],
   unProcessedText?: string,
   fontSize?: number,
+  config?: "obsidian" | "chat"
 }){
 
   return (
@@ -68,6 +70,7 @@ function MarkdownTable({
                   }}>
                     <MarkdownTextSplitter
                       text={entry.text}
+                      config={config}
                     />
                   </div>
                 </TableCell>

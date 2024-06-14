@@ -44,11 +44,13 @@ function MarkdownMapComponent({
   token,
   unProcessedText,
   finished,
+  config = "obsidian",
 }:{
   className?: string,
   token: Token,
   unProcessedText: string,
   finished: boolean,
+  config?: "obsidian" | "chat",
 }) {
   const defaultFontSize = 'text-base';
 
@@ -72,7 +74,7 @@ function MarkdownMapComponent({
       if (token.raw[0] != "#") {
         return (
           <p className={className}>
-            <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + unProcessedText}/>
+            <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + unProcessedText} config={config}/>
           </p>
         );
       } else {
@@ -80,39 +82,39 @@ function MarkdownMapComponent({
           case 1:
             return (
               <h2 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
                 {/* {token.text + props.unProcessedText} */}
               </h2>
             );
           case 2:
             return (
               <h3 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
                 {/* {token.text + props.unProcessedText} */}
               </h3>
             );
           case 3:
             return (
               <h4 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
               </h4>
             );
           case 4:
             return (
               <h5 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
               </h5>
             );
           case 5:
             return (
               <h6 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
               </h6>
             );
           case 6:
             return (
               <h6 className={className}>
-                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText}/>
+                <MarkdownTextSplitter selectable={true} text={token.text + unProcessedText} config={config}/>
               </h6>
             );
         }
@@ -126,6 +128,7 @@ function MarkdownMapComponent({
             header={token.header} 
             rows={token.rows}
             unProcessedText={unProcessedText}
+            config={config}
           />
         );
       }
@@ -134,7 +137,12 @@ function MarkdownMapComponent({
     case 'blockquote':
       return (
         <blockquote className={className}>
-          <MarkdownTextSplitter selectable={true} className={`text-left ${defaultFontSize}`} text={token.text + unProcessedText}/>
+          <MarkdownTextSplitter 
+            selectable={true} 
+            className={`text-left ${defaultFontSize}`} 
+            text={token.text + unProcessedText}
+            config={config}
+          />
         </blockquote>
       );
     case 'list':
@@ -148,6 +156,7 @@ function MarkdownMapComponent({
                 key={k}
                 unProcessedText={(k === token.items.length-1)?unProcessedText:""}
                 token={{...v, type: "list_item"}}
+                config={config}
               />
             ))}
           </ol>
@@ -161,6 +170,7 @@ function MarkdownMapComponent({
                 key={k}
                 unProcessedText={(k === token.items.length-1)?unProcessedText:""}
                 token={{...v, type: "list_item"}}
+                config={config}
               />
             ))}
           </ul>
@@ -175,6 +185,7 @@ function MarkdownMapComponent({
             input={token.text + unProcessedText} 
             finished={finished} 
             disableRender={false}
+            config={config}
           />
         </li>
       );
@@ -190,6 +201,7 @@ function MarkdownMapComponent({
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 
                     text={line}
+                    config={config}
                   />
                 </p>
               ))}
@@ -200,6 +212,7 @@ function MarkdownMapComponent({
               selectable={true} 
               className={`text-left text-base text-gray-200`} 
               text={lines[0]}
+              config={config}
             />
           )}
         </span>
@@ -209,7 +222,12 @@ function MarkdownMapComponent({
     case 'text':
       return (
         <span className={className}>
-          <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + unProcessedText}/>
+          <MarkdownTextSplitter 
+            selectable={true} 
+            className={`text-left text-base text-gray-200`} 
+            text={token.text + unProcessedText}
+            config={config}
+          />
         </span>
       );
     default:
@@ -226,6 +244,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay,
   disableRender = false,
   finished,
+  config = "obsidian"
 } : {
   className?: string,
   unpacked?: boolean,
@@ -233,6 +252,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay?: boolean,
   disableRender?: boolean,
   finished: boolean,
+  config?: "obsidian" | "chat"
 }) {
   const lexer = new marked.Lexer();
   const lexed_input = lexer.lex(sanitizeMarkdown(input));
@@ -264,6 +284,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
                 finished={finished}
                 token={v} 
                 unProcessedText={""}
+                config={config}
               />
             ))}
           </>
@@ -276,6 +297,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
               transparentDisplay={transparentDisplay}
               disableRender={disableRender}
               finished={finished}
+              config={config}
             />
           </div>
         )}
