@@ -9,6 +9,7 @@ import {
   toolchain_session,
   setStateOrCallback,
   QueryLakeApiKey,
+  APIFunctionSpec,
 } from "@/types/globalTypes";
 import { SERVER_ADDR_HTTP } from "@/config_server_hostnames";
 import { ToolChain } from "@/types/toolchains";
@@ -686,6 +687,26 @@ export function createApiKey(args :{
 
   fetch(url).then((response) => {
 		response.json().then((data : {success : boolean, result?: QueryLakeApiKey & {api_key : string}}) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result);
+		});
+	});
+}
+
+
+export function QuerylakeFunctionHelp(args :{
+  onFinish?: (result : APIFunctionSpec[] | false) => void
+}) {
+
+  const url = craftUrl(`/api/function_help`, {
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean, result?: APIFunctionSpec[]}) => {
       console.log(data);
 			if (!data["success"]) {
 				if (args.onFinish) args.onFinish(false);

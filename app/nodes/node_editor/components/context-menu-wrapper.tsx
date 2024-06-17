@@ -1,5 +1,6 @@
 "use client";
 
+import { useContextAction } from '@/app/context-provider';
 import {
 	ContextMenu,
 	ContextMenuCheckboxItem,
@@ -15,6 +16,8 @@ import {
 	ContextMenuSubTrigger,
 	ContextMenuTrigger,
 } from '@/registry/default/ui/context-menu';
+// import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { ScrollArea } from '@/registry/default/ui/scroll-area';
 import { MouseEvent, MouseEventHandler, useCallback } from 'react';
 import { Node, ReactFlowInstance } from 'reactflow';
 
@@ -30,6 +33,8 @@ export default function ContextMenuWrapper({
   getId: () => string;
 	children: React.ReactNode;
 }) {
+
+  const { apiFunctionSpecs } = useContextAction();
 
   const onAddTestItem = useCallback(
     (event : MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -56,7 +61,7 @@ export default function ContextMenuWrapper({
   );
 
   return (
-		<ContextMenu>
+		<ContextMenu modal={true}>
 			<ContextMenuTrigger className="flex z-5 h-full w-full items-center justify-center rounded-md border border-dashed text-sm">
 				{children}
 			</ContextMenuTrigger>
@@ -66,42 +71,31 @@ export default function ContextMenuWrapper({
         }}>
           Add Test Item
 				</ContextMenuItem>
-				<ContextMenuItem inset disabled>
+				{/* <ContextMenuItem inset disabled>
 					Forward
 					<ContextMenuShortcut>⌘]</ContextMenuShortcut>
-				</ContextMenuItem>
+				</ContextMenuItem> */}
 				<ContextMenuItem inset>
-					Reload
-					<ContextMenuShortcut>⌘R</ContextMenuShortcut>
+					Add Empty Node
 				</ContextMenuItem>
 				<ContextMenuSub>
-					<ContextMenuSubTrigger inset>More Tools</ContextMenuSubTrigger>
-					<ContextMenuSubContent className="w-48">
-						<ContextMenuItem>
-							Save Page As...
-							<ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
-						</ContextMenuItem>
-						<ContextMenuItem>Create Shortcut...</ContextMenuItem>
-						<ContextMenuItem>Name Window...</ContextMenuItem>
-						<ContextMenuSeparator />
-						<ContextMenuItem>Developer Tools</ContextMenuItem>
+					<ContextMenuSubTrigger inset>Add API Call</ContextMenuSubTrigger>
+					<ContextMenuSubContent className="">
+            <ScrollArea className='h-[400px]'>
+            {apiFunctionSpecs?.map((spec, index) => (
+              <ContextMenuItem inset key={index}>
+                {spec.api_function_id}
+              </ContextMenuItem>
+            ))}
+            </ScrollArea>
+            {/* <div className='p-5 flex flex-row space-x-1'>
+              <ScrollArea className='h-[400px]'>
+
+                <div className='w-[50px] h-[500px] bg-red-500'/>
+              </ScrollArea>
+            </div> */}
 					</ContextMenuSubContent>
 				</ContextMenuSub>
-				<ContextMenuSeparator />
-				<ContextMenuCheckboxItem checked>
-					Show Bookmarks Bar
-					<ContextMenuShortcut>⌘⇧B</ContextMenuShortcut>
-				</ContextMenuCheckboxItem>
-				<ContextMenuCheckboxItem>Show Full URLs</ContextMenuCheckboxItem>
-				<ContextMenuSeparator />
-				<ContextMenuRadioGroup value="pedro">
-					<ContextMenuLabel inset>People</ContextMenuLabel>
-					<ContextMenuSeparator />
-					<ContextMenuRadioItem value="pedro">
-						Pedro Duarte
-					</ContextMenuRadioItem>
-					<ContextMenuRadioItem value="colm">Colm Tuite</ContextMenuRadioItem>
-				</ContextMenuRadioGroup>
 			</ContextMenuContent>
 		</ContextMenu>
   );

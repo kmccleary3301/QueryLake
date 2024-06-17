@@ -125,7 +125,7 @@ export default function SettingsPage() {
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
                     <div className="flex flex-row space-x-2">
                       <ModeToggle/>
-                      <ComboBox
+                      <ComboBoxScroll
                         values={COMBOBOX_THEMES}
                         placeholder="Select Theme..."
                         searchPlaceholder="Search Themes..."
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex flex-row justify-between gap-6">
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Code Highlighter Theme</h1>
-                    <ComboBox
+                    <ComboBoxScroll
                       values={SHIKI_THEMES}
                       placeholder="Select Code Theme..."
                       searchPlaceholder="Search Themes..."

@@ -16,13 +16,14 @@ import {
 	setStateOrCallback,
 	toolchain_session,
 	toolchain_type,
-	collectionGroup
+	collectionGroup,
+  APIFunctionSpec
 } from '@/types/globalTypes';
 import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import { useRouter } from 'next/navigation';
 import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
-import { fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
+import { QuerylakeFunctionHelp, fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
 import { ToolChain } from '@/types/toolchains';
 import { BundledTheme } from 'shiki/themes';
 
@@ -65,6 +66,8 @@ const Context = createContext<{
 
 	getUserData : (user_data_input : userDataType | undefined, onFinish : () => void) => void,
 
+  apiFunctionSpecs : APIFunctionSpec[] | undefined,
+
 	breakpoint : breakpointType,
 }>({
 	userData: undefined,
@@ -100,6 +103,8 @@ const Context = createContext<{
   setShikiTheme: () => {return {theme: 'tokyo-night', backgroundColor: undefined}},
 
 	getUserData: () => undefined,
+
+  apiFunctionSpecs: undefined,
 
 	breakpoint: '2xl',
 });
@@ -140,6 +145,7 @@ export const ContextProvider = ({
 	const [login_valid, set_login_valid] = useState<boolean>(false);
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
   const [shiki_theme, set_shiki_theme] = useState<codeThemePreferenceType>({theme: 'tokyo-night', backgroundColor: undefined});
+  const [api_function_specs, set_api_function_specs] = useState<APIFunctionSpec[] | undefined>(undefined);
 
 	useEffect(() => {
     const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
@@ -234,6 +240,18 @@ export const ContextProvider = ({
     refresh_toolchain_sessions();
   }, [user_data?.auth, auth_reviewed]);
 
+  const getAPIFunctionSpecs = useCallback(() => {
+    QuerylakeFunctionHelp({
+      // auth: user_data?.auth as string,
+      onFinish: (v : APIFunctionSpec[] | false) => {
+        if (v) {
+          set_api_function_specs(v);
+        }
+      }
+    })
+  }, [user_data?.auth, auth_reviewed]);
+
+
   useEffect(() => {
     if (selected_toolchain === undefined) return;
     setFullToolchain(selected_toolchain);
@@ -242,6 +260,7 @@ export const ContextProvider = ({
   useEffect(() => {
     if (user_data === undefined || !auth_reviewed) return;
     set_selected_toolchain(user_data.default_toolchain.id);
+    getAPIFunctionSpecs();
   }, [user_data?.auth, auth_reviewed]);
 	
 	return (
@@ -269,6 +288,7 @@ export const ContextProvider = ({
       shikiTheme : shiki_theme,
       setShikiTheme : set_shiki_theme,
 			getUserData : get_user_data,
+      apiFunctionSpecs: api_function_specs,
 			breakpoint : break_point,
 		}}>
 			{children}

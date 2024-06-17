@@ -6,6 +6,8 @@ import { ChevronRight, Plus, Settings } from 'lucide-react';
 import React, { memo, ReactNode, useEffect } from 'react';
 import { Handle, NodeProps, Position, XYPosition } from 'reactflow';
 import AddFeedMapSheet, { ModifyFeedMapSheet } from './control_fields/AddFeedMapSheet';
+import { cn } from '@/lib/utils';
+import { fontConsolas } from '@/lib/fonts';
 // import { FiCloud } from 'react-icons/fi';
 
 export type ToolchainNodeData = {
@@ -16,6 +18,8 @@ export type ToolchainNodeData = {
 }
 
 export default memo(({ data }: NodeProps<toolchainNode>) => {
+  const topWindowHeight = 50;
+
   useEffect(() => {
     console.log("Got data", data);
   }, [data]);
@@ -34,7 +38,15 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
       </Handle>
       {data.input_arguments?.map((input : nodeInputArgument, index : number) => (
         <React.Fragment key={index}>
-          <Handle key={index} type="target" id={input.key} position={Position.Left} style={{top:30*index + 75}} onContextMenu={(e) => e.preventDefault()} className='w-5 h-5 rounded-full border-2 border-[#e92a67] overflow-visible z-10'>
+          <Handle 
+            key={index} 
+            type="target" 
+            id={input.key} 
+            position={Position.Left} 
+            style={{top:30*index + 25 + topWindowHeight}} 
+            onContextMenu={(e) => e.preventDefault()} 
+            className='w-5 h-5 rounded-full border-2 border-[#e92a67] overflow-visible z-10'
+          >
             {/* <p className='ml-6 h-4 text-nowrap text-primary text-xs flex flex-col justify-center'>{input.key}</p> */}
             <div className='ml-6 h-5 flex flex-col justify-center'>
               <Input className='pl-2 h-2 mb-1 w-20 text-xs' spellCheck={false} defaultValue={input.key}/>
@@ -48,7 +60,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           id={"||ADD_ARG_BUTTON||"} 
           isConnectable={false} 
           position={Position.Left} 
-          style={{top:30*((data.input_arguments || []).length) + 75}} 
+          style={{top:30*((data.input_arguments || []).length) + 25 + topWindowHeight}} 
           className='w-5 h-5 rounded-full overflow-visible z-10' 
           onContextMenu={(e) => e.preventDefault()}
         >
@@ -69,7 +81,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
             id={`feed-${index}`} 
             position={Position.Right}
             style={{
-              top:30*index + 75,
+              top:30*index + 25 + topWindowHeight,
               borderColor: (feed.destination === "<<STATE>>") ? 
                             '#fed734' : (feed.destination === "<<USER>>") ?
                             '#2a8af6' : 
@@ -95,7 +107,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
         id={"||ADD_BUTTON||"} 
         isConnectable={false} 
         position={Position.Right} 
-        style={{top:30*((data.feed_mappings || []).length) + 75}} 
+        style={{top:30*((data.feed_mappings || []).length) + 25 +  + topWindowHeight}} 
         className='w-5 h-5 rounded-full overflow-visible z-10' onContextMenu={(e) => e.preventDefault()}
       >
         <AddFeedMapSheet>
@@ -106,35 +118,34 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
       </Handle>
       <div className="wrapper gradient rounded-2xl bg-transparent" onContextMenu={(e) => e.preventDefault()}>
         <div className="px-4 py-2 shadow-md bg-background text-primary rounded-lg">
-          <div className="flex h-[50px]">
-            <div className='flex flex-row'>
-              <p className='h-5 flex flex-col justify-center pr-2'>{"id: "}</p>
-              <Input
-                className='text-sm h-5 max-w-40'
-                spellCheck={false}
-                defaultValue={data.id}
-              />
+          <div className="flex" style={{height: topWindowHeight}}>
+            <div className='flex flex-col space-y-1'>
+              <div className='flex flex-row'>
+                <p className='h-5 flex flex-col justify-center pr-2'>{"id: "}</p>
+                <Input
+                  className='text-sm h-5 max-w-40'
+                  spellCheck={false}
+                  defaultValue={data.id}
+                />
+              </div>
+              {(data.api_function) && (
+                <div className='flex flex-row'>
+                  <p className='h-5 flex flex-col justify-center pr-2'>{"API: "}</p>
+                  <p className={cn('h-5 flex flex-col justify-center pr-2 text-xs', fontConsolas.className)}>{data.api_function}</p>
+                </div>
+              )}
             </div>
           </div>
           
           <div className='flex flex-row'>
-            <div className='flex flex-col w-20 mr-2'style={{height: 30*(1+(data.input_arguments || [])?.length) + 0}}>
+            <div className='flex flex-col w-20 mr-2'style={{height: 30*(1+(data.input_arguments || [])?.length) + topWindowHeight - 50}}>
               {data.input_arguments?.map((input : nodeInputArgument, index : number) => (
                 <React.Fragment key={index}>
                   <p className='text-nowrap text-primary/0 text-xs select-none' style={{top:30*index + 10}}>{input.key}</p>
                 </React.Fragment>
               ))}
             </div>
-            <div className='flex flex-row-reverse justify-start w-full' style={{height: 30*(1+(data.feed_mappings || [])?.length) + 0}}>
-              {/* {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (
-                <div className='absolute text-nowrap text-primary text-xs select-none' style={{top:30*index + 65}} onContextMenu={(e) => e.preventDefault()}>
-                  <ModifyFeedMapSheet data={feed} className='h-5 w-5 select-none rounded-full flex flex-col justify-center bg-none text-xs text-primary translate-x-[2px] border-2 border-pink-500'>
-                    <div className='h-full flex flex-col justify-center bg-none pointer-events-auto text-xs text-primary'>
-                      <p className='w-full text-center pointer-events-none'>{(feed.destination === "<<STATE>>") ? 'S' : (feed.destination === "<<USER>>") ? 'U' : ''}</p>
-                    </div>
-                  </ModifyFeedMapSheet>
-                </div>
-              ))} */}
+            <div className='flex flex-row-reverse justify-start w-full' style={{height: 30*(1+(data.feed_mappings || [])?.length) + topWindowHeight - 50}}>
             </div>
           </div>
         </div>

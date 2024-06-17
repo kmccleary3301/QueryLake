@@ -16,9 +16,11 @@ import {
 import {
   Popover,
   PopoverContent,
+  PopoverContentNoPortal,
   PopoverTrigger,
 } from "./popover"
-import { ScrollArea } from "@radix-ui/react-scroll-area"
+// import { ScrollArea } from "@radix-ui/react-scroll-area"
+import { ScrollArea } from "./scroll-area"
 import { HoverCardTrigger, HoverCard, HoverCardContent } from "./hover-card"
 
 type valueType = {value: string, label: string};
@@ -106,7 +108,7 @@ export function ComboBoxScroll({
   const [innerValue, setInnerValue] = React.useState(defaultValue?.value || value)
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -122,10 +124,11 @@ export function ComboBoxScroll({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <CommandInput placeholder={searchPlaceholder} />
+          {/* <CommandInput placeholder={searchPlaceholder} />
           <CommandEmpty>No framework found.</CommandEmpty>
-          <CommandGroup>
-        <ScrollArea className="h-[200px]">
+          <CommandGroup> */}
+        {/* <ScrollArea className="h-[200px]">
             {values.map((e) => (
               <CommandItem
                 key={e.value}
@@ -145,8 +148,34 @@ export function ComboBoxScroll({
                 {e.label}
               </CommandItem>
             ))}
-        </ScrollArea>
-          </CommandGroup>
+        </ScrollArea> */}
+          <ScrollArea className="h-[200px]">
+            <CommandEmpty>Not found</CommandEmpty>
+            <CommandGroup>
+              {values.map((e) => (
+                  <CommandItem
+                    className="mr-[10px]"
+                    key={e.value}
+                    value={e.value}
+                    onSelect={(currentValue) => {
+                      setInnerValue(currentValue === innerValue ? "" : currentValue);
+                      onChange(e.value, e.label);
+                      setOpen(false)
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        innerValue === e.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {e.label}
+                  </CommandItem>
+                ))
+              }
+            </CommandGroup>
+          </ScrollArea>
+          {/* </CommandGroup> */}
         </Command>
       </PopoverContent>
     </Popover>

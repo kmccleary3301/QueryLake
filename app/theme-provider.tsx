@@ -78,7 +78,7 @@ export const REGISTRY_THEMES : registryThemeEntry[] = Array(themes.length*2).fil
   };
 }) as unknown as registryThemeEntry[];
 
-const DEFAULT_THEME_ID = "openai";
+const DEFAULT_THEME_ID = "red";
 const DEFAULT_THEME = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: themeType, dark: themeType};
 
 const Context = createContext<{

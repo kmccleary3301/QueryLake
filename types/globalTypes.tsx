@@ -120,8 +120,6 @@ export type sessionEntry = {
   hash_id: string
 }
 
-
-
 export type genericArrayType = Array<string | boolean | number | object>;
 export type genericMapValueType = string | boolean | number | object | genericArrayType;
 export type sessionStateType = Map<string, string | boolean | number | object | genericArrayType>;
@@ -203,3 +201,18 @@ export type QueryLakeApiKey = {
 	last_used: number | null,
   last_used_string?: string,
 };
+
+
+export type APIFunctionArgument = {
+  keyword: string,
+  type_hint?: string,
+  default_value?: any,
+}
+
+export type APIFunctionSpec = {
+  endpoint: string,
+  api_function_id: string,
+  function_name: string,
+  description: string,
+  function_args: APIFunctionArgument[],
+}

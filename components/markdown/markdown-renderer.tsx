@@ -165,19 +165,9 @@ function MarkdownMapComponent({
               config={config}
             />
           )}
-          
-          {/* <MarkdownRenderer 
-            unpacked={true}
-            className={`text-left ml-3 ${defaultFontSize}`} 
-            input={token.text + unProcessedText} 
-            finished={finished} 
-            disableRender={false}
-            config={config}
-          /> */}
         </blockquote>
       );
     case 'list':
-
       if (token.ordered) {
         return (
           <ol className={cn("not-prose", className)}>
