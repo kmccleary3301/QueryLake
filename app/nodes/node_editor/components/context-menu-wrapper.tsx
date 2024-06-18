@@ -18,6 +18,8 @@ import {
 } from '@/registry/default/ui/context-menu';
 // import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { ScrollArea } from '@/registry/default/ui/scroll-area';
+import { APIFunctionSpec } from '@/types/globalTypes';
+import { toolchainNode } from '@/types/toolchains';
 import { MouseEvent, MouseEventHandler, useCallback } from 'react';
 import { Node, ReactFlowInstance } from 'reactflow';
 
@@ -49,7 +51,7 @@ export default function ContextMenuWrapper({
       });
 
       const newNode = {
-        id: getId(),
+        id: "dndnode_test_"+getId(),
         position: position,
         data: { icon: <div/>, title: 'fullBundle' },
         type: 'turbo',
@@ -59,6 +61,44 @@ export default function ContextMenuWrapper({
     },
     [reactFlowInstance],
   );
+
+  const onAddAPIFunctionNode = useCallback(
+    (event : MouseEvent<HTMLDivElement, globalThis.MouseEvent>, api_func: APIFunctionSpec) => {
+      // event.preventDefault();
+      if (!reactFlowInstance) {
+        console.log("No reactFlowInstance; exiting");
+        return;
+      }
+
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+
+      const new_node_data : toolchainNode = {
+        id: api_func.api_function_id + "_" + getId(),
+        api_function: api_func.api_function_id,
+        feed_mappings: [],
+        input_arguments: api_func.function_args.map((arg) => ({
+          key: arg.keyword,
+          ...(arg.default_value?{ default_value: arg.default_value }:{}),
+          ...(arg.type_hint?{ type_hint: arg.type_hint }:{}),
+        }))
+      }
+
+      const newNode = {
+        id: getId(),
+        position: position,
+        data: new_node_data,
+        type: 'toolchain',
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [reactFlowInstance],
+  );
+
 
   return (
 		<ContextMenu modal={true}>
@@ -83,7 +123,9 @@ export default function ContextMenuWrapper({
 					<ContextMenuSubContent className="">
             <ScrollArea className='h-[400px]'>
             {apiFunctionSpecs?.map((spec, index) => (
-              <ContextMenuItem inset key={index}>
+              <ContextMenuItem inset key={index} onClick={(event) => {
+                onAddAPIFunctionNode(event, spec);
+              }}>
                 {spec.api_function_id}
               </ContextMenuItem>
             ))}

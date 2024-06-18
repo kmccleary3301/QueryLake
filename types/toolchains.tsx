@@ -185,13 +185,14 @@ export type feedMapping = feedMappingOutputValue | feedMappingInputValue | feedM
 
 export interface nodeInputArgument {
     key: string;
-    initialValue?: substituteAny;
+    value?: substituteAny;
     from_user?: boolean;
     from_server?: boolean;
     from_state?: stateValue;
     from_files?: getFiles;
     sequence?: sequenceAction[];
     optional?: boolean;
+    type_hint?: string;
 }
 
 export interface chatWindowMapping {

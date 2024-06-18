@@ -23,7 +23,7 @@ import { hslStringToRGBHex } from '@/hooks/rgb-hsl-functions';
 
 export default function Flow() {
   let id = 50;
-  const getId = () => `dndnode_test_${id++}`;
+  const getId = () => `${id++}`;
 
   const { 
     toolchainNodes,

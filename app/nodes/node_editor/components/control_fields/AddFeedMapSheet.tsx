@@ -16,6 +16,7 @@ import Code from "@/components/markdown/code"
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
 import { ScrollArea } from "@/registry/default/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/registry/default/ui/accordion";
+import SequenceActionModifier from "./SequenceActionModifier";
 
 export default function AddFeedMapSheet({
   data,
@@ -70,19 +71,19 @@ export function ModifyFeedMapSheet({
                 <MarkdownCodeBlock text={JSON.stringify(data, null, 4)} lang="JSON" finished/>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="item-2">
-              <AccordionTrigger>Sequence</AccordionTrigger>
-              <AccordionContent>
-                Yes. It comes with default styles that matches the other
-                components&apos; aesthetic.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
-            
-            {(data && data.route !== undefined && data.route !== null) && (
-              <StaticRouteCreation values={data.route} className=""/>
+            {(data && data.sequence !== undefined && data.sequence !== null) && (
+              <AccordionItem value="item-2" className="border-b-0">
+                <AccordionTrigger>Sequence</AccordionTrigger>
+                <AccordionContent className="space-y-4">
+                {/* <p>Static Route Creator</p> */}
+                {data.sequence.map((seq, index) => (
+                  <SequenceActionModifier data={seq} key={index}/>
+                ))}
+                </AccordionContent>
+              </AccordionItem>
             )}
+          </Accordion>
+            
           </div>
         </ScrollArea>
       </PopoverContent>
