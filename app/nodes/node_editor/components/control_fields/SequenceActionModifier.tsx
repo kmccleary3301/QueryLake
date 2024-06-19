@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
+import { Button } from "@/registry/default/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
 import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
 import { Textarea } from "@/registry/default/ui/textarea";
 import { appendAction, backOut, createAction, deleteAction, operatorAction, sequenceAction, sequenceActionNonStatic, updateAction } from "@/types/toolchains";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Trash } from "lucide-react";
 
 const SEQUENCE_ACTION_MAP: { [key: string]: string[] } = {
   "createAction":   ["bg-yellow-500", "C", "Create"   , "text-yellow-500", "border-yellow-500"],
@@ -40,27 +42,52 @@ function SequenceActionStandard({
   return (
     <div className="flex flex-row">
       <div>
-      <HoverTextDiv hint={sequence_values[2]}>
-        <p className={cn(`rounded-full p-1 h-7 min-w-7 text-center font-bold text-black`, sequence_values[0])}>
-          {sequence_values[1]}
-        </p>
-      </HoverTextDiv>
+      {/* <HoverTextDiv hint={sequence_values[2]}> */}
+
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <div>
+            <p className={cn(`rounded-full p-1 h-7 min-w-7 text-center font-bold text-black select-none`, sequence_values[0])}>
+              {sequence_values[1]}
+            </p>
+            </div>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-auto max-w-[200px] flex flex-row space-x-2">
+            <Button variant={"ghost"} className="w-6 h-6 p-0 m-0 text-destructive hover:text-destructive/80 active:text-destructive/60">
+              <Trash className="w-4 h-4"/>
+            </Button>
+            <p className="text-sm h-auto flex flex-col justify-center">
+              {sequence_values[2]}
+            </p>
+          </HoverCardContent>
+        </HoverCard>
+        
+      {/* </HoverTextDiv> */}
       </div>
       {/* <div>
         <ChevronLeft className={cn("h-7 -mr-4 pr-[2px] pb-[0px]", sequence_values[3])}/>
       </div> */}
       <div className="flex flex-row -mr-[1px] pl-2">
-        <div className={cn("w-[15px] mb-5 border-t-2 border-r-2 rounded-tr-sm mr-[0.5px]", sequence_values[4])} style={{marginTop: "calc(0.875rem - 1px)"}}>
+        <div className={cn("w-[15px] mb-5 border-t-2 border-r-2 rounded-tr-xl mr-[0.5px]", sequence_values[4])} style={{marginTop: "calc(0.875rem )"}}>
 
-        {/* <div className={cn("h-7 flex flex-col justify-center -mr-3.5 -mt-[calc(150%)] -ml-[150%]", sequence_values[3])}>
-          
-        </div> */}
+        {/* <div 
+          className={cn(
+            "h-3 w-3 border-b-2 border-l-2 flex flex-col justify-center -mr-3.5 m-[1px]", 
+            sequence_values[3], 
+            sequence_values[4]
+          )}
+          style={{
+            marginTop: "calc(-100%)",
+            // Rotate 45 degrees
+            transform: "rotate(45deg)",
+          }}
+        /> */}
         </div>
         {/* <div className={cn("h-7 flex flex-col justify-center", sequence_values[3])}>
         </div> */}
       </div>
-      <div className={cn("flex flex-col border-l-2 border-b-2 rounded-bl-lg -ml-[1px]", sequence_values[4])} style={{marginTop: "calc(0.875rem + 5px)"}}>
-        <div className="pl-2 pb-2 -mt-3.5 min-h-[40px]">
+      <div className={cn("flex flex-col border-l-2 border-b-2 rounded-bl-xl -ml-[1px]", sequence_values[4])} style={{marginTop: "calc(0.875rem + 10px)"}}>
+        <div className="pl-4 pb-4 -mt-3.5 min-h-[40px]">
         {children}
         </div>
       </div>
@@ -83,12 +110,12 @@ export default function SequenceActionModifier({
   return(
     <>
       {((typeof data === "object") && 
-        ((data as createAction))) && (
+        ((data as createAction).type === "createAction")) && (
           <SequenceActionStandard type="createAction">
             {((data as createAction).initialValue !== undefined) && (
               <div>
                 <p>Initial Value</p>
-                <Textarea value={JSON.stringify((data as createAction).initialValue)}/>
+                <Textarea className="resize-none" value={JSON.stringify((data as createAction).initialValue)}/>
               </div>
             )}
           </SequenceActionStandard>

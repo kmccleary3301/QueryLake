@@ -123,7 +123,7 @@ export default function ContextMenuWrapper({
 					<ContextMenuSubContent className="">
             <ScrollArea className='h-[400px]'>
             {apiFunctionSpecs?.map((spec, index) => (
-              <ContextMenuItem inset key={index} onClick={(event) => {
+              <ContextMenuItem inset key={index} className='pl-2 mr-2.5' onClick={(event) => {
                 onAddAPIFunctionNode(event, spec);
               }}>
                 {spec.api_function_id}
