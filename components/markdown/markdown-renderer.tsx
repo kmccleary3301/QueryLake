@@ -198,8 +198,10 @@ function MarkdownMapComponent({
         );
       }
     case 'list_item':
+      const counter = (token.raw.match(/^([^\s]+) /) || [""])[0].trimStart().trimEnd();
+
       return (
-        <li className={className}>
+        <li className={className} counter-text={counter + " "}>
           {/* <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/> */}
           <MarkdownRenderer 
             unpacked={true}

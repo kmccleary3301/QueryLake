@@ -142,6 +142,8 @@ Sure, here's the Markdown example without using code blocks to demonstrate the f
 2. Second item
    - Subitem A
    - Subitem B
+2. Let's start miscounting
+1. To test the CSS
 
 ## Headers
 

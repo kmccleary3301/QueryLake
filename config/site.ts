@@ -1,12 +1,11 @@
 export const siteConfig = {
   name: "QueryLake",
-  url: "https://ui.shadcn.com",
+  url: "https://querylake.lsu.edu",
   ogImage: "https://ui.shadcn.com/og.jpg",
   description:
-    "Beautifully designed components that you can copy and paste into your apps. Accessible. Customizable. Open Source.",
+    "An open-source AI platform for everyone.",
   links: {
-    twitter: "https://twitter.com/shadcn",
-    github: "https://github.com/shadcn-ui/ui",
+    github: "https://github.com/kmccleary3301/QueryLake",
   },
 }
 

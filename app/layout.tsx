@@ -34,14 +34,17 @@ export const metadata: Metadata = {
     "Tailwind CSS",
     "Server Components",
     "Radix UI",
+    "QueryLake",
+    "LSU",
+    "AI"
   ],
   authors: [
     {
-      name: "shadcn",
-      url: "https://shadcn.com",
+      name: "Kyle McCleary",
+      url: "https://github.com/kmccleary3301",
     },
   ],
-  creator: "shadcn",
+  creator: "kmccleary3301",
   openGraph: {
     type: "website",
     locale: "en_US",
