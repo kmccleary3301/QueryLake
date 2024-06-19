@@ -127,7 +127,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="pb-2">
-            <Button className="w-full h-8" type="submit">
+            <Button className="w-full h-8 text-black" type="submit">
               Login
             </Button>
           </div>

@@ -6,6 +6,7 @@ import { motion, stagger, useAnimate } from "framer-motion";
 import LoginBox from "./login-box";
 import React, { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
+import { useThemeContextAction } from "@/app/theme-provider";
 
 const LSULogoSVG = [
   "m340.55 617.76v-0.64375-61.648-0.64375h0.64375 55.584 0.64375v0.64375 12.483 0.64375h-0.64375-33.633v48.522 0.64375h-0.64375-21.308-0.64375z",
@@ -41,12 +42,15 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 	const moveLeftAnimation = { type: "spring", duration: 1, bounce: 0, delay: 4.5 };
 	const padLeft = "2.5%";
 	const LSULogoSize = 0.5;
+  const { theme, generateStylesheet } = useThemeContextAction();
+
 
 	return (
 		<>
 			<div 
 				id="spacing div" 
 				className="h-full w-full flex flex-col items-center justify-around overflow-x-scroll scrollbar-hide"
+        style={generateStylesheet(theme.dark)}
 			>
 				{/* <div /> */}
 				<div className="w-full pt-[20px] pb-[20px] text-white">
@@ -58,7 +62,7 @@ export const QueryLakeDisplay = ({ children }:{ children: React.ReactNode }) => 
 							spring={true}
 							words="QueryLake"
 							// words="Test"
-							className="inline-block text-2xl md:text-4xl lg:text-6xl font-bold"
+							className="inline-block text-primary text-2xl md:text-4xl lg:text-6xl font-bold"
 						/>
 					</MoveLeftWrapper>
 					<MoveLeftWrapper className="pt-[2px] pb-[8px]">

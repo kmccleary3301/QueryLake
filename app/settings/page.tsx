@@ -15,7 +15,7 @@ import { ThemesTabs } from "@/app/themes/tabs"
 import { ScrollArea } from "@/registry/default/ui/scroll-area"
 import { useContextAction } from "@/app/context-provider";
 import { REGISTRY_THEMES, REGISTRY_THEMES_MAP, ThemeProviderWrapper, registryThemeEntry, themeType, useThemeContextAction } from "../theme-provider";
-import { ComboBox, ComboBoxScroll } from "@/registry/default/ui/combo-box"
+import { ComboBox, ComboBoxScroll, ComboBoxScrollPreview } from "@/registry/default/ui/combo-box"
 import CompactInput from "@/registry/default/ui/compact-input";
 import { Button } from "@/registry/default/ui/button";
 import { Send, Trash } from "lucide-react";
@@ -125,17 +125,17 @@ export default function SettingsPage() {
                     <h1 className="text-2xl h-auto flex flex-col justify-center">Global Theme</h1>
                     <div className="flex flex-row space-x-2">
                       <ModeToggle/>
-                      <ComboBoxScroll
+                      <ComboBoxScrollPreview
                         values={COMBOBOX_THEMES}
                         placeholder="Select Theme..."
                         searchPlaceholder="Search Themes..."
-                        value={theme["theme-select-id"]}
+                        value={theme.dark["theme-select-id"]}
                         onChange={(value, _) => {
                           const themeGet = REGISTRY_THEMES_MAP.get(value) as {light: themeType, dark: themeType} | undefined;
                           if (themeGet) {
                             console.log("Setting theme:", themeGet);
-                            const dark = (system_mode_theme === "light")?false:true;
-                            setTheme(dark?themeGet.dark:themeGet.light);
+                            // const dark = (system_mode_theme === "light")?false:true;
+                            setTheme(themeGet);
                           }
                         }}
                       />

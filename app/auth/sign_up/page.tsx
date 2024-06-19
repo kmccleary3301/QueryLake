@@ -167,7 +167,7 @@ export default function Component() {
             />
           </div>
           <div className="pb-2">
-            <Button className="w-full h-8" type="submit" onClick={form.handleSubmit(signup)}>
+            <Button className="w-full h-8 text-black" type="submit" onClick={form.handleSubmit(signup)}>
               Sign Up
             </Button>
           </div>
