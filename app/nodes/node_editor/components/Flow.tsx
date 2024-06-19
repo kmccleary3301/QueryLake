@@ -37,7 +37,7 @@ export default function Flow() {
   } = useNodeContextAction();
 
   const {
-    theme
+    themeBrightness
   } = useThemeContextAction();
 
   // const [nodes, setNodes, onNodesChange] = useNodesState<object>(initNodes);
@@ -91,8 +91,8 @@ export default function Flow() {
             <MiniMap color="#F00" className='bg-background' zoomable pannable/>
             <Controls />
             <Background 
-              color={hslStringToRGBHex(theme.foreground) as string} 
-              style={{backgroundColor: hslStringToRGBHex(theme.background) as string}}
+              color={hslStringToRGBHex(themeBrightness.foreground) as string} 
+              style={{backgroundColor: hslStringToRGBHex(themeBrightness.background) as string}}
               gap={16}
             />
             {/* <Controls showInteractive={false} /> */}

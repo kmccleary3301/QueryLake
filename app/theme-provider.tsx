@@ -86,12 +86,16 @@ const DEFAULT_THEME = REGISTRY_THEMES_MAP.get(DEFAULT_THEME_ID) as {light: theme
 const Context = createContext<{
 	theme: dualThemeType;
   setTheme: Dispatch<SetStateAction<dualThemeType>>;
+  themeBrightness: themeType;
+  setThemeBrightness: Dispatch<SetStateAction<themeType>>;
   themeStylesheet: React.CSSProperties;
   setThemeStylesheet: Dispatch<SetStateAction<React.CSSProperties>>;
   generateStylesheet: (theme: themeType) => React.CSSProperties;
 }>({
 	theme: DEFAULT_THEME,
   setTheme: () => {},
+  themeBrightness: DEFAULT_THEME.dark,
+  setThemeBrightness: () => {},
   themeStylesheet: {},
   setThemeStylesheet: () => {},
   generateStylesheet: () => ({} as React.CSSProperties),
@@ -128,6 +132,7 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
   }
 
 	const [theme_i, set_theme_i] = useState<dualThemeType>(DEFAULT_THEME);
+  const [theme_brightness_i, set_theme_brightness_i] = useState<themeType>(DEFAULT_THEME.dark);
   const [theme_stylesheet_i, set_theme_stylesheet_i] = useState<React.CSSProperties>(generate_stylesheet(DEFAULT_THEME.dark));
 
   // useEffect(() => {
@@ -144,7 +149,7 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
   useEffect(() => {
     // console.log("SYSTEM THEME:", system_mode_theme);
     const dark = (system_mode_theme === "light")?false:true;
-
+    set_theme_brightness_i(dark?theme_i.dark:theme_i.light);
     set_theme_stylesheet_i(generate_stylesheet(dark?theme_i.dark:theme_i.light));
     // console.log("DARK:", dark);
     // const themeGet = REGISTRY_THEMES_MAP.get(theme_i.dark['theme-select-id']) as {light: themeType, dark: themeType};
@@ -155,6 +160,8 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
 		<Context.Provider value={{ 
 			theme: theme_i,
       setTheme: set_theme_i,
+      themeBrightness: theme_brightness_i,
+      setThemeBrightness: set_theme_brightness_i,
       themeStylesheet: theme_stylesheet_i,
       setThemeStylesheet: set_theme_stylesheet_i,
       generateStylesheet: generate_stylesheet
