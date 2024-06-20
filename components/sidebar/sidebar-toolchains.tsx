@@ -127,12 +127,12 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
                 }}
               >
                 <span className="flex flex-row justify-center pointer-events-auto gap-x-2 pr-2">
-                  <Link href={`/nodes/node_editor?mode=create&ref=${toolchain_entry.id}`}>
+                  <Link href={`/nodes/node_editor?mode=create&ref=${toolchain_entry.id}`} className='flex flex-col justify-center'>
                     <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
                       <Copy className='w-3.5 h-3.5'/>
                     </button>
                   </Link>
-                  <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain_entry.id}`}>
+                  <Link href={`/nodes/node_editor?mode=edit&t_id=${toolchain_entry.id}`} className='flex flex-col justify-center'>
                     <button className='h-6 w-4 rounded-full p-0 m-0 text-primary active:text-primary/70'>
                       <Pencil className='w-3.5 h-3.5'/>
                     </button>
