@@ -46,6 +46,19 @@ type scoped_text = {
   content: string
 };
 
+export const handleCopy = (text : string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.navigator.clipboard.writeText(text);
+    toast("Copied to clipboard");
+  } catch (err) {
+    toast("Failed to copy to clipboard");
+  }
+};
+
 export default function MarkdownCodeBlock({
   className = "",
   text,
@@ -64,18 +77,18 @@ export default function MarkdownCodeBlock({
     shikiTheme
   } = useContextAction();
 
-  const handleCopy = (text : string) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+  // const handleCopy = (text : string) => {
+  //   if (typeof window === 'undefined') {
+  //     return;
+  //   }
 
-    try {
-      window.navigator.clipboard.writeText(text);
-      toast("Copied to clipboard");
-    } catch (err) {
-      toast("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     window.navigator.clipboard.writeText(text);
+  //     toast("Copied to clipboard");
+  //   } catch (err) {
+  //     toast("Failed to copy to clipboard");
+  //   }
+  // };
 
   // const [highlights, setHighlights] = useState<scoped_text[][]>([]);
   const [unprocessedText, setUnprocessedText] = useState<string[]>([]);

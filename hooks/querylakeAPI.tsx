@@ -697,6 +697,26 @@ export function createApiKey(args :{
 	});
 }
 
+export function deleteApiKey(args :{
+  auth: string,
+  api_key_id: string,
+  onFinish?: (result : boolean) => void
+}) {
+
+  const url = craftUrl(`/api/delete_api_key`, {
+    "auth": args.auth,
+    "api_key_id": args.api_key_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean, result?: QueryLakeApiKey & {api_key : string}}) => {
+      console.log(data);
+      if (args.onFinish) args.onFinish(data["success"]);
+      return;
+		});
+	});
+}
+
 
 export function QuerylakeFunctionHelp(args :{
   onFinish?: (result : APIFunctionSpec[] | false) => void
