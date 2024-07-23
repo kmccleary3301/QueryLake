@@ -27,7 +27,7 @@ const CompactInput = forwardRef(({
 		false
 	);
 	const [hidden, setHidden] = useState((type === "password") ? true : hideText);
-	const buttonAvailable =  (type === "password") ? true : false;
+	const buttonAvailable = (type === "password") ? true : false;
 
 
 	// const height = className ? className.match(/h-(^[\s]+)/)?.[1] : "h-10";
@@ -58,7 +58,7 @@ const CompactInput = forwardRef(({
 							`${buttonAvailable ? "w-full" : "w-full"} p-0 px-3 bg-transparent rounded-md ring-transparent focus-visible:ring-transparent focus-visible:border-none focus:outline-none h-full overflow-hidden`
 						}
 						// type={type}
-						type={hidden ? "password" : type}
+						type={!hidden ? "text" : type}
 						{...props}
 						onFocus={(e) => {
 							setIsFocused(true);

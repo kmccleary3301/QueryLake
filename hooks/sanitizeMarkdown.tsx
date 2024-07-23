@@ -2,11 +2,16 @@ function stripNewlinesFromDollarSegments(inputString : string) {
   return inputString.replace(/(?:[^\\]|^)\$\$([\s\S]*?)\$\$(?:[^\\]|$)/g, (match, p1) => `$$${p1.replace(/\n/g, '')}$$`);
 }
 
+function stripNewlinesFromSlashSegments(inputString : string) {
+  return inputString.replace(/(?:[^\\]|^)\\\[([\s\S]*?)\\\](?:[^\\]|$)/g, (match, p1) => `\\[ ${p1.replace(/\n/g, '')} \\]`);
+}
+
 export default function sanitizeMarkdown(input_string : string) {
   
   let ret = input_string;
   ret = ret.replace(/^[\s]*/, "");
   ret = stripNewlinesFromDollarSegments(ret);
+  ret = stripNewlinesFromSlashSegments(ret);
 
   let input_split = ret.split("\n");
   const line_is_table_row = Array(input_split.length).fill(false);

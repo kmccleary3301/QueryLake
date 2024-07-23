@@ -36,6 +36,7 @@ export const OBSIDIAN_MARKDOWN_RENDERING_CONFIG : markdownRenderingConfig = {
 export const CHAT_RENDERING_STYLE : markdownRenderingConfig = {
   ...normal_config,
   double_dollar: "newline_math",
+  single_dollar: "inline_math",   // Ideally this is disabled
   "escaped_parentheses": "inline_math",
   "escaped_square_brackets": "newline_math"
 }
