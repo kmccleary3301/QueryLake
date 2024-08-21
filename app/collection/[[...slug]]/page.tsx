@@ -21,7 +21,7 @@ import { Label } from "@/registry/new-york/ui/label"
 import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/registry/new-york/ui/select"
 import { Input } from "@/registry/new-york/ui/input"
 import { Textarea } from "@/registry/new-york/ui/textarea"
-import { Button } from "@/registry/new-york/ui/button"
+import { Button } from "@/registry/default/ui/button"
 import { ScrollArea } from "@/registry/new-york/ui/scroll-area"
 import { SVGProps } from "react"
 import { 
@@ -30,14 +30,16 @@ import {
   deleteDocument,
   createCollection,
   openDocument,
-  modifyCollection
+  modifyCollection,
+  fetchCollectionDocuments
 } from "@/hooks/querylakeAPI";
 import { useContextAction } from "@/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/registry/default/ui/progress';
-import { LucideLoader2 } from 'lucide-react';
+import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
+import { handleCopy } from '@/components/markdown/markdown-code-block';
 
 const file_size_as_string = (size : number) => {
   if (size < 1024) {
@@ -140,12 +142,24 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
       collection_id: params["slug"][1],
       onFinish: (data) => {
         if (data !== undefined) {
-          setCollectionDocuments(data.document_list);
+          
           if (!only_documents) {
             setCollectionTitle(data.title);
             setCollectionDescription(data.description);
             setCollectionIsPublic(data.public);
           }
+
+          fetchCollectionDocuments({
+            auth: userData?.auth as string,
+            collection_id: params["slug"][1],
+            limit: 100,
+            offset: 0,
+            onFinish: (data) => {
+              if (data !== undefined) {
+                setCollectionDocuments(data);
+              }
+            }
+          })
         }
       }
     })
@@ -282,6 +296,18 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         <h1 className="text-3xl font-bold tracking-tight mb-4 text-center">
           {(CollectionMode === "create")?"Create a Document Collection":(CollectionMode === "edit")?"Edit Document Collection":(CollectionMode === "view")?"View Document Collection":"Bad URL!"}
         </h1>
+        {(params["slug"][1]) && (
+          <span className="text-xs text-primary/35 flex flex-row space-x-4 pb-10">
+            <p className="text-sm text-nowrap overflow-hidden h-7 border-2 p-1 px-3 rounded-lg flex flex-col justify-center" >
+              {params["slug"][1]}
+            </p>
+            <Button type="submit" className="p-0 m-0 h-7" variant={"transparent"} onClick={() => {
+              handleCopy(params["slug"][1] || "")
+            }}>
+              <Copy className="w-4 h-4 text-primary"/>
+            </Button>
+          </span>
+        )}
         <div className="grid px-4 md:grid-cols-2 md:gap-8 w-[80%] md:w-full flex-grow max-w-5xl pb-8">
           <div className="gap-2 grid-cols-2 flex flex-col space-y-2">
             <div className="grid grid-cols-2 gap-2">
@@ -318,6 +344,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
             </div>
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="title">Title</Label>
+              
               <Input
                 onChange={(event) => {
                   setCollectionTitle(event.target.value);

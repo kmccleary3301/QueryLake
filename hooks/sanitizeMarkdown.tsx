@@ -1,5 +1,9 @@
+// function stripNewlinesFromDollarSegments(inputString : string) {
+//   return inputString.replace(/(?:[^\\]|^)\$\$([\s\S]*?)\$\$(?:[^\\]|$)/g, (match, p1) => `$$${p1.replace(/\n/g, '')}$$`);
+// }
+
 function stripNewlinesFromDollarSegments(inputString : string) {
-  return inputString.replace(/(?:[^\\]|^)\$\$([\s\S]*?)\$\$(?:[^\\]|$)/g, (match, p1) => `$$${p1.replace(/\n/g, '')}$$`);
+  return inputString.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => ` $$ ${p1.replace(/\n/g, '')} $$ `);
 }
 
 function stripNewlinesFromSlashSegments(inputString : string) {

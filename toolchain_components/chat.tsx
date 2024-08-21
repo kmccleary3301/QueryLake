@@ -3,7 +3,7 @@ import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/registry/default/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { Fragment, useEffect, useState } from "react";
-import MarkdownRenderer from "../markdown/markdown-renderer";
+import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { Button } from "@/registry/default/ui/button";
@@ -12,33 +12,14 @@ import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
 import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
-import { QueryLakeLogoSvg } from "../logo";
-import MARKDOWN_SAMPLE_TEXT, { MARKDOWN_CHAT_SAMPLE_TEXT } from "../markdown/demo-text";
+import { QueryLakeLogoSvg } from "@/components/logo";
+import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
   category: "Text Display",
   description: "A user and assistant chat display component that renders markdown, similar to OpenAI's ChatGPT.",
 };
-
-export function SKELETON({
-	configuration
-}:{
-	configuration: displayMapping
-}) {
-  return (
-		<div className="flex flex-row space-x-4 w-auto">
-			<div>
-				<Skeleton className="rounded-full w-10 h-10"/>
-			</div>
-			<div className="flex-grow flex flex-col space-y-3">
-				{Array(10).fill(0).map((_, i) => (
-					<Skeleton key={i} className="rounded-full w-auto h-3"/>
-				))}
-			</div>
-		</div>
-	);
-}
 
 export const DEMO_DATA = [
   {role: "user", "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."},

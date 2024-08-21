@@ -161,9 +161,12 @@ export default function MarkdownCodeBlock({
           ))}
         </code>
         <ScrollAreaHorizontal className='min-w-auto'>
-          <div className='pl-[5px] pt-[0px] pb-[20px] pr-[8px]' dangerouslySetInnerHTML={{__html: codeHTML}}>
-            {/* <code className='bg-transparent' ></code> */}
-          </div>
+          {/* <pre>{text}</pre> */}
+          {(codeHTML === "")?(
+            <pre className='pl-[5px] pt-[0px] pb-[20px] pr-[8px]'>{text}</pre>
+          ):(
+            <div className='pl-[5px] pt-[0px] pb-[20px] pr-[8px]' dangerouslySetInnerHTML={{__html: codeHTML}}/>
+          )}
         </ScrollAreaHorizontal>
       </pre>
     </div>

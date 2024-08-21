@@ -30,25 +30,6 @@ export const METADATA : componentMetaDataType = {
   }
 };
 
-export function SKELETON({
-	configuration,
-  children
-}:{
-	configuration: inputMapping,
-  children: React.ReactNode
-}) {
-  const { breakpoint } = useContextAction();
-
-  return (
-    <Skeleton 
-      className="rounded-md h-10 border-dashed border-[2px] border-primary/50 flex flex-col justify-center"
-      style={tailwindToObject([configuration.tailwind], breakpoint)}
-    >
-      {children}
-    </Skeleton>
-  )
-}
-
 export default function SwitchInput({
 	configuration,
   entriesMap,

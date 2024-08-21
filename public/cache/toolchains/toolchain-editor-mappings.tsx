@@ -24,13 +24,13 @@ import { BreadcrumbEllipsis } from "@/registry/default/ui/breadcrumb";
 
 
 
-import ChatInput from '@/components/toolchain_interface/chat-input';
-import Chat from '@/components/toolchain_interface/chat';
-import CurrentEventDisplay from '@/components/toolchain_interface/current-event-display';
-import FileUpload from '@/components/toolchain_interface/file-upload';
-import Markdown from '@/components/toolchain_interface/markdown';
-import Switch from '@/components/toolchain_interface/switch';
-import Text from '@/components/toolchain_interface/text';
+import ChatInput from '@/toolchain_components/chat-input';
+import Chat from '@/toolchain_components/chat';
+import CurrentEventDisplay from '@/toolchain_components/current-event-display';
+import FileUpload from '@/toolchain_components/file-upload';
+import Markdown from '@/toolchain_components/markdown';
+import Switch from '@/toolchain_components/switch';
+import Text from '@/toolchain_components/text';
 import "@/lib/sine-opacity.css";
 import { INPUT_COMPONENT_FIELDS } from "@/types/toolchain-interface";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";

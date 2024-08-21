@@ -1,11 +1,7 @@
 "use client";
-
-import { Skeleton } from "@/registry/default/ui/skeleton";
 import { componentMetaDataType, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
-import ToolchainSession from "@/hooks/toolchain-session";
-import { substituteAny } from "@/types/toolchains";
 import FileDropzone from "@/registry/default/ui/file-dropzone";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
@@ -28,27 +24,6 @@ export const METADATA : componentMetaDataType = {
 		],
 	}
 };
-
-
-export function SKELETON({
-	configuration,
-  children
-}:{
-	configuration: inputMapping,
-  children: React.ReactNode
-}) {
-  const { breakpoint } = useContextAction();
-
-  return (
-    <Skeleton 
-      className="rounded-md h-10 border-dashed border-[2px] border-primary/50 flex flex-col justify-center"
-      style={tailwindToObject([configuration.tailwind], breakpoint)}
-    >
-      {children}
-    </Skeleton>
-  )
-}
-
 
 export default function FileUpload({
 	configuration,

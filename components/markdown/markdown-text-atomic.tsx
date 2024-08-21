@@ -49,7 +49,7 @@ export default function MarkdownTextAtomic({
       );
     case "anchor":
       return (
-        <a href={textSeg.link as string} className="p-0 m-0 text-[#A68AEB] underline-offset-4 hover:underline active:text-[#A68AEB]/90">
+        <a href={textSeg.link as string} target="_blank" className="p-0 m-0 text-[#A68AEB] underline-offset-4 hover:underline active:text-[#A68AEB]/90">
           {textSeg.text}
         </a>
       );

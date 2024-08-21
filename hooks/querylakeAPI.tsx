@@ -142,7 +142,6 @@ type collectionResponse = {
   type: "user" | "organization" | "global",
   owner: string,
   public: boolean,
-  document_list: fetch_collection_document_type[]
 }
 
 type fetchCollectionArgs = {
@@ -165,6 +164,36 @@ export function fetchCollection(args : fetchCollectionArgs) {
         return;
 			}
 			if (args.onFinish) args.onFinish(data.result as collectionResponse);
+		});
+	});
+}
+
+export function fetchCollectionDocuments({
+  auth,
+  collection_id,
+  limit,
+  offset,
+  onFinish
+}:{
+  auth: string,
+  collection_id: string,
+  limit?: number,
+  offset?: number,
+  onFinish: (result : fetch_collection_document_type[] | undefined) => void
+}) {
+  const url = craftUrl(`/api/fetch_collection_documents`, {
+    "auth": auth,
+    "collection_hash_id": collection_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (onFinish) onFinish(undefined);
+        return;
+			}
+			if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
 		});
 	});
 }

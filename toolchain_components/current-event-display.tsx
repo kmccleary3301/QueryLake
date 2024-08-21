@@ -1,5 +1,4 @@
 "use client";
-import { Skeleton } from "@/registry/default/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import BounceLoader from "react-spinners/BounceLoader";
@@ -9,18 +8,6 @@ export const METADATA : componentMetaDataType = {
   category: "Debugging",
   description: "Displays the current active node in the toolchain while running.",
 };
-
-export function SKELETON({
-	configuration
-}:{
-	configuration: displayMapping
-}) {
-  return (
-    <div className="w-auto h-11 flex flex-row justify-center gap-2">
-      <Skeleton className="rounded-full w-[200px] h-10"/>
-    </div>
-	);
-}
 
 type documentEmbeddingSpecialFields1 ={
   collection_type: string;

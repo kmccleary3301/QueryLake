@@ -1,13 +1,11 @@
 "use client";
 import { retrieveValueFromObj, toolchainStateType } from "@/hooks/toolchain-session";
-import { Skeleton } from "@/registry/default/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
-import { substituteAny } from "@/types/toolchains";
-import MarkdownRenderer from "../markdown/markdown-renderer";
+import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { useEffect, useState } from "react";
-import MARKDOWN_SAMPLE_TEXT from "../markdown/demo-text";
+import MARKDOWN_SAMPLE_TEXT from "@/components/markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
 	label: "Markdown",
