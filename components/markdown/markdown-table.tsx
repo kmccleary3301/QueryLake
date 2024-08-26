@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/registry/default/ui/table"
+import { ScrollAreaHorizontal } from "@/registry/default/ui/scroll-area";
 
 type textSegment = {
   text: string,
@@ -41,6 +42,7 @@ function MarkdownTable({
 
   return (
     <div className={cn("not-prose mb-[1em]", className)}>
+      <ScrollAreaHorizontal>
       <Table>
         <TableHeader>
           <TableRow>
@@ -79,6 +81,7 @@ function MarkdownTable({
           ))}
         </TableBody>
       </Table>
+      </ScrollAreaHorizontal>
     </div>
   );
 }

@@ -262,6 +262,7 @@ function MarkdownMapComponent({
 
 const MarkdownRenderer = memo(function MarkdownRenderer({
   className = "",
+  style = {},
   unpacked = false,
   input,
   transparentDisplay,
@@ -271,6 +272,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   list_in_block = false,
 } : {
   className?: string,
+  style?: React.CSSProperties,
   unpacked?: boolean,
   input: string,
   transparentDisplay?: boolean,
@@ -316,7 +318,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
             ))}
           </>
         ):(
-          <div className={cn("prose font-geist-sans markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
+          <div className={cn("prose font-geist-sans markdown text-sm text-theme-primary space-y-3 flex flex-col", className)} style={style}>
             <MarkdownRenderer 
               className={className}
               unpacked={true}

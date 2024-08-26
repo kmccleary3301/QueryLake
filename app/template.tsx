@@ -18,10 +18,13 @@ export function Template({
 }) {
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ type: "spring", ease: "linear", bounce: 0, duration: 2.5, delay: 0.2}}
+      id="template_div"
+      className="w-auto h-auto"
+      // style={{maxWidth: "100%"}}
     >
       {children}
     </motion.div>
@@ -90,6 +93,7 @@ export default function RootTemplate({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ type: "spring", ease: "linear", bounce: 0, duration: 2.5, delay: 0.2}}
+          id="root_template_div"
         >
           {children}
         </motion.div>

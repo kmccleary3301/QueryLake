@@ -182,6 +182,12 @@ export default function TestPage() {
   return (
     <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
 				<ScrollArea className="w-full">
+          <div 
+            className="h-4 bg-red-500 border-r-8 border-r-green-500 border-l-8 border-l-green-500" 
+            style={{
+              width: "min(100%, 800px)"
+            }}
+          />
 					<div className="flex flex-row justify-center pt-10">
 						<div className="max-w-[85vw] md:max-w-[70vw] lg:max-w-[45vw]">
               <div className="flex flex-col space-y-2">

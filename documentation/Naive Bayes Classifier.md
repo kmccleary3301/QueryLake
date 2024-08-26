@@ -252,3 +252,7 @@ print("Accuracy:", accuracy)
 	}
 }
 ```
+
+# Long Equation Scrolling
+
+$$ \left( \frac{\partial^2 g_{\mu \nu}}{\partial x^\alpha \partial x^\beta} + \Gamma^\lambda_{\alpha \beta} \frac{\partial g_{\mu \nu}}{\partial x^\lambda} + \Gamma^\lambda_{\mu \nu} \frac{\partial g_{\alpha \beta}}{\partial x^\lambda} \right) - \frac{1}{2} \left( g^{\rho \sigma} \left( \frac{\partial^2 g_{\rho \sigma}}{\partial x^\mu \partial x^\nu} + \Gamma^\lambda_{\mu \nu} \frac{\partial g_{\rho \sigma}}{\partial x^\lambda} + \Gamma^\lambda_{\rho \sigma} \frac{\partial g_{\mu \nu}}{\partial x^\lambda} \right) \right) + \Lambda g_{\mu \nu} = \frac{8 \pi G}{c^4} \left( (\rho + p) u_\mu u_\nu + p g_{\mu \nu} \right) + \kappa \left( \frac{\partial \phi}{\partial x^\mu} \frac{\partial \phi}{\partial x^\nu} - \frac{1}{2} g_{\mu \nu} g^{\alpha \beta} \frac{\partial \phi}{\partial x^\alpha} \frac{\partial \phi}{\partial x^\beta} \right) $$

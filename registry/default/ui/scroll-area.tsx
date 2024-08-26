@@ -80,7 +80,7 @@ const ScrollAreaHorizontal = React.forwardRef<
     className={cn("relative overflow-x-hidden", className)}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitive.Viewport className="relative h-full w-auto rounded-[inherit]">
       {children}
     </ScrollAreaPrimitive.Viewport>
     <ScrollBar orientation="horizontal"/>
