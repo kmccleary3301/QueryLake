@@ -115,8 +115,9 @@ export default function Chat({
                 </div>
                 <p className="select-none h-7 text-primary/70">{(value.role === "user")?"You":"QueryLake"}</p>
               </div>
-              <div className="max-w-full p-0 pl-11 -mt-1.5">
+              <div className="max-w-full -mt-1.5" style={{marginLeft: "2.75rem"}}> {/* The left pad doesn't render for some reason */}
                 <MarkdownRenderer 
+                  className="ml-11"
                   disableRender={(value.role === "user")}
                   input={(value || {}).content || ""} 
                   finished={false}
@@ -124,7 +125,7 @@ export default function Chat({
                 />
               </div>
               {(value.role === "assistant" && value.sources) && (
-                <div className="w-full flex flex-wrap gap-3 pl-11 pt-2">
+                <div className="w-full flex flex-wrap gap-3 pl-11 pt-2" style={{marginLeft: "2.75rem"}}>
                   {value.sources.map((source, index) => (
                     <HoverCard key={index}>
                       <HoverCardTrigger asChild>
@@ -169,7 +170,7 @@ export default function Chat({
                 </div>
               )}
               {(value.role === "assistant") && (
-                <div className="w-full flex flex-row pl-11 pt-2">
+                <div className="w-full flex flex-row pl-11 pt-2" style={{marginLeft: "2.75rem"}}>
                   <Button variant={"ghost"} className="rounded-full p-0 h-8 w-8" onClick={() => handleCopy((value || {}).content || "")}>
                     <Copy className="w-4 h-4 text-primary"/>
                   </Button>
