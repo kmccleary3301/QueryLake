@@ -1,17 +1,6 @@
 import { Metadata } from "next"
 
 import "public/registry/themes.css"
-import { Announcement } from "@/components/inherited/announcement"
-import {
-  PageActions,
-  PageHeader,
-  PageHeaderDescription,
-  PageHeaderHeading,
-} from "@/components/inherited/page-header"
-import { ThemeCustomizer } from "@/components/inherited/theme-customizer"
-import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
-import { ThemesTabs } from "@/app/themes/tabs"
-// import Flow from "./components/Flow"
 import FlowDisplay from "./components/flow-page"
 
 export const metadata: Metadata = {

@@ -9,9 +9,6 @@ import {
   PageHeaderDescription,
   PageHeaderHeading,
 } from "@/components/inherited/page-header"
-import { ThemeCustomizer } from "@/components/inherited/theme-customizer"
-import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
-import { ThemesTabs } from "@/app/themes/tabs"
 import { ScrollArea } from "@/registry/default/ui/scroll-area"
 import { useContextAction } from "@/app/context-provider";
 import { REGISTRY_THEMES, REGISTRY_THEMES_MAP, ThemeProviderWrapper, registryThemeEntry, themeType, useThemeContextAction } from "../theme-provider";
