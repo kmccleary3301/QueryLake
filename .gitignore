@@ -33,3 +33,6 @@ documentation/Overview
 /public/cache/documentation
 /public/cache/toolchains
 /.next
+
+
+package-lock.json
