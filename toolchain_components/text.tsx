@@ -2,7 +2,7 @@
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { retrieveValueFromObj, toolchainStateType } from "@/hooks/toolchain-session";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { substituteAny } from "@/types/toolchains";
 import { useEffect, useState } from "react";

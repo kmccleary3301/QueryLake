@@ -1,11 +1,11 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 // import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Textarea } from "@/registry/default/ui/textarea";
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
 import { editor } from "monaco-editor-core";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import { get_all_language_backgrounds } from "@/lib/shiki";
 import { hslStringToHsl, hslStringToRGBHex, hslToHslString, hslToRgb, rgbToHex, rgbToHsl } from "@/hooks/rgb-hsl-functions";
 // import { getHighlighter } from 'shiki';

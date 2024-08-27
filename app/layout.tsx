@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/inherited/providers"
 import { StateThemeProvider, ThemeProviderWrapper } from "./theme-provider";
 import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
 import { ThemeSwitcher } from "@/components/inherited/theme-switcher"
-import { Toaster as DefaultToaster } from "@/registry/default/ui/toaster"
+import { Toaster as DefaultToaster } from "@/components/ui/toaster"
 import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner"
 import { Toaster as NewYorkToaster } from "@/registry/new-york/ui/toaster"
 import { ContextProvider } from "./context-provider"

@@ -1,9 +1,9 @@
 import { useState, useRef, useImperativeHandle} from 'react'
 // import '@/App.css'
-import { Button } from '@/registry/default/ui/button'
+import { Button } from '@/components/ui/button'
 import { PaperPlaneIcon } from '@radix-ui/react-icons'
-import AdaptiveTextArea from '@/registry/default/ui/adaptive-text-area'
-import ChatInput from '@/registry/default/ui/chat-input'
+import AdaptiveTextArea from '@/components/ui/adaptive-text-area'
+import ChatInput from '@/components/ui/chat-input'
 
 type ChatBarInputProps = {
 	onMessageSend?: (message: string) => void,

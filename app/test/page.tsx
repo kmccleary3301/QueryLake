@@ -1,14 +1,14 @@
 "use client";
 // import React from "react";
 import { use, useCallback, useEffect, useRef, useState } from "react";
-import { ScrollArea, ScrollAreaHorizontal } from "@/registry/default/ui/scroll-area";
-import { Button } from "@/registry/default/ui/button";
+import { ScrollArea, ScrollAreaHorizontal } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import ToolchainSession, { ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { useContextAction } from "@/app/context-provider";
 import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
-import FileDropzone from "@/registry/default/ui/file-dropzone";
-import { Textarea } from "@/registry/default/ui/textarea";
+import FileDropzone from "@/components/ui/file-dropzone";
+import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 

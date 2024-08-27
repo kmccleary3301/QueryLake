@@ -1,9 +1,9 @@
 "use client";
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import * as Icon from 'react-feather';
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import useResizeObserver from '@react-hook/resize-observer';
-import { ScrollBar } from "@/registry/default/ui/scroll-area";
+import { ScrollBar } from "@/components/ui/scroll-area";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 import { cn } from "@/lib/utils";
 

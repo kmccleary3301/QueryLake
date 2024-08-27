@@ -4,7 +4,7 @@ import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/registry/default/ui/resizable";
+} from "@/components/ui/resizable";
 import {
 	divisionSection,
 	headerSection,

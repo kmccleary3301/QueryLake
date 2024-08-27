@@ -16,7 +16,7 @@ import {
 import {
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/registry/default/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import {
   Avatar,
   AvatarFallback,

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import MarkdownLatex from "./markdown-latex";
 import { fontConsolas } from '@/lib/fonts';
 import Link from "next/link";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import { textSegment } from "./markdown-text-splitter";
 import { CHAT_RENDERING_STYLE, OBSIDIAN_MARKDOWN_RENDERING_CONFIG } from "./configs";
 import { useEffect } from "react";

@@ -1,6 +1,6 @@
 "use client"
 
-import { Checkbox } from "@/registry/default/ui/checkbox"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function CheckboxWithText() {
   return (

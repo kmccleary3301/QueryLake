@@ -2,7 +2,7 @@
 import { componentMetaDataType, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
-import FileDropzone from "@/registry/default/ui/file-dropzone";
+import FileDropzone from "@/components/ui/file-dropzone";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
 

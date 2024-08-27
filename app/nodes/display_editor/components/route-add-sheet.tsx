@@ -1,7 +1,7 @@
 "use client";
-import { Button } from "@/registry/default/ui/button"
-import { Input } from "@/registry/default/ui/input"
-import { Label } from "@/registry/default/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
 	Sheet,
 	SheetClose,
@@ -11,8 +11,8 @@ import {
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
-} from "@/registry/default/ui/sheet"
-import { ToggleGroup, ToggleGroupItem } from "@/registry/default/ui/toggle-group"
+} from "@/components/ui/sheet"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useRef, useState } from "react"
 
 export default function RouteAddSheet({

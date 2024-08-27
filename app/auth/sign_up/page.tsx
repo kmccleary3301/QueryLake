@@ -1,8 +1,8 @@
 "use client";
-import { Label } from "@/registry/default/ui/label"
-import { Input } from "@/registry/default/ui/input"
-import { Button } from "@/registry/default/ui/button"
-import { Separator } from "@/registry/default/ui/separator"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
 import craftUrl from "@/hooks/craftUrl"
 import { userDataType } from "@/types/globalTypes";
@@ -12,7 +12,7 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/registry/default/ui/form"
+} from "@/components/ui/form"
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useForm } from "react-hook-form"
@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from "sonner"
 import { useContextAction } from "@/app/context-provider";
 import { get } from "http";
-import CompactInput from "@/registry/default/ui/compact-input";
+import CompactInput from "@/components/ui/compact-input";
 
 type login_results = {
   success: false,

@@ -1,8 +1,8 @@
 "use client";
 import * as Icon from 'react-feather';
 import HoverDocumentEntry from '../manual_components/hover_document_entry';
-import { ScrollArea } from '@/registry/default/ui/scroll-area';
-import { Button } from '@/registry/default/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { userDataType, timeWindowType, collectionGroup, toolchain_session, setStateOrCallback } from '@/types/globalTypes';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { useContextAction } from "@/app/context-provider";
 import { Trash } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HoverTextDiv } from '@/registry/default/ui/hover-text-div';
+import { HoverTextDiv } from '@/components/ui/hover-text-div';
 import SidebarEntry from '../manual_components/sidebar-entry-fade';
 
 

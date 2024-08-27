@@ -7,12 +7,10 @@
 // import { useEffect, useState } from 'react';
 // import CollectionWrapper from './CollectionWrapper';
 import CollectionWrapper from '../manual_components/collection-wrapper';
-import { collectionGroup, pageID, selectedCollectionsType, userDataType } from '@/types/globalTypes';
-import { Button } from '@/registry/default/ui/button';
+import { collectionGroup, selectedCollectionsType, userDataType } from '@/types/globalTypes';
+import { Button } from '@/components/ui/button';
 import * as Icon from 'react-feather';
-import { ScrollArea } from '@/registry/default/ui/scroll-area';
-import { Input } from '@/registry/default/ui/input';
-import { useEffect } from 'react';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
 type SidebarCollectionSelectProps = {
@@ -26,10 +24,6 @@ type SidebarCollectionSelectProps = {
 }
 
 export default function SidebarCollectionSelect(props: SidebarCollectionSelectProps) {
-
-	// useEffect(() => {
-	// 	console.log("Recieved collection groups:", props.collectionGroups);
-	// }, [props.collectionGroups]);
 
   const toggleMyCollections = (selected: boolean, group_key: number) => {
 		// if (selected) {

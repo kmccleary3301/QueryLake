@@ -8,9 +8,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-} from "@/registry/default/ui/tabs"
+} from "@/components/ui/tabs"
 import { motion } from 'framer-motion';
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { useNodeContextAction } from "./context-provider"
 

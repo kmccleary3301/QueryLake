@@ -1,12 +1,12 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { useContextAction } from "@/app/context-provider";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
-import FileDropzone from "@/registry/default/ui/file-dropzone";
+import FileDropzone from "@/components/ui/file-dropzone";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { Textarea } from "@/registry/default/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { WavyCircularDisplay } from "./components/wavy-circular";
 import { QueryLakeLogo, create_logo_svg } from "@/components/logo";
 import "./components/logo_css.css";

@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode, useCallback } from 'react';
 import { selectedCollectionsType } from '@/types/globalTypes';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import { motion, useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';
 import CollectionPreview from '@/components/manual_components/collection-preview';

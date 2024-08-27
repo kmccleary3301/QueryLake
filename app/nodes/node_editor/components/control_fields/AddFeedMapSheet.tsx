@@ -1,21 +1,21 @@
 "use client";
-import { Button } from "@/registry/default/ui/button"
-import { Input } from "@/registry/default/ui/input"
-import { Label } from "@/registry/default/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/registry/default/ui/popover"
+} from "@/components/ui/popover"
 import { feedMapping, staticRoute } from "@/types/toolchains"
 import { StaticRouteCreation } from "./StaticRouteCreation"
-import { HoverCard, HoverCardContent } from "@/registry/default/ui/hover-card"
+import { HoverCard, HoverCardContent } from "@/components/ui/hover-card"
 import { HoverCardTrigger } from "@radix-ui/react-hover-card"
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/registry/default/ui/context-menu"
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu"
 import Code from "@/components/markdown/code"
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/registry/default/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SequenceActionModifier from "./SequenceActionModifier";
 
 export default function AddFeedMapSheet({

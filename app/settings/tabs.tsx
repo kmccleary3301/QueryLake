@@ -5,7 +5,7 @@ import * as React from "react"
 import { useConfig } from "@/hooks/use-config"
 import { ThemeWrapper } from "@/components/inherited/theme-wrapper"
 import CardsDefault from "@/registry/default/example/cards"
-import { Skeleton } from "@/registry/default/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import CardsNewYork from "@/registry/new-york/example/cards"
 
 export function ThemesTabs() {

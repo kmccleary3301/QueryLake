@@ -23,7 +23,7 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/registry/default/ui/avatar"
+} from "@/components/ui/avatar"
 
 import MarkdownRenderer from "../markdown/markdown-renderer";
 import { useEffect } from "react";

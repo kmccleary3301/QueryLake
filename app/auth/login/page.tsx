@@ -1,10 +1,10 @@
 "use client";
 
-import { Label } from "@/registry/default/ui/label"
-import { Input } from "@/registry/default/ui/input"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { Button } from "@/registry/default/ui/button"
-import { Separator } from "@/registry/default/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 // import { cookies } from 'next/headers' // Doesn't work with client components
 // import Cookies from 'js-cookie';
 import { setCookie } from "@/hooks/cookies";
@@ -20,12 +20,12 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/registry/default/ui/form"
+} from "@/components/ui/form"
 // import { toast } from "@/registry/default/ui/use-toast";
 import { toast } from "sonner";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
-import CompactInput from "@/registry/default/ui/compact-input";
+import CompactInput from "@/components/ui/compact-input";
 
 
 type login_results = {

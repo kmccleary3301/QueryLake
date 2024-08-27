@@ -21,7 +21,7 @@ import { Label } from "@/registry/new-york/ui/label"
 import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/registry/new-york/ui/select"
 import { Input } from "@/registry/new-york/ui/input"
 import { Textarea } from "@/registry/new-york/ui/textarea"
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/registry/new-york/ui/scroll-area"
 import { SVGProps } from "react"
 import { 
@@ -36,7 +36,7 @@ import {
 import { useContextAction } from "@/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
-import { Progress } from '@/registry/default/ui/progress';
+import { Progress } from '@/components/ui/progress';
 import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
 import { handleCopy } from '@/components/markdown/markdown-code-block';

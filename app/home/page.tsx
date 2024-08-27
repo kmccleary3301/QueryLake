@@ -1,6 +1,6 @@
 "use client";
 import "public/registry/themes.css";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from 'framer-motion';
 

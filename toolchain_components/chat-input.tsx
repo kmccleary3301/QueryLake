@@ -1,10 +1,10 @@
 "use client";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, inputMapping } from "@/types/toolchain-interface";
 import tailwindToObject from "@/hooks/tailwind-to-obj/tailwind-to-style-obj-imported";
 import { useContextAction } from "@/app/context-provider";
 import ToolchainSession from "@/hooks/toolchain-session";
-import {default as ChatInputProto} from "@/registry/default/ui/chat-input";
+import {default as ChatInputProto} from "@/components/ui/chat-input";
 import { substituteAny } from "@/types/toolchains";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";

@@ -7,7 +7,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/registry/default/ui/card"
+} from "@/components/ui/card"
 import { themes } from "@/registry/themes"
 
 const data = [

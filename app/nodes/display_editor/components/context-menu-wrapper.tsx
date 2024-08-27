@@ -12,7 +12,7 @@ import {
 	ContextMenuSubContent,
 	ContextMenuSubTrigger,
 	ContextMenuTrigger,
-} from '@/registry/default/ui/context-menu';
+} from '@/components/ui/context-menu';
 import { 
 	AlignLeft,
 	AlignRight,
@@ -20,8 +20,8 @@ import {
 	AlignJustify,
 	Wand
 } from 'lucide-react';
-import { Button } from '@/registry/default/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@/registry/default/ui/toggle-group';
+import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { 
 	alignType, 
 	displayComponents, 
@@ -33,7 +33,7 @@ import {
   INPUT_COMPONENT_FIELDS,
   configEntryFieldType
 } from '@/types/toolchain-interface';
-import CompactInput from '@/registry/default/ui/compact-input';
+import CompactInput from '@/components/ui/compact-input';
 import { ChangeEvent, useRef } from 'react';
 import { config } from 'process';
 import { cn } from '@/lib/utils';

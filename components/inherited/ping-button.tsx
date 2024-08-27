@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 
 
 export default function PingButton() {

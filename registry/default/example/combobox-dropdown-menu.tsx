@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Calendar, MoreHorizontal, Tags, Trash, User } from "lucide-react"
 
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -11,7 +11,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/registry/default/ui/command"
+} from "@/components/ui/command"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +24,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/registry/default/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 
 const labels = [
   "feature",

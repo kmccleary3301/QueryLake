@@ -9,23 +9,23 @@ import {
   PageHeaderDescription,
   PageHeaderHeading,
 } from "@/components/inherited/page-header"
-import { ScrollArea } from "@/registry/default/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useContextAction } from "@/app/context-provider";
 import { REGISTRY_THEMES, REGISTRY_THEMES_MAP, ThemeProviderWrapper, registryThemeEntry, themeType, useThemeContextAction } from "../theme-provider";
-import { ComboBox, ComboBoxScroll, ComboBoxScrollPreview } from "@/registry/default/ui/combo-box"
-import CompactInput from "@/registry/default/ui/compact-input";
-import { Button } from "@/registry/default/ui/button";
+import { ComboBox, ComboBoxScroll, ComboBoxScrollPreview } from "@/components/ui/combo-box"
+import CompactInput from "@/components/ui/compact-input";
+import { Button } from "@/components/ui/button";
 import { Send, Trash } from "lucide-react";
 import { ChangeEvent, ChangeEventHandler, use, useEffect, useRef, useState } from "react";
 import { modifyUserExternalProviders } from "@/hooks/querylakeAPI";
-import { Input } from "@/registry/default/ui/input";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import MarkdownCodeBlock from "@/components/markdown/markdown-code-block";
 import { SHIKI_THEMES, SHIKI_THEMES_BACKGROUND_COLORS, SHIKI_THEMES_TEXT_COLORS } from "@/lib/shiki";
 import { BundledTheme } from "shiki/themes";
 import { COMBOBOX_THEMES } from "../theme-provider";
-import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/registry/default/ui/table";
-import { ColorPicker } from "@/registry/default/ui/color-picker";
+import { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { hexToRgb, hslStringToHsl, hslStringToRGBHex, hslToRgb, rgbToHex } from "@/hooks/rgb-hsl-functions";
 import { ModeToggle } from "@/components/inherited/mode-toggle";
 import { useTheme } from "next-themes";

@@ -1,7 +1,7 @@
 import { BellRing, Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/registry/default/ui/card"
-import { Switch } from "@/registry/default/ui/switch"
+} from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
 
 const notifications = [
   {

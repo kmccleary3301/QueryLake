@@ -15,9 +15,9 @@ import {
 	ContextMenuSubContent,
 	ContextMenuSubTrigger,
 	ContextMenuTrigger,
-} from '@/registry/default/ui/context-menu';
+} from '@/components/ui/context-menu';
 // import { ScrollArea } from '@radix-ui/react-scroll-area';
-import { ScrollArea } from '@/registry/default/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { APIFunctionSpec } from '@/types/globalTypes';
 import { toolchainNode } from '@/types/toolchains';
 import { MouseEvent, MouseEventHandler, useCallback } from 'react';

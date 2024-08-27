@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import useAutosizeTextArea from "@/hooks/use-autosize-text-area";
-import { Textarea } from "@/registry/default/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 // import "@/App.css";
 import { ScrollArea, ScrollBar } from "./scroll-area";
 // import { DragEventHandler } from "react";

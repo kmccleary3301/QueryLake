@@ -1,6 +1,6 @@
 "use client";
-import { Button } from '@/registry/default/ui/button';
-import { Input } from '@/registry/default/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { feedMapping, nodeInputArgument, toolchainNode } from '@/types/toolchains';
 import { ChevronRight, Plus, Settings } from 'lucide-react';
 import React, { memo, ReactNode, useEffect } from 'react';

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import { Check, Copy, Pencil } from "lucide-react";
 import Link from "next/link";
 import { motion, useAnimation } from "framer-motion";

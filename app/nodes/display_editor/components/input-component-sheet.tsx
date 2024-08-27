@@ -1,8 +1,8 @@
 "use client";
-import { Button } from "@/registry/default/ui/button"
-import { Input } from "@/registry/default/ui/input"
-import { Label } from "@/registry/default/ui/label"
-import { ScrollArea } from "@/registry/default/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
 	Sheet,
 	SheetClose,
@@ -12,22 +12,22 @@ import {
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
-} from "@/registry/default/ui/sheet"
+} from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 	DropdownMenuItem
-} from "@/registry/default/ui/dropdown-menu"
-import { ToggleGroup, ToggleGroupItem } from "@/registry/default/ui/toggle-group"
+} from "@/components/ui/dropdown-menu"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { INPUT_COMPONENT_FIELDS, configEntry, configEntryFieldType, inputComponentConfig, inputComponents, inputEvent, inputMapping } from "@/types/toolchain-interface"
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
 import { useEffect, useState, Fragment, useCallback, ChangeEvent, use } from "react"
-import CompactInput from "@/registry/default/ui/compact-input"
-import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
-import { Separator } from "@/registry/default/ui/separator";
-import { Textarea } from "@/registry/default/ui/textarea";
-import { Toggle } from "@/registry/default/ui/toggle";
+import CompactInput from "@/components/ui/compact-input"
+import { HoverTextDiv } from "@/components/ui/hover-text-div";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
 
 export default function InputComponentSheet({
 	value,

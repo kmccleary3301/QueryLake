@@ -1,5 +1,5 @@
 "use client";
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import { feedMapping, nodeInputArgument, toolchainNode } from '@/types/toolchains';
 import React, { memo } from 'react';
 import { Handle, Position, XYPosition } from 'reactflow';

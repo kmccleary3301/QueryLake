@@ -1,4 +1,4 @@
-import { ScrollArea } from "@/registry/default/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function DocsLayout({ 
 	children 

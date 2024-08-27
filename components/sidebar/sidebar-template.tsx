@@ -1,7 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from 'react';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import { useContextAction } from "@/app/context-provider";
 import { motion, useAnimation } from "framer-motion";
 import * as Icon from 'react-feather';

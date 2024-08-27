@@ -1,12 +1,12 @@
 "use client";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { displayMapping } from "@/types/toolchain-interface";
-import { Input } from "@/registry/default/ui/input";
+import { Input } from "@/components/ui/input";
 import { 
 	Trash2,
 	Plus
 } from 'lucide-react';
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import RouteSetter from "./route-setter";
 import RouteAddSheet from "./route-add-sheet";
 

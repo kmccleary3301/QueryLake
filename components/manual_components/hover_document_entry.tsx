@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as Icon from 'react-feather';
 
 // import { Feather } from "@expo/vector-icons";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 
 type HoverDocumentEntryProps = {
   deleteIndex: () => void,

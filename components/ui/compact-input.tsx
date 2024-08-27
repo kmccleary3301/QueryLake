@@ -1,7 +1,7 @@
 import { HTMLInputTypeAttribute, forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import * as Icon from 'react-feather';
 import { AspectRatio } from './aspect-ratio';
 

@@ -1,5 +1,5 @@
 "use client";
-import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
+import { HoverTextDiv } from "@/components/ui/hover-text-div";
 import { indexRouteRetrievedInputArgValue, indexRouteRetrievedNew, indexRouteRetrievedOutputArgValue, indexRouteRetrievedStateValue, staticRoute, staticRouteElementType } from "@/types/toolchains";
 
 export const staticRouteElementTypes = [

@@ -5,7 +5,7 @@ import {
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "@/registry/default/ui/breadcrumb"
+} from "@/components/ui/breadcrumb"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuSubContent,
 	DropdownMenuPortal
-} from "@/registry/default/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import { Fragment } from "react"
 import RouteAddSheet from "./route-add-sheet"
 

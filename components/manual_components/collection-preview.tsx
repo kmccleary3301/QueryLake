@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 // import AnimatedPressable from './AnimatedPressable';
 // import globalStyleSettings from '../../globalStyleSettings';
 import { motion, useAnimation } from "framer-motion";
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 type CollectionPreviewProps = {

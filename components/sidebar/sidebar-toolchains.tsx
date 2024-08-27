@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { userDataType, toolchainCategory, toolchain_type, setStateOrCallback } from '@/types/globalTypes';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import * as Icon from 'react-feather';
 import { cn } from '@/lib/utils';
 import { usePathname, useRouter } from 'next/navigation';
-import { HoverTextDiv } from '@/registry/default/ui/hover-text-div';
+import { HoverTextDiv } from '@/components/ui/hover-text-div';
 import Link from 'next/link';
 import { Copy, Pencil, Trash } from 'lucide-react';
 import SidebarEntry from '../manual_components/sidebar-entry-fade';

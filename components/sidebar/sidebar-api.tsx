@@ -7,11 +7,11 @@ import {
   folder_structure_aliases, 
   reverse_lookup 
 } from "@/public/cache/documentation/__all-documents__";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import Link from 'next/link';
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import { toVariableName } from "@/app/docs/[[...slug]]/hooks";
 import { useState, useEffect } from 'react';
 import { motion, useAnimation } from "framer-motion";

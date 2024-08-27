@@ -1,13 +1,13 @@
 import * as React from "react"
 
-import { Card, CardContent } from "@/registry/default/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/registry/default/ui/carousel"
+} from "@/components/ui/carousel"
 
 export default function CarouselOrientation() {
   return (

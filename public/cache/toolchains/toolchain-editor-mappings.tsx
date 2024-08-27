@@ -1,5 +1,5 @@
 "use client";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
 	DISPLAY_COMPONENTS, 
 	configEntriesMap, 
@@ -9,18 +9,18 @@ import {
 	inputComponents, 
 	inputMapping
 } from "@/types/toolchain-interface";
-import { Input } from "@/registry/default/ui/input";
+import { Input } from "@/components/ui/input";
 import { 
 	Trash2,
 	Plus,
 	CircleEllipsis
 } from 'lucide-react';
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import RouteSetter from "@/app/nodes/display_editor/components/route-setter";
 import RouteAddSheet from "@/app/nodes/display_editor/components/route-add-sheet";
 import SheetDemo from "@/registry/default/example/sheet-demo";
 import InputComponentSheet from "@/app/nodes/display_editor/components/input-component-sheet";
-import { BreadcrumbEllipsis } from "@/registry/default/ui/breadcrumb";
+import { BreadcrumbEllipsis } from "@/components/ui/breadcrumb";
 
 
 
@@ -33,7 +33,7 @@ import Switch from '@/toolchain_components/switch';
 import Text from '@/toolchain_components/text';
 import "@/lib/sine-opacity.css";
 import { INPUT_COMPONENT_FIELDS } from "@/types/toolchain-interface";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 export function DisplayComponentSkeletonMapper({
 	info,

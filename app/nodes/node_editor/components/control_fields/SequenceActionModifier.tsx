@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Button } from "@/registry/default/ui/button";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
-import { HoverTextDiv } from "@/registry/default/ui/hover-text-div";
-import { Textarea } from "@/registry/default/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { HoverTextDiv } from "@/components/ui/hover-text-div";
+import { Textarea } from "@/components/ui/textarea";
 import { appendAction, backOut, createAction, deleteAction, operatorAction, sequenceAction, sequenceActionNonStatic, updateAction } from "@/types/toolchains";
 import { ChevronLeft, Trash } from "lucide-react";
 

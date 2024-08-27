@@ -4,13 +4,13 @@ import { getUserCollections } from '@/hooks/querylakeAPI';
 import { 
   collectionGroup
 } from '@/types/globalTypes';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import {
 	TabsContent,
   TabsList,
   TabsTrigger,
 	Tabs
-} from "@/registry/default/ui/tabs"
+} from "@/components/ui/tabs"
 import SidebarCollectionSelect from './sidebar-collections';
 import SidebarToolchains from './sidebar-toolchains';
 import SidebarChatHistory from './sidebar-history';

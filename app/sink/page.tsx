@@ -47,7 +47,7 @@ import ToggleGroupDemo from "@/registry/default/example/toggle-group-demo"
 import ToggleOutline from "@/registry/default/example/toggle-outline"
 import ToggleWithText from "@/registry/default/example/toggle-with-text"
 import TooltipDemo from "@/registry/default/example/tooltip-demo"
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 
 export default function KitchenSinkPage() {
   return (

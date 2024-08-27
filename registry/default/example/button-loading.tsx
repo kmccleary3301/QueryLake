@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react"
 
-import { Button } from "@/registry/default/ui/button"
+import { Button } from "@/components/ui/button"
 
 export default function ButtonLoading() {
   return (

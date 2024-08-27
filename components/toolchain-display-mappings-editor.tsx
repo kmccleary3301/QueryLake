@@ -1,5 +1,5 @@
 "use client";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
 	DISPLAY_COMPONENTS, 
 	contentMapping, 
@@ -8,18 +8,18 @@ import {
 	inputComponents, 
 	inputMapping
 } from "@/types/toolchain-interface";
-import { Input } from "@/registry/default/ui/input";
+import { Input } from "@/components/ui/input";
 import { 
 	Trash2,
 	Plus,
 	CircleEllipsis
 } from 'lucide-react';
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import RouteSetter from "@/app/nodes/display_editor/components/route-setter";
 import RouteAddSheet from "@/app/nodes/display_editor/components/route-add-sheet";
 import SheetDemo from "@/registry/default/example/sheet-demo";
 import InputComponentSheet from "@/app/nodes/display_editor/components/input-component-sheet";
-import { BreadcrumbEllipsis } from "@/registry/default/ui/breadcrumb";
+import { BreadcrumbEllipsis } from "@/components/ui/breadcrumb";
 import { FileUploadSkeleton } from "@/components/toolchain_interface/file-upload";
 import { DEMO as ChatInputSkeleton } from "@/components/toolchain_interface/chat-input";
 import { ChatSkeleton } from "@/components/toolchain_interface/chat";

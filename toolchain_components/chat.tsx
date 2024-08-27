@@ -1,15 +1,15 @@
 "use client";
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
-import { Skeleton } from "@/registry/default/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { Fragment, useEffect, useState } from "react";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
-import { Button } from "@/registry/default/ui/button";
+import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/registry/default/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "@/components/logo";

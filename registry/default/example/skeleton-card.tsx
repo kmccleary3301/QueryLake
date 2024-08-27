@@ -1,4 +1,4 @@
-import { Skeleton } from "@/registry/default/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function SkeletonCard() {
   return (

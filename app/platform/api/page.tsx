@@ -4,18 +4,18 @@
  * @see https://v0.dev/t/wcm0mArUul3
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
-import { TableHead, TableRow, TableHeader, TableCell, TableBody, Table } from "@/registry/default/ui/table"
-import { Button } from "@/registry/default/ui/button"
+import { TableHead, TableRow, TableHeader, TableCell, TableBody, Table } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import { QueryLakeApiKey } from "@/types/globalTypes";
 import { useEffect, useRef, useState } from "react";
 import { createApiKey, deleteApiKey, fetchApiKeys } from "@/hooks/querylakeAPI";
 import { useContextAction } from "@/app/context-provider";
 import { toast } from "sonner";
-import { ScrollArea } from "@/registry/default/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, LockKeyhole, Pencil, Plus, Trash } from "lucide-react";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/registry/default/ui/dialog";
-import { Label } from "@/registry/default/ui/label";
-import { Input } from "@/registry/default/ui/input";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { handleCopy } from "@/components/markdown/markdown-code-block";
 
 const MONTH_NAMES = [

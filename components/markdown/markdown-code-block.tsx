@@ -1,11 +1,11 @@
 "use client";
-import { ScrollArea, ScrollAreaHorizontal, ScrollBar } from '@/registry/default/ui/scroll-area';
+import { ScrollArea, ScrollAreaHorizontal, ScrollBar } from '@/components/ui/scroll-area';
 // import hljs from 'highlight.js';
 // import { getHighlighter } from 'shiki';
 import { useEffect, useState, useRef, useCallback } from "react";
 import { fontConsolas } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
-import { Button } from '@/registry/default/ui/button';
+import { Button } from '@/components/ui/button';
 import * as Icon from 'react-feather';
 import { toast } from 'sonner';
 import { getLanguage, highlight } from '@/lib/shiki';

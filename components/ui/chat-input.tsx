@@ -10,7 +10,7 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/registry/default/ui/hover-card"
+} from "@/components/ui/hover-card"
 
 export function FilePreview({
   className = "",

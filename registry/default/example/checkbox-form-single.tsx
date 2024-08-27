@@ -5,8 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { Button } from "@/registry/default/ui/button"
-import { Checkbox } from "@/registry/default/ui/checkbox"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -14,8 +14,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-} from "@/registry/default/ui/form"
-import { toast } from "@/registry/default/ui/use-toast"
+} from "@/components/ui/form"
+import { toast } from "@/components/ui/use-toast"
 
 const FormSchema = z.object({
   mobile: z.boolean().default(false).optional(),

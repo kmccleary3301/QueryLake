@@ -1,5 +1,5 @@
 "use client";
-import { ScrollAreaHorizontal } from "@/registry/default/ui/scroll-area";
+import { ScrollAreaHorizontal } from "@/components/ui/scroll-area";
 import TeX from "@matejmazur/react-katex";
 import "katex/dist/katex.min.css";
 
