@@ -108,7 +108,9 @@ export default function Chat({
                   )}
 
                   {(value.role === "assistant") && (
-                    <QueryLakeLogoSvg className="w-7 h-7 text-primary"/>
+                    <div className="mt-1">
+                      <QueryLakeLogoSvg className="w-7 h-7 text-primary"/>
+                    </div>
                   )}
                   
                     
