@@ -17,12 +17,12 @@ type collection_mode_type = "create" | "edit" | "view" | undefined;
 
 import axios from 'axios';
 import { useEffect, useState } from "react"
-import { Label } from "@/registry/new-york/ui/label"
-import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/registry/new-york/ui/select"
-import { Input } from "@/registry/new-york/ui/input"
-import { Textarea } from "@/registry/new-york/ui/textarea"
+import { Label } from '@/components/ui/label';
+import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/registry/new-york/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { SVGProps } from "react"
 import { 
   fetchCollection, 
