@@ -59,7 +59,8 @@ export default function FileUpload({
           "collection_type" : "toolchain_session"
         }
       });
-      file_upload_hashes = uploadFileResponses.map((response : any) => response.hash_id)
+
+      file_upload_hashes = uploadFileResponses.map((response : any) => response.result?.hash_id)
                                               .filter((hash : string) => hash !== undefined);
     }
 
@@ -67,8 +68,11 @@ export default function FileUpload({
       let new_args = {};
 
       if (hook.hook === "on_upload") {
+        const file_upload_args = (file_upload_hashes.length > 1) ? 
+          file_upload_hashes.map((h : string) => {return {"type": "<<||TOOLCHAIN_SESSION_FILE||>>", "document_hash_id": h}}) : 
+          (file_upload_hashes.length === 1) ? {"type": "<<||TOOLCHAIN_SESSION_FILE||>>", "document_hash_id": file_upload_hashes[0]} : null;
         new_args = {
-          [`${hook.target_route}`]: file_upload_hashes,
+          [`${hook.target_route}`]: file_upload_args,
         }
       } else if (hook.hook === "selected_collections") {
         const collections = Array.from(selectedCollections.keys()).filter((key) => selectedCollections.get(key) === true);
