@@ -765,3 +765,39 @@ export function QuerylakeFunctionHelp(args :{
 		});
 	});
 }
+
+export type UsageEntryType = {
+  start_timestamp: number,
+  organization_id: null | string,
+  id: string,
+  user_id: string,
+  value: object,
+  window: "hour" | "day" | "month",
+  api_key_id: null | string,
+}
+
+export function QuerylakeFetchUsage(args :{
+  auth: string,
+  onFinish?: (result : UsageEntryType[] | false) => void,
+  start_time: number,
+  window: "hour" | "day" | "month",
+  end_time: number
+}) {
+
+  const url = craftUrl(`/api/function_help`, {
+    "auth": args.auth,
+    "start_timestamp": args.start_time,
+    "end_timestamp": args.end_time
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data : {success : boolean, result?: UsageEntryType[]}) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result);
+		});
+	});
+}
