@@ -784,8 +784,9 @@ export function QuerylakeFetchUsage(args :{
   end_time: number
 }) {
 
-  const url = craftUrl(`/api/function_help`, {
+  const url = craftUrl(`/api/get_usage_tally`, {
     "auth": args.auth,
+    "window": args.window,
     "start_timestamp": args.start_time,
     "end_timestamp": args.end_time
   });

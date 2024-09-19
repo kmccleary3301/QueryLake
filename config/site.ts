@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "QueryLake",
-  url: "localhost:3001",
+  url: "https://ui.shadcn.com",
   ogImage: "https://ui.shadcn.com/og.jpg",
   description:
     "An open-source AI platform for everyone.",
