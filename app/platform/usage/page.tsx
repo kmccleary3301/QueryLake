@@ -287,7 +287,7 @@ export default function UsagePage(){
                 {/* <h1 className="text-4xl border-b-accent pb-2 border-b-4"><b>{category_entry.category}</b></h1> */}
                 <div className="flex-wrap">
                   {category_entry.models.map((model_entry, index_2) => (
-                    <div className="w-[32vw] h-[355px]">
+                    <div className="lg:w-[32vw] w-[450px] h-[355px]">
                       <TestGraph key={index_2} data={model_entry}/>
                     </div>
                   ))}
