@@ -85,7 +85,7 @@ function TestGraph({
 				<CardTitle className="text-base">{data.model}</CardTitle>
 				{/* <CardDescription>Model usage for {data.model}</CardDescription> */}
 			</CardHeader>
-			<CardContent className="">
+			<CardContent className="pl-0 -ml-2">
 				<ChartContainer config={{
           tokens: {
             label: "Tokens",
@@ -102,7 +102,19 @@ function TestGraph({
         }} className="aspect-auto h-[250px] w-full">
 					<BarChart accessibilityLayer data={data.time_data}>
             <CartesianGrid vertical={false} />
-            {/* <YAxis className="-ml-4"/> */}
+            <YAxis className="-ml-4" tickFormatter={(value) => {
+              if (value > 1000000000000) {
+                return Math.floor(value / 1000000000000) + "t";
+              } else if (value > 1000000000) {
+                return Math.floor(value / 1000000000) + "b";
+              } else if (value > 1000000) {
+                return Math.floor(value / 1000000) + "m";
+              } else if (value > 1000) {
+                return Math.floor(value / 1000) + "k";
+              } else {
+                return value;
+              }
+            }}/>
             <XAxis
 							dataKey="date"
 							tickLine={true}
@@ -110,10 +122,12 @@ function TestGraph({
               minTickGap={8}
 							axisLine={true}
 							tickFormatter={(value) => {
-                return new Date(value).toLocaleDateString("en-US", {
+                let date_get = new Date(value);
+                date_get.setDate(date_get.getDate() + 1);
+                return date_get.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
-                })
+                });
 							}}
 						/>
 						<Bar
@@ -287,7 +301,7 @@ export default function UsagePage(){
                 {/* <h1 className="text-4xl border-b-accent pb-2 border-b-4"><b>{category_entry.category}</b></h1> */}
                 <div className="flex-wrap">
                   {category_entry.models.map((model_entry, index_2) => (
-                    <div className="lg:w-[32vw] w-[450px] h-[355px]">
+                    <div className="w-[540px] h-[355px]">
                       <TestGraph key={index_2} data={model_entry}/>
                     </div>
                   ))}
