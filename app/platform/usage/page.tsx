@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 
-import { Bar, BarChart, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
   Card,
@@ -78,13 +78,14 @@ function TestGraph({
 }:{
   data : ModelComposition
 }) {
+
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-lg">{data.model}</CardTitle>
-				<CardDescription>Model usage for {data.model}</CardDescription>
+				<CardTitle className="text-base">{data.model}</CardTitle>
+				{/* <CardDescription>Model usage for {data.model}</CardDescription> */}
 			</CardHeader>
-			<CardContent>
+			<CardContent className="">
 				<ChartContainer config={{
           tokens: {
             label: "Tokens",
@@ -98,45 +99,64 @@ function TestGraph({
             label: "Output Tokens",
             color: "hsl(var(--chart-3))",
           }
-        }}>
+        }} className="aspect-auto h-[250px] w-full">
 					<BarChart accessibilityLayer data={data.time_data}>
-						<XAxis
+            <CartesianGrid vertical={false} />
+            {/* <YAxis className="-ml-4"/> */}
+            <XAxis
 							dataKey="date"
 							tickLine={true}
-							tickMargin={10}
+							// tickMargin={10}
+              minTickGap={8}
 							axisLine={true}
 							tickFormatter={(value) => {
-								return new Date(value).toLocaleDateString("en-US", {
-									weekday: "short",
-								})
+                return new Date(value).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
 							}}
 						/>
 						<Bar
 							dataKey="tokens"
 							stackId="a"
 							fill="var(--color-tokens)"
-							radius={[0, 0, 4, 4]}
+							// radius={[0, 0, 4, 4]}
 						/>
             <Bar
 							dataKey="input_tokens"
 							stackId="a"
 							fill="var(--color-input_tokens)"
-							radius={[0, 0, 4, 4]}
+							// radius={[0, 0, 4, 4]}
 						/>
             
 						<Bar
 							dataKey="output_tokens"
 							stackId="a"
 							fill="var(--color-output_tokens)"
-							radius={[4, 4, 0, 0]}
+							// radius={[4, 4, 0, 0]}
 						/>
 						<ChartTooltip
               // wrapperClassName="w-[200px]"
               labelClassName="pr-10"
-							content={<ChartTooltipContent indicator="line" />}
+							content={<ChartTooltipContent active />}
 							cursor={false}
 							defaultIndex={1}
 						/>
+            {/* <ChartTooltip
+              content={
+                <ChartTooltipContent
+                  // className="w-[150px]"
+                  nameKey="views"
+                  labelFormatter={(value) => {
+                    return new Date(value).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  }}
+                />
+              }
+            /> */}
 					</BarChart>
 				</ChartContainer>
 			</CardContent>
@@ -224,11 +244,29 @@ export default function UsagePage(){
           inner_map.set(model, {model: model, time_data: time_data});
           model_compositions.set(category, inner_map);
         }
-        const modelCompositionsList : CategorizedSeries[] = 
-        Array.from(model_compositions.entries()).map(([category, modelsMap]) => ({
-          category,
-          models: Array.from(modelsMap.entries()).map(([model, composition]) => composition),
-        }))
+        const modelCompositionsList: CategorizedSeries[] = Array.from(model_compositions.entries()).map(([category, modelsMap]) => {
+          const models = Array.from(modelsMap.entries()).map(([model, composition]) => {
+            const filledTimeData = [];
+            const datesSet = new Set(composition.time_data.map(entry => entry.date));
+            const currentDate = new Date(currentMonth + "-01T00:00:00Z");
+            const nextMonth = new Date(currentDate);
+            nextMonth.setMonth(currentDate.getMonth() + 1);
+
+            while (currentDate < nextMonth) {
+              const dateString = currentDate.toISOString().slice(0, 10);
+              if (!datesSet.has(dateString)) {
+                filledTimeData.push({ date: dateString});
+              } else {
+                filledTimeData.push(...composition.time_data.filter(entry => entry.date === dateString));
+              }
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            return { ...composition, time_data: filledTimeData };
+          });
+
+          return { category, models };
+        });
         setCurrentData(modelCompositionsList);
 			}
 		})
@@ -238,14 +276,18 @@ export default function UsagePage(){
 
 		<div className="w-full h-[calc(100vh)] flex flex-row justify-center">
 			<ScrollArea className="w-full">
+        
+
 				<div className="flex flex-row justify-center">
-					<div className="pt-10 w-[85vw] md:w-[70vw] flex flex-wrap justify-center gap-10">
+					<div className="pt-10 max-w-[85vw] md:max-w-[70vw] flex flex-wrap justify-between gap-10">
+            
+            <h1 className="text-2xl w-full border-b-2 pb-6 border-b-accent"><b>Model Usage</b></h1>
             {currentData.map((category_entry, index) => (
-              <div key={index} className="flex flex-col space-y-8">
+              <div key={index} className="flex flex-col space-y-2">
                 {/* <h1 className="text-4xl border-b-accent pb-2 border-b-4"><b>{category_entry.category}</b></h1> */}
                 <div className="flex-wrap">
                   {category_entry.models.map((model_entry, index_2) => (
-                    <div className="w-[450px] h-[450px]">
+                    <div className="w-[32vw] h-[355px]">
                       <TestGraph key={index_2} data={model_entry}/>
                     </div>
                   ))}
