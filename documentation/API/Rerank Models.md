@@ -7,7 +7,7 @@ You can call these models like so:
 ```python
 import requests
 
-input = {
+response = requests.get(f"http://localhost:8000/api/embedding", json={
 	"auth": {"api_key": "sk-123456789"},
     "inputs": [
 		[
@@ -23,10 +23,8 @@ input = {
 			"cupcake"
 		],
 	]
-}
-    
-response = requests.get(f"http://localhost:8000/api/embedding", json=input)
-response.raise_for_status()
+})
+result = response.raise_for_status().json()
 ```
 
 ### Result

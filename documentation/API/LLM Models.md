@@ -13,9 +13,7 @@ response = requests.get(f"http://localhost:8000/api/llm", json={
 	    "temperature": 1.0
     }
 })
-response.raise_for_status()
-
-result = response.json()
+result = response.raise_for_status().json()
 ```
 
 Alternatively, you can provide chat history:
@@ -31,8 +29,7 @@ response = requests.get(f"http://localhost:8000/api/llm", json={
 	    "temperature": 1.0
     }
 })
-response.raise_for_status()
-result = response.json()
+result = response.raise_for_status().json()
 ```
 
 #### Results

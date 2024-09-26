@@ -23,48 +23,49 @@ export default function SidebarTemplate({
   const pathname = usePathname();
   const { 
     userData,
+    sidebarOpen,
+    setSidebarOpen,
   } = useContextAction();
 
 
   const width_as_string = (typeof width === 'string') ? `[${width}]` : width.toString();
 
   const controlsSidebarWidth = useAnimation();
-  const [sidebarOpened, setSidebarOpened] = useState<boolean>(false);
   const [sidebarToggleVisible, setSidebarToggleVisible] = useState<boolean>(true);
   
   const controlSidebarButtonOffset = useAnimation();
 
   useEffect(() => {
 		controlsSidebarWidth.start({
-			width: 0
+			width: (sidebarOpen)?width:0
 		});
 	}, [controlsSidebarWidth]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setSidebarToggleVisible(!sidebarOpened);
-      controlSidebarButtonOffset.set({ zIndex: sidebarOpened?0:52 });
-    }, sidebarOpened?0.4:0);
+      setSidebarToggleVisible(!sidebarOpen);
+      controlSidebarButtonOffset.set({ zIndex: sidebarOpen?0:52 });
+    }, sidebarOpen?0.4:0);
 
     controlsSidebarWidth.start({
-      width: (sidebarOpened)?width:0,
+      width: (sidebarOpen)?width:0,
       transition: { duration: 0.4, ease: "easeInOut", bounce: 0 }
     });
 
     return () => {
       clearTimeout(timeoutId);
     };
-	}, [userData, sidebarOpened, controlsSidebarWidth, controlSidebarButtonOffset]);
+	}, [sidebarOpen, controlsSidebarWidth, controlSidebarButtonOffset]);
 
   useEffect(() => {
     // const sidebar_value = (sidebarIsAvailable && sidebarOpened)?true:false;
 
     controlSidebarButtonOffset.start({
-			translateX: sidebarOpened?0:0,
-      opacity: sidebarOpened?0:1,
-			transition: { delay: sidebarOpened?0:0.4, duration: sidebarOpened?0:0.6, ease: "easeInOut", bounce: 0 }
+			translateX: sidebarOpen?0:0,
+      opacity: sidebarOpen?0:1,
+			transition: { delay: sidebarOpen?0:0.4, duration: sidebarOpen?0:0.6, ease: "easeInOut", bounce: 0 }
 		});
-  }, [sidebarOpened, controlSidebarButtonOffset, pathname]);
+  }, [sidebarOpen, controlSidebarButtonOffset, pathname]);
 
 
 	return (
@@ -73,11 +74,11 @@ export default function SidebarTemplate({
       <motion.div 
         id="SIDEBARBUTTON" 
         className={`p-1 pl-2 absolute`}
-        initial={{translateX: 0, opacity: 1, zIndex: 52}}
+        initial={{translateX: sidebarOpen?0:0, opacity: sidebarOpen?0:1, zIndex: 52}}
         animate={controlSidebarButtonOffset}>
         {(sidebarToggleVisible) ? (
           <Button variant="ghost" className={`p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70`} onClick={() => {
-            setSidebarOpened(true);
+            setSidebarOpen(true);
           }}>
             <Sidebar id="closed_sidebar_button" size={24}/>
           </Button> 
@@ -85,7 +86,7 @@ export default function SidebarTemplate({
       </motion.div>
       
       <div className="h-screen">
-        <motion.div className="h-full bg-background-sidebar flex flex-col p-0 z-54" initial={{width: 0}} animate={controlsSidebarWidth} >
+        <motion.div className="h-full bg-background-sidebar flex flex-col p-0 z-54" initial={{width: (sidebarOpen)?width:0}} animate={controlsSidebarWidth} >
           {(userData === undefined) ? (
             null
           ) : (
@@ -105,7 +106,7 @@ export default function SidebarTemplate({
                   </Link>
                   <Button variant="ghost" className="p-2 rounded-md pl-2 pr-2 text-primary active:text-primary/70" onClick={() => {
                     // TODO: Toggle Sidebar
-                    setSidebarOpened(false);
+                    setSidebarOpen(false);
                   }}>
                     {/* <Icon.Sidebar size={24} color="#E8E3E3" /> */}
                     <Sidebar size={24}/>

@@ -13,7 +13,7 @@ type sidebar_assigned = "app" | "api" | "documentation" | "none"
 export default function SidebarController() {
 	const {
     authReviewed,
-    loginValid
+    loginValid,
   } = useContextAction();
 
 	const pathname = usePathname();

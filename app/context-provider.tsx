@@ -69,6 +69,9 @@ const Context = createContext<{
   apiFunctionSpecs : APIFunctionSpec[] | undefined,
 
 	breakpoint : breakpointType,
+
+	sidebarOpen : boolean,
+	setSidebarOpen : setStateOrCallback<boolean>,
 }>({
 	userData: undefined,
 	setUserData: () => undefined,
@@ -107,6 +110,9 @@ const Context = createContext<{
   apiFunctionSpecs: undefined,
 
 	breakpoint: '2xl',
+
+	sidebarOpen: true,
+	setSidebarOpen: () => true,
 });
 
 
@@ -146,6 +152,8 @@ export const ContextProvider = ({
 	const [break_point, set_breakpoint] = useState<breakpointType>('2xl');
   const [shiki_theme, set_shiki_theme] = useState<codeThemePreferenceType>({theme: 'tokyo-night', backgroundColor: undefined});
   const [api_function_specs, set_api_function_specs] = useState<APIFunctionSpec[] | undefined>(undefined);
+	const [sidebar_open, set_sidebar_open] = useState<boolean>(true);
+
 
 	useEffect(() => {
     const breakpoints : breakpointType[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
@@ -290,6 +298,8 @@ export const ContextProvider = ({
 			getUserData : get_user_data,
       apiFunctionSpecs: api_function_specs,
 			breakpoint : break_point,
+			sidebarOpen : sidebar_open,
+			setSidebarOpen : set_sidebar_open,
 		}}>
 			{children}
 		</Context.Provider>
