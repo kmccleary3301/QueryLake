@@ -61,7 +61,8 @@ export default function Component({
         parameters: {
           "auth": userData?.auth as string,
           "collection_hash_id": sessionId?.current as string,
-          "collection_type" : "toolchain_session"
+          "collection_type" : "toolchain_session",
+          "await_embedding": true,
         }
       });
       file_upload_hashes = uploadFileResponses.map((response : any) => response.hash_id)

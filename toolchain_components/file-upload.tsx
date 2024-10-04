@@ -56,7 +56,8 @@ export default function FileUpload({
         parameters: {
           "auth": userData?.auth as string,
           "collection_hash_id": sessionId?.current as string,
-          "collection_type" : "toolchain_session"
+          "collection_type" : "toolchain_session",
+          "await_embedding": true,
         }
       });
 

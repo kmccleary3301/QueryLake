@@ -136,6 +136,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         setFirstEventRan((prevState) => [prevState[0], true]);
       },
       onMessage: (message : ToolchainSessionMessage) => {
+        console.log("Message from loaded Toolchain:", message);
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
@@ -145,9 +146,9 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           // setToolchainSelectedBySession(message.toolchain_id);
         }
 
-        if (message.error) {
-          toast(message.error);
-        }
+        // if (message.error) {
+        //   toast(message.error);
+        // }
       },
       onSend: (message : {command?: string}) => {
         if (message.command && message.command === "toolchain/event" && appMode) {
@@ -183,7 +184,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           mounting.current = false;
         }
       },
-      onCurrentEventChange: (event: string | undefined) => { setCurrentEvent(event); }
+      onCurrentEventChange: (event: string | undefined) => { setCurrentEvent(event); },
+      onError: (message: object) => {
+        toast("An error occurred");
+        console.log("Error from loaded Toolchain:", message);
+        setCurrentEvent(undefined);
+      }
     });
   };
 

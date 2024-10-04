@@ -33,6 +33,8 @@ export default class ToolchainSession {
 	private onMessage: (message: object) => void;
   private onSend: (message: object) => void;
 	private onOpen: (session : ToolchainSession) => void;
+	private onError: (message: object) => void;
+	private onClose: () => void;
 	private onFirstCallEnd: () => void;
   private onCurrentEventChange: (event: string | undefined) => void;
 	public  socket: WebSocket; // Add socket as a type
@@ -47,7 +49,9 @@ export default class ToolchainSession {
 									onCallEnd = undefined,
 									onMessage = undefined,
                   onSend = undefined,
-								  onOpen = undefined, 
+								  onOpen = undefined,
+									onError = undefined,
+									onClose = undefined,
                   onFirstCallEnd = undefined,
                   onCurrentEventChange = undefined,
                 }:{ 
@@ -56,6 +60,8 @@ export default class ToolchainSession {
 									onMessage?: (message: object) => void,
                   onSend?: (message: object) => void,
 								  onOpen?: (session : ToolchainSession) => void,
+									onError?: (message: object) => void,
+									onClose?: () => void,
                   onFirstCallEnd?: () => void,
                   onCurrentEventChange?: (event: string | undefined) => void,
                 } ) {
@@ -65,13 +71,17 @@ export default class ToolchainSession {
 		this.onMessage = onMessage || (() => {});
     this.onSend = onSend || (() => {});
 		this.onOpen = onOpen || (() => {});
+		this.onError = onError || (() => {});
+		this.onClose = onClose || (() => {});
     this.onFirstCallEnd = onFirstCallEnd || (() => {});
     this.onCurrentEventChange = onCurrentEventChange || (() => {});
     this.message_queue = [];
     this.currently_running = false;
     this.current_event = undefined;
 		
-		this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
+		// this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
+		
+		this.socket = new WebSocket(`ws://localhost:3001/toolchain`);
 		
 		// this.state = {};
 		this.stream_mappings = new Map<string, (string | number)[][]>();
@@ -90,8 +100,8 @@ export default class ToolchainSession {
 				
 				// console.log("Message received parsed:", typeof message, message)
 				// this.onStateChange(() => this.handle_message(message))
-        this.handle_message(message);
 				this.onMessage(message);
+        this.handle_message(message);
 			} catch (error) {
 				console.error("Error parsing message:", error);
 			}
@@ -104,6 +114,7 @@ export default class ToolchainSession {
 
 		this.socket.onclose = () => {
 		  toast("Connection to server closed");
+			this.onClose();
 		}
 	}
   
@@ -132,8 +143,9 @@ export default class ToolchainSession {
         this.onCurrentEventChange(this.current_event);
         this.onCallEnd(this);
       }
-		} else if (Object.prototype.hasOwnProperty.call(data, "trace")) {
-			console.log(data);
+		} else if (Object.prototype.hasOwnProperty.call(data, "trace") || Object.prototype.hasOwnProperty.call(data, "error")) {
+			// console.log(data);
+			this.onError(data);
 		} else if ("type" in data) {
       
 			if (data["type"] === "streaming_output_mapping") {
