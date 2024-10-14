@@ -8,6 +8,21 @@ The `modify_document_collection` endpoint allows you to change properties of a d
 **Method:** GET, POST  
 **Authentication:** Supported through API Key, OAuth2, or Username/Password (for creating or deleting API keys only).
 
+#### Authentication
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
+
 #### Function Args
 
 - **auth**: (REQUIRED) Authentication details based on your method of choice.  

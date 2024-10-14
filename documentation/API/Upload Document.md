@@ -7,19 +7,26 @@
 Upload a file to the server. This file can be a user document, organization document, or a toolchain session document. If uploading for a toolchain session, provide the toolchain session hash ID as the `collection_hash_id`.
 
 ## Authentication
-This endpoint can be accessed using any of the following authentication methods:
-
-- API Key:
-    ```json
-    {"auth": {"api_key": "example_api_key"}}
-    ```
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
 
 ## Function Arguments
 
 | Keyword               | Type hint                                              | Default        | Description                                                     |
 |----------------------|-------------------------------------------------------|----------------|-----------------------------------------------------------------|
-| `auth`               | `QUERYLAKE_AUTH`                                     |                | Authentication object (API key, OAuth2, or username/password). |
-| `file`               | `Union[fastapi.datastructures.UploadFile, _io.BytesIO]` |                | The file to be uploaded.                                       |
+| `auth`               | `Auth (see above)`                                     |                | Authentication object (API key, OAuth2, or username/password). |
+| `file`               | `BytesIO` |                | The file to be uploaded.                                       |
 | `collection_hash_id` | `str`                                                |                | Hash ID of the collection where the document should be stored.  |
 | `file_name`          | `str`                                                | `None`         | Optional name for the file being uploaded.                    |
 | `collection_type`    | `str`                                                | `'user'`       | Type of collection to associate the document with.            |
@@ -35,26 +42,31 @@ import requests, json
 from urllib.parse import urlencode
 
 # Define your authentication method
-auth = {"auth": {"api_key": "example_api_key"}}
+auth = {"api_key": "example_api_key"}
+
+# Get the id of your collection to upload to.
 collection_hash_id = "your_collection_hash_id"
-pdf_files = ["path/to/first.pdf", "path/to/second.pdf", "path/to/large.pdf"]
+
+# Pick your file path
+pdf_file_path = "path/to/first.pdf"
 
 # Prepare the input parameters
 input_data = {
+    "auth": auth,
     "collection_hash_id": collection_hash_id,
     "await_embedding": True
 }
 
-for i, path in enumerate(pdf_files):
-    with open(path, 'rb') as f:
-        files = {'file': f}
-        new_inputs = {**input_data, "create_embeddings": (i != 2)}
-        encoded_params = urlencode({"parameters": json.dumps(new_inputs)})
-        
-        response = requests.post(f"http://localhost:8000/upload_document?{encoded_params}", files=files)
-        result = response.json()
 
-        print(json.dumps(result, indent=4))
+with open(pdf_file_path, 'rb') as f:
+    files = {'file': f}
+    new_inputs = {**input_data, "create_embeddings": (i != 2)}
+    encoded_params = urlencode({"parameters": json.dumps(new_inputs)})
+    
+    response = requests.post(f"http://localhost:8000/upload_document?{encoded_params}", files=files)
+    result = response.json()
+
+    print(json.dumps(result, indent=4))
 ```
 
 ### JavaScript Example

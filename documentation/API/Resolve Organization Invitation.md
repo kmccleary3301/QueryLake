@@ -29,7 +29,7 @@ The following authentication methods are supported:
 
 ### Request Parameters
 
-- `auth`: Authentication credentials (required)
+- `auth`: Authentication credentials (required, see above)
 - `organization_id`: The ID of the organization (required, type: int)
 - `accept`: A boolean indicating whether to accept the invitation (required, type: bool)
 

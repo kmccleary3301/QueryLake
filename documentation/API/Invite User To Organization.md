@@ -17,7 +17,7 @@ This endpoint requires one of the following authentication methods:
   {"auth": {"api_key": "example_api_key"}}
   ```
   
-- **Username and Password** (for creating an API key):
+- **Username and Password**:
   ```json
   {"auth": {"username": "example_username", "password": "example_password"}}
   ```
@@ -25,7 +25,7 @@ This endpoint requires one of the following authentication methods:
 #### Parameters
 | Parameter             | Type   | Required | Default Value | Description                                     |
 |-----------------------|--------|----------|---------------|-------------------------------------------------|
-| `auth`                | QUERYLAKE_AUTH | Yes      | N/A           | The authentication method (API Key or username/password)  |
+| `auth`                | Auth (see above) | Yes      | N/A           | The authentication method  |
 | `username_to_invite`  | str    | Yes      | N/A           | The username of the user to invite               |
 | `organization_id`     | int    | Yes      | N/A           | The ID of the organization                       |
 | `member_class`        | str    | No       | 'member'      | The class of membership for the invited user    |

@@ -9,10 +9,19 @@ GET /api/fetch_document_collections_belonging_to
 ```
 
 ## Authentication
-This endpoint supports authentication through the following methods:
-- **API Key** (preferred method for accessing this endpoint)
-- **OAuth2**
-- **Username and Password**
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
 
 Note: Authentication can only be done using one method at a time.
 

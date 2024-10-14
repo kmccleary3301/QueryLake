@@ -1,6 +1,21 @@
 You can call an LLM using a normal post or get request using QueryLake authentication.
 
 
+## Authentication
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
+
 ## Standard Call
 For a static call, you would call it like so:
 ```python

@@ -11,21 +11,22 @@ POST /api/search_bm25
 ```
 
 #### Authentication
-This endpoint supports the following authentication methods:
-1. **API Key**:
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
    ```json
    {"auth": {"api_key": "example_api_key"}}
    ```
-
-2. **Username and Password**:
+2. **Username and Password**
    ```json
    {"auth": {"username": "example_username", "password": "example_password"}}
    ```
-
-3. **OAuth2** (not used for this endpoint).
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
 
 #### Request Parameters
-- `auth` (required): Authentication details (API key or username/password).
+- `auth` (required): Authentication details (see above).
 - `query` (required): The search query string.
 - `collection_ids` (optional): List of collection IDs to search over. Defaults to an empty list.
 - `limit` (optional): The maximum number of results to return. Defaults to 10.

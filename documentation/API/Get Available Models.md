@@ -104,5 +104,3 @@ Upon a successful request, the JSON response will include an object with the fol
 
 #### Note
 This endpoint supports both GET and POST requests, although typically the GET method is used for retrieving data.
-
-Feel free to utilize this documentation when integrating the `get_available_models` function in your application!

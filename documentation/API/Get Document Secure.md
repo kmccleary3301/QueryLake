@@ -6,10 +6,19 @@
 
 **Endpoint**: `/api/get_document_secure`
 
-**Authentication Methods**: 
-- API Key
-- OAuth2
-- Username and Password
+**Authentication**: This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
 
 **Function Arguments**:
 - `auth`: (required) Authentication method (one of the three methods mentioned).

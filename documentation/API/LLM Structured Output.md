@@ -7,18 +7,20 @@ Call an LLM with TypeScript/Pydantic scheme enforcement on the response.
 #### Endpoint
 `GET` or `POST http://localhost:8000/api/llm`
 
-### Authentication
-This endpoint can be accessed using either:
-
-- **API Key**
-```json
-{"auth": {"api_key": "example_api_key"}}
-```
-
-- **Username and Password** (for creating and deleting an API key)
-```json
-{"auth": {"username": "example_username", "password": "example_password"}}
-```
+#### Authentication
+This endpoint supports three types of authentication. Only one is required for any request:
+1. **API Key**
+   ```json
+   {"auth": {"api_key": "example_api_key"}}
+   ```
+2. **Username and Password**
+   ```json
+   {"auth": {"username": "example_username", "password": "example_password"}}
+   ```
+3. **OAuth2 Token**
+   ```json
+   {"auth": "oauth2_string"}
+   ```
 
 ### Request Body
 
