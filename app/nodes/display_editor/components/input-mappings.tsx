@@ -35,10 +35,10 @@ export function DisplayComponentSkeletonMapper({
 					<h2>Markdown</h2>
 				</div>
 			);
-		case "graph":
+		default:
 			return (
 				<div>
-					<h2>Graph</h2>
+					<h2>Unknown</h2>
 				</div>
 			);
 	}

@@ -53,7 +53,8 @@ export function HeaderSection({
 	}, [sectionInfo?.tailwind]);
 
 	return (
-		(typeof sectionInfo.tailwind === "string") &&
+		<>
+		{(typeof sectionInfo.tailwind === "string") &&
 		<div className={`text-center flex flex-row`}>
 			<ContextMenuHeaderWrapper 
         className="h-full w-full"
@@ -128,6 +129,7 @@ export function HeaderSection({
 						))}
 				</div>
 			</ContextMenuHeaderWrapper>
-		</div>
+		</div>}
+		</>
 	)
 }

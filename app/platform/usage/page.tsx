@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/chart"
 import { QuerylakeFetchUsage, UsageEntryType } from "@/hooks/querylakeAPI";
 
-export const description = "A stacked bar chart with a legend"
+const description = "A stacked bar chart with a legend"
 
 const chartData = [
   { date: "2024-07-15", running: 450 },

@@ -24,7 +24,8 @@ export function HeaderSection({
   } = useContextAction();
 
 	return (
-		(typeof section.tailwind === "string") &&
+		<>
+		{(typeof section.tailwind === "string") &&
 		<div className={`text-center flex flex-row`}>
 			
 				<div className={`w-full h-full flex flex-row justify-${
@@ -50,6 +51,7 @@ export function HeaderSection({
               </Fragment>
 						))}
 				</div>
-		</div>
+		</div>}
+		</>
 	)
 }

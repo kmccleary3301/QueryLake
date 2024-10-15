@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run build:docs && npm run build:toolchain-components && next dev -p 3001",
-    "build": "npm run build:docs && npm run build:registry && npm run build:toolchain-components && next build",
+    "build": "npm run build:docs && npm run build:toolchain-components && next build",
     "build:registry": "tsx --tsconfig ./tsconfig.scripts.json ./scripts/build-registry.ts",
     "seed:tasks": "tsx --tsconfig ./tsconfig.scripts.json ./app/examples/tasks/data/seed.ts",
     "start": "NODE_ENV=production node server.js && next start -p 3001",

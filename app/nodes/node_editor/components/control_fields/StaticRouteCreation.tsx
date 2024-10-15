@@ -21,7 +21,7 @@ export function StaticRouteElementCreation({
   className?: string,
 }) {
   let type = value;
-
+  
   if (typeof value === "string") { // String case
     return (
       <input type="number" className={className}/>
@@ -60,6 +60,9 @@ export function StaticRouteElementCreation({
       )
     }
   }
+  return (
+    <h1>Error</h1>
+  )
 }
 
 export function StaticRouteCreation({

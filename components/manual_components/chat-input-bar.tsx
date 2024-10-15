@@ -38,7 +38,7 @@ export default function ChatBarInput(props : ChatBarInputProps) {
           onSubmission={(value : string) => {
             if (props.onMessageSend) props.onMessageSend(value);
           }}
-        >
+        />
         
         <div className='flex h-auto pl-[10px] flex-col justify-center'>
           <Button variant="secondary" type="submit" size="icon" disabled={(userInput.length < 1 && !filesQueued)} onClick={()=>{
@@ -49,7 +49,6 @@ export default function ChatBarInput(props : ChatBarInputProps) {
             <PaperPlaneIcon className="h-4 w-4 text-primary" />
           </Button>
         </div>
-        </ChatInput>
       </div>
     </div>
   )

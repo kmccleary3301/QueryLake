@@ -53,7 +53,7 @@ const file_size_as_string = (size : number) => {
   }
 }
 
-export function FileDisplayType({ 
+function FileDisplayType({ 
   name,
   finishedProcessing,
   subtext = undefined,

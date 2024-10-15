@@ -67,7 +67,7 @@ export default function ScrollSection({
 		if (scrollDiv.current !== null) {
 			scrollDiv.current.scrollTo({
 				top: scrollDiv.current.scrollHeight,
-        behavior: ((smooth !== undefined)?smooth:smoothScroll)?"smooth":"instant"
+        behavior: ((smooth !== undefined)?smooth:smoothScroll)?"smooth":"instant" as ScrollBehavior
       });
     }
   }, [smoothScroll, scrollDiv]);
