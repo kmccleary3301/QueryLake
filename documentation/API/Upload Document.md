@@ -33,6 +33,7 @@ This endpoint supports three types of authentication. Only one is required for a
 | `return_file_hash`   | `bool`                                              | `False`        | Should the response include the file hash?                    |
 | `create_embeddings`   | `bool`                                              | `True`         | Should embeddings be created for the document?                   |
 | `await_embedding`     | `bool`                                              | `False`        | Should the upload wait for embeddings to be processed?          |
+| `document_metadata`     | `dict`                                              | `None`        | Add custom metadata to the document that will be copied to all the text chunks |
 
 ## Example Usage
 

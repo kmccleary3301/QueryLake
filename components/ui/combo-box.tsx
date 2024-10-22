@@ -24,7 +24,7 @@ import { ScrollArea } from "./scroll-area"
 import { HoverCardTrigger, HoverCard, HoverCardContent } from "./hover-card"
 import { useMutationObserver } from "@/hooks/use-mutation-observer"
 
-type valueType = {value: string, label: string, preview?: string};
+interface valueType {value: string, label: string, preview?: string};
 
 export function ComboBox({
   values,
@@ -208,8 +208,10 @@ export function ComboBoxScrollPreview({
   const [innerValue, setInnerValue] = React.useState(defaultValue?.value || value)
   const [peekedPreview, setPeekedPreview] = React.useState<string | undefined>();
 
-  const categories : boolean = values.every((e) => e.hasOwnProperty("category_label"));
-  const values_flat : valueType[] = categories ? (values as valueCategory[]).flatMap((e) => e.values) : (values as valueType[]);
+  
+  const categories: boolean = (values as (valueType | valueCategory)[]).some((e): e is valueCategory => 'category_label' in e);
+  // const categories: boolean = values.every(isValueCategory);
+  const values_flat: valueType[] = categories ? (values as valueCategory[]).flatMap((e) => e.values) : (values as valueType[]);
 
 
   return (
@@ -289,61 +291,6 @@ export function ComboBoxScrollPreview({
             </CommandList>
           </Command>
         </HoverCard>
-
-        {/* <Command> */}
-        {/* <CommandInput placeholder={searchPlaceholder} /> */}
-          {/* <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>No framework found.</CommandEmpty>
-          <CommandGroup> */}
-        {/* <ScrollArea className="h-[200px]">
-            {values.map((e) => (
-              <CommandItem
-                key={e.value}
-                value={e.value}
-                onSelect={(currentValue) => {
-                  setInnerValue(currentValue === innerValue ? "" : currentValue);
-                  onChange(e.value, e.label);
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    innerValue === e.value ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {e.label}
-              </CommandItem>
-            ))}
-        </ScrollArea> */}
-          {/* <ScrollArea className="h-[200px]">
-            <CommandEmpty>Not found</CommandEmpty>
-            <CommandGroup>
-              {values.map((e) => (
-                  <CommandItem
-                    className="mr-[10px]"
-                    key={e.value}
-                    value={e.value}
-                    onSelect={(currentValue) => {
-                      setInnerValue(currentValue === innerValue ? "" : currentValue);
-                      onChange(e.value, e.label);
-                      setOpen(false)
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        innerValue === e.value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {e.label}
-                  </CommandItem>
-                ))
-              }
-            </CommandGroup>
-          </ScrollArea> */}
-          {/* </CommandGroup> */}
-        {/* </Command> */}
       </PopoverContent>
     </Popover>
   )
