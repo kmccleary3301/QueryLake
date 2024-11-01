@@ -79,8 +79,6 @@ export default class ToolchainSession {
     this.currently_running = false;
     this.current_event = undefined;
 		
-		// this.socket = new WebSocket(`ws://localhost:8000/toolchain`);
-		
 		this.socket = new WebSocket(`ws://localhost:3001/toolchain`);
 		
 		// this.state = {};

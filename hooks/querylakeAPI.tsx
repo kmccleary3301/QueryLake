@@ -142,6 +142,7 @@ type collectionResponse = {
   type: "user" | "organization" | "global",
   owner: string,
   public: boolean,
+  document_count: number,
 }
 
 type fetchCollectionArgs = {
