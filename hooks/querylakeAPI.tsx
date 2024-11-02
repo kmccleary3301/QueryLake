@@ -199,6 +199,47 @@ export function fetchCollectionDocuments({
 	});
 }
 
+
+export function searchCollectionDocuments({
+  auth,
+  collection_id,
+  search_query,
+  order_by,
+  order_direction,
+  limit,
+  offset,
+  onFinish
+}:{
+  auth: string,
+  collection_id: string,
+  search_query: string,
+  order_by: string,
+  order_direction: "ascend" | "descend",
+  limit?: number,
+  offset?: number,
+  onFinish: (result : fetch_collection_document_type[] | undefined) => void
+}) {
+  const url = craftUrl(`/api/search_bm25`, {
+    "auth": auth,
+    "collection_hash_id": collection_id,
+    "table": "document",
+    "limit": limit,
+    "offset": offset,
+    "query": search_query,
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (onFinish) onFinish(undefined);
+        return;
+			}
+			if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
+		});
+	});
+}
+
 type openDocumentArgs = {
 	auth: string, 
 	document_id: string

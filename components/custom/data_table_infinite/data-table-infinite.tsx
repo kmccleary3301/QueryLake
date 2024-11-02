@@ -49,6 +49,15 @@ import { z } from "zod";
 // import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet-details";
 // import { TimelineChart } from "./timeline-chart";
 
+// Add at the top after imports
+
+// export interface DataTableFilterField<TData> {
+//   label: string;
+//   value: string;
+//   items?: string[];
+//   type?: "date-range" | "number-range" | "boolean";
+// }
+
 // TODO: add a possible chartGroupBy
 export interface DataTableInfiniteProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -59,12 +68,12 @@ export interface DataTableInfiniteProps<TData, TValue> {
   searchColumnFilters?: ColumnFiltersState;
   defaultColumnSorting?: SortingState;
   defaultRowSelection?: RowSelectionState;
+  defaultColumnVisibility?: VisibilityState;
+  arrayColumns?: string[]; // New prop for columns that contain arrays
   filterFields?: DataTableFilterField<TData>[];
   totalRows?: number;
   filterRows?: number;
   totalRowsFetched?: number;
-  // currentPercentiles?: Record<Percentile, number>;
-  // chartData?: { timestamp: number; [key: string]: number }[];
   isFetching?: boolean;
   isLoading?: boolean;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => void;
@@ -78,6 +87,8 @@ export function DataTableInfinite<TData, TValue>({
   defaultColumnFilters = [],
   defaultColumnSorting = [],
   defaultRowSelection = {},
+  defaultColumnVisibility = {},
+  arrayColumns = [],
   filterFields = [],
   isFetching,
   isLoading,
@@ -85,8 +96,6 @@ export function DataTableInfinite<TData, TValue>({
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
-  // currentPercentiles,
-  // chartData = [],
 }: DataTableInfiniteProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -99,14 +108,7 @@ export function DataTableInfinite<TData, TValue>({
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    useLocalStorage<VisibilityState>("data-table-visibility", {
-      uuid: false,
-      "timing.dns": false,
-      "timing.connection": false,
-      "timing.tls": false,
-      "timing.ttfb": false,
-      "timing.transfer": false,
-    });
+    useLocalStorage<VisibilityState>("data-table-visibility", defaultColumnVisibility);
   const [controlsOpen, setControlsOpen] = useLocalStorage(
     "data-table-controls",
     true
@@ -158,8 +160,10 @@ export function DataTableInfinite<TData, TValue>({
       columnOrder,
     },
     enableMultiRowSelection: false,
-    // @ts-ignore FIXME: because it is not in the types
-    getRowId: (row, index) => `${row?.uuid}` || `${index}`,
+    getRowId: (row: any) => {
+      // Try different unique identifiers in order of preference
+      return row?.id || row?.uuid || String(Math.random());
+    },
     onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
@@ -171,8 +175,7 @@ export function DataTableInfinite<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
       const map = getFacetedUniqueValues<TData>()(table, columnId)();
-      // TODO: it would be great to do it dynamically, if we recognize the row to be Array.isArray
-      if (["regions"].includes(columnId)) {
+      if (arrayColumns.includes(columnId)) {
         const rowValues = table
           .getGlobalFacetedRowModel()
           .flatRows.map((row) => row.getValue(columnId) as string[]);
@@ -227,12 +230,20 @@ export function DataTableInfinite<TData, TValue>({
       setSearch({ uuid: Object.keys(rowSelection)?.[0] || null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    console.log("SELECTED ROW CALLED:", selectedRow);
+
   }, [rowSelection, selectedRow]);
+
+  React.useEffect(() => {
+    console.log("totalRowsFetched", totalRowsFetched);
+    console.log("filterRows", filterRows);
+    console.log("totalRows", totalRows);
+  }, [totalRowsFetched, filterRows, totalRows]);
 
   return (
     <>
       <div className="flex w-full min-h-screen h-full flex-col sm:flex-row">
-        <div
+        {/* <div
           className={cn(
             "w-ful h-full sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72 sm:sticky sm:top-0 sm:max-h-screen sm:overflow-y-scroll",
             !controlsOpen && "hidden"
@@ -245,14 +256,14 @@ export function DataTableInfinite<TData, TValue>({
               filterFields={filterFields}
             />
           </div>
-          {/* <Separator className="my-2" /> */}
-        </div>
+          <Separator className="my-2" />
+        </div> */}
         <div
           className={cn(
             "flex max-w-full flex-1 flex-col sm:border-l border-border overflow-clip",
             // Chrome issue
             controlsOpen &&
-              "sm:max-w-[calc(100vw_-_208px)] md:max-w-[calc(100vw_-_288px)]"
+              "max-w-[calc(100vw_-_58px)] sm:max-w-[calc(100vw_-_208px)] md:max-w-[calc(100vw_-_288px)]"
           )}
         >
           <div
