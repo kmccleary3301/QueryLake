@@ -80,6 +80,8 @@ export interface DataTableInfiniteProps<TData, TValue> {
   isLoading?: boolean;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => void;
   className?: string;
+  onSelectRow?: (row: TData) => void;
+  onToggleControls?: (opened: boolean) => void;
 }
 
 export function DataTableInfinite<TData, TValue>({
@@ -100,6 +102,8 @@ export function DataTableInfinite<TData, TValue>({
   filterRows = 0,
   totalRowsFetched = 0,
   className = "",
+  onSelectRow = () => {},
+  onToggleControls = () => {},
 }: DataTableInfiniteProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -290,11 +294,6 @@ export function DataTableInfinite<TData, TValue>({
               isLoading={isFetching || isLoading}
               enableColumnOrdering={true}
             />
-            {/* <TimelineChart
-              data={chartData}
-              className="-mb-2"
-              handleFilter={table.getColumn("date")?.setFilterValue}
-            /> */}
           </div>
           <div className="z-0">
             <Table containerClassName="overflow-clip">
