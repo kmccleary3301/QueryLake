@@ -24,6 +24,7 @@ import {
   SortableDragHandle,
   SortableItem,
 } from "@/components/custom/sortable";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
@@ -68,7 +69,7 @@ export function DataTableViewOptions<TData>({
           <span className="sr-only">View</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent side="bottom" align="end" className="w-[200px] p-0">
+      <PopoverContent side="bottom" align="end" className="w-[250px] p-0">
         <Command>
           <CommandInput
             value={search}
@@ -76,6 +77,7 @@ export function DataTableViewOptions<TData>({
             placeholder="Search options..."
           />
           <CommandList>
+            <ScrollArea className="h-[200px] pr-2">
             <CommandEmpty>No option found.</CommandEmpty>
             {/* TODO: add a "RESET REORDERING ROW" */}
             <CommandGroup>
@@ -124,6 +126,7 @@ export function DataTableViewOptions<TData>({
                 ))}
               </Sortable>
             </CommandGroup>
+            </ScrollArea>
           </CommandList>
         </Command>
       </PopoverContent>

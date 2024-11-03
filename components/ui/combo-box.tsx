@@ -125,37 +125,13 @@ export function ComboBoxScroll({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-        <CommandInput placeholder={searchPlaceholder} />
-          {/* <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>No framework found.</CommandEmpty>
-          <CommandGroup> */}
-        {/* <ScrollArea className="h-[200px]">
-            {values.map((e) => (
-              <CommandItem
-                key={e.value}
-                value={e.value}
-                onSelect={(currentValue) => {
-                  setInnerValue(currentValue === innerValue ? "" : currentValue);
-                  onChange(e.value, e.label);
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    innerValue === e.value ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                {e.label}
-              </CommandItem>
-            ))}
-        </ScrollArea> */}
-          <ScrollArea className="h-[200px]">
-            <CommandEmpty>Not found</CommandEmpty>
-            <CommandGroup>
-              {values.map((e) => (
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandList>
+            <ScrollArea className="h-[200px]">
+              <CommandEmpty>Not found</CommandEmpty>
+              <CommandGroup>
+                {values.map((e) => (
                   <CommandItem
-                    className="mr-[10px]"
                     key={e.value}
                     value={e.value}
                     onSelect={(currentValue) => {
@@ -172,11 +148,10 @@ export function ComboBoxScroll({
                     />
                     {e.label}
                   </CommandItem>
-                ))
-              }
-            </CommandGroup>
-          </ScrollArea>
-          {/* </CommandGroup> */}
+                ))}
+              </CommandGroup>
+            </ScrollArea>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>

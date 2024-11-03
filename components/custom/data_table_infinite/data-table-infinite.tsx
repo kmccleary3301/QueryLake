@@ -27,8 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
-import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
-import { DataTableFilterCommand, DataTableFilterCommandProps } from "@/components/data-table/data-table-filter-command";
+import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 // import { ColumnSchema, columnFilterSchema } from "./schema";
 import type { DataTableFilterField } from "@/components/data-table/types";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"; // TODO: check where to put this
@@ -39,24 +38,27 @@ import { useQueryStates, UseQueryStatesKeysMap } from "nuqs";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-// import { SheetDetailsContent } from "./sheet-details-content";
-import { Percentile } from "@/lib/request/percentile";
 import { formatCompactNumber } from "@/lib/format";
 import { inDateRange, arrSome } from "@/lib/table/filterfns";
 import { z } from "zod";
-// import { SocialsFooter } from "@/components/layout/socials-footer";
-// import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet-details";
-// import { TimelineChart } from "./timeline-chart";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import useResizeObserver from "@react-hook/resize-observer";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+import { set } from "date-fns";
 
-// Add at the top after imports
+const useSize = (target : React.RefObject<HTMLDivElement>) => {
+  const [size, setSize] = React.useState<DOMRect>()
 
-// export interface DataTableFilterField<TData> {
-//   label: string;
-//   value: string;
-//   items?: string[];
-//   type?: "date-range" | "number-range" | "boolean";
-// }
+  React.useLayoutEffect(() => {
+		if (target.current !== null) {
+			setSize(target.current.getBoundingClientRect())
+		}
+  }, [target])
+
+  // Where the magic happens
+  useResizeObserver(target, (entry) => setSize(entry.contentRect))
+  return size
+}
 
 // TODO: add a possible chartGroupBy
 export interface DataTableInfiniteProps<TData, TValue> {
@@ -77,6 +79,7 @@ export interface DataTableInfiniteProps<TData, TValue> {
   isFetching?: boolean;
   isLoading?: boolean;
   fetchNextPage: (options?: FetchNextPageOptions | undefined) => void;
+  className?: string;
 }
 
 export function DataTableInfinite<TData, TValue>({
@@ -96,6 +99,7 @@ export function DataTableInfinite<TData, TValue>({
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
+  className = "",
 }: DataTableInfiniteProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -132,22 +136,24 @@ export function DataTableInfinite<TData, TValue>({
     return () => observer.unobserve(topBar);
   }, [topBarRef]);
 
+  const [bottomScrollRefresher, setBottomScrollRefresher] = React.useState(true);
+
+
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    // if (typeof window === "undefined") return;
+    if (!bottomScrollRefresher) return;
 
-    function onScroll() {
-      // TODO: add a threshold for the "Load More" button
-      const onPageBottom =
-        window.innerHeight + Math.round(window.scrollY) >=
-        document.body.offsetHeight;
-      if (onPageBottom && !isFetching && totalRowsFetched < filterRows) {
-        fetchNextPage();
-      }
+    // TODO: add a threshold for the "Load More" button
+    const onPageBottom =
+      window.innerHeight + Math.round(window.scrollY) >=
+      document.body.offsetHeight;
+    if (onPageBottom && !isFetching && totalRowsFetched < filterRows) {
+      console.log("Fetching next page...");
+      fetchNextPage();
+      setBottomScrollRefresher(false);
     }
+  }, [fetchNextPage, isFetching, filterRows, totalRowsFetched, bottomScrollRefresher]);
 
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [fetchNextPage, isFetching, filterRows, totalRowsFetched]);
 
   const table = useReactTable({
     data,
@@ -242,22 +248,20 @@ export function DataTableInfinite<TData, TValue>({
 
   return (
     <>
-      <div className="flex w-full min-h-screen h-full flex-col sm:flex-row">
-        {/* <div
-          className={cn(
-            "w-ful h-full sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72 sm:sticky sm:top-0 sm:max-h-screen sm:overflow-y-scroll",
-            !controlsOpen && "hidden"
-          )}
-        >
-          <div className="p-2 flex-1">
-            <DataTableFilterControls
-              table={table}
-              columns={columns}
-              filterFields={filterFields}
-            />
-          </div>
-          <Separator className="my-2" />
-        </div> */}
+      <ScrollArea 
+        className={cn("flex w-full h-screen flex-col sm:flex-row pr-2 overflow-hidden sticky scrollbar-hide", className)}
+        onScroll={(e) => {
+          const scrollTop = e.currentTarget.scrollTop;
+          const scrollHeight = e.currentTarget.scrollHeight;
+          const clientHeight = e.currentTarget.clientHeight;
+          const scrollPercentage = (scrollTop / (scrollHeight - clientHeight)) * 100;
+          const scrollDelta = (scrollHeight-clientHeight)-scrollTop;
+          if (scrollDelta < 10 && !isFetching && totalRowsFetched < filterRows) {
+            console.log("Fetching next page...");
+            fetchNextPage();
+          }
+        }}
+      >
         <div
           className={cn(
             "flex max-w-full flex-1 flex-col sm:border-l border-border overflow-clip",
@@ -326,9 +330,10 @@ export function DataTableInfinite<TData, TValue>({
               <TableBody>
                 {/* FIXME: should be getRowModel() as filtering */}
                 {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row, row_index) => (
                     <TableRow
-                      key={row.id}
+                      // key={row.id}
+                      key={row_index}
                       data-state={row.getIsSelected() && "selected"}
                       onClick={() => row.toggleSelected()}
                     >
@@ -387,20 +392,7 @@ export function DataTableInfinite<TData, TValue>({
             </Table>
           </div>
         </div>
-      </div>
-      {/** This is for opening a sheet on the side after clicking on an entry **/}
-      {/* <DataTableSheetDetails
-        // TODO: make it dynamic via renderSheetDetailsContent
-        title={(selectedRow?.original as ColumnSchema | undefined)?.pathname}
-        titleClassName="font-mono"
-        table={table}
-      >
-        <SheetDetailsContent
-          data={selectedRow?.original as ColumnSchema}
-          percentiles={currentPercentiles}
-          filterRows={filterRows}
-        />
-      </DataTableSheetDetails> */}
+      </ScrollArea>
     </>
   );
 }

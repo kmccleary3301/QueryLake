@@ -10,6 +10,8 @@ type SearchParams = {
   offset: number;
   limit: number;
   table: string;
+  sort_by?: string;
+  sort_dir?: "ASC" | "DESC";
 }
 
 
@@ -43,7 +45,9 @@ export const dataOptions = (
         query: "",
         offset: start,
         limit: search.size,
-        table: 'document'
+        table: 'document',
+        sort_by: search.sort ? `${search.sort.id}` : "file_name",
+        sort_dir: search.sort ? (search.sort.desc ? "DESC" : "ASC") : undefined,
       };
       return fetcher(searchParams);
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { LucideLoader2, Minus } from "lucide-react";
+import { LucideLoader2, Minus, Trash } from "lucide-react";
 // import type { ColumnSchema } from "./schema";
 // import ColumnSchema
 import { format, set } from "date-fns";
@@ -30,6 +30,7 @@ import {
 import { ARRAY_DELIMITER, RANGE_DELIMITER, SLIDER_DELIMITER, SORT_DELIMITER } from "@/lib/delimiters";
 
 import { Percentile } from "@/lib/request/percentile";
+import { Button } from "@/components/ui/button";
 
 export type MakeArray<T> = {
   [P in keyof T]: T[P][];
@@ -121,7 +122,7 @@ export const searchParamsParser = {
   
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
-  size: parseAsInteger.withDefault(30),
+  size: parseAsInteger.withDefault(10),
   start: parseAsInteger.withDefault(0),
   
   // REQUIRED FOR SELECTION
@@ -147,23 +148,44 @@ export type ColumnSchema = z.infer<typeof columnSchema>;
 
 export const columns: ColumnDef<ColumnSchema>[] = [
   {
-    id: "id", // Add explicit ID column first
+    id: "id",
     accessorKey: "id",
-    header: "ID",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
     cell: ({ row }) => {
       const value = row.getValue("id") as string;
-      return <div className="font-mono">{value}</div>;
+      return <TextWithTooltip className="font-mono max-w-[85px]" text={value} />
     },
-    enableHiding: true, // Don't allow hiding the ID column
+    enableHiding: true,
+    enableSorting: true,
+    sortingFn: "alphanumeric"
+  },
+  {
+    id: "integrity_sha256",
+    accessorKey: "integrity_sha256",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Integrity" />
+    ),
+    cell: ({ row }) => {
+      const value = row.getValue("integrity_sha256") as string;
+      return <TextWithTooltip className="font-mono max-w-[85px]" text={value} />
+    },
+    enableHiding: true,
+    enableSorting: true,
+    sortingFn: "alphanumeric"
   },
   {
     id: "file_name",
     accessorKey: "file_name",
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+    enableSorting: true, // Enable sorting for this column
     cell: ({ row }) => {
       const value = row.getValue("file_name") as string;
       return (
-        <TextWithTooltip className="font-mono max-w-[85px]" text={value} />
+        <TextWithTooltip className="font-mono max-w-[200px]" text={value} />
       );
     },
     meta: {
@@ -185,8 +207,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
             </div>
           </HoverCardTrigger>
           <HoverCardContent
-            side="right"
-            align="start"
+            side="left"
+            align="center"
             alignOffset={-4}
             className="p-2 w-auto z-10"
           >
@@ -219,7 +241,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   },
   {
     accessorKey: "size_bytes",
-    header: "Size",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Size" />
+    ),
+    enableSorting: true,
+    sortingFn: "basic",
     cell: ({ row }) => {
       const value = row.getValue("size_bytes");
       if (typeof value === "undefined") {
@@ -238,12 +264,15 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     // TODO: make it a type of MethodSchema!
     accessorKey: "finished_processing",
     header: "Processing",
+    // enableMultiSort: true,
+    enableSorting: true,
+    filterFn: "auto",
     cell: ({ row }) => {
       const value = row.getValue("finished_processing") as boolean;
       return (
         <>
           {value ? (
-            <p className="text-green-500">Done</p>
+            <p className="text-green-500 w-[100px]">Done</p>
           ):(
             <div className="h-4 bg-accent flex flex-row space-x-1 text-nowrap px-2 rounded-full">
               <div className='h-auto flex flex-col justify-center'>
@@ -259,7 +288,22 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </>
       );
     }
-  },
+  }
+  // {
+  //   id: "delete_button",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.getValue("id") as string;
+  //     return (
+  //       <Button variant={"destructive"}>
+  //         <Trash className="w-4 h-4" />
+  //       </Button>
+  //     )
+  //   },
+  //   enableHiding: true,
+  // }
 ];
 
 

@@ -73,7 +73,7 @@ export function Client({}) {
 
   return (
     <div className="w-full h-[calc(100vh)] flex flex-row justify-center">
-      <ScrollArea className="w-full">
+      {/* <ScrollArea className="w-full"> */}
         <div className="flex flex-row w-full justify-center">
           <div className="flex flex-col">
             <DataTableInfinite
@@ -98,7 +98,7 @@ export function Client({}) {
             />
           </div>
         </div>
-      </ScrollArea>
+      {/* </ScrollArea> */}
     </div>
   );
 }
