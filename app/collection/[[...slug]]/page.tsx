@@ -1,31 +1,24 @@
 "use client";
-interface DocPageProps {
-  params: {
-    slug: string[],
-  },
-  searchParams: object
-}
 
-
-type collection_mode_type = "create" | "edit" | "view" | undefined;
-
-/**
- * v0 by Vercel.
- * @see https://v0.dev/t/n2FrFZXZwwu
- * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
- */
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { DataTableInfinite, DataTableInfiniteProps } from "@/components/custom/data_table_infinite/data-table-infinite";
+import { useContextAction } from "@/app/context-provider";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+import { useEffect, useMemo, useState } from "react";
+import { columns, ColumnSchema, columnSchema, INFINITE_COLLECTION_ID, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
+import { DataFetcher, dataOptions } from "./query-options";
+import { fetchCollection } from "@/hooks/querylakeAPI";
+import craftUrl from "@/hooks/craftUrl";
 
 import axios from 'axios';
-import { useEffect, useState } from "react"
 import { Label } from '@/components/ui/label';
 import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { SVGProps } from "react"
-import { 
-  fetchCollection, 
+import {
   fetch_collection_document_type,
   deleteDocument,
   createCollection,
@@ -33,81 +26,40 @@ import {
   modifyCollection,
   fetchCollectionDocuments
 } from "@/hooks/querylakeAPI";
-import { useContextAction } from "@/app/context-provider";
-import craftUrl from "@/hooks/craftUrl";
+// import { useContextAction } from "@/app/context-provider";
+// import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
 import { handleCopy } from '@/components/markdown/markdown-code-block';
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
-const file_size_as_string = (size : number) => {
-  if (size < 1024) {
-    return `${size} B`;
-  } else if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  } else if (size < 1024 * 1024 * 1024) {
-    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  } else {
-    return `${(size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  }
-}
+const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
-function FileDisplayType({ 
-  name,
-  finishedProcessing,
-  subtext = undefined,
-  progress = undefined,
-  onOpen = undefined,
-  onDelete = undefined
-} : { 
-  name: string,
-  finishedProcessing: boolean,
-  subtext?: string[],
-  progress?: number,
-  onOpen?: () => void,
-  onDelete?: () => void
-}) {
-  return (
-    <div className="w-[inherit] h-14 flex flex-row items-center justify-between pt-2 pb-2">
-      <div className='w-[70%] pb-2 flex flex-col space-y-1'>
-        {(onOpen === undefined)?(
-          <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
-        ):(
-          <Button variant="link" className="font-medium p-0 h-6 justify-start" onClick={onOpen}>
-            <p className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</p>
-          </Button>
-        )}
-        {(subtext !== undefined) && (
-          <div className='h-4 flex flex-row space-x-4'>
-            <p className={`text-xs text-primary/35 h-auto flex flex-col justify-center`}>{subtext.join(" | ")}</p>
-            {(!finishedProcessing) && (
-              <div className="h-4 bg-accent flex flex-row space-x-1 text-nowrap px-2 rounded-full">
-                <div className='h-auto flex flex-col justify-center'>
-                  <div style={{
-                    animation: 'spin 1.5s linear infinite'
-                  }}>
-                    <LucideLoader2 className="w-3 h-3 text-primary" />
-                  </div>
-                </div>
-                <p className='text-xs h-auto flex flex-col justify-center'>Processing</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      {progress !== undefined && (
-        <div className="w-[30%] px-2 pr-4">  
-          <Progress value={progress} className='h-2 mb-2 w-auto' />
-        </div>
-      )}
-      {(onDelete !== undefined) && (
-        <Button size="icon" variant="ghost" onClick={onDelete}>
-          <TrashIcon className="w-4 h-4" />
-        </Button>
-      )}
-    </div>
-  );
+const defaultFetcher: DataFetcher = async (params) => {
+  console.log("defaultFetcher Params", params);
+  const url_make = craftUrl('/api/search_bm25', params);
+
+  const response = await fetch(url_make);
+  const result = await response.json();
+  console.log("defaultFetcher Result", result);
+
+  return Promise.resolve({
+    data: result.result,
+    meta: {
+      totalRowCount: 1000,
+      filterRowCount: result.total + 10,
+    } as InfiniteQueryMeta
+  });
+};
+
+interface DocPageProps {
+  params: {
+    slug: string[],
+  },
+  searchParams: object
 }
 
 type uploading_file_type = {
@@ -115,7 +67,11 @@ type uploading_file_type = {
   progress: number,
 }
 
-export default function CollectionPage({ params, searchParams }: DocPageProps) {
+type collection_mode_type = "create" | "edit" | "view" | undefined;
+
+export default function Page({ params, searchParams }: DocPageProps) {
+  const { userData, refreshCollectionGroups } = useContextAction();
+  const [totalDBRowCount, setTotalDBRowCount] = useState(0);
 
   const router = useRouter();
   const collection_mode_immediate = (["create", "edit", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as collection_mode_type : undefined
@@ -128,44 +84,29 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
   const [publishStarted, setPublishStarted] = useState<boolean>(false);
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
+  const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
 
-  const {
-    userData,
-    refreshCollectionGroups,
-  } = useContextAction();
+  
 
-  const fetchCollectionCallback = (only_documents : boolean) => {
-    if (!params["slug"][1]) return;
-
+  const fetchCollectionCallback = () => {
+    if (!userData?.auth) return;
     fetchCollection({
-      auth: userData?.auth as string,
-      collection_id: params["slug"][1],
+      auth: userData.auth,
+      collection_id: COLLECTION_ID,
       onFinish: (data) => {
-        if (data !== undefined) {
-          
-          if (!only_documents) {
-            setCollectionTitle(data.title);
-            setCollectionDescription(data.description);
-            setCollectionIsPublic(data.public);
-          }
-
-          fetchCollectionDocuments({
-            auth: userData?.auth as string,
-            collection_id: params["slug"][1],
-            limit: 100,
-            offset: 0,
-            onFinish: (data) => {
-              if (data !== undefined) {
-                setCollectionDocuments(data);
-              }
-            }
-          })
-        }
+        console.log("Collection Data", data);
+        if (data === undefined) { return; }
+        setCollectionTitle(data.title);
+        setCollectionDescription(data.description);
+        setCollectionIsPublic(data.public);
+        setTotalDBRowCount(data.document_count);
       }
-    })
+    });
   };
 
-  useEffect(() => { // Keep refreshing collection documents every 5s if they are still processing
+
+  // Keep refreshing collection documents every 5s if they are still processing
+  useEffect(() => { 
     let documents_processing = false;
     collectionDocuments.forEach(doc => {
       if (!doc.finished_processing) {
@@ -174,58 +115,21 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     });
     if (documents_processing) {
       setTimeout(() => {
-        fetchCollectionCallback(true);
+        // TODO: update this to fetch documents where finished_processing is false
       }, 5000)
     }
   }, [collectionDocuments]);
+
 
   useEffect(() => {
     if ( userData?.auth !== undefined) {
       if (CollectionMode === "edit" || CollectionMode === "view") {
         // setCollectionMode(collection_mode_immediate)
-        fetchCollectionCallback(false);
+        fetchCollectionCallback();
       }
     }
   }, [CollectionMode])
 
-  const onPublish = () => {
-    const create_args = {
-      auth: userData?.auth as string,
-      title: collectionTitle,
-      description: collectionDescription,
-      public: collectionIsPublic,
-    }
-
-    if (CollectionMode === "create") {
-      createCollection({
-        ...create_args, 
-        ...(collectionOwner === "personal") ?
-                                            {} :
-                                            {organization_id: collectionOwner},
-        onFinish: (result : false | {hash_id : string}) => {
-          if (result !== false) {
-            if (pendingUploadFiles !== null) {
-              start_document_uploads(result.hash_id);
-            } else {
-              router.push(`/collection/edit/${result.hash_id}`);
-            }
-          }
-        }
-      });
-    } else {
-      modifyCollection({
-        ...create_args,
-        collection_id: params["slug"][1],
-        onFinish: (result) => {
-          if (result !== false && pendingUploadFiles !== null) {
-            start_document_uploads(params["slug"][1]);
-          }
-          refreshCollectionGroups();
-        }
-      })
-      
-    }
-  }
 
   const start_document_uploads = async (collection_hash_id : string) => {
     if (pendingUploadFiles === null) return;
@@ -290,180 +194,85 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
       router.push(`/collection/edit/${collection_hash_id}`);
   }
 
+  const [search] = useQueryStates(searchParamsParser);
+  const { data, isFetching, isLoading, fetchNextPage } = useInfiniteQuery(
+    dataOptions(
+      search,
+      userData?.auth as string,
+      INFINITE_COLLECTION_ID,
+      defaultFetcher
+    )
+  );
+
+  const flatData = useMemo(
+    () => data?.pages?.flatMap((page) => page.data ?? []) ?? [],
+    [data?.pages]
+  );
+
+  useEffect(() => {
+    console.log("Data", data);
+  }, [data]);
+
+
+  const lastPage = data?.pages?.[data?.pages.length - 1];
+  const filterDBRowCount = lastPage?.meta?.filterRowCount;
+  const totalFetched = flatData?.length;
+
+  const { sort, start, size, ...filter } = search;
+
+  const deletionColumn : ColumnDef<ColumnSchema> = {
+    id: "delete_button",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Deletion" />
+    ),
+    cell: ({ row }) => {
+      const value = row.getValue("id") as string;
+      return (
+        <Button 
+          className="h-6 p-2 bg-[#DC2626] hover:bg-[#DC2626]/70 active:bg-[#DC2626]/50"
+        >
+          {/* <Trash className="w-4 h-4 p-0" /> */}
+          <p className="text-black font-mono">Delete</p>
+        </Button>
+      )
+    },
+    enableHiding: true,
+  }
+
+  useEffect(() => {
+    setDataRowsProcessed(flatData);
+  }, [flatData, uploadingFiles, pendingUploadFiles]);
+
   return (
-    <ScrollArea className="w-full h-[calc(100vh)]">
-      <div className="p-4 flex flex-col items-center w-full min-h-[calc(100vh)]">
-        <h1 className="text-3xl font-bold tracking-tight mb-4 text-center">
-          {(CollectionMode === "create")?"Create a Document Collection":(CollectionMode === "edit")?"Edit Document Collection":(CollectionMode === "view")?"View Document Collection":"Bad URL!"}
-        </h1>
-        {(params["slug"][1]) && (
-          <span className="text-xs text-primary/35 flex flex-row space-x-4 pb-10">
-            <p className="text-sm text-nowrap overflow-hidden h-7 border-2 p-1 px-3 rounded-lg flex flex-col justify-center" >
-              {params["slug"][1]}
-            </p>
-            <Button type="submit" className="p-0 m-0 h-7" variant={"transparent"} onClick={() => {
-              handleCopy(params["slug"][1] || "")
-            }}>
-              <Copy className="w-4 h-4 text-primary"/>
-            </Button>
-          </span>
-        )}
-        <div className="grid px-4 md:grid-cols-2 md:gap-8 w-[80%] md:w-full flex-grow max-w-5xl pb-8">
-          <div className="gap-2 grid-cols-2 flex flex-col space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="visibility">Visibility</Label>
-                <Select value={(collectionIsPublic?"public":"private")} onValueChange={(value : string) => {
-                  setCollectionIsPublic(value === "public");
-                }} disabled={(CollectionMode !== "create" && CollectionMode !== "edit")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select visibility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="owner">Owner</Label>
-                <Select value={collectionOwner} onValueChange={(value : string) => {
-                  setCollectionOwner(value);
-                }} disabled={(CollectionMode !== "create")}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select owner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    {(userData !== undefined) && userData.memberships.map((membership, index) => (
-                      <SelectItem key={index} value={membership.organization_id}>{membership.organization_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="title">Title</Label>
-              
-              <Input
-                onChange={(event) => {
-                  setCollectionTitle(event.target.value);
-                }}
-                value={collectionTitle}
-                id="title" 
-                placeholder={(params["slug"][0] === "create")?"Enter title":""}
-                disabled={(params["slug"][0] === "view")}
-              />
-            </div>
-            <div className="w-full items-center gap-1.5 flex-grow flex flex-col">
-              <Label htmlFor="description" className='w-full text-left'>Description</Label>
-              <Textarea
-                className='flex-grow resize-none'
-                id="description"
-                value={collectionDescription}
-                disabled={(params["slug"][0] === "view")}
-                onChange={(event) => {
-                  setCollectionDescription(event.target.value);
-                }}
-                placeholder="Enter description"
-              />
-            </div>
-          </div>
-          <div className="gap-4 pt-4 md:pt-0 flex flex-col">
-            {(CollectionMode === "create" || CollectionMode === "edit") && (
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="document">Upload Document</Label>
-                <Input id="document" className='items-center text-center pb-0' type="file" multiple onChange={(event) =>{
-                  if (event.target.files !== null) {
-                    setPendingUploadFiles(Array.from(event.target.files));
-                  }
-                }}/>
-              </div>
-            )}
-            <div className="h-72 w-full rounded-md border border-input flex-grow">
-              <ScrollArea className="p-4 pt-2 text-sm h-full">
-                <div className='w-[inherit]'>
-                {(pendingUploadFiles !== null && !publishStarted) && pendingUploadFiles.map((file, index) => (
-                  <FileDisplayType
-                    key={index}
-                    finishedProcessing={true}
-                    name={file.name}
-                    subtext={[file_size_as_string(file.size)]}
-                    onDelete={() => {
-                      setPendingUploadFiles(pendingUploadFiles.filter((_, i) => i !== index));
-                    }} 
-                  />
-                ))}
-
-                {uploadingFiles.map((file, index) => (
-                  <FileDisplayType
-                    key={index}
-                    finishedProcessing={true}
-                    name={file.title}
-                    progress={file.progress} 
-                  />
-                ))}
-                {collectionDocuments.map((doc, index) => (
-                  <FileDisplayType
-                    key={index} 
-                    finishedProcessing={doc.finished_processing}
-                    name={doc.title}
-                    onOpen={() => {
-                      openDocument({
-                        auth: userData?.auth as string,
-                        document_id: doc.hash_id
-                      })
-                    }}
-                    subtext={[doc.size]} 
-                    // progress={doc.progress} 
-                    onDelete={(CollectionMode === "create" || CollectionMode === "edit")?(() => {
-                      deleteDocument({
-                        auth: userData?.auth as string,
-                        document_id: doc.hash_id,
-                        onFinish: (success : boolean) => {
-                          if (success) {
-                            const newDocs = collectionDocuments.filter((_, i) => i !== index);
-
-                            setCollectionDocuments(newDocs);
-                          }
-                        }
-                      })
-                    }):undefined}
-                  />
-                ))}
-                </div>
-              </ScrollArea>
-            </div>
-            {(CollectionMode === "create" || CollectionMode === "edit") && (
-              <Button disabled={publishStarted} className="w-full h-10" type="submit" onClick={onPublish}>
-                Publish
-              </Button>
-            )}
+    <div className="w-full h-[calc(100vh)] flex flex-row justify-center overflow-hidden sticky">
+      {/* <ScrollArea className="w-full"> */}
+        <div className="flex flex-row w-full justify-center overflow-hidden">
+          <div className="flex flex-col overflow-hidden w-full">
+            <DataTableInfinite
+              className="overflow-hidden w-[100%]"
+              columns={[...columns, deletionColumn]}
+              data={dataRowsProcessed}
+              // data={flatData}
+              totalRows={totalDBRowCount}
+              // filterRows={filterDBRowCount}
+              filterRows={totalDBRowCount}
+              totalRowsFetched={totalFetched}
+              defaultColumnFilters={Object.entries(filter)
+                .map(([key, value]) => ({
+                  id: key,
+                  value,
+                }))
+                .filter(({ value }) => value ?? undefined)}
+              defaultColumnSorting={sort ? [sort] : undefined}
+              searchColumnFiltersSchema={columnSchema}
+              searchParamsParser={searchParamsParser}
+              isFetching={isFetching}
+              isLoading={isLoading}
+              fetchNextPage={fetchNextPage}
+            />
           </div>
         </div>
-      </div>
-    </ScrollArea>
-  )
+      {/* </ScrollArea> */}
+    </div>
+  );
 }
-
-function TrashIcon(props : SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-    </svg>
-  )
-}
-

@@ -185,7 +185,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     cell: ({ row }) => {
       const value = row.getValue("file_name") as string;
       return (
-        <TextWithTooltip className="font-mono max-w-[200px]" text={value} />
+        <TextWithTooltip className="font-mono max-w-[300px]" text={value} />
       );
     },
     meta: {

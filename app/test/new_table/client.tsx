@@ -65,6 +65,11 @@ export function Client({}) {
     [data?.pages]
   );
 
+  useEffect(() => {
+    console.log("Data", data);
+  }, [data]);
+
+
   const lastPage = data?.pages?.[data?.pages.length - 1];
   const filterDBRowCount = lastPage?.meta?.filterRowCount;
   const totalFetched = flatData?.length;
