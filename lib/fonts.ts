@@ -3,7 +3,7 @@ import { JetBrains_Mono as FontMono } from "next/font/google"
 // import { GeistMono } from "geist/font/mono"
 // import { GeistSans } from "geist/font/sans"
 import localFont from 'next/font/local'
-
+import { Inter } from "next/font/google";
 
 
 // export const fontSans = FontSans({
@@ -43,7 +43,7 @@ export const fontSoehne = localFont({
     {
       path: '../assets/fonts/Soehne/soehne-halbfett.woff2',
       weight: '700',
-      style: 'normal',
+      style: 'bold',
     }
   ],
   variable: "--font-soehne",
@@ -64,3 +64,22 @@ export const fontConsolas = localFont({
   ],
   variable: "--font-consolas",
 })
+
+
+export const fontInter = localFont({
+  src: [
+    {
+      path: '../assets/fonts/Inter/medium.ttf',
+      style: 'medium',
+    },
+    {
+      path: '../assets/fonts/Inter/regular.ttf',
+      style: 'normal',
+    },
+    {
+      path: '../assets/fonts/Inter/semi-bold.ttf',
+      style: 'semibold',
+    }
+  ],
+  variable: "--font-inter",
+});

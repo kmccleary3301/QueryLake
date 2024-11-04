@@ -14,6 +14,8 @@ import Link from "next/link";
 import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
+import { cn } from "@/lib/utils";
+import { fontInter } from "@/lib/fonts";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -117,7 +119,7 @@ export default function Chat({
                 </div>
                 <p className="select-none h-7 text-primary/70">{(value.role === "user")?"You":"QueryLake"}</p>
               </div>
-              <div className="max-w-full -mt-1.5" style={{marginLeft: "2.75rem"}}> {/* The left pad doesn't render for some reason */}
+              <div className={cn("max-w-full -mt-1.5")} style={{marginLeft: "2.75rem"}}> {/* The left pad doesn't render for some reason */}
                 <MarkdownRenderer 
                   className="ml-11"
                   disableRender={(value.role === "user")}

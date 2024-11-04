@@ -77,6 +77,7 @@ module.exports = {
         consolas: fontFamily.consolas,
         "geist-sans": ['var(--font-geist-sans)'],
         "geist-mono": ['var(--font-geist-mono)'],
+        "inter": ['var(--font-inter)'],
         // sans: ["var(--font-geist-sans)", ...fontFamily.sans],
         // mono: ["var(--font-mono)", ...fontFamily.mono],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"],

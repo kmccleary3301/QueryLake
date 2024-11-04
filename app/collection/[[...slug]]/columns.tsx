@@ -185,8 +185,22 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     cell: ({ row }) => {
       const value = row.getValue("file_name") as string;
       return (
-        <TextWithTooltip className="font-mono max-w-[300px]" text={value} />
-      );
+        <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCardTrigger asChild>
+            <div className="max-w-[300px] italic">
+              {value}
+            </div>
+          </HoverCardTrigger>
+          <HoverCardContent
+            side="right"
+            align="center"
+            alignOffset={-4}
+            className="p-2 w-auto z-10"
+          >
+            <p>{value}</p>
+          </HoverCardContent>
+        </HoverCard>
+      )
     },
     meta: {
       label: "Name",
