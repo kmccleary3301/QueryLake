@@ -12,6 +12,7 @@ import uploadFiles from "@/hooks/upload-files";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat Input",
+  type: "Input",
   category: "Text",
   description: "A chat input component that optionally supports file uploads.",
   config: {

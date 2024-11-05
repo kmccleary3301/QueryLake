@@ -9,6 +9,7 @@ import MARKDOWN_SAMPLE_TEXT from "@/components/markdown/demo-text";
 
 export const METADATA : componentMetaDataType = {
 	label: "Markdown",
+  type: "Display",
 	category: "Text Display",
 	description: "Displays text as markdown.",
 };
@@ -22,7 +23,6 @@ export default function Markdown({
 }) {
 
   const { toolchainState, toolchainWebsocket } = useToolchainContextAction();
-  const { userData } = useContextAction();
 
 	const [currentValue, setCurrentValue] = useState<string>(
     demo ?

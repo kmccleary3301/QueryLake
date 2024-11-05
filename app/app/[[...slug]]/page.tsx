@@ -31,6 +31,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const toolchainStateRef = useRef<toolchainStateType>({});
   const [firstEventRan, setFirstEventRan] = useState<boolean[]>([false, false]);
   const [toolchainSelectedBySession, setToolchainSelectedBySession] = useState<string | undefined>(undefined);
+  const isUnmounting = useRef(false);
 
   const {
     toolchainState,
@@ -124,9 +125,53 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     setToolchainState(value_copied);
   }, [toolchainState, setToolchainState]);
 
-  const initializeWebsocket = () => {
+  const closeWebsocket = () => {
+    
+    if (toolchainWebsocket?.current === undefined || toolchainWebsocket.current.socket === undefined) return;
+    if (process.env.NODE_ENV !== "production") toast("Closing TC WS");
+    toolchainWebsocket.current.cleanup();
+    toolchainWebsocket.current = undefined;
+  }
+
+  const onOpenSessionTC = () => {
+    if (toolchainWebsocket?.current === undefined) return;
+
+    if (appMode.current === "create") {
+      toolchainWebsocket.current.send_message({
+        "auth": userData?.auth,
+        "command" : "toolchain/create",
+        "arguments": {
+          // "toolchain_id": "test_chat_session_normal"
+          "toolchain_id": selectedToolchainFull?.id,
+        }
+      });
+    } else if (appMode.current === "session") {
+      if (toolchainWebsocket.current === undefined) {
+        console.error("No session ID provided");
+        router.push("/app/create");
+        return;
+      }
+      setToolchainState({});
+      toolchainWebsocket.current.send_message({
+        "auth": userData?.auth,
+        "command" : "toolchain/load",
+        "arguments": {
+          "session_id": sessionId?.current as string,
+        }
+      });
+    }
+    mounting.current = false;
+  }
+
+  const initializeWebsocket = (onFinish: () => void) => {
     if (toolchainWebsocket === undefined || sessionId === undefined) return;
+    if (toolchainWebsocket.current !== undefined) {
+      if (process.env.NODE_ENV !== "production") toast("TC WS Already Open");
+      onFinish();
+      return;
+    }
     setToolchainState({});
+    if (process.env.NODE_ENV !== "production") toast("Opening TC WS");
     toolchainWebsocket.current = new ToolchainSession({
       onStateChange: (state) => {
         // toolchainStateRef.current = state;
@@ -155,39 +200,19 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           setFirstEventRan((prevState) => [true, prevState[1]]);
         }
       },
-      onOpen: (session: ToolchainSession) => {
-        if (true) {
-          if (appMode.current === "create") {
-            session.send_message({
-              "auth": userData?.auth,
-              "command" : "toolchain/create",
-              "arguments": {
-                // "toolchain_id": "test_chat_session_normal"
-                "toolchain_id": selectedToolchainFull?.id,
-              }
-            });
-          } else if (appMode.current === "session") {
-            if (sessionId.current === undefined) {
-              console.error("No session ID provided");
-              router.push("/app/create");
-              return;
-            }
-            setToolchainState({});
-            session.send_message({
-              "auth": userData?.auth,
-              "command" : "toolchain/load",
-              "arguments": {
-                "session_id": sessionId.current as string,
-              }
-            });
-          }
-          mounting.current = false;
-        }
+      onOpen: () => {
+        if (process.env.NODE_ENV !== "production") toast("Websocket opened");
+        onFinish();
       },
       onCurrentEventChange: (event: string | undefined) => { setCurrentEvent(event); },
       onError: (message: object) => {
         toast("An error occurred");
         console.log("Error from loaded Toolchain:", message);
+        setCurrentEvent(undefined);
+      },
+      onClose: () => {
+        if (process.env.NODE_ENV !== "production") toast("TS WC closed unexpectedly");
+        console.log("Websocket closed");
         setCurrentEvent(undefined);
       }
     });
@@ -195,6 +220,10 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
 
   // This is a URL change monitor to refresh content.
   useEffect(() => {
+    // if (isUnmounting.current) {
+    //   toast("Skipping URL Change (Unmounted)");
+    //   return;
+    // }
     if (selectedToolchainFull === undefined) return;
     console.log("URL Change", pathname, search_params?.get("s"));
     const url_mode = pathname?.replace(/^\/app\//, "").split("/")[0] as string;
@@ -209,33 +238,36 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       console.log("Session ID Change", search_params?.get("s"), sessionId?.current);
       sessionId.current = search_params?.get("s") as string;
       setActiveToolchainSession(sessionId.current);
-      initializeWebsocket();
+      initializeWebsocket(onOpenSessionTC);
+      onOpenSessionTC();
     }
 
     else if (new_mode === "create" && appMode.current !== "create") {
-      initializeWebsocket();
+      initializeWebsocket(onOpenSessionTC);
       setFirstEventRan([false, false]);
       setCurrentToolchainSession(toolchainState.title as string || "Untitled Session");
       setActiveToolchainSession(undefined);
     } else if (new_mode === "create") {
-      initializeWebsocket();
+      initializeWebsocket(onOpenSessionTC);
       setActiveToolchainSession(undefined);
     }
     appMode.current = new_mode;
+  }, [pathname, search_params, selectedToolchainFull]);
+  
 
+  useEffect(() => {
     return () => {
-      if (toolchainWebsocket?.current !== undefined) {
-        toolchainWebsocket.current.socket?.close();
-        toolchainWebsocket.current = undefined;
+      isUnmounting.current = true;
+      if (isUnmounting.current && toolchainWebsocket?.current !== undefined) {
+        // toast("Disconnecting TC WS");
+        closeWebsocket();
       }
     }
-  }, [pathname, search_params, selectedToolchainFull]);
+  }, []);
 
   return (
     <div className="h-[100vh] w-full pr-0 pl-0">
       {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) &&
-      //  ((toolchainSelectedBySession === selectedToolchainFull.id) || 
-      //   (appModeState === "create")) && 
         (
         <DivisibleSection
           section={selectedToolchainFull.display_configuration}

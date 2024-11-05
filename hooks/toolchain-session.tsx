@@ -7,7 +7,7 @@ import {
   compositionType,
   substituteAny 
 } from "@/types/toolchains";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 
 export type toolchainStateType = {title?: string, [key : string]: substituteAny};
 
@@ -229,11 +229,16 @@ export default class ToolchainSession {
 		this.socket.send(JSON.stringify(message));
 	}
 
-	private cleanup() {
+	cleanup() {
     this.currently_running = false;
     this.current_event = undefined;
     this.message_queue = [];
     this.stream_mappings.clear();
+		if (this.socket !== undefined) {
+			this.socket.onclose = () => {};
+			this.socket.close();
+			this.socket = undefined;
+		}
   }
 
 	// TODO: turn send_message into a queue system.

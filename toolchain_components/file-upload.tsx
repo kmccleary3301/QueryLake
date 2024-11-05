@@ -8,6 +8,7 @@ import uploadFiles from "@/hooks/upload-files";
 
 export const METADATA : componentMetaDataType = {
   label: "File Upload",
+  type: "Input",
   category: "Input",
   description: "A dropzone box for file uploads that immediately triggers on upload.",
   config: {

@@ -1,7 +1,7 @@
 "use client";
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/components/ui/skeleton";
-import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
+import { componentMetaDataType, configEntriesMap, displayMapping } from "@/types/toolchain-interface";
 import { Fragment, useEffect, useState } from "react";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
@@ -15,12 +15,12 @@ import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 import { cn } from "@/lib/utils";
-import { fontInter } from "@/lib/fonts";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
+  type: "Display",
   category: "Text Display",
-  description: "A user and assistant chat display component that renders markdown, similar to OpenAI's ChatGPT.",
+  description: "A user and assistant chat display component that renders markdown, similar to OpenAI's ChatGPT."
 };
 
 export const DEMO_DATA = [
