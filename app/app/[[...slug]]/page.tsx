@@ -222,6 +222,13 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       setActiveToolchainSession(undefined);
     }
     appMode.current = new_mode;
+
+    return () => {
+      if (toolchainWebsocket?.current !== undefined) {
+        toolchainWebsocket.current.socket?.close();
+        toolchainWebsocket.current = undefined;
+      }
+    }
   }, [pathname, search_params, selectedToolchainFull]);
 
   return (

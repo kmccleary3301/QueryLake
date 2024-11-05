@@ -37,7 +37,7 @@ export default class ToolchainSession {
 	private onClose: () => void;
 	private onFirstCallEnd: () => void;
   private onCurrentEventChange: (event: string | undefined) => void;
-	public  socket: WebSocket; // Add socket as a type
+	public  socket: WebSocket | undefined; // Add socket as a type
 	private stream_mappings: Map<string, (string | number)[][]>;
   private message_queue: Object[];
   public currently_running: boolean;
@@ -79,13 +79,15 @@ export default class ToolchainSession {
     this.currently_running = false;
     this.current_event = undefined;
 		
-		this.socket = new WebSocket(`ws://localhost:3001/toolchain`);
+		this.socket = undefined;
 		
 		// this.state = {};
 		this.stream_mappings = new Map<string, (string | number)[][]>();
     
 
-		this.socket.onmessage = async (event: MessageEvent) => {
+		
+
+		const onMsgCallback = async (event: MessageEvent) => {
 			try {
 				const message_text : Blob | string = event.data;
 
@@ -105,18 +107,55 @@ export default class ToolchainSession {
 			}
 		};
 
-		this.socket.onopen = () => {
+		
+		const onOpenCallback = () => {
 			console.log("Connected to server");
 			this.onOpen(this);
 		}
+		
+		const onCloseCallback = () => {
+      this.cleanup();
+      reconnect();
+      this.onClose();
+    };
 
-		this.socket.onclose = () => {
-		  toast("Connection to server closed");
-			this.onClose();
+		const onErrorCallback = (error : Event) => {
+			console.error("WebSocket error:", error);
+			this.cleanup();
+			this.onError({ error: "Connection error" });
+		};
+		
+		const set_up_socket_handlers = () => {
+			if (this.socket === undefined) return;
+			this.socket.onmessage = onMsgCallback;
+			this.socket.onopen = onOpenCallback;
+			this.socket.onclose = onCloseCallback;
+			this.socket.onerror = onErrorCallback;
 		}
+
+
+    // Add reconnection logic
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+    
+    const reconnect = () => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        setTimeout(() => {
+          console.log(`Attempting reconnect ${reconnectAttempts}/${maxReconnectAttempts}`);
+          this.socket = new WebSocket(`ws://localhost:3001/toolchain`);
+          set_up_socket_handlers();
+        }, 1000 * reconnectAttempts);
+      }
+    };
+
+		reconnect();
 	}
   
+	
+
 	handle_message(data : { [key : string] : substituteAny }) {
+		if (this.socket === undefined) return;
 		if ("state" in data) {
 			const state = data["state"] as toolchainStateType;
 			// this.state = state;
@@ -180,6 +219,7 @@ export default class ToolchainSession {
 	}
 
 	send_message(message : { [key : string] : substituteAny }) {
+		if (this.socket === undefined) return;
     this.message_queue.push(message);
     if (this.currently_running) {
       return;
@@ -188,6 +228,13 @@ export default class ToolchainSession {
     this.onSend(message);
 		this.socket.send(JSON.stringify(message));
 	}
+
+	private cleanup() {
+    this.currently_running = false;
+    this.current_event = undefined;
+    this.message_queue = [];
+    this.stream_mappings.clear();
+  }
 
 	// TODO: turn send_message into a queue system.
   

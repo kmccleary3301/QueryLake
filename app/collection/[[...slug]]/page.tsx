@@ -6,7 +6,7 @@ import { useContextAction } from "@/app/context-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
-import { columns, ColumnSchema, columnSchema, INFINITE_COLLECTION_ID, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
+import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 import { DataFetcher, dataOptions } from "./query-options";
 import { fetchCollection } from "@/hooks/querylakeAPI";
 import craftUrl from "@/hooks/craftUrl";
@@ -36,7 +36,7 @@ import { handleCopy } from '@/components/markdown/markdown-code-block';
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 
-const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
+// const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
 const defaultFetcher: DataFetcher = async (params) => {
   console.log("defaultFetcher Params", params);
@@ -92,7 +92,7 @@ export default function Page({ params, searchParams }: DocPageProps) {
     if (!userData?.auth) return;
     fetchCollection({
       auth: userData.auth,
-      collection_id: COLLECTION_ID,
+      collection_id: params["slug"][1],
       onFinish: (data) => {
         console.log("Collection Data", data);
         if (data === undefined) { return; }
@@ -199,7 +199,7 @@ export default function Page({ params, searchParams }: DocPageProps) {
     dataOptions(
       search,
       userData?.auth as string,
-      INFINITE_COLLECTION_ID,
+      params["slug"][1],
       defaultFetcher
     )
   );

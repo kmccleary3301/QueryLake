@@ -306,4 +306,3 @@ export const columns: ColumnDef<ColumnSchema>[] = [
 ];
 
 
-export const INFINITE_COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
