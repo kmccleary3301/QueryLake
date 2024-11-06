@@ -82,6 +82,7 @@ export interface DataTableInfiniteProps<TData, TValue> {
   className?: string;
   onSelectRow?: (row: TData) => void;
   onToggleControls?: (opened: boolean) => void;
+  sidebarComponent?: (props: {selectedRow: TData | undefined, table: TTable<TData>}) => React.ReactNode;
 }
 
 export function DataTableInfinite<TData, TValue>({
@@ -104,6 +105,7 @@ export function DataTableInfinite<TData, TValue>({
   className = "",
   onSelectRow = () => {},
   onToggleControls = () => {},
+  sidebarComponent,
 }: DataTableInfiniteProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -392,6 +394,9 @@ export function DataTableInfinite<TData, TValue>({
           </div>
         </div>
       </ScrollArea>
+      {(sidebarComponent !== undefined) && (
+        sidebarComponent({ selectedRow: selectedRow?.original, table: table })
+      )}
     </>
   );
 }

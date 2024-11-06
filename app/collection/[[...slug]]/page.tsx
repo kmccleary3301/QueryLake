@@ -33,8 +33,9 @@ import { Progress } from '@/components/ui/progress';
 import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
 import { handleCopy } from '@/components/markdown/markdown-code-block';
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Table } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { CollectionDataTableSheetDetails, CollectionSheetDetailsContent } from "./data-table-sheet-details";
 
 // const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
@@ -250,7 +251,7 @@ export default function Page({ params, searchParams }: DocPageProps) {
           <div className="flex flex-col overflow-hidden w-full">
             <DataTableInfinite
               className="overflow-hidden w-[100%]"
-              columns={[...columns, deletionColumn]}
+              columns={columns}
               data={dataRowsProcessed}
               // data={flatData}
               totalRows={totalDBRowCount}
@@ -269,6 +270,28 @@ export default function Page({ params, searchParams }: DocPageProps) {
               isFetching={isFetching}
               isLoading={isLoading}
               fetchNextPage={fetchNextPage}
+              sidebarComponent={(props: {selectedRow: ColumnSchema | undefined, table: Table<ColumnSchema>}) => {
+                return (
+                  <CollectionDataTableSheetDetails
+                    // TODO: make it dynamic via renderSheetDetailsContent
+                    title={(props.selectedRow as ColumnSchema | undefined)?.file_name}
+                    titleClassName="font-mono"
+                    table={props.table}
+                    onDownload={() => {
+                      if (!props.selectedRow) return;
+                      openDocument({
+                        auth: userData?.auth as string,
+                        document_id: props.selectedRow?.id
+                      });
+                    }}
+                  >
+                    <CollectionSheetDetailsContent
+                      data={props.selectedRow as ColumnSchema}
+                      filterRows={totalDBRowCount}
+                    />
+                  </CollectionDataTableSheetDetails>
+                )
+              }}
             />
           </div>
         </div>
