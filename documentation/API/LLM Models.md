@@ -69,7 +69,7 @@ response = requests.get(f"http://localhost:8000/api/llm", json={
 	"stream": True,
 	"question": "What is the Riemann-Roch theorem?",
 	"model_parameters": {
-		# "model_choice": "mistral-7b-instruct-v0.1",
+		# "model": "llama-3.1-8b-instruct",
 		"stream": True, 
 		"max_tokens": 1000, 
 		"temperature": 0.5, 
@@ -82,5 +82,5 @@ response.raise_for_status()
 
 for chunk_raw in response.iter_content(chunk_size=None, decode_unicode=False):
 	chunk_decoded = chunk_raw.decode("utf-8")
-	print(chunk, end="")
+	print(chunk_decoded, end="")
 ```
