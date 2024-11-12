@@ -256,10 +256,10 @@ export function openDocument(args : openDocumentArgs) {
     console.log(response);
     response.json().then((data : DataResponse<{access_encrypted: string, file_name: string}>) => {
       if (data["success"] == false) {
-        toast("Failed to fetch document");
+        toast("Failed to download document");
         return;
       }
-      const url_actual = craftUrl(`/api/fetch_document/${data.result.file_name}`, {
+      const url_actual = craftUrl(`/api/download_document/${data.result.file_name}`, {
         "document_auth_access": data.result.access_encrypted
       })
       // Linking.openURL(url_actual.toString());
