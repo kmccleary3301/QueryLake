@@ -15,6 +15,7 @@ import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -143,11 +144,12 @@ export default function Chat({
                           <p className="text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis">{source.document_name}</p>
                         </div>
                       </HoverCardTrigger>
-                      <HoverCardContent className="px-5 max-w-[320px]">
+                      <HoverCardContent className="px-5 max-w-[320px]" side="top">
                         <h1 className="text-base">{source.document_name}</h1>
                         {source.rerank_score && (
                           <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
                         )}
+                        <ScrollArea className="h-[200px] pr-3">
                         {(source.website_url) ? (
                           <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
                             <Button variant={"ghost"} className="p-2 m-0 h-auto">
@@ -168,6 +170,7 @@ export default function Chat({
                             </div>
                           </Button>
                         )}
+                        </ScrollArea>
                       </HoverCardContent>
                     </HoverCard>
                   ))}
