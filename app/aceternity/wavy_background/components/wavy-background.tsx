@@ -61,11 +61,11 @@ export const WavyBackground = ({
   };
 
   const waveColors = colors ?? [
-    "#38bdf8",
-    "#818cf8",
-    "#c084fc",
-    "#e879f9",
-    "#22d3ee",
+    "rgb(56, 189, 248)",
+    "rgb(129, 140, 248)",
+    "rgb(192, 132, 252)",
+    "rgb(232, 121, 249)",
+    "rgb(34, 211, 238)",
   ];
   const drawWave = (n: number) => {
     time_passed = Date.now() - start_time;

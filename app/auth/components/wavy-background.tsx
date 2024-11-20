@@ -82,11 +82,11 @@ export const WavyBackground = ({
   };
 
   const waveColors = colors ?? [
-    "#38bdf8",
-    "#818cf8",
-    "#c084fc",
-    "#e879f9",
-    "#22d3ee",
+    "rgb(56, 189, 248)",
+    "rgb(129, 140, 248)",
+    "rgb(192, 132, 252)",
+    "rgb(232, 121, 249)",
+    "rgb(34, 211, 238)",
   ];
   
   // const drawWave = (n: number) => {
@@ -140,7 +140,8 @@ export const WavyBackground = ({
       ctx.moveTo(controlPoints[0].x, controlPoints[0].y);
       let j;
       for (j = 0; j < controlPoints.length - 2; j++) {
-        ctx.strokeStyle = `rgba(${waveColors[i % waveColors.length]}, ${1 - j / blur})`;
+        // ctx.strokeStyle = new_color_2;
+        // console.log("New color:", new_color_2);
         const xc = (controlPoints[j].x + controlPoints[j + 1].x) / 2;
         const yc = (controlPoints[j].y + controlPoints[j + 1].y) / 2;
         ctx.quadraticCurveTo(controlPoints[j].x, controlPoints[j].y, xc, yc);
