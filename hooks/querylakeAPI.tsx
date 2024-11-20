@@ -844,3 +844,108 @@ export function QuerylakeFetchUsage(args :{
 		});
 	});
 }
+
+export type user_organization_membership = {
+  organization_id: string;
+  organization_name: string;
+  role: string;
+  invite_still_open: boolean;
+  sender: string;
+}
+
+export function QueryLakeFetchUsersMemberships(args :{
+  auth: string,
+  onFinish?: (result : user_organization_membership[] | false) => void,
+}) {
+
+  const url = craftUrl(`/api/fetch_memberships`, {
+    "auth": args.auth,
+    "return_subset": "all"
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: {memberships: user_organization_membership[]}
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+		});
+	});
+}
+
+
+export type create_organization_result = {
+  organization_id: string;
+}
+
+export function QueryLakeCreateOrganization(args :{
+  auth: string,
+  organization_name: string,
+  onFinish?: (result : create_organization_result | false) => void,
+}) {
+
+  const url = craftUrl(`/api/create_organization`, {
+    "auth": args.auth,
+    "organization_name": args.organization_name
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: create_organization_result
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result);
+		});
+	});
+}
+
+
+export type organization_memberships = {
+  organization_id: string;
+  organization_name: string;
+  role: string;
+  invite_still_open: boolean;
+  username: string;
+}
+
+export function QueryLakeFetchOrganizationsMemberships(args :{
+  auth: string,
+  organization_id: string,
+  onFinish?: (result : organization_memberships[] | false) => void,
+}) {
+
+  const url = craftUrl(`/api/fetch_memberships_of_organization`, {
+    "auth": args.auth,
+    "organization_id": args.organization_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: {memberships: organization_memberships[]}
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+		});
+	});
+}

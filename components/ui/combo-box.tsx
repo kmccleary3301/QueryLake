@@ -246,7 +246,7 @@ export function ComboBoxScrollPreview({
                         <div 
                           className="w-full px-2 py-1.5 rounded-[inherit] relative flex cursor-pointer select-none items-center" 
                           onMouseEnter={()=>{
-                            setPeekedPreview(e.value);
+                            setPeekedPreview(e.preview);
                           }}
                         >
                           <Check
