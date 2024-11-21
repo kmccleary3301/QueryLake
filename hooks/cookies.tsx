@@ -2,14 +2,15 @@
 import { RequestCookie } from 'next/dist/compiled/@edge-runtime/cookies'
 import { cookies } from 'next/headers'
 
-export const getCookie = ({
+export const getCookie = async ({
 	key, 
 	convert_object = true
 } : { 
 	key : string, 
 	convert_object?: boolean
 }) => {
-	const cookieStore = cookies();
+
+	const cookieStore = await cookies();
 
 	if (cookieStore.has(key)) {
 		const cookie = cookieStore.get(key) as RequestCookie;
@@ -22,8 +23,14 @@ export const getCookie = ({
 	return undefined;
 }
 
-export const setCookie = ({ key, value } : { key : string, value : object | string }) => {
-	const cookieStore = cookies();
+export const getAllCookies = async () => {
+	const cookieStore = await cookies();
+
+	return cookieStore.getAll();
+}
+
+export const setCookie = async ({ key, value } : { key : string, value : object | string }) => {
+	const cookieStore = await cookies();
 	if (typeof value === 'object') {
 		// console.log("Setting Cookie:", key, JSON.stringify(value));
 		cookieStore.set(key, JSON.stringify(value));
@@ -33,7 +40,7 @@ export const setCookie = ({ key, value } : { key : string, value : object | stri
 	}
 }
 
-export const deleteCookie = ({ key } : { key : string }) => {
-	const cookieStore = cookies();
+export const deleteCookie = async ({ key } : { key : string }) => {
+	const cookieStore = await cookies();
 	cookieStore.delete(key);
 }

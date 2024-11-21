@@ -47,7 +47,7 @@ export default function RootTemplate({
 
   const onMount = async() => {
     if (userData === undefined) {
-			const cookie : userDataType | undefined = await getCookie({ key: 'UD' });
+			const cookie : string | undefined = await getCookie({ key: 'UD', convert_object : false });
 			getUserData(cookie, () => {setMounted(true);});
 		}
   }
@@ -59,7 +59,7 @@ export default function RootTemplate({
   useEffect(() => {
     // console.log("Calling effect with userdata and mount change")
     if (mounted && !authReviewed) {
-      getUserData(userData, () => {setMounted(true);});
+      getUserData(userData?.auth, () => {setMounted(true);});
     }
   }, [userData?.auth, mounted]);
   

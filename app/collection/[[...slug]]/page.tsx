@@ -5,7 +5,7 @@ import { DataTableInfinite, DataTableInfiniteProps } from "@/components/custom/d
 import { useContextAction } from "@/app/context-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { Usable, useEffect, useMemo, useState, use } from "react";
 import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 import { DataFetcher, dataOptions } from "./query-options";
 import { fetchCollection } from "@/hooks/querylakeAPI";
@@ -57,9 +57,7 @@ const defaultFetcher: DataFetcher = async (params) => {
 };
 
 interface DocPageProps {
-  params: {
-    slug: string[],
-  },
+  params: Usable<unknown>,
   searchParams: object
 }
 
@@ -74,8 +72,21 @@ export default function Page({ params, searchParams }: DocPageProps) {
   const { userData, refreshCollectionGroups } = useContextAction();
   const [totalDBRowCount, setTotalDBRowCount] = useState(0);
 
+  const resolvedParams = use(params) as {
+    slug: string[],
+  };
+
   const router = useRouter();
-  const collection_mode_immediate = (["create", "edit", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as collection_mode_type : undefined
+
+  const collection_mode_immediate = 
+  (
+    ["create", "edit", "view"].indexOf(
+    resolvedParams["slug"][0]) 
+    > -1
+  ) ? 
+    resolvedParams["slug"][0] as collection_mode_type :
+    undefined;
+  
   const [CollectionMode, setCollectionMode] = useState<collection_mode_type>(collection_mode_immediate);
   const [collectionTitle, setCollectionTitle] = useState<string>("");
   const [collectionDescription, setCollectionDescription] = useState<string>("");
@@ -93,7 +104,7 @@ export default function Page({ params, searchParams }: DocPageProps) {
     if (!userData?.auth) return;
     fetchCollection({
       auth: userData.auth,
-      collection_id: params["slug"][1],
+      collection_id: resolvedParams["slug"][1],
       onFinish: (data) => {
         console.log("Collection Data", data);
         if (data === undefined) { return; }
@@ -200,7 +211,7 @@ export default function Page({ params, searchParams }: DocPageProps) {
     dataOptions(
       search,
       userData?.auth as string,
-      params["slug"][1],
+      resolvedParams["slug"][1],
       defaultFetcher
     )
   );

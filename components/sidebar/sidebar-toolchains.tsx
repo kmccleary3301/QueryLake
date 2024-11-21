@@ -79,9 +79,9 @@ export default function SidebarToolchains(props: SidebarToolchainsProps) {
   const pathname = usePathname(),
         router = useRouter();
 
-  useEffect(() => {
-    console.log("new userdata selected", props.userData);
-  }, [props.userData]);
+  // useEffect(() => {
+  //   console.log("new userdata selected", props.userData);
+  // }, [props.userData]);
 
   useEffect(() => {
     console.log("Toolchains called");

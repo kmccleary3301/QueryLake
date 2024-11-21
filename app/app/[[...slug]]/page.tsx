@@ -1,30 +1,32 @@
 "use client";
+
+import { useCallback, useEffect, useRef, useState, useTransition, use, Usable } from "react";
 interface DocPageProps {
-  params: {
-    slug: string[],
-  },
+  params: Usable<unknown>,
   searchParams: {s? : string}
 }
 
 type app_mode_type = "create" | "session" | "view" | undefined;
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { useContextAction } from "@/app/context-provider";
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import ToolchainSession, { CallbackOrValue, ToolchainSessionMessage, toolchainStateType } from "@/hooks/toolchain-session";
 import { DivisibleSection } from "../components/section-divisible";
 import { useToolchainContextAction } from "../context-provider";
 import { toolchain_session } from "@/types/globalTypes";
 import { toast } from "sonner";
+import { useContextAction } from "@/app/context-provider";
 
 export default function AppPage({ params, searchParams }: DocPageProps) {
   const [isPending, startTransition] = useTransition();
+  const resolvedParams = use(params) as {
+    slug: string[],
+  };
 
   const router = useRouter(),
         pathname = usePathname(),
         search_params = useSearchParams();
   
-  const app_mode_immediate = (["create", "session", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as app_mode_type : undefined;
+  const app_mode_immediate = (["create", "session", "view"].indexOf(resolvedParams["slug"]?.[0]) > -1) ? resolvedParams["slug"][0] as app_mode_type : undefined;
   const appMode = useRef<app_mode_type>(app_mode_immediate);
   const [appModeState, setAppModeState] = useState(app_mode_immediate);
   const mounting = useRef(true);
@@ -176,7 +178,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         setFirstEventRan((prevState) => [prevState[0], true]);
       },
       onMessage: (message : ToolchainSessionMessage) => {
-        console.log("Message from loaded Toolchain:", message);
+        // console.log("Message from loaded Toolchain:", message);
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
