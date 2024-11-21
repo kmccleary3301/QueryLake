@@ -4,7 +4,7 @@ import { ScrollArea, ScrollAreaHorizontal } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useContextAction } from "@/app/context-provider";
 import { useEffect, useState } from "react";
-import { user_organization_membership, QueryLakeCreateOrganization, QueryLakeFetchUsersMemberships, organization_memberships, QueryLakeFetchOrganizationsMemberships } from "@/hooks/querylakeAPI";
+import { user_organization_membership, QueryLakeCreateOrganization, QueryLakeFetchUsersMemberships, organization_memberships, QueryLakeFetchOrganizationsMemberships, QueryLakeInviteUserToOrg, memberRoleLower } from "@/hooks/querylakeAPI";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -82,7 +82,8 @@ export function InviteUserToOrgSheet({
 }:{
   children: React.ReactNode,
   onSubmit: (form : {
-    name: string
+    name: string,
+    role: memberRole
   }) => void
 }) {
   const [name, setName] = useState("");
@@ -146,7 +147,7 @@ export function InviteUserToOrgSheet({
         </div>
         <SheetFooter >
           <SheetClose asChild>
-            <Button type="submit" variant={"secondary"} disabled={(name==="")} onClick={() => {onSubmit({name: name})}}>
+            <Button type="submit" variant={"secondary"} disabled={(name==="")} onClick={() => {onSubmit({name: name, role: role})}}>
               Send Invite
             </Button>
           </SheetClose>
@@ -300,20 +301,43 @@ export default function OrgPage({ params, searchParams }: OrgPageProps) {
 
               <TableBody>
                 
-              <TableRow>
 
-                <TableCell colSpan={4} className="text-center p-0">
-                  <InviteUserToOrgSheet onSubmit={(form) => {
-                    toast("Inviting User");
-                    
+                {((selectedOrg?.role === "admin") || 
+                  (selectedOrg?.role === "owner") || 
+                  (selectedOrg?.role === "member")) && (
 
-                  }}>
-                    <Button variant={"ghost"} className="w-full rounded-none">
-                      Invite New User
-                    </Button>
-                  </InviteUserToOrgSheet>
-                </TableCell>
-                </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center p-0">
+                      <InviteUserToOrgSheet onSubmit={(form) => {
+                        toast("Inviting User");
+                        QueryLakeInviteUserToOrg({
+                          auth: userData?.auth as string,
+                          organization_id: selectedOrg?.organization_id as string,
+                          username: form.name,
+                          role: (form.role).toLowerCase() as memberRoleLower,
+                          onFinish: (data) => {
+                            if (data === false) {
+                              toast("Failed to invite user");
+                              return; 
+                            }
+                            toast("User invited successfully");
+                            setSelectedOrgMembers([...selectedOrgMembers, {
+                              username: form.name,
+                              role: (form.role as string).toLowerCase() as memberRole,
+                              invite_still_open: true,
+                              organization_id: selectedOrg?.organization_id as string,
+                              organization_name: selectedOrg?.organization_name as string,
+                            }]);
+                          }
+                        })
+                      }}>
+                        <Button variant={"ghost"} className="w-full rounded-none">
+                          Invite New User
+                        </Button>
+                      </InviteUserToOrgSheet>
+                    </TableCell>
+                  </TableRow>
+                )}
 
                 {selectedOrgMembers.map((member, member_index) => (
                   <TableRow key={member_index}>
