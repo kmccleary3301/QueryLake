@@ -125,18 +125,12 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     setToolchainState(value_copied);
   }, [toolchainState, setToolchainState]);
 
-  const closeWebsocket = () => {
-    
-    if (toolchainWebsocket?.current === undefined || toolchainWebsocket.current.socket === undefined) return;
-    if (process.env.NODE_ENV !== "production") toast("Closing TC WS");
-    toolchainWebsocket.current.cleanup();
-    toolchainWebsocket.current = undefined;
-  }
-
-  const onOpenSessionTC = () => {
+  const onOpenSessionTC = useCallback(( create_session : boolean) => {
     if (toolchainWebsocket?.current === undefined) return;
 
-    if (appMode.current === "create") {
+    if (create_session) {
+      setToolchainState({});
+      console.log("Creating toolchain", selectedToolchainFull?.id);
       toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/create",
@@ -145,13 +139,14 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
           "toolchain_id": selectedToolchainFull?.id,
         }
       });
-    } else if (appMode.current === "session") {
+    } else {
       if (toolchainWebsocket.current === undefined) {
         console.error("No session ID provided");
         router.push("/app/create");
         return;
       }
       setToolchainState({});
+      console.log("Loading toolchain", sessionId?.current);
       toolchainWebsocket.current.send_message({
         "auth": userData?.auth,
         "command" : "toolchain/load",
@@ -161,9 +156,9 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       });
     }
     mounting.current = false;
-  }
+  }, [selectedToolchainFull]);
 
-  const initializeWebsocket = (onFinish: () => void) => {
+  const initializeWebsocket = useCallback((onFinish: () => void) => {
     if (toolchainWebsocket === undefined || sessionId === undefined) return;
     if (toolchainWebsocket.current !== undefined) {
       if (process.env.NODE_ENV !== "production") toast("TC WS Already Open");
@@ -216,7 +211,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
         setCurrentEvent(undefined);
       }
     });
-  };
+  }, [toolchainWebsocket, sessionId]);
 
   // This is a URL change monitor to refresh content.
   useEffect(() => {
@@ -238,32 +233,32 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
       console.log("Session ID Change", search_params?.get("s"), sessionId?.current);
       sessionId.current = search_params?.get("s") as string;
       setActiveToolchainSession(sessionId.current);
-      initializeWebsocket(onOpenSessionTC);
-      onOpenSessionTC();
+      initializeWebsocket(() => {onOpenSessionTC(false)});
     }
 
     else if (new_mode === "create" && appMode.current !== "create") {
-      initializeWebsocket(onOpenSessionTC);
+      onOpenSessionTC(true);
       setFirstEventRan([false, false]);
       setCurrentToolchainSession(toolchainState.title as string || "Untitled Session");
       setActiveToolchainSession(undefined);
     } else if (new_mode === "create") {
-      initializeWebsocket(onOpenSessionTC);
+      initializeWebsocket(() => {onOpenSessionTC(true)});
       setActiveToolchainSession(undefined);
     }
     appMode.current = new_mode;
   }, [pathname, search_params, selectedToolchainFull]);
   
 
-  useEffect(() => {
-    return () => {
-      isUnmounting.current = true;
-      if (isUnmounting.current && toolchainWebsocket?.current !== undefined) {
-        // toast("Disconnecting TC WS");
-        closeWebsocket();
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     console.log("Unmounting at URL:", pathname);
+  //     isUnmounting.current = true;
+  //     if (isUnmounting.current && toolchainWebsocket?.current !== undefined) {
+  //       // toast("Disconnecting TC WS");
+  //       closeWebsocket();
+  //     }
+  //   }
+  // }, []);
 
   return (
     <div className="h-[100vh] w-full pr-0 pl-0">

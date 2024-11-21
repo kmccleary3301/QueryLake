@@ -6,11 +6,14 @@ import {
 	SetStateAction,
 	createContext,
 	useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react';
 import ToolchainSession, { toolchainStateType } from '@/hooks/toolchain-session';
 import { substituteAny } from '@/types/toolchains';
+import { usePathname } from 'next/navigation';
+import { toast } from 'sonner';
 
 const ToolchainContext = createContext<{
   toolchainStateCounter: number;
@@ -39,6 +42,8 @@ const ToolchainContext = createContext<{
 export const ToolchainContextProvider = ({
 	children,
 }: PropsWithChildren<{}>) => {
+  const pathname = usePathname();
+
   const [toolchain_state_counter, set_toolchain_state_counter] = useState<number>(0);
 	const [toolchain_state, set_toolchain_state] = useState<toolchainStateType>({});
   const toolchain_websocket = useRef<ToolchainSession | undefined>();
@@ -65,6 +70,23 @@ export const ToolchainContextProvider = ({
     }
   };
 
+  const closeWebsocket = () => {
+    if (toolchain_websocket?.current === undefined || toolchain_websocket.current.socket === undefined) return;
+    if (process.env.NODE_ENV !== "production") toast("Closing TC WS");
+    toolchain_websocket.current.cleanup();
+    toolchain_websocket.current = undefined;
+  }
+
+  useEffect(() => {
+    return () => {
+
+      console.log("CONTEXT PROVIDER UNMOUNTING (TC WEBSOCKET)");
+      if (toolchain_websocket?.current !== undefined) {
+        // toast("Disconnecting TC WS");
+        closeWebsocket();
+      }
+    }
+  }, []);
 
 	return (
 		<ToolchainContext.Provider value={{ 
