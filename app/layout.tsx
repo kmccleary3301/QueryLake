@@ -125,8 +125,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   {/* <SiteHeader /> */}
                   {/* <AnimatePresence initial={false} mode="popLayout"> */}
                     {/* <main className="flex-1">{children}</main> */}
+                      
                       {children}
-                    
                       {/* <NewYorkToaster /> */}
                       {/* <DefaultToaster /> */}
                       <NewYorkSonner />

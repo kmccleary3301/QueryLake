@@ -8,6 +8,7 @@ import MarkdownTable from "./markdown-table";
 import sanitizeMarkdown from "@/hooks/sanitizeMarkdown";
 import "./prose.css"
 import { cn } from "@/lib/utils";
+import { markdownRenderingConfig } from "./configs";
 
 type MarkdownRendererProps = {
   input: string,
@@ -44,13 +45,13 @@ function MarkdownMapComponent({
   token,
   unProcessedText,
   finished,
-  config = "obsidian",
+  config,
 }:{
   className?: string,
   token: Token,
   unProcessedText: string,
   finished: boolean,
-  config?: "obsidian" | "chat",
+  config: markdownRenderingConfig,
 }) {
   const defaultFontSize = 'text-base';
 
@@ -219,14 +220,14 @@ function MarkdownMapComponent({
           {(lines.length > 1)?(
             <>
               {lines.map((line, i) => (
-                <p className="pb-1" key={i}>
+                <pre className="pb-1" key={i}>
                   <MarkdownTextSplitter 
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 
                     text={line}
                     config={config}
                   />
-                </p>
+                </pre>
               ))}
             </>
           ):(
@@ -267,7 +268,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay,
   disableRender = false,
   finished,
-  config = "obsidian",
+  config,
   list_in_block = false,
 } : {
   className?: string,
@@ -276,7 +277,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay?: boolean,
   disableRender?: boolean,
   finished: boolean,
-  config?: "obsidian" | "chat"
+  config: markdownRenderingConfig,
   list_in_block?: boolean
 }) {
   const lexer = new marked.Lexer();

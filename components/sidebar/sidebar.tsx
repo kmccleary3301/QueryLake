@@ -69,7 +69,7 @@ export default function SidebarController() {
 			) && authReviewed && loginValid && 
 				<Sidebar/>
 			}
-			{(pathname?.startsWith("/docs")) && authReviewed && loginValid && 
+			{(pathname?.startsWith("/docs")) && 
 				<DocSidebar/>
 			}
       {(pathname?.startsWith("/platform")) && authReviewed && loginValid && 

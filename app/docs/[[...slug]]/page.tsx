@@ -2,6 +2,7 @@ import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import allDocs from "@/public/cache/documentation/__all-documents__";
 import { getValueFromPath } from "./hooks";
 import React from "react";
+import { OBSIDIAN_MARKDOWN_RENDERING_CONFIG } from "@/components/markdown/configs";
 
 interface DocPageProps {
   params: {
@@ -33,7 +34,7 @@ export default function DocPage({ params, searchParams }: DocPageProps) {
       {/* <p className="text-lg text-primary text-bold pb-10 pt-5">
         <em>By Kyle McCleary</em>
       </p> */}
-      <MarkdownRenderer input={doc.content} finished={true}/>
+      <MarkdownRenderer input={doc.content} finished={true} config={OBSIDIAN_MARKDOWN_RENDERING_CONFIG}/>
     </div>
   );
 }

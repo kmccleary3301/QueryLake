@@ -118,7 +118,7 @@ export default function ChatInput({
 
   return (
 
-    <div className={cn(
+    <div id="chat_input" className={cn(
       "max-h-[200px] flex w-full rounded-md bg-input text-sm ring-offset-background placeholder:text-muted-foreground",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed",
       className

@@ -16,6 +16,9 @@ import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
+import { textSegment } from "@/components/markdown/markdown-text-splitter";
+import { parse } from "path";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -55,6 +58,93 @@ export type chatEntry = {
 	role?: "user" | "assistant",
 	content: string,
 	sources?: DocumentEmbeddingDictionary[]
+}
+
+function InlineSource({
+  sources,
+  textSeg,
+  user_auth
+}:{
+  sources: DocumentEmbeddingDictionary[],
+  textSeg: textSegment,
+  user_auth: string
+}) {
+  const parseSourceIndex = parseInt(textSeg.text) - 1;
+  
+  return (
+    <>
+      {((!isNaN(parseSourceIndex)) && (parseSourceIndex < sources.length)) ? (
+        
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <span style={{ transform: 'translateY(-2px)', display: 'inline-block' }}>
+              <button className="text-primary/50 hover:text-primary inline-block bg-accent rounded-full flex-row justify-center -translate-y-[2px]" style={{
+                // paddingLeft: "0.1rem",
+                fontSize: "0.65rem",
+                height: "18px",
+                minWidth: "18px",
+              }}>
+                <div className="w-auto flex flex-row justify-center">
+                  <strong className="p-0 m-0 self-center leading-none">
+                    {textSeg.text}
+                  </strong>
+                </div>
+              </button>
+            </span>
+          </HoverCardTrigger>
+          <HoverCardContent className="px-5 max-w-[320px]" side="top">
+            <h4 className="text-base break-words max-w-[260px]">{sources[parseSourceIndex].document_name}</h4>
+            {sources[parseSourceIndex].rerank_score && (
+              <p className="text-sm py-3">Relevance Score: {sources[parseSourceIndex].rerank_score.toFixed(2)}</p>
+            )}
+            <ScrollArea className="h-[200px] pr-3">
+            {(sources[parseSourceIndex].website_url) ? (
+              <Link href={sources[parseSourceIndex].website_url} rel="noopener noreferrer" target="_blank">
+                <Button variant={"ghost"} className="p-2 m-0 h-auto">
+                  <div className="max-w-[260px]">
+                    <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{sources[parseSourceIndex].text}</p>
+                  </div>
+                </Button>
+              </Link>
+            ):(
+              <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
+                openDocument({
+                  auth: user_auth,
+                  document_id: sources[parseSourceIndex]?.document_id as string,
+                })
+              }}>
+                <div className="max-w-[260px]">
+                  <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{sources[parseSourceIndex].text}</p>
+                </div>
+              </Button>
+            )}
+            </ScrollArea>
+          </HoverCardContent>
+        </HoverCard>
+        
+      ):(
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <span style={{ transform: 'translateY(-2px)', display: 'inline-block' }}>
+              <button className="text-primary/50 hover:text-primary inline-block bg-accent rounded-full flex-row justify-center -translate-y-[2px]" style={{
+                fontSize: "0.65rem",
+                height: "18px",
+                minWidth: "18px",
+              }}>
+                <div className="w-auto flex flex-row justify-center">
+                  <strong className="p-0 m-0 self-center leading-none">?</strong>
+                </div>
+              </button>
+            </span>
+          </HoverCardTrigger>
+          <HoverCardContent className="px-5" side="top">
+            <p>Unknown source cited: {textSeg.raw_text}</p>
+          </HoverCardContent>
+        </HoverCard>
+      )}
+    </>
+  )
+
 }
 
 export default function Chat({
@@ -126,7 +216,16 @@ export default function Chat({
                   disableRender={(value.role === "user")}
                   input={(value || {}).content || ""} 
                   finished={false}
-                  config="chat"
+                  config={{
+                    ...CHAT_RENDERING_STYLE,
+                    citation: (textSeg: textSegment) => (
+                      <InlineSource
+                        sources={(value || {}).sources || []}
+                        textSeg={textSeg}
+                        user_auth={userData?.auth as string}
+                      />
+                    )
+                  }}
                 />
               </div>
               {(value.role === "assistant" && value.sources) && (

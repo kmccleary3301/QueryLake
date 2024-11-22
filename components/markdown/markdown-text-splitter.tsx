@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import MarkdownTextAtomic from "./markdown-text-atomic";
 import { cn } from "@/lib/utils";
-import { segment_types } from "./configs";
+import { markdownRenderingConfig, segment_types } from "./configs";
 
 const escape_replace = [
 	[/\%/g, "%"],
@@ -25,9 +25,9 @@ function unescape_text(text : string) {
 	return text;
 }
 
-const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\)|\\\[.*?\\\]|\\\(.*?\\\))/;
+const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\)|\\\[.*?\\\]|\\\(.*?\\\))|\{cite\:.*?\}/;
 
-function parseText(text : string) {
+function parseText(text : string, config : markdownRenderingConfig) {
 	text = escape_text(text);
 
   let match : RegExpMatchArray | null = text.match(all_md_patterns);
@@ -50,35 +50,42 @@ function parseText(text : string) {
 				type: "regular"
 			})
 		}
-		if (match[0].length > 6 && match[0].slice(0, 3) === "***") {
+		if (config.citation && match[0].length > 7 && match[0].slice(0, 6) === "{cite:") {
+			string_segments.push({
+				text: unescape_text(match[0].slice(6, match[0].length-1)),
+        raw_text: unescape_text(match[0]),
+				type: "citation"
+			});
+		}
+		else if (config.bolditalic && match[0].length > 6 && match[0].slice(0, 3) === "***") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(3, match[0].length-3)),
         raw_text: unescape_text(match[0]),
 				type: "bolditalic"
 			});
 		}
-		else if (match[0].length > 4 && match[0].slice(0, 2) === "**") {
+		else if (config.bold && match[0].length > 4 && match[0].slice(0, 2) === "**") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
 				type: "bold"
 			});
 		}
-		else if (match[0].length > 4 && match[0].slice(0, 2) === "$$") {
+		else if (config.double_dollar && match[0].length > 4 && match[0].slice(0, 2) === "$$") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
 				type: "double_dollar"
 			});
 		}
-		else if (match[0].length > 4 && match[0].slice(0, 2) === "~~") {
+		else if (config.strikethrough && match[0].length > 4 && match[0].slice(0, 2) === "~~") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
 				type: "strikethrough"
 			});
 		}
-    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\[") {
+    else if (config.escaped_square_brackets && match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\[") {
       string_segments.push({
         text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
@@ -86,15 +93,14 @@ function parseText(text : string) {
       });
       console.log("Got square brackets:", string_segments[string_segments.length-1]);
     }
-    else if (match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\(") {
+    else if (config.escaped_parentheses && match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\(") {
       string_segments.push({
         text: unescape_text(match[0].slice(2, match[0].length-2)),
         raw_text: unescape_text(match[0]),
 				type: "escaped_parentheses"
-        });
-      console.log("Got parentheses:", string_segments[string_segments.length-1]);
+			});
     }
-		else if (match[0].length > 4 && match[0].slice(0, 1) === "[" && match[0].length > 2) {
+		else if (config.anchor && match[0].length > 4 && match[0].slice(0, 1) === "[" && match[0].length > 2) {
       // Link case.
 
 			const linkMatch = match[0].match(/\([^\)]*\)$/);
@@ -113,21 +119,21 @@ function parseText(text : string) {
 				});
 			}
 		}
-		else if (match[0].length > 2 && match[0].slice(0, 1) === "*") {
+		else if (config.italic && match[0].length > 2 && match[0].slice(0, 1) === "*") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
         raw_text: unescape_text(match[0]),
 				type: "italic"
 			});
 		}
-		else if (match[0].length > 2 && match[0].slice(0, 1) === "$" && match[0][match[0].length-2] !== " " && match[0][1] !== " ") {
+		else if (config.single_dollar && match[0].length > 2 && match[0].slice(0, 1) === "$" && match[0][match[0].length-2] !== " " && match[0][1] !== " ") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
         raw_text: unescape_text(match[0]),
 				type: "single_dollar"
 			});
 		}
-		else if (match[0].length > 2 && match[0].slice(0, 1) === "`") {
+		else if (config.codespan && match[0].length > 2 && match[0].slice(0, 1) === "`") {
 			string_segments.push({
 				text: unescape_text(match[0].slice(1, match[0].length-1)),
         raw_text: unescape_text(match[0]),
@@ -177,17 +183,17 @@ export default function MarkdownTextSplitter({
   selectable = true,
   className = "",
   text,
-  config = "obsidian",
+  config,
 }:{
   selectable?: boolean,
   className?: string,
   text: string,
-  config?: "obsidian" | "chat",
+  config: markdownRenderingConfig,
 }){
 
   return (
     <>
-      {parseText(text).map((v : textSegment, k : number) => (
+      {parseText(text, config).map((v : textSegment, k : number) => (
         <MarkdownTextAtomic key={k} textSeg={v} config={config}/>
       ))}
     </>
