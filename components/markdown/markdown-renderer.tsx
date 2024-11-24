@@ -136,7 +136,7 @@ function MarkdownMapComponent({
     case 'hr':
       return (null);
     case 'blockquote':
-      console.log("Blockquote text:", token);
+      // console.log("Blockquote text:", token);
       return (
         <blockquote className={cn(className, "pl-6 flex flex-col space-y-2")}>
           {/* <MarkdownTextSplitter 
@@ -202,10 +202,9 @@ function MarkdownMapComponent({
       const counter = (token.raw.match(/^([^\s]+) /) || [""])[0].trimStart().trimEnd();
 
       return (
-        <li className={className} counter-text={counter + " "}>
-          {/* <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/> */}
+        <li className={cn(className, "relative")} counter-text={counter + " "}>
           <MarkdownRenderer 
-            unpacked={true}
+            unpacked
             input={token.text + unProcessedText} 
             finished={finished} 
             disableRender={false}

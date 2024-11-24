@@ -16,11 +16,9 @@ export default function MarkdownLatex(props : MarkdownLatexProps){
       return <TeX math={props.textSeg.text} />;
     } else {
       return (
-        // <div className="items-center w-auto">
-          <ScrollAreaHorizontal>
-            <TeX as={"span"} block className="word-break whitespace-pre-wrap" math={props.textSeg.text} />
-          </ScrollAreaHorizontal>
-        // </div>
+        <ScrollAreaHorizontal className="max-w-full w-full">
+          <TeX as={"span"} block className="word-break whitespace-pre-wrap" math={props.textSeg.text} />
+        </ScrollAreaHorizontal>
       );
     }
   } catch (error) {

@@ -1,19 +1,23 @@
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import allDocs from "@/public/cache/documentation/__all-documents__";
 import { getValueFromPath } from "./hooks";
-import React from "react";
+import React, { Usable, use } from "react";
 import { OBSIDIAN_MARKDOWN_RENDERING_CONFIG } from "@/components/markdown/configs";
 
 interface DocPageProps {
-  params: {
-    slug: string[],
-  },
+  params: Usable<unknown>,
   searchParams: object
 }
 
 export default function DocPage({ params, searchParams }: DocPageProps) {
-  const { slug } = params;
+  const resolvedParams = use(params) as {
+    slug: string[],
+  };
+  
+  const { slug } = resolvedParams;
   const doc : { slug : string, content : string } = getValueFromPath(allDocs, slug);
+
+
 
   if (doc === undefined) {
     return (

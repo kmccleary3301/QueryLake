@@ -11,7 +11,7 @@ export type segment_types = "regular" | "bold" |
                             "double_dollar" | "single_dollar" | 
                             "escaped_square_brackets" | "escaped_parentheses" |
                             "codespan" | "anchor" | 
-                            "strikethrough" | "citation"
+                            "strikethrough" | "citation" | "code"
 
 export type rendering_types = "regular" | "bold" | 
                               "italic" | "bolditalic" | 
@@ -48,7 +48,7 @@ const textSegmentRenderers = {
   
   codespan: (textSeg: textSegment) => (
     <code className={cn("", fontConsolas.className)}>
-      {textSeg.text}
+      `{textSeg.text}`
     </code>
   ),
   
@@ -70,7 +70,7 @@ const textSegmentRenderers = {
   
   inline_math: (textSeg: textSegment) => (
     <MarkdownLatex textSeg={textSeg} type="inline"/>
-  )
+  ),
 } as markdownRenderingConfig;
 
 const normal_config: markdownRenderingConfig = {
