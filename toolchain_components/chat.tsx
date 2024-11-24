@@ -78,7 +78,7 @@ function InlineSource({
         <HoverCard>
           <HoverCardTrigger asChild>
             <span style={{ transform: 'translateY(-2px)', display: 'inline-block' }}>
-              <button className="text-primary/50 hover:text-primary inline-block bg-accent rounded-full flex-row justify-center -translate-y-[2px]" style={{
+              <button className="text-primary/50 hover:text-primary inline-block bg-input rounded-full flex-row justify-center -translate-y-[2px]" style={{
                 // paddingLeft: "0.1rem",
                 fontSize: "0.65rem",
                 height: "18px",
@@ -92,12 +92,12 @@ function InlineSource({
               </button>
             </span>
           </HoverCardTrigger>
-          <HoverCardContent className="px-5 max-w-[320px]" side="top">
-            <h4 className="text-base break-words max-w-[260px]">{sources[parseSourceIndex].document_name}</h4>
+          <HoverCardContent className="p-0 max-w-[320px] m-0" side="top">
+            <h4 className="px-5 py-4 text-base break-words w-[320px]">{sources[parseSourceIndex].document_name}</h4>
             {sources[parseSourceIndex].rerank_score && (
               <p className="text-sm py-3">Relevance Score: {sources[parseSourceIndex].rerank_score.toFixed(2)}</p>
             )}
-            <ScrollArea className="h-[200px] pr-3">
+            <ScrollArea className="h-[200px] pr-3 px-5">
             {(sources[parseSourceIndex].website_url) ? (
               <Link href={sources[parseSourceIndex].website_url} rel="noopener noreferrer" target="_blank">
                 <Button variant={"ghost"} className="p-2 m-0 h-auto">
@@ -107,16 +107,24 @@ function InlineSource({
                 </Button>
               </Link>
             ):(
-              <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
-                openDocument({
-                  auth: user_auth,
-                  document_id: sources[parseSourceIndex]?.document_id as string,
-                })
-              }}>
-                <div className="max-w-[260px]">
-                  <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{sources[parseSourceIndex].text}</p>
+              // <Button variant={"ghost"} className="p-2 m-0 h-auto justify-start" onClick={()=>{
+              //   openDocument({
+              //     auth: user_auth,
+              //     document_id: sources[parseSourceIndex]?.document_id as string,
+              //   })
+              // }}>
+                <div className="justify-start pb-[20px]">
+                  {/* <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{sources[parseSourceIndex].text}</p> */}
+                    <div className="opacity-30" style={{marginLeft: "0.1rem" }}> {/* The left pad doesn't render for some reason */}
+                    <MarkdownRenderer 
+                      className="w-[280px] opacity-5"
+                      input={sources[parseSourceIndex].text} 
+                      finished={false}
+                      config={CHAT_RENDERING_STYLE}
+                    />
+                    </div>
                 </div>
-              </Button>
+              // </Button>
             )}
             </ScrollArea>
           </HoverCardContent>

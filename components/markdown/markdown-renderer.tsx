@@ -220,14 +220,14 @@ function MarkdownMapComponent({
           {(lines.length > 1)?(
             <>
               {lines.map((line, i) => (
-                <pre className="pb-1" key={i}>
+                <span className="pb-1" key={i}>
                   <MarkdownTextSplitter 
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 
                     text={line}
                     config={config}
                   />
-                </pre>
+                </span>
               ))}
             </>
           ):(
