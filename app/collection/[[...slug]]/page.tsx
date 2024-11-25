@@ -36,6 +36,7 @@ import { handleCopy } from '@/components/markdown/markdown-code-block';
 import { ColumnDef, Table } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { CollectionDataTableSheetDetails, CollectionSheetDetailsContent } from "./data-table-sheet-details";
+import { useParams } from "next/navigation";
 
 // const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
@@ -56,11 +57,6 @@ const defaultFetcher: DataFetcher = async (params) => {
   });
 };
 
-interface DocPageProps {
-  params: Usable<unknown>,
-  searchParams: object
-}
-
 type uploading_file_type = {
   title: string,
   progress: number,
@@ -68,11 +64,11 @@ type uploading_file_type = {
 
 type collection_mode_type = "create" | "edit" | "view" | undefined;
 
-export default function Page({ params, searchParams }: DocPageProps) {
+export default function Page() {
   const { userData, refreshCollectionGroups } = useContextAction();
   const [totalDBRowCount, setTotalDBRowCount] = useState(0);
 
-  const resolvedParams = use(params) as {
+  const resolvedParams = useParams() as {
     slug: string[],
   };
 

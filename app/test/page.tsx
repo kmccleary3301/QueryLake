@@ -11,6 +11,7 @@ import FileDropzone from "@/components/ui/file-dropzone";
 import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
+import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
 
 const test_text = `
 # Heading 1
@@ -230,7 +231,7 @@ export default function TestPage() {
                     />
                   </ScrollAreaHorizontal>
 
-                  <MarkdownRenderer input={markdownText} finished={false}/>
+                  <MarkdownRenderer input={markdownText} finished={false} config={CHAT_RENDERING_STYLE}/>
                 </div>
                 <div className="w-full h-[20px] rounded-md bg-gradient-to-l from-indigo-500 from-80% ..."/>
               </div>

@@ -5,6 +5,7 @@ import { retrieveValueFromObj, toolchainStateType } from "@/hooks/toolchain-sess
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
 import { useEffect, useState } from "react";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
+import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
 
 export const METADATA : componentMetaDataType = {
   label: "Text",
@@ -48,6 +49,7 @@ export default function Text({
     <div className="max-w-full">
       <MarkdownRenderer
         disableRender
+        config={CHAT_RENDERING_STYLE}
         input={currentValue} 
         finished={false}
       />

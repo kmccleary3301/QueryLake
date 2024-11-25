@@ -9,11 +9,10 @@ export const metadata: Metadata = {
 }
 
 interface ExamplesLayoutProps {
-  children: React.ReactNode,
-  searchParams: object
+  children: React.ReactNode
 }
 
-export default function NodesLayout({ children, searchParams }: ExamplesLayoutProps) {
+export default function NodesLayout({ children }: ExamplesLayoutProps) {
   
   return (
     <>

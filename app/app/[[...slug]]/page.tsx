@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition, use, Usable } from "react";
-interface DocPageProps {
-  params: Usable<unknown>,
-  searchParams: {s? : string}
-}
+import { useParams } from "next/navigation";
+
 
 type app_mode_type = "create" | "session" | "view" | undefined;
 
@@ -15,10 +13,14 @@ import { useToolchainContextAction } from "../context-provider";
 import { toolchain_session } from "@/types/globalTypes";
 import { toast } from "sonner";
 import { useContextAction } from "@/app/context-provider";
+import { resolve } from "path";
 
-export default function AppPage({ params, searchParams }: DocPageProps) {
+export default function AppPage() {
+
+
+  
   const [isPending, startTransition] = useTransition();
-  const resolvedParams = use(params) as {
+  const resolvedParams = useParams() as {
     slug: string[],
   };
 
@@ -31,7 +33,11 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
   const [appModeState, setAppModeState] = useState(app_mode_immediate);
   const mounting = useRef(true);
   const toolchainStateRef = useRef<toolchainStateType>({});
+
+  
   const [firstEventRan, setFirstEventRan] = useState<boolean[]>([false, false]);
+
+
   const [toolchainSelectedBySession, setToolchainSelectedBySession] = useState<string | undefined>(undefined);
   const isUnmounting = useRef(false);
 
@@ -131,6 +137,7 @@ export default function AppPage({ params, searchParams }: DocPageProps) {
     if (toolchainWebsocket?.current === undefined) return;
 
     if (create_session) {
+      setFirstEventRan([false, false]);
       setToolchainState({});
       console.log("Creating toolchain", selectedToolchainFull?.id);
       toolchainWebsocket.current.send_message({

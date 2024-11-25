@@ -105,11 +105,11 @@ function InlineSource({
               </Button>
             </h4>
             {sources[parseSourceIndex].rerank_score && (
-              <p className="text-sm py-3">Relevance Score: {sources[parseSourceIndex].rerank_score.toFixed(2)}</p>
+              <p className="text-sm py-3">Relevance Score: {sources[parseSourceIndex].rerank_score?.toFixed(2)}</p>
             )}
             <ScrollArea className="h-[200px] pr-3 px-5">
-            {(sources[parseSourceIndex].website_url) ? (
-              <Link href={sources[parseSourceIndex].website_url} rel="noopener noreferrer" target="_blank">
+            {(sources[parseSourceIndex].website_url !== undefined) ? (
+              <Link href={sources[parseSourceIndex]?.website_url || ""} rel="noopener noreferrer" target="_blank">
                 <Button variant={"ghost"} className="p-2 m-0 h-auto">
                   <div className="max-w-[260px]">
                     <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{sources[parseSourceIndex].text}</p>

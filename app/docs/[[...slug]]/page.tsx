@@ -1,16 +1,14 @@
+"use client";
+
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import allDocs from "@/public/cache/documentation/__all-documents__";
 import { getValueFromPath } from "./hooks";
 import React, { Usable, use } from "react";
 import { OBSIDIAN_MARKDOWN_RENDERING_CONFIG } from "@/components/markdown/configs";
+import { useParams } from "next/navigation";
 
-interface DocPageProps {
-  params: Usable<unknown>,
-  searchParams: object
-}
-
-export default function DocPage({ params, searchParams }: DocPageProps) {
-  const resolvedParams = use(params) as {
+export default function DocPage() {
+  const resolvedParams = useParams() as {
     slug: string[],
   };
   

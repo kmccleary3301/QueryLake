@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { user_organization_membership, QueryLakeCreateOrganization, QueryLakeFetchUsersMemberships, organization_memberships, QueryLakeFetchOrganizationsMemberships, QueryLakeInviteUserToOrg, memberRoleLower } from "@/hooks/querylakeAPI";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import CreateOrgSheet from "./components/create-org-sheet";
 
 interface OrgPageProps {
   params: {
@@ -31,137 +32,11 @@ import { toast } from 'sonner';
 import { ComboBox, ComboBoxScrollPreview } from "@/components/ui/combo-box";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowUpRight } from "lucide-react";
+import { useParams } from "next/navigation";
+import InviteUserToOrgSheet, { memberRole } from "./components/invite-org-sheet";
 
-export function CreateOrgSheet({
-  children,
-  onSubmit,
-}:{
-  children: React.ReactNode,
-  onSubmit: (form : {
-    name: string
-  }) => void
-}) {
-  const [name, setName] = useState("");
-
-
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Create Organization</SheetTitle>
-          <SheetDescription>
-            Create a new QueryLake organization. 
-          </SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value={name} onChange={
-              (e) => setName(e.target.value)
-            } placeholder="Set Organization Name" className="col-span-3" />
-          </div>
-        </div>
-        <SheetFooter >
-          <SheetClose asChild>
-            <Button type="submit" variant={"secondary"} disabled={(name==="")} onClick={() => {onSubmit({name: name})}}>Create</Button>
-          </SheetClose>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-type memberRole = "Owner" | "Admin" | "Member" | "Reader";
-
-export function InviteUserToOrgSheet({
-  children,
-  onSubmit,
-}:{
-  children: React.ReactNode,
-  onSubmit: (form : {
-    name: string,
-    role: memberRole
-  }) => void
-}) {
-  const [name, setName] = useState("");
-  const [role, setRole] = useState<memberRole>("Reader");
-
-
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Invite User</SheetTitle>
-          <SheetDescription>
-            Invite a user to join this organization.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              User
-            </Label>
-            <Input id="name" value={name} onChange={
-              (e) => setName(e.target.value)
-            } placeholder="Username to invite" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="role" className="text-right">
-              Role
-            </Label>
-            <ComboBoxScrollPreview
-              values={[
-                {
-                  value: "Owner",
-                  label: "Owner",
-                  preview: "Can delete organization and manage all members."
-                },
-                {
-                  value: "Admin",
-                  label: "Admin",
-                  preview: "Can manage all members and document collections."
-                },
-                {
-                  value: "Member",
-                  label: "Member",
-                  preview: "Can view and edit document collections."
-                },
-                {
-                  value: "Reader",
-                  label: "Reader",
-                  preview: "Can view organization data and read documents."
-                },
-              ]}
-              onChange={(value) => {
-                setRole(value as memberRole);
-              }}
-              value={role}
-            />
-          </div>
-        </div>
-        <SheetFooter >
-          <SheetClose asChild>
-            <Button type="submit" variant={"secondary"} disabled={(name==="")} onClick={() => {onSubmit({name: name, role: role})}}>
-              Send Invite
-            </Button>
-          </SheetClose>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-
-export default function OrgPage({ params, searchParams }: OrgPageProps) {
-  const { slug } = params;
+export default function OrgPage() {
+  const { slug } = useParams() as {slug: string[]};
   const { userData } = useContextAction();
   const [organizations, setOrganizations] = useState<user_organization_membership[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<user_organization_membership | undefined>();
