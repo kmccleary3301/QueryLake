@@ -1,4 +1,4 @@
-import { HTMLInputTypeAttribute, forwardRef, useState } from 'react';
+import { DetailedHTMLProps, HTMLInputTypeAttribute, InputHTMLAttributes, forwardRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,7 @@ const CompactInput = forwardRef(({
   placeholder?: string;
   backgroundColor?: string;
   hideText?: boolean;
-  [key: string]: any;
-}, ref) => {
+} & DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>, ref) => {
   const [isFocused, setIsFocused] = useState(false);
 	const [placeHolderMoved, setPlaceHolderMoved] = useState(
 		(props.value && props.value !== "") ? true : 

@@ -157,17 +157,17 @@
   line-height:1.4285714;
   margin-top:.8571429em
 }
-.prose :where(code):not(:where([class~=not-prose] *)) {
+/* .prose :where(code):not(:where([class~=not-prose] *)) {
   color:var(--tw-prose-code);
   font-size:.875em;
   font-weight:600
-}
-.prose :where(code):not(:where([class~=not-prose] *)):before {
+} */
+/* .prose :where(code):not(:where([class~=not-prose] *)):before {
   content:"`"
-}
-.prose :where(code):not(:where([class~=not-prose] *)):after {
+} */
+/* .prose :where(code):not(:where([class~=not-prose] *)):after {
   content:"`"
-}
+} */
 .prose :where(a code):not(:where([class~=not-prose] *)) {
   color:inherit
 }
@@ -195,7 +195,7 @@
   background-color:transparent;
   border-radius:.375rem;
   color:currentColor;
-  font-size:.875em;
+  /* font-size:.875em; */
   font-weight:400;
   line-height:1.7142857;
   margin:0;
@@ -322,6 +322,11 @@
 .prose :where(.prose>ul>li>:first-child):not(:where([class~=not-prose] *)) {
   margin-top:1.25em
 }
+
+/* .prose :where(ul > li):not(:where([class~="not-prose"] *))::marker{
+  color: var(--tw-prose-bullets);
+} */
+
 .prose :where(.prose>ul>li>:last-child):not(:where([class~=not-prose] *)) {
   margin-bottom:1.25em
 }
@@ -565,10 +570,8 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 }
 
 .markdown ol {
-    counter-reset: list-number;
     display: flex;
     flex-direction: column;
-    list-style-type: none;
     padding-left: 0
 }
 
@@ -585,11 +588,15 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
 }
 
 .markdown ol {
-    counter-reset: list-number; /* Resets the counter for each new ol element */
+    counter-reset: list-number;
+    display: flex;
+    flex-direction: column;
+    list-style-type: none;
+    padding-left: 0
 }
 
 .markdown ol>li {
-    counter-increment: list-number;
+    /* counter-increment: list-number; */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -598,6 +605,8 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     margin-top: 0.25rem;
     /* min-height: 1.75rem; */
     position: relative; /* Added to position the ::before pseudo-element relative to the li element */
+    max-width: 100%;
+    width: 100%;
 }
 
 .markdown ol>li:before {
@@ -660,6 +669,9 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     margin-top: 0.125rem;
     /* min-height: 1.75rem; */
     position: relative; /* Added to position the ::before pseudo-element relative to the li element */
+    max-width: 100%;
+    width: 100%;
+    
 }
 
 .markdown ul>li:before {
@@ -667,7 +679,7 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     /* height: 0; */
     opacity: 0.5;
     content: "\2022";
-    font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
+    font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var (--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
     /* padding-right: .65rem; */
     font-size: 1.75rem;
     width: 1.5rem;
@@ -680,6 +692,19 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     align-items: flex-start; /* Aligns the bullet to the top */
     justify-content: center; /* Centers the bullet horizontally */
     /* border-width: 1px; */
+}
+
+.markdown ol>li>*,
+.markdown ul>li>* {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Ensure ScrollArea components inside list items respect container width */
+.markdown ol>li [data-radix-scroll-area-viewport],
+.markdown ul>li [data-radix-scroll-area-viewport] {
+  max-width: 100%;
+  width: 100%;
 }
 
 .markdown ol li>p,

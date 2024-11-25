@@ -20,7 +20,6 @@ import { setCookie } from "@/hooks/cookies";
 import { useRouter } from 'next/navigation';
 import { toast } from "sonner"
 import { useContextAction } from "@/app/context-provider";
-import { get } from "http";
 import CompactInput from "@/components/ui/compact-input";
 
 type login_results = {
@@ -61,8 +60,8 @@ export default function Component() {
     },
   })
 
-  const setUserDataHook = (data: userDataType) => {
-    setCookie({ key: "UD", value: data });
+  const setUserDataHook = async (data: userDataType) => {
+    await setCookie({ key: "UD", value: data });
     setUserData(data);
     router.push("/home");
   }
@@ -90,7 +89,7 @@ export default function Component() {
         console.log("Got data:", data);
 				if (data.success) {
 					const result : userDataType = data.result;
-          getUserData(result, () => {setUserDataHook(result);});
+          getUserData(result.auth, () => {setUserDataHook(result);});
 				} else {
 					setErrorMessage(data.error as string);
 				}

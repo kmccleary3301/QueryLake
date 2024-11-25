@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { markdownRenderingConfig } from "./configs";
 
 type textSegment = {
   text: string,
@@ -29,14 +30,14 @@ function MarkdownTable({
   rows,
   unProcessedText,
   fontSize,
-  config = "obsidian",
+  config,
 }:{
   className?: string,
   header: textSegment[],
   rows: textSegment[][],
   unProcessedText?: string,
   fontSize?: number,
-  config?: "obsidian" | "chat"
+  config: markdownRenderingConfig
 }){
 
   return (

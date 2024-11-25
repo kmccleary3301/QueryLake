@@ -76,6 +76,11 @@ const buttonProps : {header : string, content : string, link : string}[] = [
     header: "Test V2",
     content: "Test more components",
     link: "/test/v2"
+  },
+  {
+    header: "InfiniTable",
+    content: "Test new infinite table",
+    link: "/test/new_table"
   }
 ]
 

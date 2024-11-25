@@ -114,7 +114,7 @@ export default function TestPage() {
 
 
   const model_params_static = {
-    "model_choice": "mistral-7b-instruct-v0.1",
+    "model": "mistral-7b-instruct-v0.1",
     "max_tokens": 1000, 
     "temperature": 0.1, 
     "top_p": 0.1, 

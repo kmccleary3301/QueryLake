@@ -16,6 +16,7 @@ import { ContextProvider } from "./context-provider"
 import SidebarController from "@/components/sidebar/sidebar"
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+
 // import { useRouter } from "next/navigation"
 // import { AppProps } from "next/app"
 // import { AppProps, useRouter } from 'next/app'
@@ -124,8 +125,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   {/* <SiteHeader /> */}
                   {/* <AnimatePresence initial={false} mode="popLayout"> */}
                     {/* <main className="flex-1">{children}</main> */}
+                      
                       {children}
-                    
                       {/* <NewYorkToaster /> */}
                       {/* <DefaultToaster /> */}
                       <NewYorkSonner />

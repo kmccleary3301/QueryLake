@@ -8,6 +8,7 @@ import MarkdownTable from "./markdown-table";
 import sanitizeMarkdown from "@/hooks/sanitizeMarkdown";
 import "./prose.css"
 import { cn } from "@/lib/utils";
+import { markdownRenderingConfig } from "./configs";
 
 type MarkdownRendererProps = {
   input: string,
@@ -44,13 +45,13 @@ function MarkdownMapComponent({
   token,
   unProcessedText,
   finished,
-  config = "obsidian",
+  config,
 }:{
   className?: string,
   token: Token,
   unProcessedText: string,
   finished: boolean,
-  config?: "obsidian" | "chat",
+  config: markdownRenderingConfig,
 }) {
   const defaultFontSize = 'text-base';
 
@@ -135,7 +136,7 @@ function MarkdownMapComponent({
     case 'hr':
       return (null);
     case 'blockquote':
-      console.log("Blockquote text:", token);
+      // console.log("Blockquote text:", token);
       return (
         <blockquote className={cn(className, "pl-6 flex flex-col space-y-2")}>
           {/* <MarkdownTextSplitter 
@@ -201,10 +202,9 @@ function MarkdownMapComponent({
       const counter = (token.raw.match(/^([^\s]+) /) || [""])[0].trimStart().trimEnd();
 
       return (
-        <li className={className} counter-text={counter + " "}>
-          {/* <MarkdownTextSplitter selectable={true} className={`text-left text-base text-gray-200`} text={token.text + props.unProcessedText}/> */}
+        <li className={cn(className, "relative")} counter-text={counter + " "}>
           <MarkdownRenderer 
-            unpacked={true}
+            unpacked
             input={token.text + unProcessedText} 
             finished={finished} 
             disableRender={false}
@@ -219,14 +219,14 @@ function MarkdownMapComponent({
           {(lines.length > 1)?(
             <>
               {lines.map((line, i) => (
-                <p className="pb-1" key={i}>
+                <span className="pb-1" key={i}>
                   <MarkdownTextSplitter 
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 
                     text={line}
                     config={config}
                   />
-                </p>
+                </span>
               ))}
             </>
           ):(
@@ -267,7 +267,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay,
   disableRender = false,
   finished,
-  config = "obsidian",
+  config,
   list_in_block = false,
 } : {
   className?: string,
@@ -276,7 +276,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   transparentDisplay?: boolean,
   disableRender?: boolean,
   finished: boolean,
-  config?: "obsidian" | "chat"
+  config: markdownRenderingConfig,
   list_in_block?: boolean
 }) {
   const lexer = new marked.Lexer();
@@ -316,7 +316,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
             ))}
           </>
         ):(
-          <div className={cn("prose font-geist-sans markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
+          <div className={cn("prose markdown text-sm text-theme-primary space-y-3 flex flex-col", className)}>
             <MarkdownRenderer 
               className={className}
               unpacked={true}

@@ -77,12 +77,12 @@ export default function LoginPage() {
       "password": values.password
     }});
 		
-    fetch(url).then((response) => {
+    fetch(url).then(async (response) => {
       response.json().then((data : login_results) => {
         console.log("GOT LOGIN DATA:", data);
 				if (data.success) {
 					const result : userDataType = data.result;
-          getUserData(result, () => {});
+          getUserData(result.auth, () => {});
 				} else {
 					setErrorMessage(data.error as string);
 				}

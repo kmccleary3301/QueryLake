@@ -15,13 +15,10 @@ import {
 	userDataType,
 	setStateOrCallback,
 	toolchain_session,
-	toolchain_type,
 	collectionGroup,
   APIFunctionSpec
 } from '@/types/globalTypes';
 import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
-import { useRouter } from 'next/navigation';
-import { usePathname } from "next/navigation";
 import craftUrl from '@/hooks/craftUrl';
 import { QuerylakeFunctionHelp, fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
 import { ToolChain } from '@/types/toolchains';
@@ -64,7 +61,7 @@ const Context = createContext<{
   shikiTheme : codeThemePreferenceType,
   setShikiTheme : setStateOrCallback<codeThemePreferenceType>,
 
-	getUserData : (user_data_input : userDataType | undefined, onFinish : () => void) => void,
+	getUserData : (user_data_input : string | undefined, onFinish : () => void) => void,
 
   apiFunctionSpecs : APIFunctionSpec[] | undefined,
 
@@ -135,9 +132,8 @@ export const ContextProvider = ({
 	selectedCollections : selectedCollectionsType,
 	toolchainSessions : Map<string, toolchain_session>
 }>) => {
-	const pathname = usePathname();
-	const router = useRouter();
 
+	// const [user_data, set_user_data] = useState<userDataType | undefined>(getCookie({ key: 'UD' }) as userDataType | undefined);
 	const [user_data, set_user_data] = useState<userDataType | undefined>(userData);
 	const [collection_groups, set_collection_groups] = useState<collectionGroup[]>([]);
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
@@ -176,27 +172,32 @@ export const ContextProvider = ({
 
 	// useEffect(() => {console.log("BREAKPOINT:", break_point)}, [break_point]);
 
-	const get_user_data = async (user_data_input : userDataType | undefined, onFinish : () => void) => {
+	const get_user_data = async (user_data_input : string | undefined, onFinish : () => void) => {
+		
+		const cookie_ud = await getCookie({ key: 'UD', convert_object: false }) as string | undefined;
+		console.log("Cookie UD:", cookie_ud);
+		
 		if (user_data_input !== undefined) {
 			const url = craftUrl(`/api/login`, {
-				"auth": user_data_input.auth
+				"auth": user_data_input
 			});
 
 			fetch(url).then((response) => {
 				// console.log("Fetching");
 				// console.log(response);
-				response.json().then((data : login_results) => {
-					// console.log("Got data:", data);
+				response.json().then(async (data : login_results) => {
+					console.log("GOT LOGIN DATA:", data);
 					if (data.success) {
-						setCookie({ key: "UD", value: data.result })
-						set_user_data(user_data_input);
+						await setCookie({ key: "UD", value: data.result.auth });
+						
+						set_user_data(data.result);
 
 						set_login_valid(true);
 						set_auth_reviewed(true);
 
 						onFinish();
 					} else {
-						deleteCookie({ key: 'UD' });
+						await deleteCookie({ key: 'UD' });
 						set_user_data(undefined);
 
 						set_login_valid(false);
@@ -216,6 +217,7 @@ export const ContextProvider = ({
   
 
   const refresh_toolchain_sessions = useCallback(() => {
+		console.log("Auth Updated:", user_data);
     fetchToolchainSessions({
       auth: user_data?.auth as string,
       onFinish: (v : toolchain_session[]) => {
@@ -228,8 +230,6 @@ export const ContextProvider = ({
     })
   }, [user_data?.auth, auth_reviewed]);
 
-
-
 	const refresh_collection_groups = () => {
 		getUserCollections({
 			auth: user_data?.auth as string, 
@@ -238,7 +238,7 @@ export const ContextProvider = ({
 	};
 
   const setFullToolchain = useCallback((toolchain_id : string) => {
-    if (!auth_reviewed) return;
+    if (!auth_reviewed || !user_data?.auth) return;
     // console.log("toolchain_id:", toolchain_id);
     fetchToolchainConfig({
       auth: user_data?.auth as string,

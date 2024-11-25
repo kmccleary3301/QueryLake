@@ -47,6 +47,7 @@ export type inputComponentConfig = {
 
 export type componentMetaDataType = {
   label: string,
+  type: "Display" | "Input",
   category: string,
   description?: string,
   config?: inputComponentConfig

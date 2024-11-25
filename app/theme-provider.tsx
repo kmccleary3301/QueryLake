@@ -46,19 +46,19 @@ export type themeType = {
   "background-sidebar": string;
   foreground: string;
   card: string;
-  cardForeground: string;
+  "card-foreground": string;
   popover: string;
-  popoverForeground: string;
+  "popover-foreground": string;
   primary: string;
-  primaryForeground: string;
+  "primary-foreground": string;
   secondary: string;
-  secondaryForeground: string;
+  "secondary-foreground": string;
   muted: string;
-  mutedForeground: string;
+  "muted-foreground": string;
   accent: string;
-  accentForeground: string;
+  "accent-foreground": string;
   destructive: string;
-  destructiveForeground: string;
+  "destructive-foreground": string;
   border: string;
   input: string;
 };
@@ -105,7 +105,7 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
   const used_theme_next = useTheme();
   const system_mode_theme = used_theme_next.theme,
         system_mode_setTheme = used_theme_next.setTheme;
-
+  
   const generate_stylesheet = (theme: themeType) => {
     return {
       '--theme-one': theme["theme-one"],
@@ -113,19 +113,19 @@ export const StateThemeProvider = ({children}: PropsWithChildren<{}>) => {
       '--background-sidebar': theme["background-sidebar"],
       '--foreground': theme.foreground,
       '--card': theme.card,
-      '--card-foreground': theme.cardForeground,
+      '--card-foreground': theme["card-foreground"],
       '--popover': theme.popover,
-      '--popover-foreground': theme.popoverForeground,
+      '--popover-foreground': theme["popover-foreground"],
       '--primary': theme.primary,
-      '--primary-foreground': theme.primaryForeground,
+      '--primary-foreground': theme["primary-foreground"],
       '--secondary': theme.secondary,
-      '--secondary-foreground': theme.secondaryForeground,
+      '--secondary-foreground': theme["secondary-foreground"],
       '--muted': theme.muted,
-      '--muted-foreground': theme.mutedForeground,
+      '--muted-foreground': theme["muted-foreground"],
       '--accent': theme.accent,
-      '--accent-foreground': theme.accentForeground,
+      '--accent-foreground': theme["accent-foreground"],
       '--destructive': theme.destructive,
-      '--destructive-foreground': theme.destructiveForeground,
+      '--destructive-foreground': theme["destructive-foreground"],
       '--border': theme.border,
       '--input': theme.input,
     } as React.CSSProperties;

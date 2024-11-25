@@ -2,15 +2,14 @@
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { retrieveValueFromObj, toolchainStateType } from "@/hooks/toolchain-session";
-import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, displayMapping } from "@/types/toolchain-interface";
-import { substituteAny } from "@/types/toolchains";
 import { useEffect, useState } from "react";
-import MARKDOWN_SAMPLE_TEXT from "../components/markdown/demo-text";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
+import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
 
 export const METADATA : componentMetaDataType = {
   label: "Text",
+  type: "Display",
   category: "Text Display",
   description: "Displays text as-is, without rendering it as markdown or processing it in any way.",
 };
@@ -50,6 +49,7 @@ export default function Text({
     <div className="max-w-full">
       <MarkdownRenderer
         disableRender
+        config={CHAT_RENDERING_STYLE}
         input={currentValue} 
         finished={false}
       />

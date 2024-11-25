@@ -142,6 +142,7 @@ type collectionResponse = {
   type: "user" | "organization" | "global",
   owner: string,
   public: boolean,
+  document_count: number,
 }
 
 type fetchCollectionArgs = {
@@ -198,6 +199,47 @@ export function fetchCollectionDocuments({
 	});
 }
 
+
+export function searchCollectionDocuments({
+  auth,
+  collection_id,
+  search_query,
+  order_by,
+  order_direction,
+  limit,
+  offset,
+  onFinish
+}:{
+  auth: string,
+  collection_id: string,
+  search_query: string,
+  order_by: string,
+  order_direction: "ascend" | "descend",
+  limit?: number,
+  offset?: number,
+  onFinish: (result : fetch_collection_document_type[] | undefined) => void
+}) {
+  const url = craftUrl(`/api/search_bm25`, {
+    "auth": auth,
+    "collection_hash_id": collection_id,
+    "table": "document",
+    "limit": limit,
+    "offset": offset,
+    "query": search_query,
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((data) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (onFinish) onFinish(undefined);
+        return;
+			}
+			if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
+		});
+	});
+}
+
 type openDocumentArgs = {
 	auth: string, 
 	document_id: string
@@ -214,10 +256,10 @@ export function openDocument(args : openDocumentArgs) {
     console.log(response);
     response.json().then((data : DataResponse<{access_encrypted: string, file_name: string}>) => {
       if (data["success"] == false) {
-        toast("Failed to fetch document");
+        toast("Failed to download document");
         return;
       }
-      const url_actual = craftUrl(`/api/fetch_document/${data.result.file_name}`, {
+      const url_actual = craftUrl(`/api/download_document/${data.result.file_name}`, {
         "document_auth_access": data.result.access_encrypted
       })
       // Linking.openURL(url_actual.toString());
@@ -799,6 +841,183 @@ export function QuerylakeFetchUsage(args :{
         return;
 			}
 			if (args.onFinish && data.result) args.onFinish(data.result);
+		});
+	});
+}
+
+export type user_organization_membership = {
+  organization_id: string;
+  organization_name: string;
+  role: string;
+  invite_still_open: boolean;
+  sender: string;
+}
+
+export function QueryLakeFetchUsersMemberships(args :{
+  auth: string,
+  onFinish?: (result : user_organization_membership[] | false) => void,
+}) {
+
+  const url = craftUrl(`/api/fetch_memberships`, {
+    "auth": args.auth,
+    "return_subset": "all"
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: {memberships: user_organization_membership[]}
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+		});
+	});
+}
+
+
+export type create_organization_result = {
+  organization_id: string;
+}
+
+export function QueryLakeCreateOrganization(args :{
+  auth: string,
+  organization_name: string,
+  onFinish?: (result : create_organization_result | false) => void,
+}) {
+
+  const url = craftUrl(`/api/create_organization`, {
+    "auth": args.auth,
+    "organization_name": args.organization_name
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: create_organization_result
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result);
+		});
+	});
+}
+
+
+export type organization_memberships = {
+  organization_id: string;
+  organization_name: string;
+  role: string;
+  invite_still_open: boolean;
+  username: string;
+}
+
+export function QueryLakeFetchOrganizationsMemberships(args :{
+  auth: string,
+  organization_id: string,
+  onFinish?: (result : organization_memberships[] | false) => void,
+}) {
+
+  const url = craftUrl(`/api/fetch_memberships_of_organization`, {
+    "auth": args.auth,
+    "organization_id": args.organization_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean, 
+        result?: {memberships: organization_memberships[]}
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+		});
+	});
+}
+
+export type memberRoleLower = "owner" | "admin" | "member" | "reader";
+
+export function QueryLakeInviteUserToOrg(args :{
+  auth: string,
+  organization_id: string,
+  username: string,
+  role: memberRoleLower,
+  onFinish?: (result : true | false) => void,
+}) {
+
+  const url = craftUrl(`/api/invite_user_to_organization`, {
+    "auth": args.auth,
+    "organization_id": args.organization_id,
+    "username_to_invite": args.username,
+    "member_class": args.role
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(true);
+		});
+	});
+}
+
+
+export function QueryLakeChangeCollectionOwnership(args :{
+  auth: string,
+  username: string,
+  collection_id: string,
+  owner: string,
+  public: boolean,
+  onFinish?: (result : true | false) => void,
+}) {
+
+  const url = craftUrl(`/api/change_collection_ownership`, {
+    "auth": args.auth,
+    ...(args.owner === "personal" ? 
+      {"user_name": args.username} :
+      (args.owner === "global" ? 
+        {"global": true} :
+        {"organization_id": args.owner}
+      )
+    ),
+    "public": args.public,
+    "collection_id": args.collection_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(true);
 		});
 	});
 }

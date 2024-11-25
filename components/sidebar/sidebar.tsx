@@ -28,7 +28,8 @@ export default function SidebarController() {
 		if (pathname?.startsWith("/app") || 
 			pathname?.startsWith("/nodes") || 
 			pathname?.startsWith("/themes") ||
-			pathname?.startsWith("/collection")
+			pathname?.startsWith("/collection") ||
+			pathname?.startsWith("/organizations")
 		) {
 			// console.log("Setting sidebar assignment to app");
 			setSidebarAssignment("app");
@@ -63,11 +64,12 @@ export default function SidebarController() {
 				pathname?.startsWith("/nodes") || 
 				pathname?.startsWith("/themes") ||
 				pathname?.startsWith("/collection") ||
-				pathname?.startsWith("/settings")
+				pathname?.startsWith("/settings") ||
+				pathname?.startsWith("/organizations")
 			) && authReviewed && loginValid && 
 				<Sidebar/>
 			}
-			{(pathname?.startsWith("/docs")) && authReviewed && loginValid && 
+			{(pathname?.startsWith("/docs")) && 
 				<DocSidebar/>
 			}
       {(pathname?.startsWith("/platform")) && authReviewed && loginValid && 

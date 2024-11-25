@@ -35,10 +35,8 @@ const nextConfig = {
 		]
 	},
   reactStrictMode: true,
-  experimental: {
-    serverComponentsExternalPackages: ['shiki', 'vscode-oniguruma']
-  },
-  swcMinify: true,
+  serverExternalPackages: ['shiki', 'vscode-oniguruma'],
+  // swcMinify: true,
   images: {
     remotePatterns: [
       {

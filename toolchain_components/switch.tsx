@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 
 export const METADATA : componentMetaDataType = {
   label: "Switch",
+  type: "Input",
   category: "ShadCN Components",
   description: "A simple toggle switch.",
   config: {

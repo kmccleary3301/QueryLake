@@ -5,6 +5,7 @@ import BounceLoader from "react-spinners/BounceLoader";
 
 export const METADATA : componentMetaDataType = {
   label: "Active Node Indicator",
+  type: "Display",
   category: "Debugging",
   description: "Displays the current active node in the toolchain while running.",
 };
