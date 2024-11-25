@@ -982,3 +982,42 @@ export function QueryLakeInviteUserToOrg(args :{
 		});
 	});
 }
+
+
+export function QueryLakeChangeCollectionOwnership(args :{
+  auth: string,
+  username: string,
+  collection_id: string,
+  owner: string,
+  public: boolean,
+  onFinish?: (result : true | false) => void,
+}) {
+
+  const url = craftUrl(`/api/change_collection_ownership`, {
+    "auth": args.auth,
+    ...(args.owner === "personal" ? 
+      {"user_name": args.username} :
+      (args.owner === "global" ? 
+        {"global": true} :
+        {"organization_id": args.owner}
+      )
+    ),
+    "public": args.public,
+    "collection_id": args.collection_id
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(true);
+		});
+	});
+}

@@ -31,9 +31,9 @@ module.exports = {
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
   			background: {
-          DEFAULT: "hsl(var(--background))",
-          sidebar: "hsl(var(--background-sidebar))",
-        },
+  				DEFAULT: 'hsl(var(--background))',
+  				sidebar: 'hsl(var(--background-sidebar))'
+  			},
   			foreground: 'hsl(var(--foreground))',
   			primary: {
   				DEFAULT: 'hsl(var(--primary))',
@@ -69,13 +69,22 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			sidebar: {
+  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				primary: 'hsl(var(--sidebar-primary))',
+  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+  				border: 'hsl(var(--sidebar-border))',
+  				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
-  		
   		fontFamily: {
-  			sans: fontFamily.soehne,
-  			soehne: fontFamily.soehne,
-  			consolas: fontFamily.consolas,
+  			sans: 'fontFamily.soehne',
+  			soehne: 'fontFamily.soehne',
+  			consolas: 'fontFamily.consolas',
   			'geist-sans': ['var(--font-geist-sans)'],
   			'geist-mono': ['var(--font-geist-mono)'],
   			inter: ['var(--font-inter)'],

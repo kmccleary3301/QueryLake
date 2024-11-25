@@ -37,6 +37,11 @@ import { ColumnDef, Table } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { CollectionDataTableSheetDetails, CollectionSheetDetailsContent } from "./data-table-sheet-details";
 import { useParams } from "next/navigation";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { AppSidebar } from "@/components/app-sidebar";
+import { CollectionSidebar } from "./collection-sidebar";
+import { userDataType } from "@/types/globalTypes";
 
 // const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
@@ -93,8 +98,7 @@ export default function Page() {
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
-
-  
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
   const fetchCollectionCallback = () => {
     if (!userData?.auth) return;
@@ -108,6 +112,7 @@ export default function Page() {
         setCollectionDescription(data.description);
         setCollectionIsPublic(data.public);
         setTotalDBRowCount(data.document_count);
+        setCollectionOwner(data.owner);
       }
     });
   };
@@ -252,55 +257,81 @@ export default function Page() {
   }, [flatData, uploadingFiles, pendingUploadFiles]);
 
   return (
-    <div className="w-full h-[calc(100vh)] flex flex-row justify-center overflow-hidden sticky">
+    <div 
+      className="w-full h-[calc(100vh)] absolute flex flex-row justify-center overflow-hidden"
+      style={{
+        "--container-width": "100%"
+      } as React.CSSProperties}
+    >
       {/* <ScrollArea className="w-full"> */}
-        <div className="flex flex-row w-full justify-center overflow-hidden">
-          <div className="flex flex-col overflow-hidden w-full">
-            <DataTableInfinite
-              className="overflow-hidden w-[100%]"
-              columns={columns}
-              data={dataRowsProcessed}
-              // data={flatData}
-              totalRows={totalDBRowCount}
-              // filterRows={filterDBRowCount}
-              filterRows={totalDBRowCount}
-              totalRowsFetched={totalFetched}
-              defaultColumnFilters={Object.entries(filter)
-                .map(([key, value]) => ({
-                  id: key,
-                  value,
-                }))
-                .filter(({ value }) => value ?? undefined)}
-              defaultColumnSorting={sort ? [sort] : undefined}
-              searchColumnFiltersSchema={columnSchema}
-              searchParamsParser={searchParamsParser}
-              isFetching={isFetching}
-              isLoading={isLoading}
-              fetchNextPage={fetchNextPage}
-              sidebarComponent={(props: {selectedRow: ColumnSchema | undefined, table: Table<ColumnSchema>}) => {
-                return (
-                  <CollectionDataTableSheetDetails
-                    // TODO: make it dynamic via renderSheetDetailsContent
-                    title={(props.selectedRow as ColumnSchema | undefined)?.file_name}
-                    titleClassName="font-mono"
-                    table={props.table}
-                    onDownload={() => {
-                      if (!props.selectedRow) return;
-                      openDocument({
-                        auth: userData?.auth as string,
-                        document_id: props.selectedRow?.id
-                      });
-                    }}
-                  >
-                    <CollectionSheetDetailsContent
-                      data={props.selectedRow as ColumnSchema}
-                      filterRows={totalDBRowCount}
-                    />
-                  </CollectionDataTableSheetDetails>
-                )
-              }}
-            />
-          </div>
+        <div className="flex flex-row w-[var(--container-width)] justify-center overflow-hidden">
+        <SidebarProvider open={sidebarOpen} className="w-full">
+          <SidebarInset>
+          
+            <div className="flex flex-col overflow-hidden w-full sticky">
+              <DataTableInfinite
+                className="overflow-hidden w-full"
+                columns={columns}
+                data={dataRowsProcessed}
+                // data={flatData}
+                totalRows={totalDBRowCount}
+                // filterRows={filterDBRowCount}
+                filterRows={totalDBRowCount}
+                totalRowsFetched={totalFetched}
+                defaultColumnFilters={Object.entries(filter)
+                  .map(([key, value]) => ({
+                    id: key,
+                    value,
+                  }))
+                  .filter(({ value }) => value ?? undefined)}
+                defaultColumnSorting={sort ? [sort] : undefined}
+                searchColumnFiltersSchema={columnSchema}
+                searchParamsParser={searchParamsParser}
+                isFetching={isFetching}
+                isLoading={isLoading}
+                fetchNextPage={fetchNextPage}
+                rowEntrySidebarComponent={(props: {selectedRow: ColumnSchema | undefined, table: Table<ColumnSchema>}) => {
+                  return (
+                    <CollectionDataTableSheetDetails
+                      // TODO: make it dynamic via renderSheetDetailsContent
+                      title={(props.selectedRow as ColumnSchema | undefined)?.file_name}
+                      titleClassName="font-mono"
+                      table={props.table}
+                      onDownload={() => {
+                        if (!props.selectedRow) return;
+                        openDocument({
+                          auth: userData?.auth as string,
+                          document_id: props.selectedRow?.id
+                        });
+                      }}
+                    >
+                      <CollectionSheetDetailsContent
+                        data={props.selectedRow as ColumnSchema}
+                        filterRows={totalDBRowCount}
+                      />
+                    </CollectionDataTableSheetDetails>
+                  )
+                }}
+                setControlsOpen={setSidebarOpen}
+              />
+            </div>
+          </SidebarInset>
+          <CollectionSidebar
+            collapsible="motion" 
+            side="right"
+            user_auth={userData as userDataType}
+            collection_id={resolvedParams["slug"][1]}
+            collection_is_public={collectionIsPublic}
+            set_collection_is_public={setCollectionIsPublic}
+            collection_owner={collectionOwner}
+            set_collection_owner={setCollectionOwner}
+            collection_name={collectionTitle}
+            set_collection_name={setCollectionTitle}
+            collection_description={collectionDescription}
+            set_collection_description={setCollectionDescription}
+          />
+        </SidebarProvider>
+          
         </div>
       {/* </ScrollArea> */}
     </div>

@@ -82,7 +82,9 @@ export interface DataTableInfiniteProps<TData, TValue> {
   className?: string;
   onSelectRow?: (row: TData) => void;
   onToggleControls?: (opened: boolean) => void;
-  sidebarComponent?: (props: {selectedRow: TData | undefined, table: TTable<TData>}) => React.ReactNode;
+  rowEntrySidebarComponent?: (props: {selectedRow: TData | undefined, table: TTable<TData>}) => React.ReactNode;
+  collectionSidebarTrigger?: React.ReactNode;
+  setControlsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function DataTableInfinite<TData, TValue>({
@@ -105,7 +107,8 @@ export function DataTableInfinite<TData, TValue>({
   className = "",
   onSelectRow = () => {},
   onToggleControls = () => {},
-  sidebarComponent,
+  rowEntrySidebarComponent: sidebarComponent,
+  setControlsOpen,
 }: DataTableInfiniteProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -119,7 +122,7 @@ export function DataTableInfinite<TData, TValue>({
   );
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>("data-table-visibility", defaultColumnVisibility);
-  const [controlsOpen, setControlsOpen] = useLocalStorage(
+  const [controlsOpen, setControlsOpenInner] = useLocalStorage(
     "data-table-controls",
     true
   );
@@ -252,6 +255,11 @@ export function DataTableInfinite<TData, TValue>({
     console.log("totalRows", totalRows);
   }, [totalRowsFetched, filterRows, totalRows]);
 
+  React.useEffect(() => {
+    if (setControlsOpen === undefined) return;
+    setControlsOpen(controlsOpen);
+  }, [controlsOpen]);
+
   return (
     <>
       <ScrollArea 
@@ -292,7 +300,7 @@ export function DataTableInfinite<TData, TValue>({
             <DataTableToolbar
               table={table}
               controlsOpen={controlsOpen}
-              setControlsOpen={setControlsOpen}
+              setControlsOpen={setControlsOpenInner}
               isLoading={isFetching || isLoading}
               enableColumnOrdering={true}
             />
