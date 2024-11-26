@@ -1021,3 +1021,32 @@ export function QueryLakeChangeCollectionOwnership(args :{
 		});
 	});
 }
+
+export function QueryLakeResolveInvitation(args :{
+  auth: string,
+  organization_id: string,
+  accept: boolean,
+  onFinish?: (result : true | false) => void,
+}) {
+
+  const url = craftUrl(`/api/resolve_organization_invitation`, {
+    "auth": args.auth,
+    "organization_id": args.organization_id,
+    "accept": args.accept
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(true);
+		});
+	});
+}

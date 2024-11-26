@@ -44,6 +44,12 @@ export function ComboBox({
   const [open, setOpen] = React.useState(false)
   const [innerValue, setInnerValue] = React.useState(defaultValue?.value || value)
 
+  React.useEffect(() => {
+    if (value) {
+      setInnerValue(value);
+    }
+  }, [value]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -183,6 +189,11 @@ export function ComboBoxScrollPreview({
   const [innerValue, setInnerValue] = React.useState(defaultValue?.value || value)
   const [peekedPreview, setPeekedPreview] = React.useState<string | undefined>();
 
+  React.useEffect(() => {
+    if (value) {
+      setInnerValue(value);
+    }
+  }, [value]);
   
   const categories: boolean = (values as (valueType | valueCategory)[]).some((e): e is valueCategory => 'category_label' in e);
   // const categories: boolean = values.every(isValueCategory);

@@ -3,8 +3,8 @@
 import { ScrollArea, ScrollAreaHorizontal } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useContextAction } from "@/app/context-provider";
-import { useEffect, useState } from "react";
-import { user_organization_membership, QueryLakeCreateOrganization, QueryLakeFetchUsersMemberships, organization_memberships, QueryLakeFetchOrganizationsMemberships, QueryLakeInviteUserToOrg, memberRoleLower } from "@/hooks/querylakeAPI";
+import { useCallback, useEffect, useState } from "react";
+import { user_organization_membership, QueryLakeCreateOrganization, QueryLakeFetchUsersMemberships, organization_memberships, QueryLakeFetchOrganizationsMemberships, QueryLakeInviteUserToOrg, memberRoleLower, QueryLakeResolveInvitation } from "@/hooks/querylakeAPI";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import CreateOrgSheet from "./components/create-org-sheet";
@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowUpRight } from "lucide-react";
 import { useParams } from "next/navigation";
 import InviteUserToOrgSheet, { memberRole } from "./components/invite-org-sheet";
+import { DialogClose } from "@radix-ui/react-dialog";
 
 export default function OrgPage() {
   const { slug } = useParams() as {slug: string[]};
@@ -64,6 +65,34 @@ export default function OrgPage() {
     })
   }, [userData, selectedOrg])
 
+
+  const resolveInvitation = useCallback((
+    member: user_organization_membership, accept: boolean
+  ) => {
+    QueryLakeResolveInvitation({
+      auth: userData?.auth as string,
+      organization_id: member.organization_id,
+      accept: accept,
+      onFinish: (data) => {
+        if (data === false) {
+          toast("Failed to resolve invitation");
+          
+          return; 
+        }
+        toast("Invitation resolved successfully");
+        if (accept) {
+          setOrganizations(organizations.map((org) => {
+            if (org.organization_id === member.organization_id) {
+              org.invite_still_open = false;
+            }
+            return org;
+          }));
+        } else {
+          setOrganizations(organizations.filter((org) => org.organization_id !== member.organization_id));
+        }
+      }
+    })
+  }, [userData, selectedOrg, organizations, setOrganizations])
 
   
   return (
@@ -136,27 +165,38 @@ export default function OrgPage() {
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle>Edit profile</DialogTitle>
+                          <DialogTitle>Resolve Invitation</DialogTitle>
                           <DialogDescription>
-                            Make changes to your profile here. Click save when you're done.
+                            You were invited to join organization `{org.organization_name}`.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name" className="text-right">
-                              Name
+                              Sender:
                             </Label>
-                            <Input id="name" value="Pedro Duarte" className="col-span-3" />
+                            <p>{org.sender}</p>
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="username" className="text-right">
-                              Username
+                            <Label htmlFor="name" className="text-right">
+                              Role:
                             </Label>
-                            <Input id="username" value="@peduarte" className="col-span-3" />
+                            <p>{org.role}</p>
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button type="submit">Save changes</Button>
+                          <DialogClose asChild>
+                            <Button type="submit" className="w-auto" onClick={() => {
+                              resolveInvitation(org, true);
+                            }}>
+                              Accept
+                            </Button>
+                          </DialogClose>
+                          <DialogClose asChild>
+                            <Button type="submit" className="w-auto" onClick={() => {
+                              resolveInvitation(org, false);
+                            }}>Decline</Button>
+                          </DialogClose>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
