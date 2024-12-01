@@ -329,6 +329,9 @@ export default function Page() {
             set_collection_name={setCollectionTitle}
             collection_description={collectionDescription}
             set_collection_description={setCollectionDescription}
+            add_files={(files) => {
+              
+            }}
           />
         </SidebarProvider>
           

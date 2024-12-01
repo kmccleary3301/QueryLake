@@ -25,7 +25,7 @@ function unescape_text(text : string) {
 	return text;
 }
 
-const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\)|\\\[.*?\\\]|\\\(.*?\\\))|\{cite\:.*?\}/;
+const all_md_patterns = /(\$\$.*?\$\$|\$.*?\$|\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*|\~\~.*?\~\~|`.*?`|\[.*?\]\(.*?\)|\\\[.*?\\\]|\\\(.*?\\\))|\{cite\:\d+\}/;
 
 function parseText(text : string, config : markdownRenderingConfig) {
 	text = escape_text(text);

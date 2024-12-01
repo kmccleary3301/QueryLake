@@ -15,7 +15,7 @@ import { openDocument } from "@/hooks/querylakeAPI";
 import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollAreaHorizontal } from "@/components/ui/scroll-area";
 import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
 import { textSegment } from "@/components/markdown/markdown-text-splitter";
 import { parse } from "path";
@@ -73,7 +73,7 @@ function InlineSource({
   
   return (
     <>
-      {((!isNaN(parseSourceIndex)) && (parseSourceIndex < sources.length)) ? (
+      {((!isNaN(parseSourceIndex)) && (parseSourceIndex < sources.length) && (sources[parseSourceIndex] !== undefined)) ? (
         
         <HoverCard>
           <HoverCardTrigger asChild>
@@ -154,7 +154,66 @@ function InlineSource({
       )}
     </>
   )
+}
 
+
+function SourcesBar({
+  sources,
+  user_auth,
+  className = "",
+}:{
+  sources: DocumentEmbeddingDictionary[],
+  user_auth: string,
+  className?: string
+}) {
+  return (
+      <div className="flex flex-row gap-2 overflow-x-scroll scrollbar-hide pt-2" style={{
+        marginLeft: "2.75rem",
+      }}>
+        {sources.map((source, index) => (
+          <HoverCard key={index}>
+            <HoverCardTrigger asChild>
+                <div
+                  className={`rounded-full px-2 max-w-[80px] h-7 bg-accent flex flex-col justify-center`}
+                  style={{
+                    maxWidth: "120px",
+                  }}
+                >
+                <p className="text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis">{source.document_name}</p>
+                </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="px-5 max-w-[320px]" side="top">
+              <h1 className="text-base">{source.document_name}</h1>
+              {source.rerank_score && (
+                <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
+              )}
+              <ScrollArea className="h-[200px] pr-3">
+              {(source.website_url) ? (
+                <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
+                  <Button variant={"ghost"} className="p-2 m-0 h-auto">
+                    <div className="max-w-[260px]">
+                      <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{source.text}</p>
+                    </div>
+                  </Button>
+                </Link>
+              ):(
+                <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
+                  openDocument({
+                    auth: user_auth,
+                    document_id: source?.document_id as string,
+                  })
+                }}>
+                  <div className="max-w-[260px]">
+                    <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{source.text}</p>
+                  </div>
+                </Button>
+              )}
+              </ScrollArea>
+            </HoverCardContent>
+          </HoverCard>
+        ))}
+      </div>
+  )
 }
 
 export default function Chat({
@@ -239,51 +298,7 @@ export default function Chat({
                 />
               </div>
               {(value.role === "assistant" && value.sources) && (
-                <div className="w-full flex flex-wrap gap-3 pl-11 pt-2" style={{marginLeft: "2.75rem"}}>
-                  {value.sources.map((source, index) => (
-                    <HoverCard key={index}>
-                      <HoverCardTrigger asChild>
-                        <div
-                          className={`rounded-xl px-2 max-w-[120px] h-8 bg-background border-[2px] flex flex-col justify-center`}
-                          style={{
-                            borderColor: source.website_url ? 
-                                `rgba(0, 220, 0, ${(source.rerank_score !== undefined)? (0.5 + 0.5*source.rerank_score/100).toString(): '0.5'})` : 
-                                `rgba(220, 0, 0, ${(source.rerank_score !== undefined)? (0.5 + 0.5*source.rerank_score/100).toString(): '0.5'})`
-                          }}>
-                          <p className="text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis">{source.document_name}</p>
-                        </div>
-                      </HoverCardTrigger>
-                      <HoverCardContent className="px-5 max-w-[320px]" side="top">
-                        <h1 className="text-base">{source.document_name}</h1>
-                        {source.rerank_score && (
-                          <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
-                        )}
-                        <ScrollArea className="h-[200px] pr-3">
-                        {(source.website_url) ? (
-                          <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
-                            <Button variant={"ghost"} className="p-2 m-0 h-auto">
-                              <div className="max-w-[260px]">
-                                <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{source.text}</p>
-                              </div>
-                            </Button>
-                          </Link>
-                        ):(
-                          <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
-                            openDocument({
-                              auth: userData?.auth as string,
-                              document_id: source?.document_id as string,
-                            })
-                          }}>
-                            <div className="max-w-[260px]">
-                              <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{source.text}</p>
-                            </div>
-                          </Button>
-                        )}
-                        </ScrollArea>
-                      </HoverCardContent>
-                    </HoverCard>
-                  ))}
-                </div>
+                <SourcesBar sources={value.sources} user_auth={userData?.auth as string} className="ml-[10px]"/>
               )}
               {(value.role === "assistant") && (
                 <div className="w-full flex flex-row pl-11 pt-2" style={{marginLeft: "2.75rem"}}>

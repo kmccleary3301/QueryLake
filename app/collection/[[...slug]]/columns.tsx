@@ -86,17 +86,14 @@ export const columnSchema = z.object({
   creation_timestamp: z.number(),
   integrity_sha256: z.string(),
   size_bytes: z.number(),
-  encryption_key_secure: z.string(),
-  organization_document_collection_hash_id: z.string().nullable(),
-  user_document_collection_hash_id: z.string(),
-  global_document_collection_hash_id: z.string().nullable(),
+  document_collection_id: z.string(),
   toolchain_session_id: z.string().nullable(),
   website_url: z.string().nullable(),
-  blob_id: z.string(),
-  blob_dir: z.string(),
+  blob_id: z.string().nullable(),
+  blob_dir: z.string().nullable(),
   finished_processing: z.boolean(),
   md: z.record(z.any()),
-  bm25_score: z.number()
+  bm25_score: z.number().nullable()
 });
 
 export const parseAsSort = createParser({
@@ -286,17 +283,13 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return (
         <>
           {value ? (
-            <p className="text-green-500 w-[100px]">Done</p>
+            <p className="text-green-500">Done</p>
           ):(
-            <div className="h-4 bg-accent flex flex-row space-x-1 text-nowrap px-2 rounded-full">
-              <div className='h-auto flex flex-col justify-center'>
-                <div style={{
-                  animation: 'spin 1.5s linear infinite'
-                }}>
-                  <LucideLoader2 className="w-3 h-3 text-primary" />
-                </div>
+            <div>
+              <div className="h-4 w-[90px] bg-accent flex items-center space-x-1 rounded-full px-2">
+                <LucideLoader2 className="w-3 h-3 text-primary animate-spin" />
+                <p className="text-xs">Processing</p>
               </div>
-              <p className='text-xs h-auto flex flex-col justify-center'>Processing</p>
             </div>
           )}
         </>

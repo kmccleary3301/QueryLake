@@ -38,7 +38,7 @@ import { DialogClose } from "@radix-ui/react-dialog";
 
 export default function OrgPage() {
   const { slug } = useParams() as {slug: string[]};
-  const { userData } = useContextAction();
+  const { userData, refreshCollectionGroups } = useContextAction();
   const [organizations, setOrganizations] = useState<user_organization_membership[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<user_organization_membership | undefined>();
   const [selectedOrgMembers, setSelectedOrgMembers] = useState<organization_memberships[]>([]);
@@ -66,29 +66,30 @@ export default function OrgPage() {
   }, [userData, selectedOrg])
 
 
-  const resolveInvitation = useCallback((
-    member: user_organization_membership, accept: boolean
-  ) => {
+  const resolveInvitation = useCallback((args : {
+    member: user_organization_membership, 
+    accept: boolean
+  }) => {
     QueryLakeResolveInvitation({
       auth: userData?.auth as string,
-      organization_id: member.organization_id,
-      accept: accept,
+      organization_id: args.member.organization_id,
+      accept: args.accept,
       onFinish: (data) => {
         if (data === false) {
           toast("Failed to resolve invitation");
-          
           return; 
         }
         toast("Invitation resolved successfully");
-        if (accept) {
+        if (args.accept) {
           setOrganizations(organizations.map((org) => {
-            if (org.organization_id === member.organization_id) {
+            if (org.organization_id === args.member.organization_id) {
               org.invite_still_open = false;
             }
             return org;
           }));
+
         } else {
-          setOrganizations(organizations.filter((org) => org.organization_id !== member.organization_id));
+          setOrganizations(organizations.filter((org) => org.organization_id !== args.member.organization_id));
         }
       }
     })
@@ -187,14 +188,14 @@ export default function OrgPage() {
                         <DialogFooter>
                           <DialogClose asChild>
                             <Button type="submit" className="w-auto" onClick={() => {
-                              resolveInvitation(org, true);
+                              resolveInvitation({member: org, accept: true});
                             }}>
                               Accept
                             </Button>
                           </DialogClose>
                           <DialogClose asChild>
                             <Button type="submit" className="w-auto" onClick={() => {
-                              resolveInvitation(org, false);
+                              resolveInvitation({member: org, accept: false});
                             }}>Decline</Button>
                           </DialogClose>
                         </DialogFooter>
