@@ -5,7 +5,7 @@ import MarkdownTextSplitter from "./markdown-text-splitter";
 import MarkdownCodeBlock from "./markdown-code-block";
 import stringHash from "@/hooks/stringHash";
 import MarkdownTable from "./markdown-table";
-import sanitizeMarkdown from "@/hooks/sanitizeMarkdown";
+import sanitizeMarkdown from "@/components/markdown/sanitizeMarkdown";
 import "./prose.css"
 import { cn } from "@/lib/utils";
 import { markdownRenderingConfig } from "./configs";
