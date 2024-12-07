@@ -9,9 +9,10 @@ import { substituteAny } from "@/types/toolchains";
 import ChatBarInput from "@/components/manual_components/chat-input-bar";
 import FileDropzone from "@/components/ui/file-dropzone";
 import { Textarea } from "@/components/ui/textarea";
-import { motion } from "framer-motion";
+import { delay, motion } from "framer-motion";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
+import SmoothHeightDiv from "@/components/manual_components/smooth-height-div";
 
 const test_text = `
 # Heading 1
@@ -178,6 +179,28 @@ export default function TestPage() {
     }
   }
 
+  const [counter, setCounter] = useState<number>(0);
+
+  useEffect(() => {
+    if (expanded) {
+      let timeouts : NodeJS.Timeout[] = [];
+      for (let i = 0; i < 40; i++) {
+        const timeout_get = setTimeout(() => {
+          setCounter(i);
+        }, i * 100);
+        timeouts.push(timeout_get);
+      }
+
+      return () => {
+        // cancel timeouts
+        for (let t of timeouts) {
+          clearTimeout(t);
+        }
+      }
+    } else {
+      setCounter(0);
+    }
+  }, [expanded]);
 
   
   return (
@@ -230,7 +253,20 @@ export default function TestPage() {
                       transition={{ duration: 0.5 }}
                     />
                   </ScrollAreaHorizontal>
-
+                  <SmoothHeightDiv className="border-2 border-purple-500">
+                  {/* <motion.div
+                    style={{ overflow: "hidden" }}
+                    initial={{ height: 0 }}
+                    animate={{ height: "auto" }}
+                    transition={{ duration: 0.5 }}
+                    exit={{ height: 0 }}
+                    key={"container"}
+                  > */}
+                    <p className="w-[100px]">
+                      {((counter !== 0)?Array(counter).fill(" Test Enabled"):"Test Disabled")}
+                    </p>
+                  {/* </motion.div> */}
+                  </SmoothHeightDiv>
                   <MarkdownRenderer input={markdownText} finished={false} config={CHAT_RENDERING_STYLE}/>
                 </div>
                 <div className="w-full h-[20px] rounded-md bg-gradient-to-l from-indigo-500 from-80% ..."/>

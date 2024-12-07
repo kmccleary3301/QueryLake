@@ -2,12 +2,12 @@
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, configEntriesMap, displayMapping } from "@/types/toolchain-interface";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, Copy } from "lucide-react";
+import { ArrowUpRight, ArrowUpRightFromCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import Link from "next/link";
@@ -16,9 +16,13 @@ import { QueryLakeLogoSvg } from "@/components/logo";
 import { MARKDOWN_CHAT_SAMPLE_TEXT } from "@/components/markdown/demo-text";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollAreaHorizontal } from "@/components/ui/scroll-area";
-import { CHAT_RENDERING_STYLE } from "@/components/markdown/configs";
+import { CHAT_RENDERING_STYLE, markdownRenderingConfig } from "@/components/markdown/configs";
 import { textSegment } from "@/components/markdown/markdown-text-splitter";
 import { parse } from "path";
+import { AnimatePresence, motion } from "framer-motion";
+import SmoothHeightDiv from "@/components/manual_components/smooth-height-div";
+import TextWithTooltip from "@/components/custom/text-with-tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -74,7 +78,6 @@ function InlineSource({
   return (
     <>
       {((!isNaN(parseSourceIndex)) && (parseSourceIndex < sources.length) && (sources[parseSourceIndex] !== undefined)) ? (
-        
         <HoverCard>
           <HoverCardTrigger asChild>
             <span style={{ transform: 'translateY(-2px)', display: 'inline-block', marginLeft: '2px' }}>
@@ -101,12 +104,21 @@ function InlineSource({
                   document_id: sources[parseSourceIndex].document_id as string,
                 })
               }}>
-                <ArrowUpRight className="w-4 h-4 text-theme-one"/>
+                <TooltipProvider disableHoverableContent delayDuration={50}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ArrowUpRightFromCircle className="w-4 h-4 text-primary"/>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-popover opacity-100">Go to Document</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                  
               </Button>
             </h4>
             {sources[parseSourceIndex].rerank_score && (
               <p className="text-sm py-3">Relevance Score: {sources[parseSourceIndex].rerank_score?.toFixed(2)}</p>
             )}
+            <div className="border-primary" style={{borderWidth: "0 0 0 0.2rem"}}>
             <ScrollArea className="h-[200px] pr-3 px-5">
             {(sources[parseSourceIndex].website_url !== undefined) ? (
               <Link href={sources[parseSourceIndex]?.website_url || ""} rel="noopener noreferrer" target="_blank">
@@ -129,6 +141,7 @@ function InlineSource({
                 </div>
             )}
             </ScrollArea>
+            </div>
           </HoverCardContent>
         </HoverCard>
         
@@ -216,6 +229,60 @@ function SourcesBar({
   )
 }
 
+function MarkdownSubComponent({
+  text,
+  config,
+  disabled = false
+}:{
+  text: string,
+  config: markdownRenderingConfig,
+  disabled: boolean
+}) {
+
+  const [workingText, setWorkingText] = useState(text);
+  const cachedText = useRef<string>("");
+  const workingTextBuffer = useRef<string>("");
+  const timeouts = useRef<NodeJS.Timeout[]>([]);
+
+  const addToken = useCallback((delay: number) => {
+    if (workingTextBuffer.current.length === 0) return;
+    return setTimeout(() => {
+      setWorkingText(workingText + workingTextBuffer.current.slice(0, 1));
+      workingTextBuffer.current = workingTextBuffer.current.slice(1);
+    }, delay);
+  }, [workingText, workingTextBuffer]);
+
+  useEffect(() => {
+    for (let t of timeouts.current) {
+      clearTimeout(t);
+    }
+    timeouts.current = [];
+    
+    if (cachedText.current != text.slice(0, cachedText.current.length)) {
+      setWorkingText(text);
+    } else {
+      workingTextBuffer.current = text;
+      const stagger_delay = 1 / workingTextBuffer.current.length;
+      for (let i = 0; i < workingTextBuffer.current.length; i++) {
+        const timeout = addToken(i * stagger_delay);
+        if (timeout) timeouts.current.push(timeout);
+      }
+    }
+    cachedText.current = text;
+  }, [text, workingTextBuffer]);
+
+
+  return (
+    <MarkdownRenderer 
+      className="ml-11"
+      disableRender={disabled}
+      input={text} 
+      finished={false}
+      config={config}
+    />
+  )
+}
+
 export default function Chat({
 	configuration,
   demo = false,
@@ -257,6 +324,7 @@ export default function Chat({
     <>
       {currentValue && (
         <div className="flex flex-col gap-8 pb-2">
+          <AnimatePresence>
           {(Array.isArray(currentValue)?currentValue:[currentValue]).map((value, index) => (
             <div className="flex flex-col gap-0" key={index}>
               <div key={index} className="flex flex-row">
@@ -279,12 +347,12 @@ export default function Chat({
                 </div>
                 <p className="select-none h-7 text-primary/70">{(value.role === "user")?"You":"QueryLake"}</p>
               </div>
-              <div className={cn("max-w-full -mt-1.5")} style={{marginLeft: "2.75rem"}}> {/* The left pad doesn't render for some reason */}
-                <MarkdownRenderer 
-                  className="ml-11"
-                  disableRender={(value.role === "user")}
-                  input={(value || {}).content || ""} 
-                  finished={false}
+              <div> {/* The left pad doesn't render for some reason */}
+                
+              <SmoothHeightDiv className={cn("max-w-full -mt-1.5")} style={{marginLeft: "2.75rem"}}>
+                <MarkdownSubComponent
+                  disabled={(value.role === "user")}
+                  text={(value || {}).content || ""}
                   config={{
                     ...CHAT_RENDERING_STYLE,
                     citation: (textSeg: textSegment) => (
@@ -296,6 +364,7 @@ export default function Chat({
                     )
                   }}
                 />
+              </SmoothHeightDiv>
               </div>
               {(value.role === "assistant" && value.sources) && (
                 <SourcesBar sources={value.sources} user_auth={userData?.auth as string} className="ml-[10px]"/>
@@ -309,6 +378,7 @@ export default function Chat({
               )}
             </div>
           ))}
+          </AnimatePresence>
         </div>
       )}
     </>

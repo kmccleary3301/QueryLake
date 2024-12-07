@@ -67,13 +67,17 @@ export default function CollectionPreview(props: CollectionPreviewProps) {
         </Button>
         </div>
         <Link className='flex-grow whitespace-nowrap overflow-hidden text-ellipsis' href={`/collection/edit/${props.collectionId}`}>
-          <Button variant={"link"} className="text-base text-left pt-0 pb-0 pl-0 pr-0 w-full h-auto justify-start" onClick={props.onPress}>
+          <Button variant={"link"} className="text-base text-left pt-0 pb-0 pl-0 pr-0 -mr-1 w-full h-auto justify-start" onClick={props.onPress}>
           <p className="text-sm whitespace-nowrap font-normal overflow-hidden text-ellipsis">{title}</p>
           </Button>
         </Link>
-        <p className="bg-foreground min-w-5 h-5 text-background text-xs text-center rounded-full flex flex-col justify-center px-1">
-          {(documentCount <= 999)?documentCount.toString():"999+"}
-        </p>
+        <div className='w-[40px]'>
+          <div className="bg-foreground min-w-0 h-5 text-background text-xs text-center rounded-full px-1">
+            <span className="text-xs h-5 flex flex-col justify-center">
+            {(documentCount <= 999)?documentCount.toString():"999+"}
+            </span>
+          </div>
+        </div>
 			</div>
 		</div>
 	);
