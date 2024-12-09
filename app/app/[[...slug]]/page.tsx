@@ -126,12 +126,32 @@ export default function AppPage() {
     }
   }, [firstEventRan]);
 
+
+  const STATE_UPDATE_MIN_WAIT = 25; // ms
+  const updateStateTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const last_timeout = useRef<number>(0);
+
   const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
+    // console.log("Updating state", state);
     const value = (typeof state === "function") ? state(toolchainStateRef.current) : state;
     toolchainStateRef.current = value;
     const value_copied = JSON.parse(JSON.stringify(value));
+    const update_timeout = Math.max(0, Date.now() - (last_timeout.current + STATE_UPDATE_MIN_WAIT));
+    // const update_timeout = STATE_UPDATE_MIN_WAIT;
+    if (updateStateTimeout.current !== undefined) {
+      clearTimeout(updateStateTimeout.current);
+    }
+
+    // updateStateTimeout.current = setTimeout(() => {
+    //   console.log("Updating state", state);
+    //   last_timeout.current = Date.now();
+    //   setToolchainState(value_copied);
+    // }, update_timeout);
+
     setToolchainState(value_copied);
-  }, [toolchainState, setToolchainState]);
+
+    
+  }, [toolchainStateRef?.current, setToolchainState]);
 
   const onOpenSessionTC = useCallback(( create_session : boolean) => {
     if (toolchainWebsocket?.current === undefined) return;
@@ -185,7 +205,7 @@ export default function AppPage() {
         setFirstEventRan((prevState) => [prevState[0], true]);
       },
       onMessage: (message : ToolchainSessionMessage) => {
-        // console.log("Message from loaded Toolchain:", message);
+        console.log("Message from loaded Toolchain:", message);
         if (message.toolchain_session_id !== undefined) {
           sessionId.current = message.toolchain_session_id;
         }
@@ -220,7 +240,7 @@ export default function AppPage() {
         setCurrentEvent(undefined);
       }
     });
-  }, [toolchainWebsocket, sessionId]);
+  }, [toolchainWebsocket, sessionId, setCurrentEvent, updateState]);
 
   // This is a URL change monitor to refresh content.
   useEffect(() => {

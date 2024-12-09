@@ -289,7 +289,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
 
   const last_render_time = useRef<number>(0);
   const rerender_timeout = useRef<NodeJS.Timeout>();
-  const RENDER_INTERVAL = 100;
+  const RENDER_INTERVAL = 25;
 
   // useEffect(() => {
   //   setTokens(lexer.lex(sanitizeMarkdown(input)))
@@ -299,69 +299,99 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
 
   useEffect(() => {
     // setTokens(lexer.lex(sanitizeMarkdown(input)));
-
-    if (
-      bufferedText.current !== input.slice(0, bufferedText.current.length) ||
-      bufferedText.current.length === 0 && input.length > 0
-    ) {
-      // Prefix mismatch, reset the tokens.
-      // console.log("Prefix mismatch, resetting tokens.");
-      bufferedText.current = input;
-      // setTokens(lexer.lex(sanitizeMarkdown(input)));
-    } else if (tokens.length > 0) {
-      // Let's parse only the recent text.
-
-      const new_buffer_text = input.slice(bufferedText.current.length);
-      const recent_token_text = tokens[tokens.length - 1].raw;
-      const text_to_lex = recent_token_text + new_buffer_text;
-      // console.log("Text to lex: ", text_to_lex);
-
-      const time_until_next_render = 
+    const time_until_next_render = 
         Math.max(0, RENDER_INTERVAL - (Date.now() - last_render_time.current));
-
-      if (rerender_timeout.current) {
-        clearTimeout(rerender_timeout.current);
-      }
-
-      const getTimeout = setTimeout(() => {
-        // console.log("Delta text: ", new_buffer_text);
-        // Update the last render time.
-        last_render_time.current = Date.now(); 
-        
-        // Lex our tokens.
-        const new_tokens = lexer.lex(sanitizeMarkdown(text_to_lex));
-
-        const end_whitespace_match = text_to_lex.match(/\s+$/);
-        const end_whitespace = (end_whitespace_match)?end_whitespace_match[0]:"";
-        if (new_tokens[new_tokens.length - 1]?.raw.match(/\s+$/)) {
-          Error("Last token raw ends in a whitespace.");
-        }
-        unusedRecentText.current = end_whitespace;
-
-
-        // Update the tokens.
-        setTokens([...tokens.slice(
-          // Remove the last token
-          0, tokens.length - 1
-        ), ...new_tokens]);
-        
-        bufferedText.current = input;
-      }, time_until_next_render);
-
-      rerender_timeout.current = getTimeout;
-    } else {
-      const new_tokens = lexer.lex(sanitizeMarkdown(input));
-      const end_whitespace_match = input.match(/\s+$/);
-      const end_whitespace = (end_whitespace_match)?end_whitespace_match[0]:"";
-      if (new_tokens[new_tokens.length - 1]?.raw.match(/\s+$/)) {
-        Error("Last token raw ends in a whitespace.");
-      }
-      unusedRecentText.current = end_whitespace;
-
-      setTokens(new_tokens);
-
-      bufferedText.current = input;
+    
+    if (rerender_timeout.current) {
+      clearTimeout(rerender_timeout.current);
     }
+
+    const getTimeout = setTimeout(() => {
+      // console.log("Delta text: ", new_buffer_text);
+      // Update the last render time.
+      last_render_time.current = Date.now(); 
+      
+      // Lex our tokens.
+      const new_tokens = lexer.lex(sanitizeMarkdown(input));
+      
+      // Update the tokens.
+      setTokens(new_tokens);
+      
+      // bufferedText.current = input;
+
+      // setUnrenderedText("");
+    }, time_until_next_render);
+
+    rerender_timeout.current = getTimeout;
+
+    // if (
+    //   bufferedText.current !== input.slice(0, bufferedText.current.length) ||
+    //   bufferedText.current.length === 0 && input.length > 0
+    // ) {
+    //   // Prefix mismatch, reset the tokens.
+    //   // console.log("Prefix mismatch, resetting tokens.");
+    //   bufferedText.current = input;
+    //   // setTokens(lexer.lex(sanitizeMarkdown(input)));
+    // } else if (tokens.length > 0) {
+    //   // Let's parse only the recent text.
+      
+    //   const new_buffer_text = input.slice(bufferedText.current.length);
+    //   // setUnrenderedText(new_buffer_text);
+
+
+    //   const recent_token_text = tokens[tokens.length - 1].raw;
+    //   const text_to_lex = recent_token_text + new_buffer_text;
+      
+
+    //   // TODO: account for trailing whitespaces and possibly other strings not used.
+
+    //   const time_until_next_render = 
+    //     Math.max(0, RENDER_INTERVAL - (Date.now() - last_render_time.current));
+
+    //   if (rerender_timeout.current) {
+    //     clearTimeout(rerender_timeout.current);
+    //   }
+
+    //   const getTimeout = setTimeout(() => {
+    //     // console.log("Delta text: ", new_buffer_text);
+    //     // Update the last render time.
+    //     last_render_time.current = Date.now(); 
+        
+    //     // Lex our tokens.
+    //     const new_tokens = lexer.lex(sanitizeMarkdown(text_to_lex));
+        
+    //     const end_whitespace_match = text_to_lex.match(/\s+$/);
+    //     const end_whitespace = (end_whitespace_match)?end_whitespace_match[0]:"";
+    //     if (new_tokens[new_tokens.length - 1]?.raw.match(/\s+$/)) {
+    //       Error("Last token raw ends in a whitespace.");
+    //     }
+    //     unusedRecentText.current = end_whitespace;
+
+    //     // Update the tokens.
+    //     setTokens([...tokens.slice(
+    //       // Remove the last token
+    //       0, tokens.length - 1
+    //     ), ...new_tokens]);
+        
+    //     bufferedText.current = input;
+
+    //     // setUnrenderedText("");
+    //   }, time_until_next_render);
+
+    //   rerender_timeout.current = getTimeout;
+    // } else {
+    //   const new_tokens = lexer.lex(sanitizeMarkdown(input));
+    //   const end_whitespace_match = input.match(/\s+$/);
+    //   const end_whitespace = (end_whitespace_match)?end_whitespace_match[0]:"";
+    //   if (new_tokens[new_tokens.length - 1]?.raw.match(/\s+$/)) {
+    //     Error("Last token raw ends in a whitespace.");
+    //   }
+    //   unusedRecentText.current = end_whitespace;
+
+    //   setTokens(new_tokens);
+
+    //   bufferedText.current = input;
+    // }
 
   }, [input]);
 
@@ -379,7 +409,15 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
         <>
         {unpacked?(
           <>
-            {tokens.map((v : Token, k : number) => (
+            {(
+              // (unrenderedText.length > 0)?
+              // [...tokens.slice(0, tokens.length-1), {
+              //   ...tokens[tokens.length-1],
+              //   raw: tokens[tokens.length-1].raw + unrenderedText,
+              // }] :
+              // tokens
+              tokens
+            ).map((v : Token, k : number) => (
               <MarkdownMapComponent
                 className={
                   (tokens[0].type === "list" && v.type === "list")?

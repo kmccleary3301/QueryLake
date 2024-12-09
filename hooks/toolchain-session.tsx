@@ -453,9 +453,9 @@ export function appendInRoute(
 			}
 		} else if (Array.isArray(objectForStaticRoute)) {
 
-      console.log("APPEND CONDITION 2", objectForStaticRoute, value);
+      // console.log("APPEND CONDITION 2", objectForStaticRoute, value);
 			objectForStaticRoute.push(value);
-      console.log("AFTER:", objectForStaticRoute)
+      // console.log("AFTER:", objectForStaticRoute)
 		} else {
 
 			if (typeof objectForStaticRoute === "string") {

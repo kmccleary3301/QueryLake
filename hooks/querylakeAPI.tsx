@@ -1050,3 +1050,42 @@ export function QueryLakeResolveInvitation(args :{
 		});
 	});
 }
+
+export type fetch_document_result = {
+  file_name: string;
+  creation_timestamp: number;
+  size_bytes: number;
+  md: Record<string, any>;
+  integrity_sha256: string;
+  id: string;
+  finished_processing: boolean;
+  collection_id: string;
+  chunk_count: number;
+}
+
+export function QueryLakeFetchDocument(args : {
+  auth: string,
+  document_id: string,
+  onFinish?: (result : fetch_document_result | false) => void,
+}) {
+  const url = craftUrl(`/api/fetch_document`, {
+    "auth": args.auth,
+    "document_id": args.document_id,
+    "count_chunks": true
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : false
+      } | { success: true, result: fetch_document_result }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(data.result);
+		});
+	});
+}

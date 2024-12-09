@@ -10,6 +10,7 @@ import {
   inputMapping,
 } from "@/types/toolchain-interface";
 
+import BasfIntroScreen from '@/toolchain_components/basf-intro-screen';
 import ChatInput from '@/toolchain_components/chat-input';
 import Chat from '@/toolchain_components/chat';
 import CurrentEventDisplay from '@/toolchain_components/current-event-display';
@@ -66,6 +67,11 @@ export function ToolchainComponentMapper({
     case "text":
       return (
         <Text configuration={(info as displayMapping)}/>
+      );
+
+    case "basf-intro-screen":
+      return (
+        <BasfIntroScreen configuration={info}/>
       );
 
     case "chat-input":

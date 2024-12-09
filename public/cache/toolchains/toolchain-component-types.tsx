@@ -1,10 +1,24 @@
 import { inputComponentConfig } from "@/types/toolchain-interface";
 
 export type displayComponents = "chat" | "current-event-display" | "markdown" | "text";
-export type inputComponents = "chat-input" | "file-upload" | "switch";
+export type inputComponents = "basf-intro-screen" | "chat-input" | "file-upload" | "switch";
 export const DISPLAY_COMPONENTS : displayComponents[] = ["chat","current-event-display","markdown","text"];
-export const INPUT_COMPONENTS : inputComponents[] = ["chat-input","file-upload","switch"];
+export const INPUT_COMPONENTS : inputComponents[] = ["basf-intro-screen","chat-input","file-upload","switch"];
 export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
+  "basf-intro-screen": {
+    "hooks": [
+      "on_upload",
+      "on_submit",
+      "selected_collections"
+    ],
+    "config": [
+      {
+        "name": "test_7_long_string",
+        "type": "long_string",
+        "default": "Hello, how are you?"
+      }
+    ]
+  },
   "chat-input": {
     "hooks": [
       "on_upload",

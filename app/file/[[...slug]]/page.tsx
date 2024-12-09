@@ -8,7 +8,7 @@ import { useQueryStates } from "nuqs";
 import { Usable, useEffect, useMemo, useState, use } from "react";
 import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 import { DataFetcher, dataOptions } from "./query-options";
-import { fetchCollection } from "@/hooks/querylakeAPI";
+import { fetchCollection, QueryLakeFetchDocument } from "@/hooks/querylakeAPI";
 import craftUrl from "@/hooks/craftUrl";
 
 import axios from 'axios';
@@ -35,18 +35,19 @@ import "./spin.css";
 import { handleCopy } from '@/components/markdown/markdown-code-block';
 import { ColumnDef, Table } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { CollectionDataTableSheetDetails, CollectionSheetDetailsContent } from "./data-table-sheet-details";
+import { DocumentChunkTableSheetDetails, DocumentChunkSheetDetailsContent } from "./data-table-sheet-details";
 import { useParams } from "next/navigation";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { AppSidebar } from "@/components/app-sidebar";
-import { CollectionSidebar } from "./collection-sidebar";
+import { CollectionSidebar } from "./document-sidebar";
 import { userDataType } from "@/types/globalTypes";
 
 // const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
 
 const defaultFetcher: DataFetcher = async (params) => {
   console.log("defaultFetcher Params", params);
+  
   const url_make = craftUrl('/api/search_bm25', params);
 
   const response = await fetch(url_make);
@@ -77,42 +78,28 @@ export default function Page() {
     slug: string[],
   };
 
-  const router = useRouter();
-
-  const collection_mode_immediate = 
-  (
-    ["create", "edit", "view"].indexOf(
-    resolvedParams["slug"][0]) 
-    > -1
-  ) ? 
-    resolvedParams["slug"][0] as collection_mode_type :
-    undefined;
+  const collection_mode_immediate = "view";
   
   const [CollectionMode, setCollectionMode] = useState<collection_mode_type>(collection_mode_immediate);
   const [collectionTitle, setCollectionTitle] = useState<string>("");
-  const [collectionDescription, setCollectionDescription] = useState<string>("");
   const [collectionDocuments, setCollectionDocuments] = useState<fetch_collection_document_type[]>([]);
-  const [collectionIsPublic, setCollectionIsPublic] = useState<boolean>(false);
-  const [collectionOwner, setCollectionOwner] = useState<string>("personal");
-  const [publishStarted, setPublishStarted] = useState<boolean>(false);
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [collectionId, setCollectionId] = useState<string | undefined>(undefined);
 
   const fetchCollectionCallback = () => {
     if (!userData?.auth) return;
-    fetchCollection({
+    QueryLakeFetchDocument({
       auth: userData.auth,
-      collection_id: resolvedParams["slug"][1],
+      document_id: resolvedParams["slug"][1],
       onFinish: (data) => {
-        console.log("Collection Data", data);
-        if (data === undefined) { return; }
-        setCollectionTitle(data.title);
-        setCollectionDescription(data.description);
-        setCollectionIsPublic(data.public);
-        setTotalDBRowCount(data.document_count);
-        setCollectionOwner(data.owner);
+        console.log("Document Data", data);
+        if (data === false) { return; }
+        setCollectionTitle(data.file_name);
+        setTotalDBRowCount(data.chunk_count);
+        setCollectionId(data.collection_id);
       }
     });
   };
@@ -144,75 +131,13 @@ export default function Page() {
   }, [CollectionMode])
 
 
-  const start_document_uploads = async (collection_hash_id : string) => {
-    if (pendingUploadFiles === null) return;
-
-    const url_2 = craftUrl("/upload/", {
-      "auth": userData?.auth as string,
-      "collection_hash_id": collection_hash_id
-    });
-  
-    setPublishStarted(true);
-    
-    setUploadingFiles(pendingUploadFiles.map((file) => {
-      return {
-        title: file.name,
-        progress: 0
-      }
-    }));
-
-    const totalCount = pendingUploadFiles.length;
-
-    for (let i = 0; i < pendingUploadFiles.length; i++) {
-      const file = pendingUploadFiles[i];
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      try {
-        const response = await axios.post(url_2.toString(), formData, {
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded / (progressEvent.total || 1)) * 100);
-            console.log(`File ${file.name} upload progress: ${progress}%`, progress);
-            setUploadingFiles(files => [{...files[0], progress: progress}, ...files.slice(1)]);
-            // setUploadingFiles(files => [...files.slice(0, i), {...files[i], progress: progress}, ...files.slice(i+1)]);
-          },
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-
-        const response_data = response.data as {success: false} | {success : true, result: fetch_collection_document_type};
-
-        if (response_data.success) {
-          setUploadingFiles(files => files.slice(1));
-          setCollectionDocuments((docs) => [response_data.result,...docs]);
-          if (i === totalCount - 1) {
-            onFinishedUploads(collection_hash_id);
-          }
-        }
-        setPendingUploadFiles((files) => files?.filter((_, j) => j !== 0) || null)
-        console.log("Pending Uploading Files", pendingUploadFiles.length);
-
-      } catch (error) {
-        console.error(`Failed to upload file ${file.name}:`, error);
-      }
-    }
-  };
-
-  const onFinishedUploads = (collection_hash_id : string) => {
-    setPublishStarted(false);
-    setPendingUploadFiles(null);
-    refreshCollectionGroups();
-    if (CollectionMode === "create")
-      router.push(`/collection/edit/${collection_hash_id}`);
-  }
-
   const [search] = useQueryStates(searchParamsParser);
   const { data, isFetching, isLoading, fetchNextPage } = useInfiniteQuery(
     dataOptions(
       search,
       userData?.auth as string,
       resolvedParams["slug"][1],
+      collectionId as string,
       defaultFetcher
     )
   );
@@ -222,9 +147,14 @@ export default function Page() {
     [data?.pages]
   );
 
-  useEffect(() => {
-    console.log("Data", data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log("Data", data);
+  // }, [data]);
+
+  // useEffect(() => {
+  //   if (collectionId === undefined) return;
+  //   fetchNextPage();
+  // }, [collectionId]);
 
 
   const lastPage = data?.pages?.[data?.pages.length - 1];
@@ -292,27 +222,24 @@ export default function Page() {
                 fetchNextPage={fetchNextPage}
                 rowEntrySidebarComponent={(props: {selectedRow: ColumnSchema | undefined, table: Table<ColumnSchema>}) => {
                   return (
-                    <CollectionDataTableSheetDetails
+                    <DocumentChunkTableSheetDetails
                       // TODO: make it dynamic via renderSheetDetailsContent
-                      title={(props.selectedRow as ColumnSchema | undefined)?.file_name}
+                      title={(props.selectedRow as ColumnSchema | undefined)?.document_name}
                       titleClassName="font-mono"
                       table={props.table}
                       onDownload={() => {
                         if (!props.selectedRow) return;
                         openDocument({
                           auth: userData?.auth as string,
-                          document_id: props.selectedRow?.id
+                          document_id: resolvedParams["slug"][1]
                         });
                       }}
-                      viewChunks={() => {
-                        window.open(`/file/view/${props.selectedRow?.id}?sort=document_chunk_number.asc`);
-                      }}
                     >
-                      <CollectionSheetDetailsContent
+                      <DocumentChunkSheetDetailsContent
                         data={props.selectedRow as ColumnSchema}
                         filterRows={totalDBRowCount}
                       />
-                    </CollectionDataTableSheetDetails>
+                    </DocumentChunkTableSheetDetails>
                   )
                 }}
                 setControlsOpen={setSidebarOpen}
@@ -323,18 +250,9 @@ export default function Page() {
             collapsible="motion" 
             side="right"
             user_auth={userData as userDataType}
-            collection_id={resolvedParams["slug"][1]}
-            collection_is_public={collectionIsPublic}
-            set_collection_is_public={setCollectionIsPublic}
-            collection_owner={collectionOwner}
-            set_collection_owner={setCollectionOwner}
+            document_id={resolvedParams["slug"][1]}
             collection_name={collectionTitle}
             set_collection_name={setCollectionTitle}
-            collection_description={collectionDescription}
-            set_collection_description={setCollectionDescription}
-            add_files={(files) => {
-              
-            }}
           />
         </SidebarProvider>
           

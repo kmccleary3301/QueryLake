@@ -91,7 +91,7 @@ function parseText(text : string, config : markdownRenderingConfig) {
         raw_text: unescape_text(match[0]),
 				type: "escaped_square_brackets"
       });
-      console.log("Got square brackets:", string_segments[string_segments.length-1]);
+    //   console.log("Got square brackets:", string_segments[string_segments.length-1]);
     }
     else if (config.escaped_parentheses && match[0].length > 4 && unescape_text(match[0].slice(0, 2)) === "\\(") {
       string_segments.push({

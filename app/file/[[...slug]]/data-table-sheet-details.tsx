@@ -36,17 +36,15 @@ export interface DataTableSheetDetailsProps<TData> {
   children?: React.ReactNode;
   onDelete?: () => void;
   onDownload?: () => void;
-  viewChunks?: () => void;
 }
 
-export function CollectionDataTableSheetDetails<TData>({
+export function DocumentChunkTableSheetDetails<TData>({
   table,
   title,
   titleClassName,
   children,
   onDelete,
   onDownload,
-  viewChunks,
 }: DataTableSheetDetailsProps<TData>) {
   const selectedRowKey =
     Object.keys(table.getState().rowSelection)?.[0] || undefined;
@@ -109,11 +107,8 @@ export function CollectionDataTableSheetDetails<TData>({
         </SheetDescription>
         <div className="p-4">{children}</div>
         <SheetFooter className="px-4">
-          <Button variant="default" onClick={viewChunks} className="p-2 h-8">
-          <span className="">View Chunks</span>
-          </Button>
-          <Button variant="default" onClick={onDownload} className="p-2 h-8 w-8">
-            <Download className="h-4 w-4 text-background" />
+          <Button variant="default" onClick={onDownload} className="p-2 h-8">
+          <span className="">Open Document</span>
           </Button>
           <SheetClose asChild>
             <Button variant="destructive" type="submit" onSubmit={onDelete} className="h-8">
@@ -134,7 +129,7 @@ interface SheetDetailsContentProps
   filterRows: number;
 }
 
-export function CollectionSheetDetailsContent({
+export function DocumentChunkSheetDetailsContent({
   data,
   filterRows,
   ...props
@@ -151,7 +146,7 @@ export function CollectionSheetDetailsContent({
       <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
         <dt className="text-muted-foreground">Name</dt>
         <dd className="font-mono">
-          <span className="text-muted-foreground">{data.file_name}</span>
+          <span className="text-muted-foreground text-wrap">{data.document_name}</span>
         </dd>
       </div>
       <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
@@ -159,6 +154,10 @@ export function CollectionSheetDetailsContent({
         <dd className="font-mono truncate">{data.id}</dd>
       </div>
       <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
+        <dt className="text-muted-foreground">Chunk Index</dt>
+        <dd className="font-mono truncate">{data.document_chunk_number}</dd>
+      </div>
+      {/* <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
         <dt className="text-muted-foreground">Processing</dt>
         <dd>
           {data.finished_processing ? (
@@ -167,7 +166,7 @@ export function CollectionSheetDetailsContent({
             <X className="h-4 w-4 text-red-500" />
           )}
         </dd>
-      </div>
+      </div> */}
       <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
         <dt className="text-muted-foreground">Upload Date</dt>
         <dd className="font-mono text-right">{formatDate(new Date(1000*(data.creation_timestamp)))}</dd>
@@ -179,29 +178,36 @@ export function CollectionSheetDetailsContent({
             variant="outline"
             className={`${statusColor.bg} ${statusColor.border} ${statusColor.text} font-mono`}
           >
-            {data.file_name.split(".").pop()?.toLowerCase()}
+            {data.document_name.split(".").pop()?.toLowerCase()}
           </Badge>
         </dd>
       </div>
-      <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
-        <dt className="text-muted-foreground">Integrity</dt>
-        <dd className="font-mono truncate text-xs">
-          {data.integrity_sha256.match(/.{32}/g)?.map((str, i) => (
-            <div key={i} className="w-full">
-              {str}
-            </div>
-          ))}
-        </dd>
-      </div>
+      {(data.document_md.integrity_sha256 as string) && (
+        <div className="flex gap-4 py-2 border-b text-sm justify-between items-center">
+          <dt className="text-muted-foreground">Integrity</dt>
+          <dd className="font-mono truncate text-xs">
+            {data.document_md.integrity_sha256.match(/.{32}/g)?.map((str : string, i : number) => (
+              <div key={i} className="w-full">
+                {str}
+              </div>
+            ))}
+          </dd>
+        </div>
+      )}
       <div className="flex flex-col gap-2 py-2 border-b text-sm text-left">
-        <dt className="text-muted-foreground">Metadata</dt>
+        <dt className="text-muted-foreground">Chunk Metadata</dt>
         {/* <CopyToClipboardContainer className="rounded-md bg-destructive/30 border border-destructive/50 p-2 whitespace-pre-wrap break-all font-mono">
           {JSON.stringify(data.md, null, 2)}
         </CopyToClipboardContainer> */}
         <MarkdownCodeBlock lang="json" text={JSON.stringify(data.md, null, 2)}/>
       </div>
-      
-      
+      <div className="flex flex-col gap-2 py-2 border-b text-sm text-left">
+        <dt className="text-muted-foreground">Document Metadata</dt>
+        {/* <CopyToClipboardContainer className="rounded-md bg-destructive/30 border border-destructive/50 p-2 whitespace-pre-wrap break-all font-mono">
+          {JSON.stringify(data.md, null, 2)}
+        </CopyToClipboardContainer> */}
+        <MarkdownCodeBlock lang="json" text={JSON.stringify(data.document_md, null, 2)}/>
+      </div>
       
       {/* {data.message ? (
         <div className="flex flex-col gap-2 py-2 border-b text-sm text-left">

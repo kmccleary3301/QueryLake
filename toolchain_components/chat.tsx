@@ -7,7 +7,7 @@ import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowUpRightFromCircle, Copy } from "lucide-react";
+import { ArrowUpRight, ArrowUpRightFromCircle, Copy, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import Link from "next/link";
@@ -23,6 +23,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import SmoothHeightDiv from "@/components/manual_components/smooth-height-div";
 import TextWithTooltip from "@/components/custom/text-with-tooltip";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import "./shimmer_1.css"
+
 
 export const METADATA : componentMetaDataType = {
   label: "Chat",
@@ -55,11 +57,12 @@ export type DocumentEmbeddingDictionary = {
 	text: string;
   website_url?: string;
   rerank_score?: number;
-  document_id?: string;
+  document_id: string;
 } & documentEmbeddingSpecialFields1 & documentEmbeddingSpecialFields2 & documentEmbeddingSpecialFields3
 
 export type chatEntry = {
 	role?: "user" | "assistant",
+  headline?: {search: string}[],
 	content: string,
 	sources?: DocumentEmbeddingDictionary[]
 }
@@ -129,16 +132,16 @@ function InlineSource({
                 </Button>
               </Link>
             ):(
-                <div className="justify-start pb-[20px]">
-                  <div className="opacity-30" style={{marginLeft: "0.1rem" }}> {/* The left pad doesn't render for some reason */}
-                    <MarkdownRenderer 
-                      className="w-[280px] opacity-5"
-                      input={sources[parseSourceIndex].text} 
-                      finished={false}
-                      config={CHAT_RENDERING_STYLE}
-                    />
-                    </div>
+              <div className="justify-start pb-[20px]">
+                <div className="" style={{marginLeft: "0.1rem" }}> {/* The left pad doesn't render for some reason */}
+                  <MarkdownRenderer 
+                    className="w-[280px]"
+                    input={sources[parseSourceIndex].text} 
+                    finished={false}
+                    config={CHAT_RENDERING_STYLE}
+                  />
                 </div>
+              </div>
             )}
             </ScrollArea>
             </div>
@@ -170,6 +173,73 @@ function InlineSource({
 }
 
 
+type source_compiled = {
+  document_id: string;
+  document_name: string;
+  sources: DocumentEmbeddingDictionary[];
+}
+
+function SourcesBarSource({
+  source,
+  user_auth,
+}:{
+  source: source_compiled,
+  user_auth: string,
+}) {
+
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <div
+          className={`rounded-lg px-2 py-1 h-[45px] w-[200px] bg-accent flex flex-row justify-start`}
+          // style={{
+          //   maxWidth: "120px",
+          // }}
+        >
+          <div className="w-[35px] h-auto flex flex-col justify-start pt-[5px] pr-[5px]" style={{paddingTop: "5px"}}>
+            <FileText className="w-6 h-6 text-primary"/>
+          </div>
+          <div className="w-[140px] flex flex-col justify-around overflow-hidden">
+            <span className="text-primary text-xs text-wrap line-clamp-2 h-[5rem] text-ellipsis">
+              {source.document_name}
+            </span>
+            <p className="text-xs opacity-30 text-primary/50">{source.sources.length} segments</p>
+          </div>
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent className="px-5 max-w-[320px]" side="top">
+        {/* <h1 className="text-base">{source.document_name}</h1>
+        {source.rerank_score && (
+          <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
+        )} */}
+        <ScrollArea className="h-[200px] pr-3">
+        {/* {(source.website_url) ? (
+          <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
+            <Button variant={"ghost"} className="p-2 m-0 h-auto">
+              <div className="max-w-[260px]">
+                <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{source.text}</p>
+              </div>
+            </Button>
+          </Link>
+        ):(
+          <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
+            openDocument({
+              auth: user_auth,
+              document_id: source?.document_id as string,
+            })
+          }}>
+            <div className="max-w-[260px]">
+              <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{source.text}</p>
+            </div>
+          </Button>
+        )} */}
+        </ScrollArea>
+      </HoverCardContent>
+    </HoverCard>
+  )
+}
+
+
 function SourcesBar({
   sources,
   user_auth,
@@ -179,53 +249,53 @@ function SourcesBar({
   user_auth: string,
   className?: string
 }) {
+
+  const [compiledSources, setCompiledSources] = useState<source_compiled[]>([]);
+
+  useEffect(() => {
+    // map by document_id
+    let sources_map = new Map<string, source_compiled>();
+    for (let source of sources) {
+      if (sources_map.has(source.document_id)) {
+        sources_map.get(source.document_id)?.sources.push(source);
+      } else {
+        sources_map.set(source.document_id, {
+          document_id: source.document_id,
+          document_name: source.document_name,
+          sources: [source]
+        });
+      }
+    }
+    const new_sources_compiled = Array.from(sources_map.values());
+
+    setCompiledSources(new_sources_compiled);
+  }, [sources]);
+
+
   return (
-      <div className="flex flex-row gap-2 overflow-x-scroll scrollbar-hide pt-2" style={{
-        marginLeft: "2.75rem",
-      }}>
-        {sources.map((source, index) => (
-          <HoverCard key={index}>
-            <HoverCardTrigger asChild>
-                <div
-                  className={`rounded-full px-2 max-w-[80px] h-7 bg-accent flex flex-col justify-center`}
-                  style={{
-                    maxWidth: "120px",
-                  }}
-                >
-                <p className="text-primary text-sm whitespace-nowrap overflow-hidden text-ellipsis">{source.document_name}</p>
-                </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="px-5 max-w-[320px]" side="top">
-              <h1 className="text-base">{source.document_name}</h1>
-              {source.rerank_score && (
-                <p className="text-sm py-3">Relevance Score: {source.rerank_score.toFixed(2)}</p>
-              )}
-              <ScrollArea className="h-[200px] pr-3">
-              {(source.website_url) ? (
-                <Link href={source.website_url} rel="noopener noreferrer" target="_blank">
-                  <Button variant={"ghost"} className="p-2 m-0 h-auto">
-                    <div className="max-w-[260px]">
-                      <p className="max-w-[260px] text-xs text-primary/50 whitespace-pre-wrap text-left overflow-wrap break-words">{source.text}</p>
-                    </div>
-                  </Button>
-                </Link>
-              ):(
-                <Button variant={"ghost"} className="p-2 m-0 h-auto" onClick={()=>{
-                  openDocument({
-                    auth: user_auth,
-                    document_id: source?.document_id as string,
-                  })
-                }}>
-                  <div className="max-w-[260px]">
-                    <p className="max-w-[260px] text-xs text-primary/50 whitespace-normal text-left overflow-wrap break-word">{source.text}</p>
-                  </div>
-                </Button>
-              )}
-              </ScrollArea>
-            </HoverCardContent>
-          </HoverCard>
+    <div className="flex flex-row gap-2 overflow-x-scroll scrollbar-hide pt-2" style={{
+      marginLeft: "2.75rem",
+    }}>
+      <AnimatePresence>
+        {compiledSources.map((source, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.3,
+              delay: index * 0.1, // stagger effect
+              ease: "easeOut"
+            }}
+          >
+            <SourcesBarSource
+              source={source}
+              user_auth={user_auth}
+            />
+          </motion.div>
         ))}
-      </div>
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -238,7 +308,7 @@ function MarkdownSubComponent({
   config: markdownRenderingConfig,
   disabled: boolean
 }) {
-
+  
   const [workingText, setWorkingText] = useState(text);
   const cachedText = useRef<string>("");
   const workingTextBuffer = useRef<string>("");
@@ -274,11 +344,12 @@ function MarkdownSubComponent({
 
   return (
     <MarkdownRenderer 
-      className="ml-11"
+      className="ml-11 text-primary"
       disableRender={disabled}
       input={text} 
       finished={false}
       config={config}
+      unpacked
     />
   )
 }
@@ -305,7 +376,7 @@ export default function Chat({
     const newValue = retrieveValueFromObj(toolchainState, configuration.display_route) as chatEntry | chatEntry[] || [];
     // console.log("Chat newValue", JSON.parse(JSON.stringify(newValue)));
 		setCurrentValue(newValue);
-	}, [toolchainState]);
+	}, [toolchainState, setCurrentValue, toolchainWebsocket, demo]);
 
   const handleCopy = (text : string) => {
     if (typeof window === 'undefined') {
@@ -326,6 +397,17 @@ export default function Chat({
         <div className="flex flex-col gap-8 pb-2">
           <AnimatePresence>
           {(Array.isArray(currentValue)?currentValue:[currentValue]).map((value, index) => (
+            
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.3,
+                // delay: index * 0.1, // stagger effect
+                ease: "easeOut"
+              }}
+            >
             <div className="flex flex-col gap-0" key={index}>
               <div key={index} className="flex flex-row">
                 <div className="w-11 h-8 pt-[5px]">
@@ -349,7 +431,16 @@ export default function Chat({
               </div>
               <div> {/* The left pad doesn't render for some reason */}
                 
-              <SmoothHeightDiv className={cn("max-w-full -mt-1.5")} style={{marginLeft: "2.75rem"}}>
+              <div className={cn("max-w-full -mt-1.5")} style={{marginLeft: "2.75rem", marginTop: -5}}>
+                {(value.headline && 
+                  value.headline.length > 0 && 
+                  value.headline[value.headline.length-1].search !== undefined &&
+                  !(value.content && value.content.length > 0)
+                ) && (
+                  <p className="shimmer">
+                    {value.headline[value.headline.length-1].search}
+                  </p>
+                )}
                 <MarkdownSubComponent
                   disabled={(value.role === "user")}
                   text={(value || {}).content || ""}
@@ -364,7 +455,7 @@ export default function Chat({
                     )
                   }}
                 />
-              </SmoothHeightDiv>
+              </div>
               </div>
               {(value.role === "assistant" && value.sources) && (
                 <SourcesBar sources={value.sources} user_auth={userData?.auth as string} className="ml-[10px]"/>
@@ -377,6 +468,7 @@ export default function Chat({
                 </div>
               )}
             </div>
+            </motion.div>
           ))}
           </AnimatePresence>
         </div>

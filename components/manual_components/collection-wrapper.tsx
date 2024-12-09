@@ -138,9 +138,6 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
               }}
               parentSelected={selected}
               parentMixedSelection={mixedSelection}
-              onPress={() => {
-                redirect(`/collections/edit?id=${value.hash_id}`)
-              }}
               selectedPrior={props.collectionSelected.get(value.hash_id)}
             />
           ))}
