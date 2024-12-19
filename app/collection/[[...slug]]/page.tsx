@@ -7,7 +7,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { Usable, useEffect, useMemo, useState, use } from "react";
 import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
-import { DataFetcher, dataOptions } from "./query-options";
+// import { DataFetcher } from "./query-options";
 import { fetchCollection } from "@/hooks/querylakeAPI";
 import craftUrl from "@/hooks/craftUrl";
 
@@ -42,8 +42,65 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { AppSidebar } from "@/components/app-sidebar";
 import { CollectionSidebar } from "./collection-sidebar";
 import { userDataType } from "@/types/globalTypes";
+import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
+import { MakeArray, SearchParamsType } from "./columns";
+
+type SearchParams = {
+  auth: string;
+  collection_ids: string[];
+  query: string;
+  offset: number;
+  limit: number;
+  table: string;
+  sort_by?: string;
+  sort_dir?: "ASC" | "DESC";
+}
+
+
+// export type InfiniteQueryMeta = {
+//   totalRowCount: number;
+//   filterRowCount: number;
+//   totalFilters: MakeArray<ColumnSchema>;
+//   currentPercentiles: Record<Percentile, number>;
+//   chartData: { timestamp: number; [key: string]: number }[];
+// };
+
+export type DataFetcher = (params: SearchParams) => Promise<{
+  data: ColumnSchema[];
+  meta: InfiniteQueryMeta;
+}>;
 
 // const COLLECTION_ID = "wAloo9uVIwU9IhidVvU2MR0JXKOWi5A6";
+
+
+const dataOptions = (
+  search: SearchParamsType,
+  auth: string,
+  collection_id: string,
+  fetcher: DataFetcher,
+) => {
+  return infiniteQueryOptions({
+    queryKey: ["data-table", searchParamsSerializer({ ...search })],
+    queryFn: async ({ pageParam = 0 }) => {
+      const start = (pageParam as number) * search.size;
+      const searchParams: SearchParams = {
+        auth,
+        collection_ids: [collection_id],
+        query: "",
+        offset: start,
+        limit: search.size,
+        table: 'document',
+        sort_by: search.sort ? `${search.sort.id}` : "file_name",
+        sort_dir: search.sort ? (search.sort.desc ? "DESC" : "ASC") : undefined,
+      };
+      return fetcher(searchParams);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (_lastGroup, groups) => groups.length,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+  });
+};
 
 const defaultFetcher: DataFetcher = async (params) => {
   console.log("defaultFetcher Params", params);

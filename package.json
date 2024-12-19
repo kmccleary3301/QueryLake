@@ -61,6 +61,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@react-hook/resize-observer": "^1.2.6",
     "@rpldy/uploader": "^1.8.0",
+    "@tanstack/query-core": "^5.62.8",
     "@tanstack/react-query": "^5.56.2",
     "@tanstack/react-query-devtools": "^5.56.2",
     "@tanstack/react-table": "^8.20.5",
