@@ -74,7 +74,7 @@ export interface CollectionDocument {
   website_url: string | null;
   blob_id: string;
   blob_dir: string;
-  finished_processing: boolean;
+  finished_processing: 0 | 1 | 2 | 3 | 4;
   md: Record<string, any>;
   bm25_score: number;
 }
@@ -91,7 +91,7 @@ export const columnSchema = z.object({
   website_url: z.string().nullable(),
   blob_id: z.string().nullable(),
   blob_dir: z.string().nullable(),
-  finished_processing: z.boolean(),
+  finished_processing: z.number(),
   md: z.record(z.any()),
   bm25_score: z.number().nullable()
 });
@@ -130,7 +130,28 @@ export const searchParamsCache = createSearchParamsCache(searchParamsParser);
 export const searchParamsSerializer = createSerializer(searchParamsParser);
 export type SearchParamsType = inferParserType<typeof searchParamsParser>;
 
-
+const processingDisplay = {
+  0: () => (
+    <p className="font-mono text-xs text-primary/50">N/A</p>
+  ),
+  1: () => (
+    <div>
+      <div className="h-4 w-[90px] bg-accent flex items-center space-x-1 rounded-full px-2">
+        <LucideLoader2 className="w-3 h-3 text-primary animate-spin" />
+        <p className="text-xs">Processing</p>
+      </div>
+    </div>
+  ),
+  2: () => (
+    <p className="text-xs text-primary/50 bg-destructive">Failed</p>
+  ),
+  3: () => (
+    <p className="text-green-500">Done</p>
+  ),
+  4: () => (
+    <p className="text-purple-500">Done</p>
+  ),
+}
 
 function file_size_as_string(bytes: number, return_i : boolean): string {
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -274,26 +295,14 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     // TODO: make it a type of MethodSchema!
     accessorKey: "finished_processing",
-    header: "Processing",
-    // enableMultiSort: true,
     enableSorting: true,
-    filterFn: "auto",
+    sortingFn: "basic",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Processing" />
+    ),
     cell: ({ row }) => {
-      const value = row.getValue("finished_processing") as boolean;
-      return (
-        <>
-          {value ? (
-            <p className="text-green-500">Done</p>
-          ):(
-            <div>
-              <div className="h-4 w-[90px] bg-accent flex items-center space-x-1 rounded-full px-2">
-                <LucideLoader2 className="w-3 h-3 text-primary animate-spin" />
-                <p className="text-xs">Processing</p>
-              </div>
-            </div>
-          )}
-        </>
-      );
+      const value = row.getValue("finished_processing") as 0 | 1 | 2 | 3 | 4;
+      return processingDisplay[value]();
     }
   }
 ];
