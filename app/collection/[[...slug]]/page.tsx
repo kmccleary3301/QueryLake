@@ -1,49 +1,35 @@
 "use client";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { DataTableInfinite, DataTableInfiniteProps } from "@/components/custom/data_table_infinite/data-table-infinite";
+import { DataTableInfinite } from "@/components/custom/data_table_infinite/data-table-infinite";
 import { useContextAction } from "@/app/context-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { Usable, useEffect, useMemo, useState, use } from "react";
-import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
+import { useEffect, useMemo, useState } from "react";
+import { columnFilterSchema, columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 // import { DataFetcher } from "./query-options";
 import { fetchCollection } from "@/hooks/querylakeAPI";
 import craftUrl from "@/hooks/craftUrl";
 
 import axios from 'axios';
-import { Label } from '@/components/ui/label';
-import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { SVGProps } from "react"
 import {
   fetch_collection_document_type,
-  deleteDocument,
-  createCollection,
   openDocument,
-  modifyCollection,
-  fetchCollectionDocuments
 } from "@/hooks/querylakeAPI";
 // import { useContextAction } from "@/app/context-provider";
 // import craftUrl from "@/hooks/craftUrl";
 import { useRouter } from 'next/navigation';
-import { Progress } from '@/components/ui/progress';
-import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
-import { handleCopy } from '@/components/markdown/markdown-code-block';
 import { ColumnDef, Table } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { CollectionDataTableSheetDetails, CollectionSheetDetailsContent } from "./data-table-sheet-details";
 import { useParams } from "next/navigation";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { filterFields as defaultFilterFields } from "./constants";
 import { CollectionSidebar } from "./collection-sidebar";
 import { userDataType } from "@/types/globalTypes";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
-import { MakeArray, SearchParamsType } from "./columns";
+import { SearchParamsType } from "./columns";
 
 type SearchParams = {
   auth: string;
@@ -83,6 +69,7 @@ const dataOptions = (
     queryKey: ["data-table", searchParamsSerializer({ ...search })],
     queryFn: async ({ pageParam = 0 }) => {
       const start = (pageParam as number) * search.size;
+      console.log("DataOptions Params", search);
       const searchParams: SearchParams = {
         auth,
         collection_ids: [collection_id],
@@ -151,12 +138,11 @@ export default function Page() {
   const [collectionDocuments, setCollectionDocuments] = useState<fetch_collection_document_type[]>([]);
   const [collectionIsPublic, setCollectionIsPublic] = useState<boolean>(false);
   const [collectionOwner, setCollectionOwner] = useState<string>("personal");
-  const [publishStarted, setPublishStarted] = useState<boolean>(false);
   const [uploadingFiles, setUploadingFiles] = useState<uploading_file_type[]>([]);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
-
+  
   const fetchCollectionCallback = () => {
     if (!userData?.auth) return;
     fetchCollection({
@@ -200,70 +186,6 @@ export default function Page() {
     }
   }, [CollectionMode])
 
-
-  const start_document_uploads = async (collection_hash_id : string) => {
-    if (pendingUploadFiles === null) return;
-
-    const url_2 = craftUrl("/upload/", {
-      "auth": userData?.auth as string,
-      "collection_hash_id": collection_hash_id
-    });
-  
-    setPublishStarted(true);
-    
-    setUploadingFiles(pendingUploadFiles.map((file) => {
-      return {
-        title: file.name,
-        progress: 0
-      }
-    }));
-
-    const totalCount = pendingUploadFiles.length;
-
-    for (let i = 0; i < pendingUploadFiles.length; i++) {
-      const file = pendingUploadFiles[i];
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      try {
-        const response = await axios.post(url_2.toString(), formData, {
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded / (progressEvent.total || 1)) * 100);
-            console.log(`File ${file.name} upload progress: ${progress}%`, progress);
-            setUploadingFiles(files => [{...files[0], progress: progress}, ...files.slice(1)]);
-            // setUploadingFiles(files => [...files.slice(0, i), {...files[i], progress: progress}, ...files.slice(i+1)]);
-          },
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-
-        const response_data = response.data as {success: false} | {success : true, result: fetch_collection_document_type};
-
-        if (response_data.success) {
-          setUploadingFiles(files => files.slice(1));
-          setCollectionDocuments((docs) => [response_data.result,...docs]);
-          if (i === totalCount - 1) {
-            onFinishedUploads(collection_hash_id);
-          }
-        }
-        setPendingUploadFiles((files) => files?.filter((_, j) => j !== 0) || null)
-        console.log("Pending Uploading Files", pendingUploadFiles.length);
-
-      } catch (error) {
-        console.error(`Failed to upload file ${file.name}:`, error);
-      }
-    }
-  };
-
-  const onFinishedUploads = (collection_hash_id : string) => {
-    setPublishStarted(false);
-    setPendingUploadFiles(null);
-    refreshCollectionGroups();
-    if (CollectionMode === "create")
-      router.push(`/collection/edit/${collection_hash_id}`);
-  }
-
   const [search] = useQueryStates(searchParamsParser);
   const { data, isFetching, isLoading, fetchNextPage } = useInfiniteQuery(
     dataOptions(
@@ -288,30 +210,43 @@ export default function Page() {
   const filterDBRowCount = lastPage?.meta?.filterRowCount;
   const totalFetched = flatData?.length;
 
-  const { sort, start, size, ...filter } = search;
-
-  const deletionColumn : ColumnDef<ColumnSchema> = {
-    id: "delete_button",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Deletion" />
-    ),
-    cell: ({ row }) => {
-      const value = row.getValue("id") as string;
-      return (
-        <Button 
-          className="h-6 p-2 bg-[#DC2626] hover:bg-[#DC2626]/70 active:bg-[#DC2626]/50"
-        >
-          {/* <Trash className="w-4 h-4 p-0" /> */}
-          <p className="text-black font-mono">Delete</p>
-        </Button>
-      )
-    },
-    enableHiding: true,
-  }
-
+  const { sort, start, size, id, ...filter } = search;
+  
   useEffect(() => {
     setDataRowsProcessed(flatData);
   }, [flatData, uploadingFiles, pendingUploadFiles]);
+
+
+  const filterFields = useMemo(
+    () =>
+      defaultFilterFields.map((field) => {
+        // if (
+        //   field.value === "latency" ||
+        //   field.value === "timing.dns" ||
+        //   field.value === "timing.connection" ||
+        //   field.value === "timing.tls" ||
+        //   field.value === "timing.ttfb" ||
+        //   field.value === "timing.transfer" ||
+        //   field.value === "status"
+        // ) {
+        //   field.options =
+        //     totalFilters?.[field.value].map((value) => ({
+        //       label: `${value}`,
+        //       value,
+        //     })) ?? field.options;
+        // }
+        // if (field.value === "host" || field.value === "pathname") {
+        //   field.options =
+        //     totalFilters?.[field.value].map((value) => ({
+        //       label: `${value}`,
+        //       value,
+        //     })) ?? field.options;
+        // }
+        return field;
+      }),
+    []
+  );
+
 
   return (
     <div 
@@ -341,9 +276,11 @@ export default function Page() {
                     value,
                   }))
                   .filter(({ value }) => value ?? undefined)}
+                filterFields={filterFields}
                 defaultColumnSorting={sort ? [sort] : undefined}
-                searchColumnFiltersSchema={columnSchema}
+                searchColumnFiltersSchema={columnFilterSchema}
                 searchParamsParser={searchParamsParser}
+                defaultRowSelection={search.id ? { [search.id]: true } : undefined}
                 isFetching={isFetching}
                 isLoading={isLoading}
                 fetchNextPage={fetchNextPage}

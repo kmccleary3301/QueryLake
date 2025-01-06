@@ -176,8 +176,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return <TextWithTooltip className="font-mono max-w-[85px]" text={value} />
     },
     enableHiding: true,
-    enableSorting: true,
-    sortingFn: "alphanumeric"
+    enableSorting: false, // Sorting isn't consistent with the backend on id.
   },
   {
     id: "integrity_sha256",
@@ -191,7 +190,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     },
     enableHiding: true,
     enableSorting: true,
-    sortingFn: "alphanumeric"
+    sortingFn: "text"
   },
   {
     id: "file_name",
@@ -200,6 +199,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
     enableSorting: true, // Enable sorting for this column
+    sortingFn: "text",
     cell: ({ row }) => {
       const value = row.getValue("file_name") as string;
       return (
@@ -229,6 +229,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Created" />
     ),
+    enableSorting: true,
+    sortingFn: "basic",
     cell: ({ row }) => {
       const date = new Date((row.getValue("creation_timestamp") as number)*1000);
       return (
@@ -307,4 +309,27 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   }
 ];
 
-
+export const columnFilterSchema = z.object({
+  id: z.string().optional(),
+  file_name: z.string().optional(),
+  creation_timestamp: z
+    .string()
+    .transform((val) => val.split(RANGE_DELIMITER).map(Number))
+    .pipe(z.coerce.date().array())
+    .optional(),
+  integrity_sha256: z.string().optional(),
+  size_bytes: z
+    .string()
+    .transform((val) => val.split(SLIDER_DELIMITER))
+    .pipe(z.coerce.number().array().max(2))
+    .optional(),
+  finished_processing: z
+    .string()
+    .transform((val) => val.split(ARRAY_DELIMITER))
+    .pipe(z.coerce.number().array())
+    .optional(),
+  website_url: z.string().optional(),
+  toolchain_session_id: z.string().optional(),
+  blob_id: z.string().optional(),
+  blob_dir: z.string().optional(),
+});

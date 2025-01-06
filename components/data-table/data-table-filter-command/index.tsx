@@ -128,10 +128,49 @@ export function DataTableFilterCommand<TData, TSchema extends z.AnyZodObject>({
   }, []);
 
   useEffect(() => {
-    if (open) {
-      inputRef?.current?.focus();
+    // REMINDER: only update the input value if the command is closed (avoids jumps while open)
+    // Trying to preserve generic fields.
+    
+    const serialized = serializeColumFilters(columnFilters, filterFields);
+    const serialized_split = serialized.split(" ");
+
+    let serialized_map = new Map<string, string>();
+    for (const filter of serialized_split) {
+      const parsed = filter.split(":");
+      if (parsed.length <= 1) {
+        continue;
+      }
+      serialized_map.set(parsed[0], filter);
     }
-  }, [open]);
+
+    const input_value_split = inputValue.split(" ");
+    let remaining_terms : string[] = [];
+
+    for (let i = 0; i < input_value_split.length; i++) {
+      const parsed = input_value_split[i].split(":");
+      if (parsed.length <= 1) { // Case of rogue terms
+        remaining_terms.push(input_value_split[i]);
+        continue;
+      }
+      const field = parsed[0];
+      if (!(serialized_map.has(field))) { // If the term is new...
+        // new_serialized_args.push(input_value_split[i]);
+        remaining_terms.push(input_value_split[i]);
+      } else {
+        remaining_terms.push(serialized_map.get(field) as string);
+        serialized_map.delete(field);
+      }
+    }
+
+    Array.from(serialized_map.entries()).forEach(([key, value]) => {
+      remaining_terms.push(value);
+    });
+    
+    if (!open) {
+      // setInputValue(serialized);
+      setInputValue(remaining_terms.join(" ").trim());
+    }
+  }, [columnFilters, filterFields, open]);
 
   return (
     <div id="table_filter_input">
