@@ -441,20 +441,22 @@ export default function Chat({
                     {value.headline[value.headline.length-1].search}
                   </p>
                 )}
-                <MarkdownSubComponent
-                  disabled={(value.role === "user")}
-                  text={(value || {}).content || ""}
-                  config={{
-                    ...CHAT_RENDERING_STYLE,
-                    citation: (textSeg: textSegment) => (
-                      <InlineSource
-                        sources={(value || {}).sources || []}
-                        textSeg={textSeg}
-                        user_auth={userData?.auth as string}
-                      />
-                    )
-                  }}
-                />
+                <div className="flex flex-col gap-y-1">
+                  <MarkdownSubComponent
+                    disabled={(value.role === "user")}
+                    text={(value || {}).content || ""}
+                    config={{
+                      ...CHAT_RENDERING_STYLE,
+                      citation: (textSeg: textSegment) => (
+                        <InlineSource
+                          sources={(value || {}).sources || []}
+                          textSeg={textSeg}
+                          user_auth={userData?.auth as string}
+                        />
+                      )
+                    }}
+                  />
+                </div>
               </div>
               </div>
               {(value.role === "assistant" && value.sources) && (
