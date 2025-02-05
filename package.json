@@ -153,6 +153,7 @@
   },
   "devDependencies": {
     "@shikijs/monaco": "^1.6.0",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@wasm-tool/wasm-pack-plugin": "^1.7.0",
     "shiki": "^1.2.2"
   }

@@ -114,7 +114,13 @@ module.exports = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"), addVariablesForColors, require('tailwind-scrollbar-hide'), require('tailwind-scrollbar')],
+  plugins: [
+		require("tailwindcss-animate"), 
+		addVariablesForColors, 
+		require('tailwind-scrollbar-hide'), 
+		require('tailwind-scrollbar'),
+		require('@tailwindcss/container-queries'),
+	],
   content: [
     "app/**/*.{ts,tsx}", 
     "components/**/*.{ts,tsx}",
