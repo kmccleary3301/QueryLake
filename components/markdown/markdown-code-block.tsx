@@ -46,18 +46,64 @@ type scoped_text = {
   content: string
 };
 
-export const handleCopy = (text : string) => {
+export const handleCopy = (text: string) => {
   if (typeof window === 'undefined') {
-    return;
+    return Promise.reject('Window is not defined');
   }
 
-  try {
-    window.navigator.clipboard.writeText(text);
-    toast("Copied to clipboard");
-  } catch (err) {
-    toast("Failed to copy to clipboard");
+  // Try the modern Clipboard API first
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text)
+      .then(() => {
+        toast("Copied to clipboard");
+        return true;
+      })
+      .catch((err) => {
+        console.error("Clipboard API failed:", err);
+        // Fall back to document.execCommand method
+        return fallbackCopy(text);
+      });
+  } else {
+    // Use fallback for browsers without Clipboard API support
+    return fallbackCopy(text);
   }
 };
+
+// Fallback copy method using execCommand
+const fallbackCopy = (text: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      
+      // Make the textarea out of viewport
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        toast("Copied to clipboard");
+        resolve(true);
+      } else {
+        toast("Failed to copy to clipboard");
+        resolve(false);
+      }
+    } catch (err) {
+      console.error("Fallback copy failed:", err);
+      toast("Failed to copy to clipboard");
+      resolve(false);
+    }
+  });
+};
+
+const DEBOUNCE_DELAY = 15; // ms - Adjust as needed
 
 export default function MarkdownCodeBlock({
   className = "",
@@ -73,61 +119,71 @@ export default function MarkdownCodeBlock({
   finished?: boolean
 }){
 
-  const {
-    shikiTheme
-  } = useContextAction();
-
-  // const handleCopy = (text : string) => {
-  //   if (typeof window === 'undefined') {
-  //     return;
-  //   }
-
-  //   try {
-  //     window.navigator.clipboard.writeText(text);
-  //     toast("Copied to clipboard");
-  //   } catch (err) {
-  //     toast("Failed to copy to clipboard");
-  //   }
-  // };
-
-  // const [highlights, setHighlights] = useState<scoped_text[][]>([]);
-  const [unprocessedText, setUnprocessedText] = useState<string[]>([]);
+  const { shikiTheme } = useContextAction();
   const [language, setLanguage] = useState<{value: BundledLanguage | "text", preview: string}>({value: "text", preview: "Text"});
   const [codeHTML, setCodeHTML] = useState<string>("");
   const [lineCount, setLineCount] = useState<number>(0);
 
+  // --- Refs for Throttling ---
+  const lastHighlightTimeRef = useRef<number>(0);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-	const lastRefreshTime = useRef(Date.now());
-	const oldInputLength = useRef(0);
-
-  const refreshInterval = 150; // In milliseconds
+  // Combine text based on finished state
+  const currentFullCode = finished ? text : text + (unProcessedText || "");
 
   useEffect(() => {
-    setLineCount(text.split("\n").length);
+    // --- Basic Setup ---
+    setLineCount(currentFullCode.split("\n").length);
+    const languageInfo = getLanguage(lang);
+    setLanguage(languageInfo);
 
-    const language_get = getLanguage(lang);
-    setLanguage(language_get);
-    if (lang === "text") {
-      setCodeHTML(text + unProcessedText);
-      return;
+    // --- Handle Plain Text Case ---
+    if (languageInfo.value === "text") {
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current); // Clear pending highlight
+      setCodeHTML(currentFullCode); // Display raw text directly
+      lastHighlightTimeRef.current = 0; // Reset timer state
+      return; // Exit early
     }
-  
-    let raw_code = text+unProcessedText;
-    const unprocessed_text = raw_code.slice(oldInputLength.current);
-    if (finished) {
-      raw_code = text;
-    }
-    
-    if (oldInputLength.current === 0 || (Date.now() - lastRefreshTime.current) > refreshInterval) {
 
-      highlight(raw_code, shikiTheme.theme, language_get.value).then((html) => {
-        setCodeHTML(html);
-      });
-      
-    } else {
-      setUnprocessedText(unprocessed_text.split("\n"));
+    // --- Throttling Logic ---
+    // Calculate time needed until the next allowed highlight execution
+    const timeSinceLast = Date.now() - lastHighlightTimeRef.current;
+    const timeUntilNextHighlight = Math.max(0, DEBOUNCE_DELAY - timeSinceLast);
+
+    // Always clear the *previous* timeout if one exists. This ensures only the
+    // latest update request within the interval window will eventually fire.
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
     }
-  }, [text, unProcessedText, finished, lang, shikiTheme]);
+
+    // Set a new timeout to perform the highlight
+    highlightTimeoutRef.current = setTimeout(() => {
+      lastHighlightTimeRef.current = Date.now(); // Record execution time *when it starts*
+
+      // Use the code captured when the timeout was scheduled
+      const codeToHighlight = finished ? text : text + (unProcessedText || "");
+
+      // Perform the async highlight
+      highlight(codeToHighlight, shikiTheme.theme, languageInfo.value)
+        .then((html) => {
+          setCodeHTML(html);
+        })
+        .catch(error => {
+          console.error("Shiki highlighting failed:", error);
+          setCodeHTML(codeToHighlight); // Fallback to raw code on error
+        });
+
+    }, timeUntilNextHighlight); // Wait for the calculated delay
+
+    // --- Cleanup Function ---
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+
+  // Dependencies: Re-run when code content, language, finished status, or theme changes.
+  }, [currentFullCode, lang, finished, shikiTheme, text, unProcessedText]); // Include text/unProcessedText if needed for timeout closure
 
   return (
     <div className={cn(

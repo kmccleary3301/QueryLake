@@ -71,13 +71,18 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
 
   const last_render_time = useRef<number>(0);
   const rerender_timeout = useRef<NodeJS.Timeout>();
-  const RENDER_INTERVAL = 50;
+  const RENDER_INTERVAL_MS = 10;
+  const USE_OLD_METHOD = false;
+
 
   const bufferedText = useRef<string>("");
 
   useEffect(() => {
+    // ... (USE_OLD_METHOD check) ...
+
+    // Throttling logic
     const time_until_next_render = 
-        Math.max(0, RENDER_INTERVAL - (Date.now() - last_render_time.current));
+        Math.max(0, RENDER_INTERVAL_MS - (Date.now() - last_render_time.current));
     
     if (rerender_timeout.current) {
       clearTimeout(rerender_timeout.current);
@@ -86,20 +91,19 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
     const getTimeout = setTimeout(() => {
       last_render_time.current = Date.now(); 
       
+      // --- THIS IS THE BOTTLENECK ---
       // Lex our tokens.
-      const new_tokens = lexer.lex(sanitizeMarkdown(input));
+      const new_tokens = lexer.lex(sanitizeMarkdown(input)); // Expensive operation!
+      // ------------------------------
       
       // Update the tokens.
-      setTokens(new_tokens);
+      setTokens(new_tokens); // Triggers re-render
       
-      // bufferedText.current = input;
-      
-      // setUnrenderedText("");
     }, time_until_next_render);
 
     rerender_timeout.current = getTimeout;
 
-  }, [input]);
+  }, [input]); // Runs every time input changes
 
   return (
     <>

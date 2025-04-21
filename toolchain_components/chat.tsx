@@ -2,7 +2,7 @@
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { Skeleton } from "@/components/ui/skeleton";
 import { componentMetaDataType, configEntriesMap, displayMapping } from "@/types/toolchain-interface";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { ElementType, Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MarkdownRenderer from "@/components/markdown/markdown-renderer";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import { useContextAction } from "@/app/context-provider";
@@ -24,6 +24,7 @@ import SmoothHeightDiv from "@/components/manual_components/smooth-height-div";
 import TextWithTooltip from "@/components/custom/text-with-tooltip";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import "./shimmer_1.css"
+import { handleCopy } from "@/components/markdown/markdown-code-block";
 
 
 export const METADATA : componentMetaDataType = {
@@ -49,6 +50,8 @@ type documentEmbeddingSpecialFields1 ={
 }
 type documentEmbeddingSpecialFields2 = { headline: string; cover_density_rank: number; } | {}
 type documentEmbeddingSpecialFields3 = { rerank_score: number; } | {}
+
+const AnimatePresenceFixedType = AnimatePresence as ElementType;
 
 export type DocumentEmbeddingDictionary = {
 	id: string;
@@ -276,7 +279,7 @@ function SourcesBar({
     <div className="flex flex-row gap-2 overflow-x-scroll scrollbar-hide pt-2" style={{
       marginLeft: "2.75rem",
     }}>
-      <AnimatePresence>
+      <AnimatePresenceFixedType>
         {compiledSources.map((source, index) => (
           <motion.div
             key={index}
@@ -294,7 +297,7 @@ function SourcesBar({
             />
           </motion.div>
         ))}
-      </AnimatePresence>
+      </AnimatePresenceFixedType>
     </div>
   )
 }
@@ -378,24 +381,11 @@ export default function Chat({
 		setCurrentValue(newValue);
 	}, [toolchainState, setCurrentValue, toolchainWebsocket, demo]);
 
-  const handleCopy = (text : string) => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      window.navigator.clipboard.writeText(text);
-      toast("Copied to clipboard");
-    } catch (err) {
-      toast("Failed to copy to clipboard");
-    }
-  };
-
   return (
     <>
       {currentValue && (
         <div className="flex flex-col gap-8 pb-2">
-          <AnimatePresence>
+          <AnimatePresenceFixedType>
           {(Array.isArray(currentValue)?currentValue:[currentValue]).map((value, index) => (
             
             <motion.div
@@ -441,7 +431,7 @@ export default function Chat({
                     {value.headline[value.headline.length-1].search}
                   </p>
                 )}
-                <div className="flex flex-col gap-y-1">
+                <div className="flex flex-col gap-y-1 prose markdown">
                   <MarkdownSubComponent
                     disabled={(value.role === "user")}
                     text={(value || {}).content || ""}
@@ -472,7 +462,7 @@ export default function Chat({
             </div>
             </motion.div>
           ))}
-          </AnimatePresence>
+          </AnimatePresenceFixedType>
         </div>
       )}
     </>

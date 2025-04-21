@@ -12,6 +12,7 @@ import {
 
 import BasfIntroScreen from '@/toolchain_components/basf-intro-screen';
 import ChatInput from '@/toolchain_components/chat-input';
+import ChatWithRating from '@/toolchain_components/chat-with-rating';
 import Chat from '@/toolchain_components/chat';
 import CurrentEventDisplay from '@/toolchain_components/current-event-display';
 import FileUpload from '@/toolchain_components/file-upload';
@@ -77,6 +78,11 @@ export function ToolchainComponentMapper({
     case "chat-input":
       return (
         <ChatInput configuration={info}/>
+      );
+
+    case "chat-with-rating":
+      return (
+        <ChatWithRating configuration={info} entriesMap={getEffectiveConfig(info)}/>
       );
 
     case "file-upload":

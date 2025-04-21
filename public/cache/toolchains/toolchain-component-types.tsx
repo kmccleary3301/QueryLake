@@ -1,9 +1,9 @@
 import { inputComponentConfig } from "@/types/toolchain-interface";
 
 export type displayComponents = "chat" | "current-event-display" | "markdown" | "text";
-export type inputComponents = "basf-intro-screen" | "chat-input" | "file-upload" | "switch";
+export type inputComponents = "basf-intro-screen" | "chat-input" | "chat-with-rating" | "file-upload" | "switch";
 export const DISPLAY_COMPONENTS : displayComponents[] = ["chat","current-event-display","markdown","text"];
-export const INPUT_COMPONENTS : inputComponents[] = ["basf-intro-screen","chat-input","file-upload","switch"];
+export const INPUT_COMPONENTS : inputComponents[] = ["basf-intro-screen","chat-input","chat-with-rating","file-upload","switch"];
 export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
   "basf-intro-screen": {
     "hooks": [
@@ -30,6 +30,23 @@ export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentC
         "name": "test_7_long_string",
         "type": "long_string",
         "default": "6ix"
+      }
+    ]
+  },
+  "chat-with-rating": {
+    "hooks": [
+      "on_rating"
+    ],
+    "config": [
+      {
+        "name": "Type",
+        "type": "long_string",
+        "default": "Boolean"
+      },
+      {
+        "name": "Label",
+        "type": "string",
+        "default": "Rate this response"
       }
     ]
   },

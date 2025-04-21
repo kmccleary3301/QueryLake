@@ -191,11 +191,12 @@ function MarkdownTypeRouter({
     case 'paragraph':
       const lines = (token.text + unProcessedText).split("\n") || "";
       return (
-        <span className={className}>
+        <span className={cn(className, "")}>
           {(lines.length > 1)?(
             <>
               {lines.map((line, i) => (
                 <span className="pb-1" key={i}>
+                  <br/>
                   <MarkdownTextSplitter 
                     selectable={true} 
                     className={`text-left text-base text-gray-200`} 

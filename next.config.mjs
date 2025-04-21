@@ -52,6 +52,11 @@ const nextConfig = {
   redirects() {
     return [
       {
+        source: "/",
+        destination: "/auth",
+        permanent: true,
+      },
+      {
         source: "/components",
         destination: "/docs/components/accordion",
         permanent: true,

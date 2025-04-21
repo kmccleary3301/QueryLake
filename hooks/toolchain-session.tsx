@@ -143,7 +143,7 @@ export default class ToolchainSession {
         reconnectAttempts++;
         setTimeout(() => {
           console.log(`Attempting reconnect ${reconnectAttempts}/${maxReconnectAttempts}`);
-          this.socket = new WebSocket(`ws://localhost:3001/toolchain`);
+          this.socket = new WebSocket(`/toolchain`);
           set_up_socket_handlers();
         }, 1000 * reconnectAttempts);
       }

@@ -679,6 +679,7 @@ tfoot td:last-child):not(:where([class~=not-prose] *)) {
     /* height: 0; */
     opacity: 0.5;
     content: "\2022";
+    /* content: attr(counter-text) " "; */
     font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var (--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction);
     /* padding-right: .65rem; */
     font-size: 1.75rem;
