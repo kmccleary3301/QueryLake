@@ -26,8 +26,14 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
   
   return (
     <>
-      <Handle type="target" id={"||UNCLASSIFIED||"} position={Position.Left} style={{top:0}} onContextMenu={(e) => e.preventDefault()} 
-        className='w-[30px] h-[30px] -ml-1 rounded-full overflow-visible z-10'>
+      <Handle 
+        type="target" 
+        id={"||UNCLASSIFIED||"} 
+        position={Position.Left} 
+        style={{top:0}} 
+        onContextMenu={(e) => e.preventDefault()} 
+        className='w-[30px] h-[30px] -ml-1 rounded-full overflow-visible z-10'
+      >
         <div className='h-full flex flex-col justify-center bg-none pointer-events-none text-xs text-primary'>
           <div className="cloudinput gradient">
             <div>
@@ -37,30 +43,38 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
         </div>
       </Handle>
       {data.input_arguments?.map((input : nodeInputArgument, index : number) => (
+        // These are the left-side input argument handles
         <React.Fragment key={index}>
           <Handle 
             key={index} 
             type="target" 
             id={input.key} 
             position={Position.Left} 
-            style={{top:30*index + 25 + topWindowHeight}} 
+            style={{
+              top:30*index + 25 + topWindowHeight,
+              backgroundColor: "hsl(var(--border))"
+            }} 
             onContextMenu={(e) => e.preventDefault()} 
-            className='w-5 h-5 rounded-full border-2 border-[#e92a67] overflow-visible z-10'
+            className='w-5 h-5 rounded-full border-2 border-[#e92a67] bg-red-500 overflow-visible z-10'
           >
             {/* <p className='ml-6 h-4 text-nowrap text-primary text-xs flex flex-col justify-center'>{input.key}</p> */}
             <div className='ml-6 h-5 flex flex-col justify-center'>
-              <Input className='pl-2 h-2 mb-1 w-20 text-xs' spellCheck={false} defaultValue={input.key}/>
+              <Input className='pl-2 h-2 mb-1 w-20 text-xs text-primary' spellCheck={false} defaultValue={input.key}/>
             </div>
           </Handle>
         </React.Fragment>
       ))}
       {(
-        <Handle 
+        // This is the left-side add argument button
+        <Handle
           type="target" 
           id={"||ADD_ARG_BUTTON||"} 
           isConnectable={false} 
           position={Position.Left} 
-          style={{top:30*((data.input_arguments || []).length) + 25 + topWindowHeight}} 
+          style={{
+            top:30*((data.input_arguments || []).length) + 25 + topWindowHeight,
+            backgroundColor: "hsl(var(--border))"
+          }} 
           className='w-5 h-5 rounded-full overflow-visible z-10' 
           onContextMenu={(e) => e.preventDefault()}
         >
@@ -73,6 +87,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
       )}
 
       {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (
+        // These are the right-side feed mapping handles
         <React.Fragment key={index}>
           <Handle
             key={index} 
@@ -86,6 +101,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
                             '#fed734' : (feed.destination === "<<USER>>") ?
                             '#2a8af6' : 
                             '#e92a67',
+              backgroundColor: "hsl(var(--border))",
             }} 
             className='w-5 h-5 rounded-full border-2 z-10'
             onContextMenu={(e) => e.preventDefault()}
@@ -107,7 +123,10 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
         id={"||ADD_BUTTON||"} 
         isConnectable={false} 
         position={Position.Right} 
-        style={{top:30*((data.feed_mappings || []).length) + 25 +  + topWindowHeight}} 
+        style={{
+          top:30*((data.feed_mappings || []).length) + 25 +  + topWindowHeight,
+          backgroundColor: "hsl(var(--border))"
+        }} 
         className='w-5 h-5 rounded-full overflow-visible z-10' onContextMenu={(e) => e.preventDefault()}
       >
         <AddFeedMapSheet>
@@ -117,7 +136,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
         </AddFeedMapSheet>
       </Handle>
       <div className="wrapper gradient rounded-2xl bg-transparent" onContextMenu={(e) => e.preventDefault()}>
-        <div className="px-4 py-2 shadow-md bg-background text-primary rounded-lg">
+        <div className="px-4 py-2 shadow-md bg-muted text-primary rounded-lg">
           <div className="flex" style={{height: topWindowHeight}}>
             <div className='flex flex-col space-y-1'>
               <div className='flex flex-row'>

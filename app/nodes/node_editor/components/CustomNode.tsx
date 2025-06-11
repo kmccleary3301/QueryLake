@@ -15,7 +15,7 @@ function ToolchainNodeReactFlowPrimitive({ data }:{
   data: toolchainNode
 }) {
   return (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400 text-black">
+    <div className="px-4 py-2 shadow-md rounded-md bg-background border-2 border-stone-400 text-primary">
       <div className="flex h-[50px] bg-teal-500">
         <div className="rounded-full w-12 h-12 flex justify-center items-center bg-gray-100"/>
         <p>{data.id}</p>
@@ -29,7 +29,7 @@ function ToolchainNodeReactFlowPrimitive({ data }:{
             <React.Fragment key={index}>
               <p className='ml-2 text-nowrap text-black/0 select-none' style={{top:30*index + 10}}>{input.key}</p>
               <Handle key={index} type="target" id={input.key} position={Position.Left} style={{top:30*index + 75}} className='w-2 mb-2 !bg-teal-500'>
-                <p className='ml-2 h-4 text-nowrap text-black flex flex-col justify-center '>{input.key}</p>
+                <p className='ml-2 h-4 text-nowrap text-primary flex flex-col justify-center '>{input.key}</p>
               </Handle>
             </React.Fragment>
           ))}
@@ -41,7 +41,7 @@ function ToolchainNodeReactFlowPrimitive({ data }:{
           <div className='flex flex-col bg-red-500'>
             <div style={{height: 30*(data.input_arguments || [])?.length - 0}}>
               {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (
-                <p key={index} className='ml-2 h-4 text-nowrap text-black/0 select-none' style={{top:30*index + 75}}>{feed.destination}</p>
+                <p key={index} className='ml-2 h-4 text-nowrap text-primary/0 select-none' style={{top:30*index + 75}}>{feed.destination}</p>
               ))}
             </div>
             {(data.feed_mappings || [] as feedMapping[]).map((feed : feedMapping, index : number) => (

@@ -16,11 +16,16 @@ import {
 	ContextMenuSubTrigger,
 	ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import {
+  HoverCard,
+  HoverCardContent,  
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 // import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { APIFunctionSpec } from '@/types/globalTypes';
 import { toolchainNode } from '@/types/toolchains';
-import { MouseEvent, MouseEventHandler, useCallback } from 'react';
+import { MouseEvent, MouseEventHandler, useCallback, useState } from 'react';
 import { Node, ReactFlowInstance } from 'reactflow';
 
 
@@ -37,6 +42,7 @@ export default function ContextMenuWrapper({
 }) {
 
   const { apiFunctionSpecs } = useContextAction();
+  const [hoveredFunction, setHoveredFunction] = useState<APIFunctionSpec | null>(null);
 
   const onAddTestItem = useCallback(
     (event : MouseEvent<HTMLDivElement, globalThis.MouseEvent>) => {
@@ -121,21 +127,74 @@ export default function ContextMenuWrapper({
 				<ContextMenuSub>
 					<ContextMenuSubTrigger inset>Add API Call</ContextMenuSubTrigger>
 					<ContextMenuSubContent className="">
-            <ScrollArea className='h-[400px]'>
-            {apiFunctionSpecs?.map((spec, index) => (
-              <ContextMenuItem inset key={index} className='pl-2 mr-2.5' onClick={(event) => {
-                onAddAPIFunctionNode(event, spec);
-              }}>
-                {spec.api_function_id}
-              </ContextMenuItem>
-            ))}
-            </ScrollArea>
-            {/* <div className='p-5 flex flex-row space-x-1'>
-              <ScrollArea className='h-[400px]'>
-
-                <div className='w-[50px] h-[500px] bg-red-500'/>
-              </ScrollArea>
-            </div> */}
+            <HoverCard>
+              {hoveredFunction && (
+                <HoverCardContent
+                  side="left"
+                  align="start"
+                  forceMount
+                  className="w-[350px] max-w-[350px] z-50"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-semibold break-words">{hoveredFunction.api_function_id}</h4>
+                      <p className="text-xs text-muted-foreground break-words">{hoveredFunction.endpoint}</p>
+                    </div>
+                    {hoveredFunction.description && (
+                      <div>
+                        <h5 className="text-xs font-medium text-muted-foreground mb-1">Description</h5>
+                        <p className="text-xs break-words">{hoveredFunction.description}</p>
+                      </div>
+                    )}
+                    {hoveredFunction.function_args && hoveredFunction.function_args.length > 0 && (
+                      <div>
+                        <h5 className="text-xs font-medium text-muted-foreground mb-2">Arguments</h5>
+                        <div className="space-y-1.5">
+                          {hoveredFunction.function_args.map((arg, index) => (
+                            <div key={index} className="flex flex-col gap-1">
+                              <div className="flex items-start gap-2 min-w-0">
+                                <code className="text-xs bg-muted px-1 py-0.5 rounded flex-shrink-0">{arg.keyword}</code>
+                                {arg.type_hint && (
+                                  <span className="text-xs text-muted-foreground break-all overflow-hidden text-ellipsis leading-relaxed min-w-0 flex-1">
+                                    {arg.type_hint}
+                                  </span>
+                                )}
+                              </div>
+                              {arg.default_value && (
+                                <div className="text-xs text-muted-foreground ml-1 break-words">
+                                  default: {JSON.stringify(arg.default_value)}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </HoverCardContent>
+              )}
+              <div className="relative">
+                <HoverCardTrigger asChild>
+                  <div className="absolute inset-0 pointer-events-none" />
+                </HoverCardTrigger>
+                <ScrollArea className='h-[400px]'>
+                  {apiFunctionSpecs?.sort((a, b) => a.api_function_id.localeCompare(b.api_function_id)).map((spec, index) => (
+                    <ContextMenuItem 
+                      inset 
+                      key={index} 
+                      className='pl-2 mr-2.5' 
+                      onClick={(event) => {
+                        onAddAPIFunctionNode(event, spec);
+                      }}
+                      onMouseEnter={() => setHoveredFunction(spec)}
+                      onMouseLeave={() => setHoveredFunction(null)}
+                    >
+                      {spec.api_function_id}
+                    </ContextMenuItem>
+                  ))}
+                </ScrollArea>
+              </div>
+            </HoverCard>
 					</ContextMenuSubContent>
 				</ContextMenuSub>
 			</ContextMenuContent>

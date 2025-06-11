@@ -1,5 +1,5 @@
 .react-flow {
-  --bg-color: rgb(17, 17, 17);
+  --bg-color: hsl(var(--muted));
   --text-color: rgb(243, 244, 246);
   --node-border-radius: 10px;
   --node-box-shadow: 10px 0 15px rgba(42, 138, 246, 0.3),
