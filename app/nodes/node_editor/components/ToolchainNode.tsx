@@ -6,6 +6,7 @@ import { ChevronRight, Plus, Settings } from 'lucide-react';
 import React, { memo, ReactNode, useEffect } from 'react';
 import { Handle, NodeProps, Position, XYPosition } from 'reactflow';
 import AddFeedMapSheet, { ModifyFeedMapSheet } from './control_fields/AddFeedMapSheet';
+import { InputArgumentSheet } from './control_fields/InputArgumentSheet';
 import { cn } from '@/lib/utils';
 import { fontConsolas } from '@/lib/fonts';
 // import { FiCloud } from 'react-icons/fi';
@@ -59,7 +60,21 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           >
             {/* <p className='ml-6 h-4 text-nowrap text-primary text-xs flex flex-col justify-center'>{input.key}</p> */}
             <div className='ml-6 h-5 flex flex-col justify-center'>
-              <Input className='pl-2 h-2 mb-1 w-20 text-xs text-primary' spellCheck={false} defaultValue={input.key}/>
+              <div className='flex flex-row'>
+                <InputArgumentSheet 
+                  data={input} 
+                  className='pointer-events-auto'
+                  onSave={(updatedInputArg) => {
+                    console.log("Updated input argument:", updatedInputArg);
+                    // TODO: Update the node data with the new input argument
+                  }}
+                >
+                  <button className='p-0 mb-1 flex flex-col justify-center w-3 rounded-full text-primary active:text-primary/70'>
+                    <ChevronRight className='w-3 h-4'/>
+                  </button>
+                </InputArgumentSheet>
+                <Input className='pl-2 h-2 mb-1 w-20 text-xs text-primary' spellCheck={false} defaultValue={input.key}/>
+              </div>
             </div>
           </Handle>
         </React.Fragment>
@@ -78,11 +93,16 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
           className='w-5 h-5 rounded-full overflow-visible z-10' 
           onContextMenu={(e) => e.preventDefault()}
         >
-          <AddFeedMapSheet>
+          <InputArgumentSheet
+            onSave={(newInputArg) => {
+              console.log("New input argument:", newInputArg);
+              // TODO: Add the new input argument to the node data
+            }}
+          >
             <Button className='h-5 w-5 rounded-full p-0 m-0 pointer-events-auto border-2 border-[#2a8af6] border-dashed text-[#2a8af6] active:text-[#2a8af6]/70 active:border-[#2a8af6]/70' variant={"ghost"}>
               <Plus className='w-4 h-4'/>
             </Button>
-          </AddFeedMapSheet>
+          </InputArgumentSheet>
         </Handle>
       )}
 
@@ -107,7 +127,14 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
             onContextMenu={(e) => e.preventDefault()}
             // onClick={(e) => {if (e.button === 2) e.preventDefault();}}
           >
-            <ModifyFeedMapSheet data={feed} className='pointer-events-auto'>
+            <ModifyFeedMapSheet 
+              data={feed} 
+              className='pointer-events-auto'
+              onSave={(updatedFeedMap) => {
+                console.log("Updated feed map:", updatedFeedMap);
+                // TODO: Update the node data with the new feed mapping
+              }}
+            >
               <button className='absolute p-0 m-0 h-full flex flex-col justify-center w-3 rounded-full -ml-5 text-primary active:text-primary/70'>
                 <ChevronRight className='w-3 h-3'/>
               </button>
@@ -126,7 +153,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
         style={{
           top:30*((data.feed_mappings || []).length) + 25 +  + topWindowHeight,
           backgroundColor: "hsl(var(--border))"
-        }} 
+        }}
         className='w-5 h-5 rounded-full overflow-visible z-10' onContextMenu={(e) => e.preventDefault()}
       >
         <AddFeedMapSheet>

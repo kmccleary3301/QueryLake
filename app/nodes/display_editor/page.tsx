@@ -26,7 +26,6 @@ export default function DisplayEditorPage() {
 
   useEffect(() => {
     setSection(JSON.parse(JSON.stringify(getInterfaceConfiguration())));
-
   }, [pathname])
 
   return (

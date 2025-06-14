@@ -5,7 +5,7 @@ import { useContextAction } from "@/app/context-provider";
 import FileDropzone from "@/components/ui/file-dropzone";
 import { useToolchainContextAction } from "@/app/app/context-provider";
 import uploadFiles from "@/hooks/upload-files";
-import SmoothSlider from "@/components/custom/smooth_slider";
+// import SmoothSlider from "@/components/custom/smooth_slider";
 import { retrieveValueFromObj } from "@/hooks/toolchain-session";
 import { FormEvent, useEffect, useState } from "react";
 import { chatEntry } from "./chat";
