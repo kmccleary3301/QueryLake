@@ -7,6 +7,7 @@ You must have node installed to run it.
 Run the following commands to set up a conda environment.
 
 ```
+cd QueryLake
 npm install
 npm run dev
 ```
