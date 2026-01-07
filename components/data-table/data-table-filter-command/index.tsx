@@ -114,7 +114,7 @@ export function DataTableFilterCommand<TData, TSchema extends z.AnyZodObject>({
     if (!open) {
       setInputValue(serializeColumFilters(columnFilters, filterFields));
     }
-  }, [columnFilters, filterFields, open]);
+  }, [columnFilters, filterFields, open, inputValue]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -167,10 +167,12 @@ export function DataTableFilterCommand<TData, TSchema extends z.AnyZodObject>({
     });
     
     if (!open) {
-      // setInputValue(serialized);
-      setInputValue(remaining_terms.join(" ").trim());
+      const nextValue = remaining_terms.join(" ").trim();
+      if (nextValue !== inputValue) {
+        setInputValue(nextValue);
+      }
     }
-  }, [columnFilters, filterFields, open]);
+  }, [columnFilters, filterFields, inputValue, open]);
 
   return (
     <div id="table_filter_input">

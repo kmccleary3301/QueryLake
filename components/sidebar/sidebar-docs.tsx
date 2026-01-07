@@ -36,7 +36,7 @@ export function FolderViewer({
 		controlHeight.set({
 			height: (route.length === 0)?"auto":0
 		});
-	}, [controlHeight]);
+	}, [controlHeight, route.length]);
 
 	useEffect(() => {
 		controlHeight.start({

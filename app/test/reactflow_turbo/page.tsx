@@ -93,7 +93,7 @@ const Flow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  const onConnect = useCallback((params :  Connection | Edge) => setEdges((els) => addEdge(params, els)), []);
+  const onConnect = useCallback((params :  Connection | Edge) => setEdges((els) => addEdge(params, els)), [setEdges]);
 
   return (
     <div className="h-[calc(100vh)] w-full pr-0 pl-0">

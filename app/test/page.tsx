@@ -83,7 +83,7 @@ export default function TestPage() {
   const state_change_callback = useCallback((state : toolchainStateType) => {
     // console.log("State change", toolchainStateCounter, counter_value, state);
     setToolchainState(JSON.parse(JSON.stringify(state)));
-  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
+  }, [setToolchainState])
 
   const get_state_callback = useCallback(() => {
     return toolchainState;

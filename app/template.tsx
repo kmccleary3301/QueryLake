@@ -3,7 +3,7 @@
 // ATTEMPT 1
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useContextAction } from "@/app/context-provider";
 import { useRouter } from 'next/navigation';
 import { userDataType } from "@/types/globalTypes";
@@ -45,23 +45,23 @@ export default function RootTemplate({
     getUserData
   } = useContextAction();
 
-  const onMount = async() => {
+  const onMount = useCallback(async() => {
     if (userData === undefined) {
 			const cookie : string | undefined = await getCookie({ key: 'UD', convert_object : false });
 			getUserData(cookie, () => {setMounted(true);});
 		}
-  }
+  }, [getUserData, userData]);
 
   useEffect(() => {
     onMount();
-  }, []);
+  }, [onMount]);
 
   useEffect(() => {
     // console.log("Calling effect with userdata and mount change")
     if (mounted && !authReviewed) {
       getUserData(userData?.auth, () => {setMounted(true);});
     }
-  }, [userData?.auth, mounted]);
+  }, [userData?.auth, mounted, authReviewed, getUserData]);
   
   useEffect(() => {
     // console.log("pathname changed to:", pathname);
@@ -78,10 +78,10 @@ export default function RootTemplate({
       console.log("Redirecting to login page");
       router.push("/auth/login");
     } else if (loginValid && (pathname?.startsWith("/auth"))) {
-      console.log("Redirecting to home page");
-      router.push("/home");
+      console.log("Redirecting to workspace selection");
+      router.push("/select-workspace");
     }
-  }, [authReviewed, loginValid, pathname, mounted]);
+  }, [authReviewed, loginValid, pathname, mounted, router]);
 
   return (
     <>

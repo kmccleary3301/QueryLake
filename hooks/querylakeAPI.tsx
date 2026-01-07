@@ -950,13 +950,19 @@ export function QueryLakeFetchOrganizationsMemberships(args :{
 	});
 }
 
-export type memberRoleLower = "owner" | "admin" | "member" | "reader";
+export type memberRoleLower = "owner" | "admin" | "member" | "viewer";
+export type memberRoleCompat = memberRoleLower | "reader";
+
+const normalizeMemberRole = (role: memberRoleCompat): memberRoleLower => {
+  if (role === "reader") return "viewer";
+  return role;
+};
 
 export function QueryLakeInviteUserToOrg(args :{
   auth: string,
   organization_id: string,
   username: string,
-  role: memberRoleLower,
+  role: memberRoleCompat,
   onFinish?: (result : true | false) => void,
 }) {
 
@@ -964,7 +970,38 @@ export function QueryLakeInviteUserToOrg(args :{
     "auth": args.auth,
     "organization_id": args.organization_id,
     "username_to_invite": args.username,
-    "member_class": args.role
+    "member_class": normalizeMemberRole(args.role)
+  });
+
+  fetch(url).then((response) => {
+		response.json().then((
+      data : {
+        success : boolean
+      }
+    ) => {
+      console.log(data);
+			if (!data["success"]) {
+				if (args.onFinish) args.onFinish(false);
+        return;
+			}
+			if (args.onFinish) args.onFinish(true);
+		});
+	});
+}
+
+export function QueryLakeUpdateOrgMemberRole(args :{
+  auth: string,
+  organization_id: string,
+  username: string,
+  role: memberRoleCompat,
+  onFinish?: (result : true | false) => void,
+}) {
+
+  const url = craftUrl(`/api/change_organization_member_role`, {
+    "auth": args.auth,
+    "organization_id": args.organization_id,
+    "username": args.username,
+    "member_class": normalizeMemberRole(args.role)
   });
 
   fetch(url).then((response) => {

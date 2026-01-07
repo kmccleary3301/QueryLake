@@ -34,5 +34,8 @@ documentation/Overview
 /public/cache/toolchains
 /.next
 
+docs_tmp/
+tsconfig.tsbuildinfo
+
 
 package-lock.json

@@ -5,7 +5,7 @@ import { DataTableInfinite, DataTableInfiniteProps } from "@/components/custom/d
 import { useContextAction } from "@/app/context-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { Usable, useEffect, useMemo, useState, use } from "react";
+import { Usable, useCallback, useEffect, useMemo, useState, use } from "react";
 import { columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 import { fetchCollection, QueryLakeFetchDocument } from "@/hooks/querylakeAPI";
 import craftUrl from "@/hooks/craftUrl";
@@ -139,7 +139,7 @@ export default function Page() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [collectionId, setCollectionId] = useState<string | undefined>(undefined);
 
-  const fetchCollectionCallback = () => {
+  const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
     QueryLakeFetchDocument({
       auth: userData.auth,
@@ -152,7 +152,7 @@ export default function Page() {
         setCollectionId(data.collection_id);
       }
     });
-  };
+  }, [resolvedParams, userData?.auth]);
 
 
   // Keep refreshing collection documents every 5s if they are still processing
@@ -178,7 +178,7 @@ export default function Page() {
         fetchCollectionCallback();
       }
     }
-  }, [CollectionMode])
+  }, [CollectionMode, fetchCollectionCallback, userData?.auth])
 
 
   const [search] = useQueryStates(searchParamsParser);

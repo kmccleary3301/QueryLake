@@ -76,5 +76,6 @@ const PopoverContentNoPortal = React.forwardRef<
 // ))
 
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
+PopoverContentNoPortal.displayName = "PopoverContentNoPortal"
 
 export { Popover, PopoverTrigger, PopoverContent, PopoverContentNoPortal }

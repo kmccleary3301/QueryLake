@@ -199,7 +199,7 @@ export default function BasfIntroScreen({
 
   return (
 		<>
-			{(show || demo) && (
+			{(show || demo || true) && (
 				<div className="w-auto h-[calc(100vh-40px)] flex flex-col justify-center pt-[30px]" style={{
 					height: "calc(100vh - 180px)",
 					paddingTop: "140px",

@@ -6,6 +6,7 @@ import {
 	SetStateAction,
 	createContext,
 	useContext,
+	useCallback,
 	useEffect,
 	useRef,
   useState,
@@ -166,7 +167,7 @@ export const NodeContextProvider = ({
 		return interface_configuration.current;
 	};
 
-  const loadInToolchain = (toolchain: ToolChain) => {
+  const loadInToolchain = useCallback((toolchain: ToolChain) => {
     console.log("Loading in Toolchain", toolchain);
     setReferenceToolchain(toolchain);
 
@@ -228,7 +229,7 @@ export const NodeContextProvider = ({
       // ...prevEdges, 
       ...toolchain_edges
     ]);
-  }
+  }, [set_nodes, set_edges]);
 
   useEffect(() => {
     const m_param = search_params?.get("mode") || "create";
@@ -269,7 +270,7 @@ export const NodeContextProvider = ({
         }
       })
     }
-  }, [searchArgs]);
+  }, [searchArgs, loadInToolchain, set_edges, set_nodes, userData?.auth]);
 
 	return (
 		<NodeContext.Provider value={{ 

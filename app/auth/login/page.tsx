@@ -137,7 +137,7 @@ export default function LoginPage() {
       <Separator />
       <div className="space-y-2 pt-2">
         <p className="text-center text-sm flex flex-row justify-center">
-          Don't have an account?
+          Don&apos;t have an account?
           <Link className="underline pl-2" href="/auth/sign_up">
             Sign up
           </Link>

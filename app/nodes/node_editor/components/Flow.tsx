@@ -44,7 +44,10 @@ export default function Flow() {
   // const [edges, setEdges, onEdgesChange] = useEdgesState(initEdges);
   const reactFlowWrapper = useRef(null);
 
-  const onConnect = useCallback((params :  Connection | Edge) => setToolchainEdges((eds) => addEdge(params, eds)), []);
+  const onConnect = useCallback(
+    (params: Connection | Edge) => setToolchainEdges((eds) => addEdge(params, eds)),
+    [setToolchainEdges]
+  );
 
   const nodeTypes = useMemo(
     () => ({

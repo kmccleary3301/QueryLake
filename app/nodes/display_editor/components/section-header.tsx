@@ -50,7 +50,7 @@ export function HeaderSection({
 	useEffect(() => {
 		console.log(sectionInfo);
 		// console.log("New Header Tailwind:", sectionInfo.tailwind);
-	}, [sectionInfo?.tailwind]);
+	}, [sectionInfo]);
 
 	return (
 		<>

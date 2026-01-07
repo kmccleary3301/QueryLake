@@ -113,7 +113,7 @@ export default function ChatInput({
     if (onSubmission !== undefined) onSubmission(value, files);
     setValue("");
     setFiles([]);
-  }, [value, files]);
+  }, [value, files, onSubmission]);
 
 
   return (

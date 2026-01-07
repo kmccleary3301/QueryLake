@@ -284,7 +284,7 @@ export default function UsagePage(){
         setCurrentData(modelCompositionsList);
 			}
 		})
-	}, []);
+	}, [currentMonth, userData?.auth]);
 
 	return (
 
@@ -301,8 +301,8 @@ export default function UsagePage(){
                 {/* <h1 className="text-4xl border-b-accent pb-2 border-b-4"><b>{category_entry.category}</b></h1> */}
                 <div className="flex-wrap">
                   {category_entry.models.map((model_entry, index_2) => (
-                    <div className="w-[540px] h-[355px]">
-                      <TestGraph key={index_2} data={model_entry}/>
+                    <div key={model_entry.model ?? index_2} className="w-[540px] h-[355px]">
+                      <TestGraph data={model_entry}/>
                     </div>
                   ))}
                 </div>

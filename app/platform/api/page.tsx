@@ -139,7 +139,7 @@ export default function Component() {
 				}
 			}
 		})
-	}, []);
+	}, [userData?.auth]);
 
 	const createApiKeyHook = (title : string) => {
 		createApiKey({
@@ -250,7 +250,7 @@ export default function Component() {
                       <LockKeyhole className="w-6 h-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-md text-center w-[300px]">Create an API key to access this QueryLake deployment's API</p>
+                  <p className="text-md text-center w-[300px]">Create an API key to access this QueryLake deployment&apos;s API</p>
                   
                 </div>
               </div>

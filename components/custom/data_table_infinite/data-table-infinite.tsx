@@ -247,7 +247,7 @@ export function DataTableInfinite<TData, TValue>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     console.log("SELECTED ROW CALLED:", selectedRow);
 
-  }, [rowSelection, selectedRow]);
+  }, [rowSelection, selectedRow, setSearch]);
 
   React.useEffect(() => {
     console.log("totalRowsFetched", totalRowsFetched);
@@ -258,7 +258,7 @@ export function DataTableInfinite<TData, TValue>({
   React.useEffect(() => {
     if (setControlsOpen === undefined) return;
     setControlsOpen(controlsOpen);
-  }, [controlsOpen]);
+  }, [controlsOpen, setControlsOpen]);
 
   return (
     <>

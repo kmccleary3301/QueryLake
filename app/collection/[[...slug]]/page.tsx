@@ -4,7 +4,7 @@ import { DataTableInfinite } from "@/components/custom/data_table_infinite/data-
 import { useContextAction } from "@/app/context-provider";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { columnFilterSchema, columns, ColumnSchema, columnSchema, InfiniteQueryMeta, searchParamsParser, searchParamsSerializer } from "./columns";
 // import { DataFetcher } from "./query-options";
 import { fetchCollection } from "@/hooks/querylakeAPI";
@@ -143,7 +143,7 @@ export default function Page() {
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   
-  const fetchCollectionCallback = () => {
+  const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
     fetchCollection({
       auth: userData.auth,
@@ -158,7 +158,7 @@ export default function Page() {
         setCollectionOwner(data.owner);
       }
     });
-  };
+  }, [resolvedParams, userData?.auth]);
 
 
   // Keep refreshing collection documents every 5s if they are still processing
@@ -184,7 +184,7 @@ export default function Page() {
         fetchCollectionCallback();
       }
     }
-  }, [CollectionMode])
+  }, [CollectionMode, fetchCollectionCallback, userData?.auth])
 
   const [search] = useQueryStates(searchParamsParser);
   const { data, isFetching, isLoading, fetchNextPage } = useInfiniteQuery(

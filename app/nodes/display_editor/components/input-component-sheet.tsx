@@ -92,23 +92,23 @@ export default function InputComponentSheet({
   };
 
 	useEffect(() => {setComponentConfigFields(INPUT_COMPONENT_FIELDS[type])}, [type]);
-	useEffect(() => {resetActingValue()}, [value]);
+	useEffect(() => {resetActingValue()}, [value, resetActingValue]);
   
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
 				{children}
 			</SheetTrigger>
-			<SheetContent className="h-full flex flex-col" onContextMenu={(e) => {e.preventDefault()}}>
-				<SheetHeader>
+			<SheetContent className="h-full flex flex-col p-0 right-0 w-full" onContextMenu={(e) => {e.preventDefault()}}>
+				<SheetHeader className="pt-6 px-6">
 					<SheetTitle>{`Configure \`${type}\` Component`}</SheetTitle>
 					<SheetDescription>
 						Configure input component for toolchain interface.
 					</SheetDescription>
 				</SheetHeader>
 
-        <ScrollArea className="flex-grow">
-          <div className="space-y-4 py-4">
+        <ScrollArea className="flex-grow pl-6 pr-2 py-2">
+          <div className="space-y-4 py-4 w-[90%]">
             {/* Styling Configuration */}
             <Card>
               <CardHeader className="pb-3">
@@ -172,7 +172,7 @@ export default function InputComponentSheet({
                   {actingValue.hooks.map((hookLocal, index) => (
                     <div key={index} className="space-y-2 p-2 border rounded-lg">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center space-x-2">
                           <span className="text-sm font-medium">{hookLocal.hook}</span>
                           <HoverTextDiv hint="Order of hook firing. Can be used to fire inputs together.">
                             <div className="flex items-center space-x-1">

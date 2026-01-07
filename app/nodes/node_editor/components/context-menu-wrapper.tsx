@@ -65,7 +65,7 @@ export default function ContextMenuWrapper({
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [reactFlowInstance],
+    [reactFlowInstance, getId, setNodes],
   );
 
   const onAddAPIFunctionNode = useCallback(
@@ -102,7 +102,7 @@ export default function ContextMenuWrapper({
 
       setNodes((nds) => [...nds, newNode]);
     },
-    [reactFlowInstance],
+    [reactFlowInstance, getId, setNodes],
   );
 
 

@@ -24,6 +24,7 @@ import { BreadcrumbEllipsis } from "@/components/ui/breadcrumb";
 
 
 
+import AudioRecorder from '@/toolchain_components/audio-recorder';
 import BasfIntroScreen from '@/toolchain_components/basf-intro-screen';
 import ChatInput from '@/toolchain_components/chat-input';
 import ChatWithRating from '@/toolchain_components/chat-with-rating';
@@ -62,6 +63,11 @@ export function DisplayComponentSkeletonMapper({
 
 	switch(info.display_as) {
 		
+    case "audio-recorder":
+      return (
+        <AudioRecorder demo configuration={(info as displayMapping)}/>
+      );
+
     case "chat":
       return (
         <Chat demo configuration={(info as displayMapping)}/>

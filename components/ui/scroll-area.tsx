@@ -90,6 +90,8 @@ const ScrollAreaHorizontal = React.forwardRef<
 
 
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+ScrollAreaDiv.displayName = "ScrollAreaDiv"
+ScrollAreaHorizontal.displayName = "ScrollAreaHorizontal"
 
 const ScrollBar = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,

@@ -43,7 +43,7 @@ export const TextGenerateEffect = ({
       };
 
     }
-  }, [scope.current]);
+  }, [animate, duration, initialDelay, spring, staggerDelay, words, byLetter, scope]);
 
   const renderWords = () => {
     return (

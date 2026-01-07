@@ -9,7 +9,7 @@ export type TurboNodeData = {
   subline?: string;
 };
 
-export default memo(({ data }: NodeProps<TurboNodeData>) => {
+const TurboNode = memo(function TurboNode({ data }: NodeProps<TurboNodeData>) {
   return (
     <>
       <div className="cloud gradient">
@@ -45,3 +45,7 @@ export default memo(({ data }: NodeProps<TurboNodeData>) => {
     </>
   );
 });
+
+TurboNode.displayName = "TurboNode";
+
+export default TurboNode;

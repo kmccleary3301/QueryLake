@@ -1,10 +1,4 @@
 "use client";
-interface DocPageProps {
-  params: {
-    slug: string[],
-  },
-  searchParams: object
-}
 
 
 type collection_mode_type = "create" | "edit" | "view" | undefined;
@@ -16,7 +10,7 @@ type collection_mode_type = "create" | "edit" | "view" | undefined;
  */
 
 import axios from 'axios';
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Label } from '@/components/ui/label';
 import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -35,7 +29,7 @@ import {
 } from "@/hooks/querylakeAPI";
 import { useContextAction } from "@/app/context-provider";
 import craftUrl from "@/hooks/craftUrl";
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Progress } from '@/components/ui/progress';
 import { Copy, LucideLoader2 } from 'lucide-react';
 import "./spin.css";
@@ -115,10 +109,15 @@ type uploading_file_type = {
   progress: number,
 }
 
-export default function CollectionPage({ params, searchParams }: DocPageProps) {
+export default function CollectionPage() {
 
   const router = useRouter();
-  const collection_mode_immediate = (["create", "edit", "view"].indexOf(params["slug"][0]) > -1) ? params["slug"][0] as collection_mode_type : undefined
+  const params = useParams<{ slug?: string[] | string }>()!;
+  const slug = useMemo(() => {
+    if (!params.slug) return [];
+    return Array.isArray(params.slug) ? params.slug : [params.slug];
+  }, [params.slug]);
+  const collection_mode_immediate = (["create", "edit", "view"].indexOf(slug[0]) > -1) ? slug[0] as collection_mode_type : undefined
   const [CollectionMode, setCollectionMode] = useState<collection_mode_type>(collection_mode_immediate);
   const [collectionTitle, setCollectionTitle] = useState<string>("");
   const [collectionDescription, setCollectionDescription] = useState<string>("");
@@ -135,12 +134,12 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     refreshCollectionGroups,
   } = useContextAction();
 
-  const fetchCollectionCallback = (only_documents : boolean) => {
-    if (!params["slug"][1]) return;
+  const fetchCollectionCallback = useCallback((only_documents : boolean) => {
+    if (!slug[1]) return;
 
     fetchCollection({
       auth: userData?.auth as string,
-      collection_id: params["slug"][1],
+      collection_id: slug[1],
       onFinish: (data) => {
         if (data !== undefined) {
           
@@ -152,7 +151,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
 
           fetchCollectionDocuments({
             auth: userData?.auth as string,
-            collection_id: params["slug"][1],
+            collection_id: slug[1],
             limit: 100,
             offset: 0,
             onFinish: (data) => {
@@ -164,7 +163,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         }
       }
     })
-  };
+  }, [slug, userData?.auth]);
 
   useEffect(() => { // Keep refreshing collection documents every 5s if they are still processing
     let documents_processing = false;
@@ -178,7 +177,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         fetchCollectionCallback(true);
       }, 5000)
     }
-  }, [collectionDocuments]);
+  }, [collectionDocuments, fetchCollectionCallback]);
 
   useEffect(() => {
     if ( userData?.auth !== undefined) {
@@ -187,7 +186,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         fetchCollectionCallback(false);
       }
     }
-  }, [CollectionMode])
+  }, [CollectionMode, fetchCollectionCallback, userData?.auth])
 
   const onPublish = () => {
     const create_args = {
@@ -216,10 +215,10 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
     } else {
       modifyCollection({
         ...create_args,
-        collection_id: params["slug"][1],
+        collection_id: slug[1],
         onFinish: (result) => {
           if (result !== false && pendingUploadFiles !== null) {
-            start_document_uploads(params["slug"][1]);
+            start_document_uploads(slug[1]);
           }
           refreshCollectionGroups();
         }
@@ -297,13 +296,13 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
         <h1 className="text-3xl font-bold tracking-tight mb-4 text-center">
           {(CollectionMode === "create")?"Create a Document Collection":(CollectionMode === "edit")?"Edit Document Collection":(CollectionMode === "view")?"View Document Collection":"Bad URL!"}
         </h1>
-        {(params["slug"][1]) && (
+        {(slug[1]) && (
           <span className="text-xs text-primary/35 flex flex-row space-x-4 pb-10">
             <p className="text-sm text-nowrap overflow-hidden h-7 border-2 p-1 px-3 rounded-lg flex flex-col justify-center" >
-              {params["slug"][1]}
+              {slug[1]}
             </p>
             <Button type="submit" className="p-0 m-0 h-7" variant={"transparent"} onClick={() => {
-              handleCopy(params["slug"][1] || "")
+              handleCopy(slug[1] || "")
             }}>
               <Copy className="w-4 h-4 text-primary"/>
             </Button>
@@ -352,8 +351,8 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 }}
                 value={collectionTitle}
                 id="title" 
-                placeholder={(params["slug"][0] === "create")?"Enter title":""}
-                disabled={(params["slug"][0] === "view")}
+                placeholder={(slug[0] === "create")?"Enter title":""}
+                disabled={(slug[0] === "view")}
               />
             </div>
             <div className="w-full items-center gap-1.5 flex-grow flex flex-col">
@@ -362,7 +361,7 @@ export default function CollectionPage({ params, searchParams }: DocPageProps) {
                 className='flex-grow resize-none'
                 id="description"
                 value={collectionDescription}
-                disabled={(params["slug"][0] === "view")}
+                disabled={(slug[0] === "view")}
                 onChange={(event) => {
                   setCollectionDescription(event.target.value);
                 }}
@@ -467,4 +466,3 @@ function TrashIcon(props : SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
-

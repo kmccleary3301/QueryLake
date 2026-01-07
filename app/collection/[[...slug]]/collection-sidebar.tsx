@@ -167,7 +167,7 @@ export function CollectionSidebar({
         }
       });
     }
-  }, [tempName, tempDescription, tempPublic, tempOwner, collection_mode_immediate]);
+  }, [tempName, tempDescription, tempPublic, tempOwner, collection_mode_immediate, router, user_auth?.auth]);
 
 	React.useEffect(() => {
 		setTempOwner(collection_owner);
@@ -193,7 +193,7 @@ export function CollectionSidebar({
 				}
 			}
 		})
-	}, [tempPublic, collection_is_public, tempOwner, collection_owner, collection_id]);
+	}, [tempPublic, tempOwner, collection_id, set_collection_owner, set_collection_is_public, user_auth?.auth, user_auth.username]);
 
 	const saveChangesMetadata = React.useCallback(() => {
 		modifyCollection({
@@ -206,7 +206,7 @@ export function CollectionSidebar({
 
 			}
 		})
-	}, [collection_name, tempName, collection_description, tempDescription, collection_id]);
+	}, [collection_is_public, tempName, tempDescription, collection_id, user_auth?.auth]);
 
 	const all_available_orgs = [
 		{category_label: "Self", values: [
@@ -225,11 +225,6 @@ export function CollectionSidebar({
 			}
 		})}
 	];
-
-	React.useEffect(() => {
-		console.log("Temp Owner:", tempOwner);
-		console.log("All orgs:", all_available_orgs);
-	}, []);
 
   return (
     <Sidebar {...props}>

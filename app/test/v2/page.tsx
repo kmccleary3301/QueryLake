@@ -62,14 +62,14 @@ export default function TestPage() {
 
   const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
     // console.log("update state called with", toolchainStateCounter);
-    setToolchainStateCounter(toolchainStateCounter + 1);
+    setToolchainStateCounter((prev) => prev + 1);
 
     const value = (typeof state === "function") ? state(toolchainStateRef.current) : state;
     toolchainStateRef.current = value;
     const value_copied = JSON.parse(JSON.stringify(value));
     setToolchainState(value_copied);
     console.log(value);
-  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState]);
+  }, [setToolchainStateCounter, setToolchainState]);
 
   // const updateState = useCallback((state: CallbackOrValue<toolchainStateType>) => {
   //   console.log("update state called with", toolchainStateCounter);
@@ -137,11 +137,11 @@ export default function TestPage() {
     console.log("State change", toolchainStateCounter, counter_value, state);
     setToolchainState(state);
     setToolchainStateCounter(counter_value);
-  }, [toolchainState, setToolchainStateCounter, toolchainStateCounter, setToolchainState])
+  }, [setToolchainStateCounter, toolchainStateCounter, setToolchainState])
 
   useEffect(() => {
     console.log("Toolchain state updated: ", toolchainState);
-  }, [toolchainStateCounter])
+  }, [toolchainState])
 
   const testWebsocket = () => {
     // setToolchainWebsocket(new ToolchainSession({

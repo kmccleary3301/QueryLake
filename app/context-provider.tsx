@@ -228,7 +228,7 @@ export const ContextProvider = ({
         set_toolchain_sessions(newToolchainSessions);
       }
     })
-  }, [user_data?.auth, auth_reviewed]);
+  }, [user_data]);
 
 	const refresh_collection_groups = () => {
 		getUserCollections({
@@ -246,7 +246,7 @@ export const ContextProvider = ({
       onFinish: (v : ToolChain) => set_selected_toolchain_full(v)
     })
     refresh_toolchain_sessions();
-  }, [user_data?.auth, auth_reviewed]);
+  }, [user_data?.auth, auth_reviewed, refresh_toolchain_sessions]);
 
   const getAPIFunctionSpecs = useCallback(() => {
     QuerylakeFunctionHelp({
@@ -257,19 +257,19 @@ export const ContextProvider = ({
         }
       }
     })
-  }, [user_data?.auth, auth_reviewed]);
+  }, []);
 
 
   useEffect(() => {
     if (selected_toolchain === undefined) return;
     setFullToolchain(selected_toolchain);
-  }, [selected_toolchain, user_data?.auth, auth_reviewed]);
+  }, [selected_toolchain, user_data?.auth, auth_reviewed, setFullToolchain]);
   
   useEffect(() => {
     if (user_data === undefined || !auth_reviewed) return;
     set_selected_toolchain(user_data.default_toolchain.id);
     getAPIFunctionSpecs();
-  }, [user_data?.auth, auth_reviewed]);
+  }, [user_data, auth_reviewed, getAPIFunctionSpecs]);
 	
 	return (
 		<Context.Provider value={{ 

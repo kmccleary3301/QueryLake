@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 
-export default memo(({ data, isConnectable } : NodeProps) => {
+const CustomNode = memo(function CustomNode({ data, isConnectable } : NodeProps) {
   return (
     <>
       <Handle
@@ -32,3 +32,7 @@ export default memo(({ data, isConnectable } : NodeProps) => {
     </>
   );
 });
+
+CustomNode.displayName = "CustomNode";
+
+export default CustomNode;

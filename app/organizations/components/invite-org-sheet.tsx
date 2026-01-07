@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ArrowUpRight } from "lucide-react";
 import { useParams } from "next/navigation";
 
-export type memberRole = "Owner" | "Admin" | "Member" | "Reader";
+export type memberRole = "Owner" | "Admin" | "Member" | "Viewer";
 
 export default function InviteUserToOrgSheet({
   children,
@@ -46,7 +46,7 @@ export default function InviteUserToOrgSheet({
   }) => void
 }) {
   const [name, setName] = useState("");
-  const [role, setRole] = useState<memberRole>("Reader");
+  const [role, setRole] = useState<memberRole>("Viewer");
 
 
   return (
@@ -92,8 +92,8 @@ export default function InviteUserToOrgSheet({
                   preview: "Can view and edit document collections."
                 },
                 {
-                  value: "Reader",
-                  label: "Reader",
+                  value: "Viewer",
+                  label: "Viewer",
                   preview: "Can view organization data and read documents."
                 },
               ]}

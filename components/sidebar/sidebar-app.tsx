@@ -45,7 +45,9 @@ export default function AppSidebar() {
   }, [
     userData,
     authReviewed,
-    loginValid
+    loginValid,
+    collectionGroups.length,
+    refreshCollectionGroups
   ]);
 
   useEffect(() => {

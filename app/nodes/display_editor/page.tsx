@@ -26,7 +26,7 @@ export default function DisplayEditorPage() {
 
   useEffect(() => {
     setSection(JSON.parse(JSON.stringify(getInterfaceConfiguration())));
-  }, [pathname])
+  }, [pathname, getInterfaceConfiguration])
 
   return (
     <div className="h-[100vh] w-full pr-0 pl-0">

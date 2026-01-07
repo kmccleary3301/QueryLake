@@ -18,7 +18,7 @@ export type ToolchainNodeData = {
   position: XYPosition,
 }
 
-export default memo(({ data }: NodeProps<toolchainNode>) => {
+const ToolchainNode = memo(function ToolchainNode({ data }: NodeProps<toolchainNode>) {
   const topWindowHeight = 50;
 
   useEffect(() => {
@@ -199,3 +199,7 @@ export default memo(({ data }: NodeProps<toolchainNode>) => {
     </>
   );
 });
+
+ToolchainNode.displayName = "ToolchainNode";
+
+export default ToolchainNode;

@@ -93,7 +93,7 @@ export default function OrgPage() {
         }
       }
     })
-  }, [userData, selectedOrg, organizations, setOrganizations])
+  }, [userData, organizations, setOrganizations])
 
   
   return (

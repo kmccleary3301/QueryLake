@@ -85,7 +85,7 @@ export default function SettingsPage() {
       setKeyAvailable(newKeyAvailable);
       setCurrentKeyInput(newKeyAvailable?".......................................":"");
     }
-  }, [currentProvider, userData?.providers]);
+  }, [currentProvider, userData]);
 
   useEffect(() => {
     console.log("User set providers:", userData?.user_set_providers);
@@ -93,7 +93,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     console.log("Theme Selected ID:", theme);
-  }, []);
+  }, [theme]);
 
   return (
     <ThemeProviderWrapper>

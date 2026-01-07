@@ -20,14 +20,7 @@ export const METADATA : componentMetaDataType = {
       "on_upload", 
       "on_submit",
       "selected_collections",
-    ],
-    "config": [
-      {
-				"name": "test_7_long_string",
-				"type": "long_string",
-        "default": "6ix"
-			}
-		],
+    ]
 	}
 };
 

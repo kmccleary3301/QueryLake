@@ -60,8 +60,8 @@ export default function AppPage() {
     setActiveToolchainSession,
   } = useContextAction();
   
-  const setCurrentToolchainSession = (title: string) => {
-    console.log("Setting toolchain session with", sessionId?.current, title, search_params?.get("s"), appMode.current, pathname, activeToolchainSession);
+  const setCurrentToolchainSession = useCallback((title: string) => {
+    console.log("Setting toolchain session with", sessionId?.current, title, appMode.current);
 
     const new_session_make : toolchain_session = {
       time: toolchainSessions.has(sessionId?.current as string) ? 
@@ -81,7 +81,13 @@ export default function AppPage() {
       return newMap;
     });
     setActiveToolchainSession(sessionId?.current);
-  }
+  }, [
+    sessionId,
+    toolchainSessions,
+    selectedToolchainFull?.id,
+    setToolchainSessions,
+    setActiveToolchainSession,
+  ]);
 
   useEffect(() => {
     console.log("TITLE CHANGED, UPDATING WITH", toolchainState.title);
@@ -95,7 +101,7 @@ export default function AppPage() {
       ) return;
     console.log("FOLLOWING THROUGH");
     setCurrentToolchainSession(toolchainState.title as string || "Untitled Session");
-  }, [toolchainState?.title]);
+  }, [sessionId, setCurrentToolchainSession, toolchainSessions, toolchainState?.title]);
 
   useEffect(() => {
     let newFirstEventRan = firstEventRan;
@@ -124,7 +130,16 @@ export default function AppPage() {
       if (selectedToolchainFull?.first_event_follow_up)
         callEvent(userData?.auth as string, selectedToolchainFull.first_event_follow_up, {})
     }
-  }, [firstEventRan]);
+  }, [
+    callEvent,
+    firstEventRan,
+    selectedToolchainFull?.first_event_follow_up,
+    selectedToolchainFull?.id,
+    sessionId,
+    setCurrentToolchainSession,
+    toolchainSessions,
+    userData?.auth,
+  ]);
 
 
   const STATE_UPDATE_MIN_WAIT = 25; // ms
@@ -151,7 +166,7 @@ export default function AppPage() {
     setToolchainState(value_copied);
 
     
-  }, [toolchainStateRef?.current, setToolchainState]);
+  }, [setToolchainState]);
 
   const onOpenSessionTC = useCallback(( create_session : boolean) => {
     if (toolchainWebsocket?.current === undefined) return;
@@ -185,7 +200,14 @@ export default function AppPage() {
       });
     }
     mounting.current = false;
-  }, [selectedToolchainFull]);
+  }, [
+    router,
+    selectedToolchainFull?.id,
+    sessionId,
+    setToolchainState,
+    toolchainWebsocket,
+    userData?.auth,
+  ]);
 
   const initializeWebsocket = useCallback((onFinish: () => void) => {
     if (toolchainWebsocket === undefined || sessionId === undefined) return;
@@ -240,7 +262,14 @@ export default function AppPage() {
         setCurrentEvent(undefined);
       }
     });
-  }, [toolchainWebsocket, sessionId, setCurrentEvent, updateState]);
+  }, [
+    sessionId,
+    setCurrentEvent,
+    setSelectedToolchain,
+    setToolchainState,
+    toolchainWebsocket,
+    updateState,
+  ]);
 
   // This is a URL change monitor to refresh content.
   useEffect(() => {
@@ -275,7 +304,17 @@ export default function AppPage() {
       setActiveToolchainSession(undefined);
     }
     appMode.current = new_mode;
-  }, [pathname, search_params, selectedToolchainFull]);
+  }, [
+    initializeWebsocket,
+    onOpenSessionTC,
+    pathname,
+    search_params,
+    selectedToolchainFull,
+    sessionId,
+    setActiveToolchainSession,
+    setCurrentToolchainSession,
+    toolchainState.title,
+  ]);
   
 
   // useEffect(() => {
@@ -300,4 +339,3 @@ export default function AppPage() {
     </div>
   );
 }
-

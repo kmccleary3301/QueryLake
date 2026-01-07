@@ -1,8 +1,8 @@
 import { inputComponentConfig } from "@/types/toolchain-interface";
 
-export type displayComponents = "chat" | "current-event-display" | "markdown" | "text";
+export type displayComponents = "audio-recorder" | "chat" | "current-event-display" | "markdown" | "text";
 export type inputComponents = "basf-intro-screen" | "chat-input" | "chat-with-rating" | "file-upload" | "switch";
-export const DISPLAY_COMPONENTS : displayComponents[] = ["chat","current-event-display","markdown","text"];
+export const DISPLAY_COMPONENTS : displayComponents[] = ["audio-recorder","chat","current-event-display","markdown","text"];
 export const INPUT_COMPONENTS : inputComponents[] = ["basf-intro-screen","chat-input","chat-with-rating","file-upload","switch"];
 export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentConfig} = {
   "basf-intro-screen": {
@@ -24,13 +24,6 @@ export const INPUT_COMPONENT_FIELDS : {[key in inputComponents]: inputComponentC
       "on_upload",
       "on_submit",
       "selected_collections"
-    ],
-    "config": [
-      {
-        "name": "test_7_long_string",
-        "type": "long_string",
-        "default": "6ix"
-      }
     ]
   },
   "chat-with-rating": {

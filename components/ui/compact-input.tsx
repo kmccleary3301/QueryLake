@@ -115,4 +115,6 @@ const CompactInput = forwardRef(({
   );
 })
 
+CompactInput.displayName = "CompactInput";
+
 export default CompactInput;

@@ -1,25 +1,26 @@
-import Image from "next/image"
-import Link from "next/link"
+"use client";
 
-import { siteConfig } from "@/config/site"
-import { cn } from "@/lib/utils"
-import { Announcement } from "@/components/inherited/announcement"
-import { ExamplesNav } from "@/components/inherited/examples-nav"
-import { Icons } from "@/components/inherited/icons"
-import {
-  PageActions,
-  PageHeader,
-  PageHeaderDescription,
-  PageHeaderHeading,
-} from "@/components/inherited/page-header"
-import { buttonVariants } from "@/registry/new-york/ui/button"
-import PingButton from "@/components/inherited/ping-button"
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
+const LAST_WORKSPACE_KEY = "ql_last_workspace";
 
 export default function IndexPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastWorkspace = window.localStorage.getItem(LAST_WORKSPACE_KEY);
+    if (lastWorkspace) {
+      router.replace(`/w/${lastWorkspace}/dashboard`);
+    } else {
+      router.replace("/select-workspace");
+    }
+  }, [router]);
+
   return (
-    <div className="container relative">
-      
+    <div className="flex h-screen items-center justify-center text-sm text-muted-foreground">
+      Redirecting...
     </div>
-  )
+  );
 }

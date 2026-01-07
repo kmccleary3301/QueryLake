@@ -195,7 +195,7 @@ const Sidebar = React.forwardRef<
         width: (state === "expanded")?"auto":0,
         transition: { duration: 0.4, ease: "easeInOut", bounce: 0 }
       });
-    }, [state]);
+    }, [state, collapsible, controlsSidebarWidth]);
 
     if (collapsible === "motion") {
       return (

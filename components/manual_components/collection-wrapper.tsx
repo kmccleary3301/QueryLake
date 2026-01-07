@@ -34,7 +34,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
   const countSelected = useCallback(() => {
     const mapped_selected = props.collections.map((value) => props.collectionSelected.get(value.hash_id)).filter(Boolean).length;
     return mapped_selected;
-  }, []);
+  }, [props.collectionSelected, props.collections]);
 
   const [selectedCount, setSelectedCount] = useState<number>(countSelected());
   const [selected, setSelected] = useState(() => (selectedCount === props.collections.length));
@@ -67,7 +67,7 @@ export default function CollectionWrapper(props: CollectionWrapperProps) {
     if (selectedCount === props.collections.length) {
       setSelected(true);
     }
-  }, [props.collectionSelected, selectedCount]);
+  }, [props.collectionSelected, selectedCount, props.collections.length]);
 
 	// useEffect(() => {
 	// 	console.log("PROP COLLECTIONS:", props.collections);

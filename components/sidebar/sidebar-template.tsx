@@ -39,7 +39,7 @@ export default function SidebarTemplate({
 		controlsSidebarWidth.start({
 			width: (sidebarOpen)?width:0
 		});
-	}, [controlsSidebarWidth]);
+	}, [controlsSidebarWidth, sidebarOpen, width]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -55,7 +55,7 @@ export default function SidebarTemplate({
     return () => {
       clearTimeout(timeoutId);
     };
-	}, [sidebarOpen, controlsSidebarWidth, controlSidebarButtonOffset]);
+	}, [sidebarOpen, width, controlsSidebarWidth, controlSidebarButtonOffset]);
 
   useEffect(() => {
     // const sidebar_value = (sidebarIsAvailable && sidebarOpened)?true:false;

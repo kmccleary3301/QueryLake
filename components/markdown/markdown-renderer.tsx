@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import { marked, TokensList, Token, Tokens } from 'marked';
 import MarkdownTextSplitter from "./markdown-text-splitter";
 import MarkdownCodeBlock from "./markdown-code-block";
@@ -61,7 +61,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
   config: markdownRenderingConfig,
   list_in_block?: boolean
 }) {
-  const lexer = new marked.Lexer();
+  const lexer = useMemo(() => new marked.Lexer(), []);
   // const lexed_input : Token[] = lexer.lex(sanitizeMarkdown(input));
 
   const [tokens, setTokens] = useState<Token[]>([]);
@@ -103,7 +103,7 @@ const MarkdownRenderer = memo(function MarkdownRenderer({
 
     rerender_timeout.current = getTimeout;
 
-  }, [input]); // Runs every time input changes
+  }, [input, lexer]); // Runs every time input changes
 
   return (
     <>

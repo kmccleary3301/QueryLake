@@ -95,7 +95,7 @@ export default function ScrollSection({
         observer.current.disconnect();
       }
     }
-	}, [interiorDivSize?.height]);
+	}, [interiorDivSize?.height, animateScroll, scrollToBottomHook]);
 
 
 	useEffect(() => {
@@ -111,7 +111,7 @@ export default function ScrollSection({
 		} else if (observer.current) {
 			observer.current.unobserve(div)
 		}
-	}, []);
+	}, [animateScroll, scrollToBottomHook]);
 
 	return (
 		<>

@@ -13,7 +13,7 @@ import { Toaster as DefaultToaster } from "@/components/ui/toaster"
 import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner"
 import { Toaster as NewYorkToaster } from "@/registry/new-york/ui/toaster"
 import { ContextProvider } from "./context-provider"
-import SidebarController from "@/components/sidebar/sidebar"
+import RouteShell from "./route-shell";
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 
@@ -118,22 +118,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
               >
               <StateThemeProvider>
               <ThemeProviderWrapper>
-              <div className="relative flex h-screen w-screen flex-row bg-background">
-                {/* <div className="flex flex-col w-[200px] h-full border border-blue-500"/> */}
-                <SidebarController />
-                <div className="relative flex h-screen w-full flex-col bg-background text-primary">
-                  {/* <SiteHeader /> */}
-                  {/* <AnimatePresence initial={false} mode="popLayout"> */}
-                    {/* <main className="flex-1">{children}</main> */}
-                      
-                      {children}
-                      {/* <NewYorkToaster /> */}
-                      {/* <DefaultToaster /> */}
-                      <NewYorkSonner />
-                  {/* </AnimatePresence> */}
-                  {/* <SiteFooter /> */}
-                </div>
-              </div>
+              <RouteShell>
+                {children}
+              </RouteShell>
+              <NewYorkSonner />
               </ThemeProviderWrapper>
               </StateThemeProvider>
               </ContextProvider>

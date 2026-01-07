@@ -29,6 +29,14 @@ const nextConfig = {
         destination: "http://localhost:8000/api/:path*"
       },
       {
+        source: "/v2/kernel/:path*",
+        destination: "http://localhost:8000/v2/kernel/:path*"
+      },
+      {
+        source: "/sessions/:path*",
+        destination: "http://localhost:8000/sessions/:path*"
+      },
+      {
         source: "/toolchain",
         destination: "http://localhost:8000/toolchain"
       }
@@ -53,8 +61,8 @@ const nextConfig = {
     return [
       {
         source: "/",
-        destination: "/auth",
-        permanent: true,
+        destination: "/select-workspace",
+        permanent: false,
       },
       {
         source: "/components",

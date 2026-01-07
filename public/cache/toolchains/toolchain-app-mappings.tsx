@@ -10,6 +10,7 @@ import {
   inputMapping,
 } from "@/types/toolchain-interface";
 
+import AudioRecorder from '@/toolchain_components/audio-recorder';
 import BasfIntroScreen from '@/toolchain_components/basf-intro-screen';
 import ChatInput from '@/toolchain_components/chat-input';
 import ChatWithRating from '@/toolchain_components/chat-with-rating';
@@ -50,6 +51,11 @@ export function ToolchainComponentMapper({
 	switch(info.display_as) {
 		
     
+    case "audio-recorder":
+      return (
+        <AudioRecorder configuration={(info as displayMapping)}/>
+      );
+
     case "chat":
       return (
         <Chat configuration={(info as displayMapping)}/>
