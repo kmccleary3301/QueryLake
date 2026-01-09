@@ -57,6 +57,8 @@ type SearchParams = {
   sort_dir?: "ASC" | "DESC";
 }
 
+const LAST_WORKSPACE_KEY = "ql_last_workspace";
+
 export type DataFetcher = (params: SearchParams) => Promise<{
   data: ColumnSchema[];
   meta: InfiniteQueryMeta;
@@ -131,6 +133,8 @@ export default function Page() {
   const resolvedParams = useParams() as {
     slug: string[],
   };
+  const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   const collection_mode_immediate = "view";
   
@@ -147,6 +151,15 @@ export default function Page() {
   const legacyWorkspacePath = legacyDocumentId
     ? `/documents/${legacyDocumentId}`
     : "/files";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastWorkspace = window.localStorage.getItem(LAST_WORKSPACE_KEY);
+    const documentId = resolvedParams["slug"]?.[1];
+    if (!lastWorkspace || !documentId) return;
+    setRedirecting(true);
+    router.replace(`/w/${lastWorkspace}/documents/${documentId}`);
+  }, [router, resolvedParams]);
 
   const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
@@ -244,6 +257,14 @@ export default function Page() {
   useEffect(() => {
     setDataRowsProcessed(flatData);
   }, [flatData, uploadingFiles, pendingUploadFiles]);
+
+  if (redirecting) {
+    return (
+      <div className="flex h-screen items-center justify-center text-sm text-muted-foreground">
+        Redirecting...
+      </div>
+    );
+  }
 
   return (
     <div 

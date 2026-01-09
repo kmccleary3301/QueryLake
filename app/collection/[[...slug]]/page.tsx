@@ -43,6 +43,7 @@ type SearchParams = {
   sort_dir?: "ASC" | "DESC";
 }
 
+const LAST_WORKSPACE_KEY = "ql_last_workspace";
 
 // export type InfiniteQueryMeta = {
 //   totalRowCount: number;
@@ -127,6 +128,7 @@ export default function Page() {
   };
 
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   const collection_mode_immediate = 
   (
@@ -152,6 +154,23 @@ export default function Page() {
   const legacyWorkspacePath = legacyCollectionId
     ? `/collections/${legacyCollectionId}`
     : "/collections";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastWorkspace = window.localStorage.getItem(LAST_WORKSPACE_KEY);
+    if (!lastWorkspace) return;
+    const mode = resolvedParams["slug"]?.[0];
+    const collectionId = resolvedParams["slug"]?.[1];
+    if (mode === "create") {
+      setRedirecting(true);
+      router.replace(`/w/${lastWorkspace}/collections/new`);
+      return;
+    }
+    if (mode === "view" && collectionId) {
+      setRedirecting(true);
+      router.replace(`/w/${lastWorkspace}/collections/${collectionId}`);
+    }
+  }, [router, resolvedParams]);
   
   const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
@@ -257,6 +276,13 @@ export default function Page() {
     []
   );
 
+  if (redirecting) {
+    return (
+      <div className="flex h-screen items-center justify-center text-sm text-muted-foreground">
+        Redirecting...
+      </div>
+    );
+  }
 
   return (
     <div 

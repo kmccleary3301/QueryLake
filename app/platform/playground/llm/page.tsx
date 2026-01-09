@@ -29,6 +29,7 @@ import { TemperatureSelector } from "./components/temperature-selector"
 import { TopPSelector } from "./components/top-p-selector"
 import { models, types } from "./data/models"
 import { presets } from "./data/presets"
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 export const metadata: Metadata = {
   title: "Playground - LLM",
@@ -38,6 +39,14 @@ export const metadata: Metadata = {
 export default function PlaygroundPage() {
   return (
     <>
+      <div className="container pt-4">
+        <LegacyNotice
+          title="Legacy LLM playground"
+          description="This is the legacy playground UI. The workspace UI is the recommended surface going forward."
+          workspacePath="/playground"
+          ctaLabel="Open workspace Playground"
+        />
+      </div>
       <div className="md:hidden">
         <Image
           src="/examples/playground-light.png"

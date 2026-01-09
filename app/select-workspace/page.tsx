@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useContextAction } from "@/app/context-provider";
-import { QueryLakeResolveInvitation } from "@/hooks/querylakeAPI";
+import { QueryLakeCreateOrganization, QueryLakeResolveInvitation } from "@/hooks/querylakeAPI";
 import { membershipType } from "@/types/globalTypes";
 
 const LAST_WORKSPACE_KEY = "ql_last_workspace";
@@ -20,11 +22,15 @@ type WorkspaceCard = {
 };
 
 export default function Page() {
+  const router = useRouter();
   const { userData, authReviewed, loginValid, getUserData } = useContextAction();
   const [memberships, setMemberships] = useState<membershipType[]>([]);
   const [actionInFlight, setActionInFlight] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [createOrgOpen, setCreateOrgOpen] = useState(false);
+  const [createOrgName, setCreateOrgName] = useState("");
+  const [creatingOrg, setCreatingOrg] = useState(false);
 
   useEffect(() => {
     if (userData?.memberships) {
@@ -77,6 +83,33 @@ export default function Page() {
   const storeLastWorkspace = (slug: string) => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(LAST_WORKSPACE_KEY, slug);
+  };
+
+  const createOrganization = () => {
+    if (!userData?.auth) return;
+    if (!createOrgName.trim()) {
+      toast("Organization name is required");
+      return;
+    }
+    setCreatingOrg(true);
+    QueryLakeCreateOrganization({
+      auth: userData.auth,
+      organization_name: createOrgName.trim(),
+      onFinish: (result) => {
+        setCreatingOrg(false);
+        if (!result) {
+          toast("Failed to create organization");
+          return;
+        }
+        toast("Organization created");
+        setCreateOrgOpen(false);
+        setCreateOrgName("");
+        getUserData(userData.auth, () => {
+          storeLastWorkspace(result.organization_id);
+          router.push(`/w/${result.organization_id}/dashboard`);
+        });
+      },
+    });
   };
 
   const resolveInvite = (membership: membershipType, accept: boolean) => {
@@ -242,6 +275,45 @@ export default function Page() {
           </div>
         </section>
       )}
+
+      <section className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold">Create organization</h2>
+            <p className="text-sm text-muted-foreground">
+              Create a new organization workspace for your team.
+            </p>
+          </div>
+          <Dialog open={createOrgOpen} onOpenChange={setCreateOrgOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                New organization
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create organization</DialogTitle>
+                <DialogDescription>
+                  Pick a name for your organization workspace.
+                </DialogDescription>
+              </DialogHeader>
+              <Input
+                placeholder="Organization name"
+                value={createOrgName}
+                onChange={(event) => setCreateOrgName(event.target.value)}
+              />
+              <DialogFooter>
+                <Button
+                  onClick={createOrganization}
+                  disabled={!createOrgName.trim() || creatingOrg}
+                >
+                  {creatingOrg ? "Creating..." : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </section>
     </div>
   );
 }

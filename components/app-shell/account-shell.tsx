@@ -9,6 +9,7 @@ type AccountShellProps = {
 
 const navItems = [
   { label: "Profile", href: "/account/profile" },
+  { label: "Security", href: "/account/security" },
   { label: "Preferences", href: "/account/preferences" },
   { label: "Providers", href: "/account/providers" },
 ];

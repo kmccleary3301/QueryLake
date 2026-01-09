@@ -34,6 +34,7 @@ import {
   QueryLakeFetchOrganizationsMemberships,
   QueryLakeFetchUsersMemberships,
   QueryLakeInviteUserToOrg,
+  QueryLakeResolveInvitation,
   QueryLakeUpdateOrgMemberRole,
   memberRoleLower,
   organization_memberships,
@@ -65,6 +66,7 @@ export default function Page() {
     {}
   );
   const [roleSaving, setRoleSaving] = useState<string | null>(null);
+  const [resolvingInvite, setResolvingInvite] = useState<string | null>(null);
 
   const refreshInvites = useCallback(() => {
     if (!userData?.auth) return;
@@ -121,12 +123,13 @@ export default function Page() {
       setError("Username or email is required.");
       return;
     }
+    const target = inviteEmail.trim();
     setInviteLoading(true);
     setError(null);
     QueryLakeInviteUserToOrg({
       auth: userData.auth,
       organization_id: params.workspace,
-      username: inviteEmail.trim(),
+      username: target,
       role: inviteRole,
       onFinish: (success) => {
         setInviteLoading(false);
@@ -136,7 +139,7 @@ export default function Page() {
           return;
         }
         setInviteEmail("");
-        toast(`Invite sent to ${inviteEmail.trim()}.`);
+        toast(`Invite sent to ${target}.`);
       },
     });
   };
@@ -192,9 +195,6 @@ export default function Page() {
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
               <Link href="/select-workspace">Select workspace</Link>
-            </Button>
-            <Button asChild size="sm" variant="outline">
-              <Link href="/organizations">Manage organizations (legacy)</Link>
             </Button>
           </div>
         </div>
@@ -346,8 +346,51 @@ export default function Page() {
                 className="rounded-md border border-border bg-background px-4 py-3 text-sm"
               >
                 <div className="font-medium">{invite.organization_name}</div>
-                <div className="text-xs text-muted-foreground">
-                  Role: {invite.role}
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Role: {invite.role} • Invited by {invite.sender}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={resolvingInvite === invite.organization_id}
+                    onClick={() => {
+                      if (!userData?.auth) return;
+                      setResolvingInvite(invite.organization_id);
+                      QueryLakeResolveInvitation({
+                        auth: userData.auth,
+                        organization_id: invite.organization_id,
+                        accept: false,
+                        onFinish: (success) => {
+                          setResolvingInvite(null);
+                          toast(success ? "Invitation declined" : "Failed to decline invitation");
+                          refreshInvites();
+                        },
+                      });
+                    }}
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={resolvingInvite === invite.organization_id}
+                    onClick={() => {
+                      if (!userData?.auth) return;
+                      setResolvingInvite(invite.organization_id);
+                      QueryLakeResolveInvitation({
+                        auth: userData.auth,
+                        organization_id: invite.organization_id,
+                        accept: true,
+                        onFinish: (success) => {
+                          setResolvingInvite(null);
+                          toast(success ? "Invitation accepted" : "Failed to accept invitation");
+                          refreshInvites();
+                        },
+                      });
+                    }}
+                  >
+                    Accept
+                  </Button>
                 </div>
               </div>
             ))}

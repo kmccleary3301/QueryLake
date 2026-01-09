@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useContextAction } from "@/app/context-provider";
+import WorkspaceCommandPalette from "@/components/app-shell/workspace-command-palette";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -91,14 +91,17 @@ export default function AppShell({ children }: AppShellProps) {
             Workspace: {workspaceLabel}
           </div>
           <div className="flex items-center gap-2">
-            <Input
-              className="h-8 w-64"
-              placeholder="Search (coming soon)"
-              disabled
-              title="Global search/command palette is not wired yet."
+            <WorkspaceCommandPalette
+              workspace={workspace}
+              workspaceLabel={workspaceLabel}
             />
             <Button asChild size="sm">
               <Link href={`/w/${workspace}/runs/new`}>New run</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/account/profile">
+                {userData?.username ? userData.username : "Account"}
+              </Link>
             </Button>
           </div>
         </header>

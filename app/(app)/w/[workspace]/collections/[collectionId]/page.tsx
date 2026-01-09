@@ -293,9 +293,6 @@ export default function CollectionPage() {
               Open in Files
             </Link>
           </Button>
-          <Button variant="outline" disabled>
-            Edit settings
-          </Button>
         </div>
       </div>
 

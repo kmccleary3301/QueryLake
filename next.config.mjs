@@ -68,11 +68,6 @@ const nextConfig = {
   redirects() {
     return [
       {
-        source: "/",
-        destination: "/select-workspace",
-        permanent: false,
-      },
-      {
         source: "/components",
         destination: "/docs/components/accordion",
         permanent: true,

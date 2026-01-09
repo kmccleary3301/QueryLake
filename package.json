@@ -14,6 +14,7 @@
     "preview": "next build && next start -p 3001",
     "preview_2": "next build && next start -p 3002",
     "preview_80": "next build && next start -p 80",
+    "smoke:prod": "node ./scripts/smoke-prod.mjs",
     "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,tsx,mdx}\" --cache",
     "format:check": "prettier --check \"***.{ts,tsx,mdx}\" --cache",

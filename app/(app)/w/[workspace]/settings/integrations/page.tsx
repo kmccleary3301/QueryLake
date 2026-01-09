@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,81 +13,17 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { useContextAction } from "@/app/context-provider";
-import { modifyUserExternalProviders } from "@/hooks/querylakeAPI";
 
 const isPersonalWorkspace = (workspace: string) =>
   workspace === "personal" || workspace === "me";
 
-export default function Page() {
+export default function WorkspaceIntegrationsPage() {
   const params = useParams<{ workspace: string }>()!;
-  const { userData, setUserData, authReviewed, loginValid } =
-    useContextAction();
-  const [currentProvider, setCurrentProvider] = useState("");
-  const [currentKeyInput, setCurrentKeyInput] = useState("");
-  const [keyAvailable, setKeyAvailable] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const { userData, authReviewed, loginValid } = useContextAction();
 
-  const providerOptions = useMemo(() => {
-    return (userData?.providers ?? []).map((provider) => provider.toLowerCase());
-  }, [userData?.providers]);
-
-  useEffect(() => {
-    if (!currentProvider) return;
-    const hasKey = userData?.user_set_providers.includes(currentProvider) ?? false;
-    setKeyAvailable(hasKey);
-    setCurrentKeyInput("");
-    setStatus(null);
-  }, [currentProvider, userData?.user_set_providers]);
-
-  const saveKey = () => {
-    if (!userData?.auth) return;
-    if (!currentProvider) {
-      setStatus("Select a provider first.");
-      return;
-    }
-    if (!currentKeyInput.trim()) {
-      setStatus("Enter an API key to save.");
-      return;
-    }
-    modifyUserExternalProviders({
-      auth: userData.auth,
-      update: { [currentProvider]: currentKeyInput },
-      onFinish: (success) => {
-        setStatus(success ? "Key saved." : "Failed to save key.");
-        if (success && userData) {
-          setUserData({
-            ...userData,
-            user_set_providers: Array.from(
-              new Set([...userData.user_set_providers, currentProvider])
-            ),
-          });
-          setKeyAvailable(true);
-          setCurrentKeyInput("");
-        }
-      },
-    });
-  };
-
-  const deleteKey = () => {
-    if (!userData?.auth || !currentProvider) return;
-    modifyUserExternalProviders({
-      auth: userData.auth,
-      delete: [currentProvider],
-      onFinish: (success) => {
-        setStatus(success ? "Key deleted." : "Failed to delete key.");
-        if (success && userData) {
-          setUserData({
-            ...userData,
-            user_set_providers: userData.user_set_providers.filter(
-              (provider) => provider !== currentProvider
-            ),
-          });
-          setKeyAvailable(false);
-          setCurrentKeyInput("");
-        }
-      },
-    });
-  };
+  const configuredProviders = useMemo(() => {
+    return userData?.user_set_providers ?? [];
+  }, [userData?.user_set_providers]);
 
   if (!authReviewed) {
     return (
@@ -110,7 +39,7 @@ export default function Page() {
       <div className="max-w-4xl space-y-4">
         <h1 className="text-2xl font-semibold">Integrations</h1>
         <p className="text-sm text-muted-foreground">
-          Sign in to manage provider keys.
+          Sign in to view integration status.
         </p>
       </div>
     );
@@ -134,58 +63,45 @@ export default function Page() {
         </Breadcrumb>
         <h1 className="text-2xl font-semibold">Integrations</h1>
         <p className="text-sm text-muted-foreground">
-          Configure external providers, OAuth, and webhooks.
+          View integration status and manage external provider keys.
         </p>
       </div>
 
-      {!isPersonalWorkspace(params.workspace) && (
+      {!isPersonalWorkspace(params.workspace) ? (
         <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          Provider keys are currently user-scoped. Workspace-level keys will be
-          added once the backend supports org-scoped provider settings.
+          Workspace-level provider keys are not supported yet. User-scoped keys
+          apply across all workspaces.
         </div>
-      )}
+      ) : null}
 
-      <div className="rounded-lg border border-border p-5 space-y-4">
-        <div className="text-sm font-semibold">Provider keys</div>
-        <div className="flex flex-wrap gap-3">
-          <Select
-            value={currentProvider}
-            onValueChange={(value) => setCurrentProvider(value)}
-          >
-            <SelectTrigger className="w-[240px]">
-              <SelectValue placeholder="Select provider" />
-            </SelectTrigger>
-            <SelectContent>
-              {providerOptions.map((provider) => (
-                <SelectItem key={provider} value={provider}>
+      <div className="rounded-lg border border-border bg-card/40 p-5 space-y-3">
+          <div>
+            <div className="text-sm font-semibold">Provider keys</div>
+            <div className="text-xs text-muted-foreground">
+              Configured providers: {configuredProviders.length}
+            </div>
+          </div>
+          {configuredProviders.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {configuredProviders.map((provider) => (
+                <span
+                  key={provider}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+                >
                   {provider}
-                </SelectItem>
+                </span>
               ))}
-            </SelectContent>
-          </Select>
-          <Input
-            className="min-w-[280px]"
-            type="password"
-            placeholder={
-              keyAvailable
-                ? "Key is stored. Paste a new key to rotate."
-                : "Enter API key"
-            }
-            value={currentKeyInput}
-            onChange={(event) => setCurrentKeyInput(event.target.value)}
-          />
-          <Button onClick={saveKey} disabled={!currentProvider || !currentKeyInput.trim()}>
-            Save
-          </Button>
-          <Button
-            variant="outline"
-            onClick={deleteKey}
-            disabled={!currentProvider || !keyAvailable}
-          >
-            Delete
-          </Button>
-        </div>
-        {status ? <p className="text-xs text-muted-foreground">{status}</p> : null}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              No provider keys configured yet.
+            </div>
+          )}
+          <div className="pt-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href="/account/providers">Manage provider keys</Link>
+            </Button>
+          </div>
       </div>
     </div>
   );
