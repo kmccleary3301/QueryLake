@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import FileDropzone from "@/components/ui/file-dropzone";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Breadcrumb,
@@ -41,6 +42,37 @@ type CollectionSummary = {
   document_count: number;
 };
 
+type CollectionSearchRow = {
+  id: string | number | Array<string> | Array<number>;
+  document_id?: string | null;
+  document_name: string;
+  document_chunk_number?: number | [number, number] | null;
+  bm25_score?: number | null;
+  text: string;
+};
+
+const chunkNumberToString = (
+  chunkNumber?: number | [number, number] | null
+) => {
+  if (chunkNumber == null) return "—";
+  if (Array.isArray(chunkNumber)) return `${chunkNumber[0]}–${chunkNumber[1]}`;
+  return String(chunkNumber);
+};
+
+const buildDocumentSearchQuery = (
+  queryText: string,
+  chunkNumber?: number | [number, number] | null
+) => {
+  const trimmed = queryText.trim();
+  if (!trimmed) return "";
+  if (chunkNumber == null) return trimmed;
+  const firstChunk = Array.isArray(chunkNumber) ? chunkNumber[0] : chunkNumber;
+  if (typeof firstChunk !== "number") return trimmed;
+  return `document_chunk_number:${firstChunk} ${trimmed}`.trim();
+};
+
+const SEARCH_PAGE_SIZE = 20;
+
 export default function CollectionPage() {
   const params = useParams<{ workspace: string; collectionId: string }>()!;
   const { userData, authReviewed, loginValid } = useContextAction();
@@ -54,6 +86,11 @@ export default function CollectionPage() {
   >([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const dropzoneRef = useRef<HTMLDivElement | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CollectionSearchRow[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOffset, setSearchOffset] = useState(0);
+  const [searchHasMore, setSearchHasMore] = useState(false);
 
   const refreshDocuments = useCallback(() => {
     if (!userData?.auth) return;
@@ -102,6 +139,58 @@ export default function CollectionPage() {
     }, 8000);
     return () => clearInterval(interval);
   }, [documents, userData?.auth, params.collectionId, refreshDocuments]);
+
+  const runSearch = useCallback(
+    async ({
+      nextOffset,
+      append,
+    }: {
+      nextOffset: number;
+      append: boolean;
+    }) => {
+      if (!userData?.auth) return;
+      const trimmed = searchQuery.trim();
+      if (!trimmed) {
+        setSearchResults([]);
+        setSearchHasMore(false);
+        setSearchOffset(0);
+        return;
+      }
+
+      setSearchLoading(true);
+      try {
+        const response = await fetch("/api/search_bm25", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            auth: userData.auth,
+            collection_ids: [params.collectionId],
+            table: "document_chunk",
+            group_chunks: true,
+            query: trimmed,
+            limit: SEARCH_PAGE_SIZE,
+            offset: nextOffset,
+          }),
+        });
+        const payload = (await response.json()) as {
+          success: boolean;
+          result?: CollectionSearchRow[];
+        };
+        if (!payload.success) {
+          setSearchHasMore(false);
+          if (!append) setSearchResults([]);
+          return;
+        }
+        const nextRows = payload.result ?? [];
+        setSearchResults((prev) => (append ? [...prev, ...nextRows] : nextRows));
+        setSearchHasMore(nextRows.length === SEARCH_PAGE_SIZE);
+        setSearchOffset(nextOffset);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [params.collectionId, searchQuery, userData?.auth]
+  );
 
   const startUpload = async (files: File[]) => {
     if (!userData?.auth || files.length === 0) return;
@@ -282,6 +371,131 @@ export default function CollectionPage() {
           </div>
         </div>
       )}
+
+      <div className="rounded-lg border border-border p-5 space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-sm font-semibold">Search in collection</div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              BM25 search across indexed document chunks in this collection.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <Input
+            value={searchQuery}
+            placeholder='Search chunks (e.g. title:"foo" or document_chunk_number:1)'
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                runSearch({ nextOffset: 0, append: false });
+              }
+            }}
+          />
+          <Button
+            variant="outline"
+            disabled={!userData?.auth || searchLoading}
+            onClick={() => runSearch({ nextOffset: 0, append: false })}
+          >
+            Search
+          </Button>
+        </div>
+
+        <div className="rounded-lg border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[240px]">Document</TableHead>
+                <TableHead className="w-[140px]">Chunk</TableHead>
+                <TableHead>Text</TableHead>
+                <TableHead className="w-[120px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {searchLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="py-6 text-center text-sm text-muted-foreground"
+                  >
+                    Searching...
+                  </TableCell>
+                </TableRow>
+              ) : searchResults.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="py-6 text-center text-sm text-muted-foreground"
+                  >
+                    {searchQuery.trim()
+                      ? "No matches yet."
+                      : "Enter a query to search within this collection."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                searchResults.map((row) => {
+                  const queryParam = buildDocumentSearchQuery(
+                    searchQuery,
+                    row.document_chunk_number
+                  );
+                  const documentHref = row.document_id
+                    ? `/w/${params.workspace}/documents/${row.document_id}${
+                        queryParam ? `?q=${encodeURIComponent(queryParam)}` : ""
+                      }`
+                    : null;
+
+                  return (
+                    <TableRow key={String(row.id)}>
+                      <TableCell className="font-medium">
+                        {documentHref ? (
+                          <Link href={documentHref} className="hover:underline">
+                            {row.document_name}
+                          </Link>
+                        ) : (
+                          row.document_name
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {chunkNumberToString(row.document_chunk_number)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="line-clamp-3 whitespace-pre-wrap">
+                          {row.text}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {documentHref ? (
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={documentHref}>Open</Link>
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {searchHasMore ? (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              disabled={searchLoading}
+              onClick={() =>
+                runSearch({
+                  nextOffset: searchOffset + SEARCH_PAGE_SIZE,
+                  append: true,
+                })
+              }
+            >
+              Load more
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       <div className="rounded-lg border border-border">
         <Table>

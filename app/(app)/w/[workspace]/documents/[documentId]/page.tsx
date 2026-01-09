@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,10 +54,11 @@ const makeChunkQuery = (documentId: string, queryText: string) => {
 
 export default function DocumentPage() {
   const params = useParams<{ workspace: string; documentId: string }>()!;
+  const searchParams = useSearchParams();
   const { userData, authReviewed, loginValid } = useContextAction();
 
   const [document, setDocument] = useState<fetch_document_result | null>(null);
-  const [queryText, setQueryText] = useState("");
+  const [queryText, setQueryText] = useState(() => searchParams?.get("q") ?? "");
   const [chunks, setChunks] = useState<ChunkRow[]>([]);
   const [offset, setOffset] = useState(0);
   const [loadingDoc, setLoadingDoc] = useState(true);
