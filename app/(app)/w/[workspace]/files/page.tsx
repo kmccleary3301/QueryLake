@@ -265,6 +265,7 @@ export default function Page() {
               <TableHead>Size</TableHead>
               <TableHead>Length</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[120px]" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -283,11 +284,24 @@ export default function Page() {
             ) : (
               documents.map((doc) => (
                 <TableRow key={doc.hash_id}>
-                  <TableCell className="font-medium">{doc.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/w/${params.workspace}/documents/${doc.hash_id}`}>
+                      {doc.title}
+                    </Link>
+                  </TableCell>
                   <TableCell>{doc.size}</TableCell>
                   <TableCell>{doc.length}</TableCell>
                   <TableCell>
                     {doc.finished_processing ? "Ready" : "Processing"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild size="sm" variant="outline">
+                      <Link
+                        href={`/w/${params.workspace}/documents/${doc.hash_id}`}
+                      >
+                        Open
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
