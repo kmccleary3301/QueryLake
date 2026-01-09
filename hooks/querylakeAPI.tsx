@@ -24,26 +24,39 @@ type getUserMembershipArgs = {
 
 type DataResponse<T> = {success : true, result: T} | {success : false, error : string};
 
+const postJson = async <T = any>(path: string, body: unknown): Promise<T> => {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body ?? {}),
+  });
+  return (await response.json()) as T;
+};
+
 /**
  * Retrieves user memberships from the API.
  * @param args - The arguments for retrieving user memberships.
  */
 export function getUserMemberships(args: getUserMembershipArgs) {
-  const url = craftUrl(`/api/fetch_memberships`, {
-    "auth": args.auth,
-    "return_subset": args.subset
-  });
-
-  fetch(url).then((response) => {
-    response.json().then((data) => {
-      if (!data.success) {
-        console.error("Failed to retrieve memberships", [data.note]);
-        return;
-      }
-      if (args.set_admin) { args.set_admin(data.result.admin); }
-      if (args.set_value) args.set_value(data.result.memberships);
-      console.log("Fetched memberships:", data.result.memberships);
-    });
+  postJson<{
+    success: boolean;
+    note?: string;
+    result?: { admin: boolean; memberships: membershipType[] };
+  }>(`/api/fetch_memberships`, {
+    auth: args.auth,
+    return_subset: args.subset,
+  }).then((data) => {
+    if (!data.success || !data.result) {
+      console.error("Failed to retrieve memberships", [data.note]);
+      return;
+    }
+    if (args.set_admin) {
+      args.set_admin(data.result.admin);
+    }
+    if (args.set_value) args.set_value(data.result.memberships);
+    console.log("Fetched memberships:", data.result.memberships);
   });
 }
 
@@ -53,15 +66,11 @@ type getUserCollectionsArgs = {
 }
 
 export function getUserCollections(args: getUserCollectionsArgs) {
-  const url = craftUrl(`/api/fetch_all_collections`, {
-    "auth": args.auth,
-  });
   const collection_groups_fetch : collectionGroup[] = [];
 
   // let retrieved_data = {};
 
-  fetch(url).then((response) => {
-    response.json().then((data) => {
+  postJson<any>(`/api/fetch_all_collections`, { auth: args.auth }).then((data) => {
       // console.log("Data:", data);
       const retrieved = data.result.collections;
       if (data["success"] == false) {
@@ -123,7 +132,6 @@ export function getUserCollections(args: getUserCollectionsArgs) {
       // console.log("Start");
       if (args.set_value) args.set_value(collection_groups_fetch);
       // console.log("End");
-    });
   });
   // return collection_groups_fetch;
 }
@@ -152,21 +160,17 @@ type fetchCollectionArgs = {
 }
 
 export function fetchCollection(args : fetchCollectionArgs) {
-  const url = craftUrl(`/api/fetch_collection`, {
-    "auth": args.auth,
-    "collection_hash_id": args.collection_id
+  postJson(`/api/fetch_collection`, {
+    auth: args.auth,
+    collection_hash_id: args.collection_id,
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(undefined);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result as collectionResponse);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(undefined);
-        return;
-			}
-			if (args.onFinish) args.onFinish(data.result as collectionResponse);
-		});
-	});
 }
 
 export function fetchCollectionDocuments({
@@ -182,21 +186,19 @@ export function fetchCollectionDocuments({
   offset?: number,
   onFinish: (result : fetch_collection_document_type[] | undefined) => void
 }) {
-  const url = craftUrl(`/api/fetch_collection_documents`, {
-    "auth": auth,
-    "collection_hash_id": collection_id
+  postJson(`/api/fetch_collection_documents`, {
+    auth,
+    collection_hash_id: collection_id,
+    limit,
+    offset,
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (onFinish) onFinish(undefined);
+      return;
+    }
+    if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (onFinish) onFinish(undefined);
-        return;
-			}
-			if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
-		});
-	});
 }
 
 
@@ -219,25 +221,23 @@ export function searchCollectionDocuments({
   offset?: number,
   onFinish: (result : fetch_collection_document_type[] | undefined) => void
 }) {
-  const url = craftUrl(`/api/search_bm25`, {
-    "auth": auth,
-    "collection_hash_id": collection_id,
-    "table": "document",
-    "limit": limit,
-    "offset": offset,
-    "query": search_query,
+  postJson(`/api/search_bm25`, {
+    auth,
+    collection_hash_id: collection_id,
+    table: "document",
+    limit,
+    offset,
+    query: search_query,
+    order_by,
+    order_direction,
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (onFinish) onFinish(undefined);
+      return;
+    }
+    if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (onFinish) onFinish(undefined);
-        return;
-			}
-			if (onFinish) onFinish(data.result as fetch_collection_document_type[]);
-		});
-	});
 }
 
 type openDocumentArgs = {
@@ -282,23 +282,20 @@ type createCollectionArgs = {
 }
 
 export function createCollection(args : createCollectionArgs) {
-  const url = craftUrl(`/api/create_document_collection`, {...{
-    "auth": args.auth,
-    "name": args.title,
-    "description": args.description,
-    "public": args.public,
-  }, ...(args.organization_id?{"organization_id": args.organization_id}:{})});
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(data.result);
-		});
-	});
+  postJson(`/api/create_document_collection`, {
+    auth: args.auth,
+    name: args.title,
+    description: args.description,
+    public: args.public,
+    ...(args.organization_id ? { organization_id: args.organization_id } : {}),
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result);
+  });
 }
 
 
@@ -314,24 +311,20 @@ type modifyCollectionArgs = {
 }
 
 export function modifyCollection(args : modifyCollectionArgs) {
-  const url = craftUrl(`/api/modify_document_collection`, {
-    "auth": args.auth, 
-    "collection_hash_id": args.collection_id,
-    "title": args.title,
-    "description": args.description,
-    // "public": args.public,
+  postJson(`/api/modify_document_collection`, {
+    auth: args.auth,
+    collection_hash_id: args.collection_id,
+    title: args.title,
+    description: args.description,
+    public: args.public,
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(data.result);
-		});
-	});
 }
 
 
@@ -342,21 +335,17 @@ type deleteDocumentArgs = {
 }
 
 export function deleteDocument(args : deleteDocumentArgs) {
-  const url = craftUrl(`/api/delete_document`, {
-    "auth": args.auth,
-    "hash_id": args.document_id
+  postJson(`/api/delete_document`, {
+    auth: args.auth,
+    hash_id: args.document_id,
+  }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
 }
 
 
@@ -436,20 +425,15 @@ export function getSerpKey(args : getSerpKeyArgs) {
 	const params = {...{
     "auth": args.auth
   }, ...((args.organization_hash_id)?{"organization_hash_id": args.organization_hash_id}:{})};
-
-  const url = craftUrl(`/api/get_serp_key`, params);
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("SERP key is undefined:", data.note);
-				args.onFinish("");
-        return;
-			}
-			args.onFinish(data.result.serp_key);
-		});
-	});
+  postJson(`/api/get_serp_key`, params).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("SERP key is undefined:", data.note);
+      args.onFinish("");
+      return;
+    }
+    args.onFinish(data.result.serp_key);
+  });
 }
 
 type setSerpKeyArgs = {
@@ -477,19 +461,17 @@ export function setSerpKey(args: setSerpKeyArgs) {
     },
     ...(org_specified ? { "organization_hash_id": args.organization_hash_id } : {})
   };
-
-  const url = craftUrl(`/api/` + (org_specified ? "set_organization_serp_key" : "set_user_serp_key"), params);
-
-  fetch(url, { method: "POST" }).then((response) => {
-    response.json().then((data) => {
-      console.log(data);
-      if (!data["success"]) {
-        console.error("Failed to set SERP key:", data.note);
-        if (args.onFinish) args.onFinish(false);
-        return;
-      }
-      if (args.onFinish) args.onFinish(true);
-    });
+  postJson(
+    `/api/${org_specified ? "set_organization_serp_key" : "set_user_serp_key"}`,
+    params
+  ).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to set SERP key:", data.note);
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
 }
 
@@ -501,13 +483,10 @@ type getChatHistoryArgs = {
 
 export function getChatHistory(args : getChatHistoryArgs) {
   const currentTime = Date.now()/1000;
-  const url = craftUrl(`/api/fetch_toolchain_sessions`, {
-    "auth": args.auth
-  });
   const chat_history_tmp : timeWindowType[] = args.time_windows.slice();
 
-  fetch(url).then((response) => {
-    response.json().then((data) => {
+  postJson(`/api/fetch_toolchain_sessions`, { auth: args.auth }).then(
+    (data: any) => {
       console.log("Fetched session history:", data);
       if (!data.success) {
         console.error("Failed to retrieve sessions", data.note);
@@ -518,16 +497,16 @@ export function getChatHistory(args : getChatHistoryArgs) {
         const entry = sessions[i];
         // console.log((currentTime - entry.time));
         for (let j = 0; j < chat_history_tmp.length; j++) {
-          if ((currentTime - entry.time) < chat_history_tmp[j].cutoff) { 
-            // chat_history_tmp_today.push(entry); 
+          if (currentTime - entry.time < chat_history_tmp[j].cutoff) {
+            // chat_history_tmp_today.push(entry);
             chat_history_tmp[j].entries.push(entry);
-            break
+            break;
           }
         }
       }
       if (args.set_value) args.set_value(chat_history_tmp);
-    });
-  });
+    }
+  );
 }
 
 type modelTypes = {
@@ -544,26 +523,21 @@ type getAvailableModelsArgs = {
 };
 
 export function getAvailableModels(args : getAvailableModelsArgs) {
-  const url = craftUrl(`/api/get_available_models`, {
-    "auth": args.auth
+  postJson(`/api/get_available_models`, { auth: args.auth }).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to retrieve available models:", data.note);
+      if (args.onFinish)
+        args.onFinish({
+          default_model: "Error",
+          external_models: {},
+          local_models: [],
+        });
+      return;
+    }
+    console.log("Available models:", data.result.available_models);
+    if (args.onFinish) args.onFinish(data.result.available_models);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("Failed to retrieve available models:", data.note);
-				if (args.onFinish) args.onFinish({
-					default_model: "Error",
-					external_models: {},
-					local_models: []
-				});
-        return;
-			}
-      console.log("Available models:", data.result.available_models);
-			if (args.onFinish) args.onFinish(data.result.available_models);
-		});
-	});
 }
 
 // type toolchainEntry = {
@@ -589,22 +563,19 @@ type getAvailableToolchainsArgs = {
 };
 
 export function getAvailableToolchains(args : getAvailableToolchainsArgs) {
-  const url = craftUrl(`/api/get_available_toolchains`, {
-    "auth": args.auth
+  postJson<
+    | { success: true; result: availableToolchainsResult }
+    | { success: false; error: string }
+  >(`/api/get_available_toolchains`, { auth: args.auth }).then((data) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to retrieve available toolchains:", data.error);
+      if (args.onFinish) args.onFinish(undefined);
+      return;
+    }
+    // console.log("Available models:", data.result);
+    if (args.onFinish) args.onFinish(data.result);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : true, result: availableToolchainsResult} | {success : false, error : string}) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("Failed to retrieve available toolchains:", data.error);
-				if (args.onFinish) args.onFinish(undefined);
-        return;
-			}
-      // console.log("Available models:", data.result);
-			if (args.onFinish) args.onFinish(data.result);
-		});
-	});
 }
 
 type setOpenAIAPIKeyArgs = {
@@ -625,20 +596,18 @@ export function setOpenAIAPIKey(args : setOpenAIAPIKeyArgs) {
   }:{
     "openai_api_key": args.api_key
   })};
-
-  const url = craftUrl(`/api/`+(org_specified?"set_organization_openai_id":"set_user_openai_api_key"), params);
-
-  fetch(url).then((response) => {
-		response.json().then((data) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("Failed to set OpenAI API key:", data.note);
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
+  postJson(
+    `/api/${org_specified ? "set_organization_openai_id" : "set_user_openai_api_key"}`,
+    params
+  ).then((data: any) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to set OpenAI API key:", data.note);
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
+  });
 }
 
 type fetchToolchainSessionsArgs = {
@@ -647,24 +616,21 @@ type fetchToolchainSessionsArgs = {
 };
 
 export function fetchToolchainSessions(args : fetchToolchainSessionsArgs) {
-  const url = craftUrl(`/api/fetch_toolchain_sessions`, {
-    "auth": args.auth
+  postJson<
+    | { success: true; result: toolchain_session[] }
+    | { success: false; error: string }
+  >(`/api/fetch_toolchain_sessions`, { auth: args.auth }).then((data) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to retrieve available toolchains:", data.error);
+      // if (args.onFinish) args.onFinish(undefined);
+      return;
+    }
+    // console.log("Available models:", data.result);
+    const results = data.result as toolchain_session[];
+
+    if (args.onFinish) args.onFinish(results);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : true, result: toolchain_session[]} | {success : false, error : string}) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("Failed to retrieve available toolchains:", data.error);
-				// if (args.onFinish) args.onFinish(undefined);
-        return;
-			}
-      // console.log("Available models:", data.result);
-      const results = data.result as toolchain_session[];
-
-			if (args.onFinish) args.onFinish(results);
-		});
-	});
 }
 
 
@@ -675,26 +641,21 @@ type fetchToolchainConfigArgs = {
 };
 
 export function fetchToolchainConfig(args : fetchToolchainConfigArgs) {
-
-  const url = craftUrl(`/api/fetch_toolchain_config`, {
-    "auth": args.auth,
-    "toolchain_id": args.toolchain_id
+  postJson<
+    | { success: true; result: ToolChain }
+    | { success: false; error: string }
+  >(`/api/fetch_toolchain_config`, {
+    auth: args.auth,
+    toolchain_id: args.toolchain_id,
+  }).then((data) => {
+    console.log(data);
+    if (!data["success"]) {
+      console.error("Failed to retrieve available toolchains:", data.error);
+      // if (args.onFinish) args.onFinish(undefined);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : true, result: ToolChain} | {success : false, error : string}) => {
-      console.log(data);
-			if (!data["success"]) {
-        console.error("Failed to retrieve available toolchains:", data.error);
-				// if (args.onFinish) args.onFinish(undefined);
-        return;
-			}
-      // console.log("Available models:", data.result);
-      // const results = data.result as toolchain_session[];
-
-			if (args.onFinish) args.onFinish(data.result);
-		});
-	});
 }
 
 
@@ -704,23 +665,18 @@ export function modifyUserExternalProviders(args :{
   delete?: string[],
   onFinish?: (result : boolean) => void
 }) {
-
-  const url = craftUrl(`/api/modify_user_external_providers`, {
-    "auth": args.auth,
-    ...(args.update)?{"update": args.update}:{},
-    ...(args.delete)?{"delete": args.delete}:{},
+  postJson(`/api/modify_user_external_providers`, {
+    auth: args.auth,
+    ...(args.update ? { update: args.update } : {}),
+    ...(args.delete ? { delete: args.delete } : {}),
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.success);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean}) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(data.success);
-		});
-	});
 }
 
 
@@ -728,21 +684,16 @@ export function fetchApiKeys(args :{
   auth: string,
   onFinish?: (result : QueryLakeApiKey[] | false) => void
 }) {
-
-  const url = craftUrl(`/api/fetch_api_keys`, {
-    "auth": args.auth,
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean, result?: {api_keys: QueryLakeApiKey[]}}) => {
+  postJson(`/api/fetch_api_keys`, { auth: args.auth }).then(
+    (data: { success: boolean; result?: { api_keys: QueryLakeApiKey[] } }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result.api_keys);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result.api_keys);
+    }
+  );
 }
 
 export function createApiKey(args :{
@@ -750,22 +701,19 @@ export function createApiKey(args :{
   name?: string,
   onFinish?: (result : QueryLakeApiKey & {api_key : string} | false) => void
 }) {
-
-  const url = craftUrl(`/api/create_api_key`, {
-    "auth": args.auth,
-    ...(args.name)?{"title": args.name}:{}
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean, result?: QueryLakeApiKey & {api_key : string}}) => {
+  postJson(`/api/create_api_key`, {
+    auth: args.auth,
+    ...(args.name ? { title: args.name } : {}),
+  }).then(
+    (data: { success: boolean; result?: QueryLakeApiKey & { api_key: string } }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result);
+    }
+  );
 }
 
 export function deleteApiKey(args :{
@@ -773,39 +721,30 @@ export function deleteApiKey(args :{
   api_key_id: string,
   onFinish?: (result : boolean) => void
 }) {
-
-  const url = craftUrl(`/api/delete_api_key`, {
-    "auth": args.auth,
-    "api_key_id": args.api_key_id
+  postJson(`/api/delete_api_key`, {
+    auth: args.auth,
+    api_key_id: args.api_key_id,
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (args.onFinish) args.onFinish(data["success"]);
+    return;
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean, result?: QueryLakeApiKey & {api_key : string}}) => {
-      console.log(data);
-      if (args.onFinish) args.onFinish(data["success"]);
-      return;
-		});
-	});
 }
 
 
 export function QuerylakeFunctionHelp(args :{
   onFinish?: (result : APIFunctionSpec[] | false) => void
 }) {
-
-  const url = craftUrl(`/api/function_help`, {
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean, result?: APIFunctionSpec[]}) => {
+  postJson(`/api/function_help`, {}).then(
+    (data: { success: boolean; result?: APIFunctionSpec[] }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result);
+    }
+  );
 }
 
 export type UsageEntryType = {
@@ -825,24 +764,19 @@ export function QuerylakeFetchUsage(args :{
   window: "hour" | "day" | "month",
   end_time: number
 }) {
-
-  const url = craftUrl(`/api/get_usage_tally`, {
-    "auth": args.auth,
-    "window": args.window,
-    "start_timestamp": args.start_time,
-    "end_timestamp": args.end_time
+  postJson(`/api/get_usage_tally`, {
+    auth: args.auth,
+    window: args.window,
+    start_timestamp: args.start_time,
+    end_timestamp: args.end_time,
+  }).then((data: { success: boolean; result?: UsageEntryType[] }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish && data.result) args.onFinish(data.result);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((data : {success : boolean, result?: UsageEntryType[]}) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result);
-		});
-	});
 }
 
 export type user_organization_membership = {
@@ -857,27 +791,22 @@ export function QueryLakeFetchUsersMemberships(args :{
   auth: string,
   onFinish?: (result : user_organization_membership[] | false) => void,
 }) {
-
-  const url = craftUrl(`/api/fetch_memberships`, {
-    "auth": args.auth,
-    "return_subset": "all"
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean, 
-        result?: {memberships: user_organization_membership[]}
-      }
-    ) => {
+  postJson(`/api/fetch_memberships`, {
+    auth: args.auth,
+    return_subset: "all",
+  }).then(
+    (data: {
+      success: boolean;
+      result?: { memberships: user_organization_membership[] };
+    }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+    }
+  );
 }
 
 
@@ -890,27 +819,19 @@ export function QueryLakeCreateOrganization(args :{
   organization_name: string,
   onFinish?: (result : create_organization_result | false) => void,
 }) {
-
-  const url = craftUrl(`/api/create_organization`, {
-    "auth": args.auth,
-    "organization_name": args.organization_name
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean, 
-        result?: create_organization_result
-      }
-    ) => {
+  postJson(`/api/create_organization`, {
+    auth: args.auth,
+    organization_name: args.organization_name,
+  }).then(
+    (data: { success: boolean; result?: create_organization_result }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result);
+    }
+  );
 }
 
 
@@ -927,27 +848,19 @@ export function QueryLakeFetchOrganizationsMemberships(args :{
   organization_id: string,
   onFinish?: (result : organization_memberships[] | false) => void,
 }) {
-
-  const url = craftUrl(`/api/fetch_memberships_of_organization`, {
-    "auth": args.auth,
-    "organization_id": args.organization_id
-  });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean, 
-        result?: {memberships: organization_memberships[]}
-      }
-    ) => {
+  postJson(`/api/fetch_memberships_of_organization`, {
+    auth: args.auth,
+    organization_id: args.organization_id,
+  }).then(
+    (data: { success: boolean; result?: { memberships: organization_memberships[] } }) => {
       console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
+      if (!data["success"]) {
+        if (args.onFinish) args.onFinish(false);
         return;
-			}
-			if (args.onFinish && data.result) args.onFinish(data.result.memberships);
-		});
-	});
+      }
+      if (args.onFinish && data.result) args.onFinish(data.result.memberships);
+    }
+  );
 }
 
 export type memberRoleLower = "owner" | "admin" | "member" | "viewer";
@@ -965,28 +878,19 @@ export function QueryLakeInviteUserToOrg(args :{
   role: memberRoleCompat,
   onFinish?: (result : true | false) => void,
 }) {
-
-  const url = craftUrl(`/api/invite_user_to_organization`, {
-    "auth": args.auth,
-    "organization_id": args.organization_id,
-    "username_to_invite": args.username,
-    "member_class": normalizeMemberRole(args.role)
+  postJson(`/api/invite_user_to_organization`, {
+    auth: args.auth,
+    organization_id: args.organization_id,
+    username_to_invite: args.username,
+    member_class: normalizeMemberRole(args.role),
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean
-      }
-    ) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
 }
 
 export function QueryLakeUpdateOrgMemberRole(args :{
@@ -996,28 +900,19 @@ export function QueryLakeUpdateOrgMemberRole(args :{
   role: memberRoleCompat,
   onFinish?: (result : true | false) => void,
 }) {
-
-  const url = craftUrl(`/api/change_organization_member_role`, {
-    "auth": args.auth,
-    "organization_id": args.organization_id,
-    "username": args.username,
-    "member_class": normalizeMemberRole(args.role)
+  postJson(`/api/change_organization_member_role`, {
+    auth: args.auth,
+    organization_id: args.organization_id,
+    username: args.username,
+    member_class: normalizeMemberRole(args.role),
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean
-      }
-    ) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
 }
 
 
@@ -1029,34 +924,23 @@ export function QueryLakeChangeCollectionOwnership(args :{
   public: boolean,
   onFinish?: (result : true | false) => void,
 }) {
-
-  const url = craftUrl(`/api/change_collection_ownership`, {
-    "auth": args.auth,
-    ...(args.owner === "personal" ? 
-      {"user_name": args.username} :
-      (args.owner === "global" ? 
-        {"global": true} :
-        {"organization_id": args.owner}
-      )
-    ),
-    "public": args.public,
-    "collection_id": args.collection_id
+  postJson(`/api/change_collection_ownership`, {
+    auth: args.auth,
+    ...(args.owner === "personal"
+      ? { user_name: args.username }
+      : args.owner === "global"
+        ? { global: true }
+        : { organization_id: args.owner }),
+    public: args.public,
+    collection_id: args.collection_id,
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean
-      }
-    ) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
 }
 
 export function QueryLakeResolveInvitation(args :{
@@ -1065,27 +949,18 @@ export function QueryLakeResolveInvitation(args :{
   accept: boolean,
   onFinish?: (result : true | false) => void,
 }) {
-
-  const url = craftUrl(`/api/resolve_organization_invitation`, {
-    "auth": args.auth,
-    "organization_id": args.organization_id,
-    "accept": args.accept
+  postJson(`/api/resolve_organization_invitation`, {
+    auth: args.auth,
+    organization_id: args.organization_id,
+    accept: args.accept,
+  }).then((data: { success: boolean }) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(true);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : boolean
-      }
-    ) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(true);
-		});
-	});
 }
 
 export type fetch_document_result = {
@@ -1105,24 +980,19 @@ export function QueryLakeFetchDocument(args : {
   document_id: string,
   onFinish?: (result : fetch_document_result | false) => void,
 }) {
-  const url = craftUrl(`/api/fetch_document`, {
-    "auth": args.auth,
-    "document_id": args.document_id,
-    "count_chunks": true
+  postJson<
+    | { success: false }
+    | { success: true; result: fetch_document_result }
+  >(`/api/fetch_document`, {
+    auth: args.auth,
+    document_id: args.document_id,
+    count_chunks: true,
+  }).then((data) => {
+    console.log(data);
+    if (!data["success"]) {
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result);
   });
-
-  fetch(url).then((response) => {
-		response.json().then((
-      data : {
-        success : false
-      } | { success: true, result: fetch_document_result }
-    ) => {
-      console.log(data);
-			if (!data["success"]) {
-				if (args.onFinish) args.onFinish(false);
-        return;
-			}
-			if (args.onFinish) args.onFinish(data.result);
-		});
-	});
 }

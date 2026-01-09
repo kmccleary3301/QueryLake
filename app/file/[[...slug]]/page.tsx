@@ -97,10 +97,13 @@ const dataOptions = (
 
 const defaultFetcher: DataFetcher = async (params) => {
   console.log("defaultFetcher Params", params);
-  
-  const url_make = craftUrl('/api/search_bm25', params);
-
-  const response = await fetch(url_make);
+  const response = await fetch("/api/search_bm25", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  });
   const result = await response.json();
   console.log("defaultFetcher Result", result);
 

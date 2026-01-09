@@ -63,7 +63,7 @@ export default function Component() {
   const setUserDataHook = async (data: userDataType) => {
     await setCookie({ key: "UD", value: data });
     setUserData(data);
-    router.push("/home");
+    router.push("/select-workspace");
   }
 
   const setErrorMessage = (message: string) => {
@@ -76,13 +76,17 @@ export default function Component() {
       return;
     }
 
-    const url = craftUrl(`/api/add_user`, {
-      "email": values.email,
-      "username": values.username,
-      "password": values.password,
-    });
-		
-    fetch(url).then((response) => {
+    fetch(`/api/add_user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: values.email,
+        username: values.username,
+        password: values.password,
+      }),
+    }).then((response) => {
       console.log("Fetching");
       console.log(response);
       response.json().then((data : login_results) => {
@@ -185,4 +189,3 @@ export default function Component() {
     </div>
   )
 }
-

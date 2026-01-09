@@ -178,13 +178,15 @@ export const ContextProvider = ({
 		console.log("Cookie UD:", cookie_ud);
 		
 		if (user_data_input !== undefined) {
-			const url = craftUrl(`/api/login`, {
-				"auth": user_data_input
-			});
-
-			fetch(url).then((response) => {
-				// console.log("Fetching");
-				// console.log(response);
+			fetch(`/api/login`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					auth: user_data_input,
+				}),
+			}).then((response) => {
 				response.json().then(async (data : login_results) => {
 					console.log("GOT LOGIN DATA:", data);
 					if (data.success) {

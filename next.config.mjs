@@ -44,6 +44,14 @@ const nextConfig = {
 	},
   reactStrictMode: true,
   serverExternalPackages: ['shiki', 'vscode-oniguruma'],
+  // NOTE: We run `npm run lint` and `npm run typecheck` explicitly in CI/build
+  // to avoid Next's build-time lint/typecheck worker OOM/SIGKILL behavior.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // swcMinify: true,
   images: {
     remotePatterns: [

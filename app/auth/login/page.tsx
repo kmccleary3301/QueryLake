@@ -63,7 +63,7 @@ export default function LoginPage() {
     // Cookies.set("UD", JSON.stringify(data), { secure: true })
     setCookie({ key: "UD", value: data });
     setUserData(data);
-    router.push("/home");
+    router.push("/select-workspace");
     return;
   }
 
@@ -72,12 +72,18 @@ export default function LoginPage() {
   }
 
   const login = (values: z.infer<typeof formSchema>) => {
-    const url = craftUrl(`/api/login`, { "auth": {
-      "username": values.username,
-      "password": values.password
-    }});
-		
-    fetch(url).then(async (response) => {
+    fetch(`/api/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auth: {
+          username: values.username,
+          password: values.password,
+        },
+      }),
+    }).then(async (response) => {
       response.json().then((data : login_results) => {
         console.log("GOT LOGIN DATA:", data);
 				if (data.success) {
