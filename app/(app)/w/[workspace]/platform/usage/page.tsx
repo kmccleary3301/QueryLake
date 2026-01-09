@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,12 +24,17 @@ import { QuerylakeFetchUsage, UsageEntryType } from "@/hooks/querylakeAPI";
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const isPersonalWorkspace = (workspace: string) =>
+  workspace === "personal" || workspace === "me";
+
 export default function Page() {
+  const params = useParams<{ workspace: string }>()!;
   const { userData, authReviewed, loginValid } = useContextAction();
   const [usage, setUsage] = useState<UsageEntryType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,38 +65,48 @@ export default function Page() {
     });
   }, [authReviewed, loginValid, userData?.auth, rangeDays, window]);
 
+  const scopedUsage = useMemo(() => {
+    if (!params.workspace) return usage;
+    if (isPersonalWorkspace(params.workspace)) {
+      return usage.filter((entry) => entry.organization_id == null);
+    }
+    return usage.filter((entry) => entry.organization_id === params.workspace);
+  }, [params.workspace, usage]);
+
   const summary = useMemo(() => {
     const apiKeys = new Set<string>();
     const users = new Set<string>();
     const orgs = new Set<string>();
-    usage.forEach((entry) => {
+    scopedUsage.forEach((entry) => {
       if (entry.api_key_id) apiKeys.add(entry.api_key_id);
       if (entry.user_id) users.add(entry.user_id);
       if (entry.organization_id) orgs.add(entry.organization_id);
     });
     return {
-      totalEntries: usage.length,
+      totalEntries: scopedUsage.length,
       apiKeys: apiKeys.size,
       users: users.size,
       orgs: orgs.size,
     };
-  }, [usage]);
+  }, [scopedUsage]);
 
   const exportUsageJson = () => {
-    const blob = new Blob([JSON.stringify(usage, null, 2)], {
+    const exportSuffix = `${params.workspace}-${rangeDays}d-${window}`;
+    const blob = new Blob([JSON.stringify(scopedUsage, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `querylake-usage-${rangeDays}d.json`;
+    anchor.download = `querylake-usage-${exportSuffix}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
   const exportUsageCsv = () => {
-    if (usage.length === 0) return;
-    const rows = usage.map((entry) => ({
+    if (scopedUsage.length === 0) return;
+    const exportSuffix = `${params.workspace}-${rangeDays}d-${window}`;
+    const rows = scopedUsage.map((entry) => ({
       id: entry.id,
       start_timestamp: entry.start_timestamp,
       start_date: new Date(entry.start_timestamp * 1000).toISOString(),
@@ -117,7 +133,7 @@ export default function Page() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `querylake-usage-${rangeDays}d.csv`;
+    anchor.download = `querylake-usage-${exportSuffix}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -152,7 +168,10 @@ export default function Page() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>Platform</BreadcrumbPage>
+                <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/w/${params.workspace}/platform`}>Platform</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbItem>
                 <BreadcrumbPage>Usage</BreadcrumbPage>
@@ -187,12 +206,20 @@ export default function Page() {
               <SelectItem value="hour">Hourly</SelectItem>
               <SelectItem value="day">Daily</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
-            </SelectContent>
+          </SelectContent>
           </Select>
-          <Button variant="outline" onClick={exportUsageJson} disabled={usage.length === 0}>
+          <Button
+            variant="outline"
+            onClick={exportUsageJson}
+            disabled={scopedUsage.length === 0}
+          >
             Export JSON
           </Button>
-          <Button variant="outline" onClick={exportUsageCsv} disabled={usage.length === 0}>
+          <Button
+            variant="outline"
+            onClick={exportUsageCsv}
+            disabled={scopedUsage.length === 0}
+          >
             Export CSV
           </Button>
         </div>
@@ -249,14 +276,14 @@ export default function Page() {
                   Loading usage entries...
                 </TableCell>
               </TableRow>
-            ) : usage.length === 0 ? (
+            ) : scopedUsage.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
                   No usage entries available.
                 </TableCell>
               </TableRow>
             ) : (
-              usage.map((entry) => (
+              scopedUsage.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>
                     {new Date(entry.start_timestamp * 1000).toLocaleDateString()}

@@ -64,6 +64,7 @@ export default function DocumentPage() {
   const [loadingDoc, setLoadingDoc] = useState(true);
   const [loadingChunks, setLoadingChunks] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [copiedChunkId, setCopiedChunkId] = useState<string | null>(null);
 
   const collectionId = document?.collection_id ?? null;
 
@@ -226,6 +227,17 @@ export default function DocumentPage() {
               </Link>
             </Button>
           ) : null}
+          {collectionId && queryText.trim() ? (
+            <Button asChild size="sm" variant="outline">
+              <Link
+                href={`/w/${params.workspace}/collections/${collectionId}?q=${encodeURIComponent(
+                  queryText
+                )}`}
+              >
+                Back to search
+              </Link>
+            </Button>
+          ) : null}
           <Button
             size="sm"
             variant="outline"
@@ -334,30 +346,31 @@ export default function DocumentPage() {
             <TableRow>
               <TableHead className="w-[160px]">Chunk</TableHead>
               <TableHead>Text</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loadingDoc ? (
               <TableRow>
-                <TableCell colSpan={2} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
                   Loading document...
                 </TableCell>
               </TableRow>
             ) : !document ? (
               <TableRow>
-                <TableCell colSpan={2} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
                   Document unavailable.
                 </TableCell>
               </TableRow>
             ) : loadingChunks ? (
               <TableRow>
-                <TableCell colSpan={2} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
                   Loading chunks...
                 </TableCell>
               </TableRow>
             ) : chunks.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} className="py-6 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
                   No chunks found.
                 </TableCell>
               </TableRow>
@@ -371,6 +384,19 @@ export default function DocumentPage() {
                     <div className="line-clamp-3 whitespace-pre-wrap">
                       {chunk.text}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(chunk.text);
+                        setCopiedChunkId(String(chunk.id));
+                        window.setTimeout(() => setCopiedChunkId(null), 1500);
+                      }}
+                    >
+                      {copiedChunkId === String(chunk.id) ? "Copied" : "Copy"}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

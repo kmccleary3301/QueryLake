@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,7 @@ const SEARCH_PAGE_SIZE = 20;
 
 export default function CollectionPage() {
   const params = useParams<{ workspace: string; collectionId: string }>()!;
+  const searchParams = useSearchParams();
   const { userData, authReviewed, loginValid } = useContextAction();
   const [collection, setCollection] = useState<CollectionSummary | null>(null);
   const [documents, setDocuments] = useState<fetch_collection_document_type[]>(
@@ -86,11 +87,13 @@ export default function CollectionPage() {
   >([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const dropzoneRef = useRef<HTMLDivElement | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const initialSearchQuery = useMemo(() => searchParams?.get("q") ?? "", [searchParams]);
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [searchResults, setSearchResults] = useState<CollectionSearchRow[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchOffset, setSearchOffset] = useState(0);
   const [searchHasMore, setSearchHasMore] = useState(false);
+  const autoSearchRanRef = useRef(false);
 
   const refreshDocuments = useCallback(() => {
     if (!userData?.auth) return;
@@ -191,6 +194,14 @@ export default function CollectionPage() {
     },
     [params.collectionId, searchQuery, userData?.auth]
   );
+
+  useEffect(() => {
+    if (autoSearchRanRef.current) return;
+    if (!initialSearchQuery.trim()) return;
+    if (!authReviewed || !loginValid || !userData?.auth) return;
+    autoSearchRanRef.current = true;
+    runSearch({ nextOffset: 0, append: false });
+  }, [authReviewed, initialSearchQuery, loginValid, runSearch, userData?.auth]);
 
   const startUpload = async (files: File[]) => {
     if (!userData?.auth || files.length === 0) return;
@@ -293,6 +304,13 @@ export default function CollectionPage() {
         <p className="mt-1 text-xs text-muted-foreground">
           Drop files here to ingest them into this collection.
         </p>
+        {!loading && documents.some((doc) => !doc.finished_processing) ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Processing is still running for{" "}
+            {documents.filter((doc) => !doc.finished_processing).length} document(s).
+            This page auto-refreshes while ingestion completes.
+          </p>
+        ) : null}
         <div className="mt-4">
           <FileDropzone
             multiple

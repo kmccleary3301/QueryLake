@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
@@ -33,7 +35,22 @@ import { useContextAction } from "@/app/context-provider";
 import { QueryLakeApiKey } from "@/types/globalTypes";
 import { createApiKey, deleteApiKey, fetchApiKeys } from "@/hooks/querylakeAPI";
 
+const isPersonalWorkspace = (workspace: string) =>
+  workspace === "personal" || workspace === "me";
+
+const dateTimeFormat: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+};
+
+const formatEpochSeconds = (seconds: number) =>
+  new Date(seconds * 1000).toLocaleString(undefined, dateTimeFormat);
+
 export default function Page() {
+  const params = useParams<{ workspace: string }>()!;
   const { userData, authReviewed, loginValid } = useContextAction();
   const [keys, setKeys] = useState<QueryLakeApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +61,19 @@ export default function Page() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmingKey, setConfirmingKey] = useState<QueryLakeApiKey | null>(
     null
+  );
+
+  const copyToClipboard = useCallback(
+    async (text: string, successMessage: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(successMessage);
+      } catch (error) {
+        console.error(error);
+        setStatus("Failed to copy to clipboard.");
+      }
+    },
+    []
   );
 
   const refreshKeys = useCallback(() => {
@@ -138,7 +168,10 @@ export default function Page() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbPage>Platform</BreadcrumbPage>
+                <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/w/${params.workspace}/platform`}>Platform</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbItem>
                 <BreadcrumbPage>API keys</BreadcrumbPage>
@@ -147,7 +180,7 @@ export default function Page() {
           </Breadcrumb>
           <h1 className="text-2xl font-semibold">API keys</h1>
           <p className="text-sm text-muted-foreground">
-            Create and manage workspace-scoped API keys.
+            Create and manage API keys for programmatic access.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -166,6 +199,10 @@ export default function Page() {
       {createdKey && (
         <div className="rounded-lg border border-border bg-card/40 p-4 text-sm">
           <div className="font-medium">New API key</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            This key is user-scoped (not workspace/org-scoped yet). Copy it now; it
+            will not be shown again.
+          </div>
           <div className="mt-2 break-all rounded-md border border-border bg-background p-3 font-mono text-xs">
             {createdKey}
           </div>
@@ -174,8 +211,7 @@ export default function Page() {
               size="sm"
               variant="outline"
               onClick={() => {
-                navigator.clipboard.writeText(createdKey);
-                setStatus("API key copied to clipboard.");
+                copyToClipboard(createdKey, "API key copied to clipboard.");
               }}
             >
               Copy
@@ -192,6 +228,13 @@ export default function Page() {
           {status}
         </div>
       )}
+
+      {!isPersonalWorkspace(params.workspace) ? (
+        <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+          Note: API keys are currently user-scoped. Workspace/org-scoped keys will
+          be added once the backend supports organization-level key ownership.
+        </div>
+      ) : null}
 
       <div className="rounded-lg border border-border">
         <Table>
@@ -220,18 +263,17 @@ export default function Page() {
             ) : (
               keys.map((key) => (
                 <TableRow key={key.id}>
-                  <TableCell className="font-medium">{key.title}</TableCell>
+                  <TableCell className="font-medium">{key.title || "—"}</TableCell>
                   <TableCell className="font-mono text-xs">
                     {key.key_preview}
                   </TableCell>
                   <TableCell>
-                    {key.created_string ??
-                      new Date(key.created * 1000).toLocaleDateString()}
+                    {key.created_string ?? formatEpochSeconds(key.created)}
                   </TableCell>
                   <TableCell>
                     {key.last_used_string ??
-                      (key.last_used
-                        ? new Date(key.last_used * 1000).toLocaleDateString()
+                      (key.last_used != null
+                        ? formatEpochSeconds(key.last_used)
                         : "Never")}
                   </TableCell>
                   <TableCell>
@@ -240,8 +282,10 @@ export default function Page() {
                         size="sm"
                         variant="ghost"
                         onClick={() => {
-                          navigator.clipboard.writeText(key.key_preview);
-                          setStatus("Key preview copied to clipboard.");
+                          copyToClipboard(
+                            key.key_preview,
+                            "Key preview copied to clipboard."
+                          );
                         }}
                       >
                         Copy preview

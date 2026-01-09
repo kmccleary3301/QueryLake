@@ -18,13 +18,20 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { fetchToolchainConfig } from "@/hooks/querylakeAPI";
+import { toolchain_session } from "@/types/globalTypes";
 import { ToolChain } from "@/types/toolchains";
 
 export default function ToolchainPage() {
   const params = useParams<{ workspace: string; toolchainId: string }>()!;
   const router = useRouter();
-  const { userData, setSelectedToolchain, authReviewed, loginValid } =
-    useContextAction();
+  const {
+    userData,
+    setSelectedToolchain,
+    toolchainSessions,
+    refreshToolchainSessions,
+    authReviewed,
+    loginValid,
+  } = useContextAction();
   const { mode } = useRuntimeMode();
   const [toolchain, setToolchain] = useState<ToolChain | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,9 +54,29 @@ export default function ToolchainPage() {
     });
   }, [authReviewed, loginValid, userData?.auth, params.toolchainId]);
 
+  useEffect(() => {
+    if (!authReviewed || !loginValid || !userData?.auth) return;
+    if (toolchainSessions.size === 0) {
+      refreshToolchainSessions();
+    }
+  }, [
+    authReviewed,
+    loginValid,
+    userData?.auth,
+    toolchainSessions.size,
+    refreshToolchainSessions,
+  ]);
+
   const nodePreview = useMemo(() => {
     return toolchain?.nodes?.slice(0, 6) ?? [];
   }, [toolchain?.nodes]);
+
+  const recentRuns: toolchain_session[] = useMemo(() => {
+    const runs = Array.from(toolchainSessions.values()).filter(
+      (run) => run.toolchain === params.toolchainId
+    );
+    return runs.sort((a, b) => b.time - a.time).slice(0, 10);
+  }, [params.toolchainId, toolchainSessions]);
 
   const openLegacyRunner = () => {
     setSelectedToolchain(params.toolchainId);
@@ -217,6 +244,47 @@ export default function ToolchainPage() {
           </div>
         </div>
       )}
+
+      <div className="rounded-lg border border-border p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Recent runs</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild size="sm">
+              <Link href={`/w/${params.workspace}/runs/new?toolchain=${params.toolchainId}`}>
+                New run
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/w/${params.workspace}/runs`}>View all runs</Link>
+            </Button>
+          </div>
+        </div>
+        {recentRuns.length === 0 ? (
+          <div className="mt-3 rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+            No runs recorded for this toolchain yet.
+          </div>
+        ) : (
+          <div className="mt-3 divide-y divide-border rounded-md border border-border">
+            {recentRuns.map((run) => (
+              <div
+                key={run.id}
+                className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 text-sm"
+              >
+                <div>
+                  <div className="font-medium">{run.title}</div>
+                  <div className="text-xs text-muted-foreground">{run.id}</div>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{new Date(run.time * 1000).toLocaleString()}</span>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/w/${params.workspace}/runs/${run.id}`}>Open</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

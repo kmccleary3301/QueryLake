@@ -131,6 +131,8 @@ export default function RunPage() {
       : run?.title;
   const displayToolchain =
     mode === "v2" ? v2SessionState?.toolchain_id ?? "—" : run?.toolchain;
+  const toolchainLinkTarget =
+    mode === "v2" ? v2SessionState?.toolchain_id : run?.toolchain;
   const displayStarted =
     mode === "v2"
       ? "—"
@@ -558,30 +560,40 @@ export default function RunPage() {
       let buffer = "";
 
       const handleEventBlock = (block: string) => {
-        const lines = block
-          .split("\n")
-          .map((line) => line.trimEnd())
-          .filter((line) => line.length > 0);
+        const lines = block.split("\n").map((line) => line.trimEnd());
         let eventType: string | null = null;
         let eventId: string | null = null;
         const dataLines: string[] = [];
 
-        lines.forEach((line) => {
+        for (const line of lines) {
+          if (!line) continue;
+          if (line.startsWith(":")) continue; // SSE heartbeat/comment.
           if (line.startsWith("event:")) {
             eventType = line.slice(6).trim();
-            return;
+            continue;
           }
           if (line.startsWith("id:")) {
             eventId = line.slice(3).trim();
-            return;
+            continue;
           }
           if (line.startsWith("data:")) {
             dataLines.push(line.slice(5).trimStart());
-            return;
           }
-        });
+        }
 
         const rawData = dataLines.join("\n");
+        const trimmedData = rawData.trim();
+        const normalizedEventType = eventType?.toLowerCase();
+
+        if (!trimmedData && !eventId && !eventType) return;
+        if (
+          !trimmedData &&
+          normalizedEventType &&
+          ["ping", "heartbeat", "keepalive"].includes(normalizedEventType)
+        ) {
+          return;
+        }
+        if (!trimmedData) return;
         let parsed: unknown = rawData;
         try {
           parsed = JSON.parse(rawData);
@@ -636,7 +648,18 @@ export default function RunPage() {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            if (buffer.trim().length > 0) {
+              handleEventBlock(buffer);
+              buffer = "";
+            }
+            if (!controller.signal.aborted) {
+              setConnectionState("error");
+              pushLog("error", { error: "Stream ended." });
+              scheduleAutoRetry();
+            }
+            break;
+          }
           buffer += decoder.decode(value, { stream: true });
           buffer = buffer.replace(/\r\n/g, "\n");
           let index = buffer.indexOf("\n\n");
@@ -747,7 +770,16 @@ export default function RunPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Toolchain</span>
-                  <span className="font-medium">{displayToolchain ?? "—"}</span>
+                  {toolchainLinkTarget ? (
+                    <Link
+                      href={`/w/${params.workspace}/toolchains/${toolchainLinkTarget}`}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {displayToolchain ?? toolchainLinkTarget}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{displayToolchain ?? "—"}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Started</span>

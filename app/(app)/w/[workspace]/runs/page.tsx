@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import RuntimeModeBanner from "@/components/toolchains/runtime-mode-banner";
+import { useRuntimeMode } from "@/components/toolchains/runtime-mode";
 import { useContextAction } from "@/app/context-provider";
 import { toolchain_session } from "@/types/globalTypes";
 import {
@@ -28,6 +29,7 @@ import {
 
 export default function Page() {
   const params = useParams<{ workspace: string }>()!;
+  const { mode } = useRuntimeMode();
   const {
     userData,
     toolchainSessions,
@@ -119,10 +121,18 @@ export default function Page() {
               Refresh
             </Button>
             <Button asChild variant="outline">
-              <Link href="/app/create">New run</Link>
+              <Link href={`/w/${params.workspace}/runs/new`}>New run</Link>
             </Button>
           </div>
         </div>
+
+      {mode === "v2" && (
+        <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+          v2 sessions are listed here via the same legacy session index as v1 runs.
+          If a session is missing, create a new one from the “New run” page or open
+          it directly by ID.
+        </div>
+      )}
 
       {!authReviewed ? (
         <div className="rounded-lg border border-border p-5 space-y-3">
