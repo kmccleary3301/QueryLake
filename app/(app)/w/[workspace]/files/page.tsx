@@ -188,6 +188,13 @@ export default function Page() {
         <p className="mt-1 text-xs text-muted-foreground">
           Drop files here to ingest them into the selected collection.
         </p>
+        {documents.some((doc) => !doc.finished_processing) ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Processing is still running for{" "}
+            {documents.filter((doc) => !doc.finished_processing).length} document(s).
+            This page auto-refreshes while ingestion completes.
+          </p>
+        ) : null}
         <div className="mt-4">
           <FileDropzone
             multiple
@@ -255,6 +262,17 @@ export default function Page() {
             ))}
           </SelectContent>
         </Select>
+        {selectedCollection ? (
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/w/${params.workspace}/collections/${selectedCollection}`}>
+              Open collection
+            </Link>
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" disabled>
+            Open collection
+          </Button>
+        )}
       </div>
 
       <div className="rounded-lg border border-border">

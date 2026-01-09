@@ -15,6 +15,7 @@ import {
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
@@ -41,13 +42,18 @@ export default function Page() {
     if (!currentProvider) return;
     const hasKey = userData?.user_set_providers.includes(currentProvider) ?? false;
     setKeyAvailable(hasKey);
-    setCurrentKeyInput(hasKey ? "••••••••••••••••" : "");
+    setCurrentKeyInput("");
+    setStatus(null);
   }, [currentProvider, userData?.user_set_providers]);
 
   const saveKey = () => {
     if (!userData?.auth) return;
     if (!currentProvider) {
       setStatus("Select a provider first.");
+      return;
+    }
+    if (!currentKeyInput.trim()) {
+      setStatus("Enter an API key to save.");
       return;
     }
     modifyUserExternalProviders({
@@ -62,6 +68,8 @@ export default function Page() {
               new Set([...userData.user_set_providers, currentProvider])
             ),
           });
+          setKeyAvailable(true);
+          setCurrentKeyInput("");
         }
       },
     });
@@ -114,7 +122,10 @@ export default function Page() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbPage>Settings</BreadcrumbPage>
+              <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={`/w/${params.workspace}/settings`}>Settings</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbItem>
               <BreadcrumbPage>Integrations</BreadcrumbPage>
@@ -155,12 +166,22 @@ export default function Page() {
           <Input
             className="min-w-[280px]"
             type="password"
-            placeholder="Enter API key"
+            placeholder={
+              keyAvailable
+                ? "Key is stored. Paste a new key to rotate."
+                : "Enter API key"
+            }
             value={currentKeyInput}
             onChange={(event) => setCurrentKeyInput(event.target.value)}
           />
-          <Button onClick={saveKey}>Save</Button>
-          <Button variant="outline" onClick={deleteKey} disabled={!keyAvailable}>
+          <Button onClick={saveKey} disabled={!currentProvider || !currentKeyInput.trim()}>
+            Save
+          </Button>
+          <Button
+            variant="outline"
+            onClick={deleteKey}
+            disabled={!currentProvider || !keyAvailable}
+          >
             Delete
           </Button>
         </div>

@@ -191,13 +191,17 @@ export default function DocumentPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href={`/w/${params.workspace}/dashboard`}>
-                  Workspace
-                </BreadcrumbLink>
+                <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               {collectionId ? (
                 <>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/w/${params.workspace}/collections`}>
+                      Collections
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     <BreadcrumbLink
                       href={`/w/${params.workspace}/collections/${collectionId}`}

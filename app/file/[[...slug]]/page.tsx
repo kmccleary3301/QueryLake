@@ -42,6 +42,7 @@ import { CollectionSidebar } from "./document-sidebar";
 import { userDataType } from "@/types/globalTypes";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { MakeArray, SearchParamsType } from "./columns";
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 
 type SearchParams = {
@@ -141,6 +142,11 @@ export default function Page() {
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [collectionId, setCollectionId] = useState<string | undefined>(undefined);
+
+  const legacyDocumentId = resolvedParams["slug"]?.[1];
+  const legacyWorkspacePath = legacyDocumentId
+    ? `/documents/${legacyDocumentId}`
+    : "/files";
 
   const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
@@ -246,6 +252,14 @@ export default function Page() {
         "--container-width": "100%"
       } as React.CSSProperties}
     >
+      <div className="absolute left-4 right-4 top-4 z-50">
+        <LegacyNotice
+          title="Legacy document viewer"
+          description="This is the legacy document/chunk viewer. Use the new workspace UI for the recommended document and retrieval flow."
+          workspacePath={legacyWorkspacePath as `/${string}`}
+          ctaLabel="Open in workspace Documents"
+        />
+      </div>
       {/* <ScrollArea className="w-full"> */}
         <div className="flex flex-row w-[var(--container-width)] justify-center overflow-hidden">
         <SidebarProvider open={sidebarOpen} className="w-full">

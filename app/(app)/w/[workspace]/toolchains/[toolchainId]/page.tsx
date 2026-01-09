@@ -126,6 +126,10 @@ export default function ToolchainPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
+                <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
                 <BreadcrumbLink href={`/w/${params.workspace}/toolchains`}>
                   Toolchains
                 </BreadcrumbLink>

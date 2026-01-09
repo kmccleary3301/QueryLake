@@ -713,9 +713,11 @@ export default function RunPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href={`/w/${params.workspace}/runs`}>
-                  Runs
-                </BreadcrumbLink>
+                <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/w/${params.workspace}/runs`}>Runs</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>

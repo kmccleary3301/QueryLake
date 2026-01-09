@@ -35,6 +35,7 @@ import { ArrowUpRight } from "lucide-react";
 import { useParams } from "next/navigation";
 import InviteUserToOrgSheet, { memberRole } from "./components/invite-org-sheet";
 import { DialogClose } from "@radix-ui/react-dialog";
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 export default function OrgPage() {
   const { slug } = useParams() as {slug: string[]};
@@ -98,6 +99,14 @@ export default function OrgPage() {
   
   return (
     <div className="w-[100%] h-screen absolute">
+    <div className="absolute left-4 right-4 top-4 z-50">
+      <LegacyNotice
+        title="Legacy organizations UI"
+        description="This is the legacy organization management page. Workspace settings are the recommended place for day-to-day member management."
+        workspacePath="/settings/members"
+        ctaLabel="Open workspace Members"
+      />
+    </div>
     <ScrollAreaHorizontal className="h-screen w-full flex flex-row">
       <p className="text-5xl text-primary/80 text-bold py-[20px] w-full border-0 border-outline border-b-2 h-[100px] text-center">
         <strong>{"Manage Organizations"}</strong>

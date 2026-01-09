@@ -29,6 +29,7 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { hexToRgb, hslStringToHsl, hslStringToRGBHex, hslToRgb, rgbToHex } from "@/hooks/rgb-hsl-functions";
 import { ModeToggle } from "@/components/inherited/mode-toggle";
 import { useTheme } from "next-themes";
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 // export const metadata: Metadata = {
 //   title: "Themes OG",
@@ -98,6 +99,14 @@ export default function SettingsPage() {
   return (
     <ThemeProviderWrapper>
     <ScrollArea className="w-full h-screen">
+      <div className="mx-auto w-full max-w-4xl px-6 pt-6">
+        <LegacyNotice
+          title="Legacy user settings"
+          description="This is the legacy user settings page. For workspace-specific settings (members/integrations), use the workspace Settings area."
+          workspacePath="/settings"
+          ctaLabel="Open workspace Settings"
+        />
+      </div>
       <div className="w-full flex flex-row justify-center">
         <div className="flex flex-col w-[85vw] md:w-[70vw] pb-[120px]">
           {/* <ThemeWrapper

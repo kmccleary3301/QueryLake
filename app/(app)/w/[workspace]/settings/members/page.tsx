@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import {
 import {
   Breadcrumb,
   BreadcrumbItem,
+  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
@@ -165,7 +167,10 @@ export default function Page() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbPage>Settings</BreadcrumbPage>
+              <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={`/w/${params.workspace}/settings`}>Settings</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbItem>
               <BreadcrumbPage>Members</BreadcrumbPage>
@@ -180,8 +185,18 @@ export default function Page() {
 
       {isPersonalWorkspace(params.workspace) ? (
         <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          Personal workspaces do not have members. Switch to an organization
-          workspace to manage team access.
+          <p>
+            Personal workspaces do not have members. Switch to an organization
+            workspace to manage team access.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href="/select-workspace">Select workspace</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/organizations">Manage organizations (legacy)</Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <>

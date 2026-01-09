@@ -30,6 +30,7 @@ import { CollectionSidebar } from "./collection-sidebar";
 import { userDataType } from "@/types/globalTypes";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { SearchParamsType } from "./columns";
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 type SearchParams = {
   auth: string;
@@ -146,6 +147,11 @@ export default function Page() {
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(null);
   const [dataRowsProcessed, setDataRowsProcessed] = useState<ColumnSchema[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+
+  const legacyCollectionId = resolvedParams["slug"]?.[1];
+  const legacyWorkspacePath = legacyCollectionId
+    ? `/collections/${legacyCollectionId}`
+    : "/collections";
   
   const fetchCollectionCallback = useCallback(() => {
     if (!userData?.auth) return;
@@ -259,6 +265,14 @@ export default function Page() {
         "--container-width": "100%"
       } as React.CSSProperties}
     >
+      <div className="absolute left-4 right-4 top-4 z-50">
+        <LegacyNotice
+          title="Legacy collections UI"
+          description="This is the legacy collections experience. Use the new workspace UI for the recommended collections flow."
+          workspacePath={legacyWorkspacePath as `/${string}`}
+          ctaLabel="Open in workspace Collections"
+        />
+      </div>
       {/* <ScrollArea className="w-full"> */}
         <div className="flex flex-row w-[var(--container-width)] justify-center overflow-hidden">
         <SidebarProvider open={sidebarOpen} className="w-full">

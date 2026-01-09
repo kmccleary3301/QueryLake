@@ -14,6 +14,7 @@ import { toolchain_session } from "@/types/globalTypes";
 import { toast } from "sonner";
 import { useContextAction } from "@/app/context-provider";
 import { resolve } from "path";
+import LegacyNotice from "@/components/legacy/legacy-notice";
 
 export default function AppPage() {
 
@@ -329,7 +330,15 @@ export default function AppPage() {
   // }, []);
 
   return (
-    <div className="h-[100vh] w-full pr-0 pl-0">
+    <div className="relative h-[100vh] w-full pr-0 pl-0">
+      <div className="absolute left-4 right-4 top-4 z-50">
+        <LegacyNotice
+          title="Legacy toolchain runner"
+          description="This is the legacy runner UI. Use the workspace Runs pages to browse and debug runs in the new surface."
+          workspacePath="/runs"
+          ctaLabel="Open workspace Runs"
+        />
+      </div>
       {(selectedToolchainFull !== undefined && selectedToolchainFull.display_configuration) &&
         (
         <DivisibleSection
