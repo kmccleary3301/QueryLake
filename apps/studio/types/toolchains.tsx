@@ -6,6 +6,7 @@
 // this instead.
 
 import { displaySection } from "./toolchain-interface";
+import type { ToolchainUISpecV2 } from "./toolchain-ui-spec-v2";
 
 // The sequenceAction type can be thought of as a bash command, and the object
 // can be thought of as a file system which is being traversed and/or changed.
@@ -162,7 +163,7 @@ export interface feedMappingAtomic {
 }
 
 export interface feedMappingOriginal extends feedMappingAtomic {
-    getFrom: valueObj;
+    getFrom?: valueObj | null;
 }
 
 export interface feedMappingStaticValue extends feedMappingAtomic {
@@ -271,6 +272,27 @@ export interface ToolChain {
     // suggestions?: startScreenSuggestion[];
     initial_state: substituteAny;
     nodes: toolchainNode[];
+
+    editor_meta?: {
+        graph?: {
+            nodes?: Record<string, { x: number; y: number }>;
+            viewport?: { x: number; y: number; zoom: number };
+            focus_canvas?: boolean;
+            editor_surface?: "modal" | "drawer";
+        };
+        settings?: {
+            description?: string;
+            tags?: string[];
+            visibility?: "private" | "workspace" | "public";
+            permissions?: {
+                view?: string[];
+                edit?: string[];
+            };
+            draft?: boolean;
+        };
+    };
+
+    ui_spec_v2?: ToolchainUISpecV2;
 }
 
 export interface ToolChainSessionFile {

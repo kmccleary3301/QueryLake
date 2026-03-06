@@ -18,6 +18,8 @@ import {
 	collectionGroup,
   APIFunctionSpec
 } from '@/types/globalTypes';
+import type { ToolchainUIState } from "@/types/toolchain-ui-state";
+import { buildToolchainUIState } from "@/lib/toolchains-v2/ui-state";
 import { deleteCookie, getCookie, setCookie } from '@/hooks/cookies';
 import craftUrl from '@/hooks/craftUrl';
 import { QuerylakeFunctionHelp, fetchToolchainConfig, fetchToolchainSessions, getUserCollections } from '@/hooks/querylakeAPI';
@@ -38,6 +40,9 @@ const Context = createContext<{
 
 	selectedCollections: selectedCollectionsType;
 	setSelectedCollections: Dispatch<SetStateAction<selectedCollectionsType>>;
+
+	toolchainUI: ToolchainUIState;
+	setToolchainUI: Dispatch<SetStateAction<ToolchainUIState>>;
 
 	toolchainSessions : Map<string, toolchain_session>,
 	setToolchainSessions : React.Dispatch<React.SetStateAction<Map<string, toolchain_session>>>,
@@ -79,6 +84,9 @@ const Context = createContext<{
 
 	selectedCollections: new Map(),
 	setSelectedCollections: () => new Map(),
+
+	toolchainUI: { collections: { selectedIds: [] } },
+	setToolchainUI: () => ({ collections: { selectedIds: [] } }),
 
 	toolchainSessions: new Map(),
 	setToolchainSessions: () => new Map(),
@@ -137,6 +145,9 @@ export const ContextProvider = ({
 	const [user_data, set_user_data] = useState<userDataType | undefined>(userData);
 	const [collection_groups, set_collection_groups] = useState<collectionGroup[]>([]);
 	const [selected_collections, set_selected_collections] = useState<selectedCollectionsType>(selectedCollections);
+	const [toolchain_ui, set_toolchain_ui] = useState<ToolchainUIState>(() =>
+		buildToolchainUIState(selectedCollections)
+	);
 	const [toolchain_sessions, set_toolchain_sessions] = useState<Map<string, toolchain_session>>(toolchainSessions);
 	const [active_toolchain_session, set_active_toolchain_session] = useState<string | undefined>(undefined);
 	const [selected_toolchain, set_selected_toolchain] = useState<string | undefined>(undefined);
@@ -169,6 +180,10 @@ export const ContextProvider = ({
     updateBreakpoint();
     return () => window.removeEventListener('resize', updateBreakpoint);
   }, []);
+
+	useEffect(() => {
+		set_toolchain_ui((prev) => buildToolchainUIState(selected_collections, prev));
+	}, [selected_collections]);
 
 	// useEffect(() => {console.log("BREAKPOINT:", break_point)}, [break_point]);
 
@@ -282,6 +297,8 @@ export const ContextProvider = ({
 			refreshCollectionGroups : refresh_collection_groups,
 			selectedCollections : selected_collections,
 			setSelectedCollections : set_selected_collections,
+			toolchainUI : toolchain_ui,
+			setToolchainUI : set_toolchain_ui,
 			toolchainSessions : toolchain_sessions,
 			setToolchainSessions : set_toolchain_sessions,  
       refreshToolchainSessions : refresh_toolchain_sessions,

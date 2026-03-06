@@ -160,6 +160,13 @@ export default function ToolchainPage() {
             </Button>
           )}
           <Button asChild variant="outline">
+            <Link
+              href={`/w/${params.workspace}/toolchains/${params.toolchainId}/edit`}
+            >
+              Open Toolchains V2 editor
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/nodes/node_editor">Open legacy builder</Link>
           </Button>
         </div>

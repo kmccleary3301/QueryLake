@@ -658,6 +658,31 @@ export function fetchToolchainConfig(args : fetchToolchainConfigArgs) {
   });
 }
 
+type updateToolchainConfigArgs = {
+  auth: string;
+  toolchain_id: string;
+  toolchain: Record<string, unknown>;
+  onFinish?: setStateOrCallback<{ toolchain_id: string } | false>;
+};
+
+export function updateToolchainConfig(args: updateToolchainConfigArgs) {
+  postJson<
+    | { success: true; result: { toolchain_id: string } }
+    | { success: false; error: string }
+  >(`/api/update_toolchain_config`, {
+    auth: args.auth,
+    toolchain_id: args.toolchain_id,
+    toolchain: args.toolchain,
+  }).then((data) => {
+    if (!data.success) {
+      toast.error(`Failed to save toolchain: ${data.error}`);
+      if (args.onFinish) args.onFinish(false);
+      return;
+    }
+    if (args.onFinish) args.onFinish(data.result);
+  });
+}
+
 
 export function modifyUserExternalProviders(args :{
   auth: string,

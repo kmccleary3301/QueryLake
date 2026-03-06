@@ -83,3 +83,93 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .ql-editor-shell {
+    @apply space-y-4;
+  }
+
+  .ql-editor-surface {
+    @apply rounded-[18px] border border-border/80 bg-[linear-gradient(180deg,hsl(var(--card)/0.92),hsl(var(--background)/0.94))] p-4 shadow-[0_1px_0_hsl(var(--border)/0.45),0_18px_50px_hsl(var(--background)/0.35)];
+  }
+
+  .ql-editor-panel {
+    @apply rounded-[16px] border border-border/80 bg-[radial-gradient(circle_at_top_right,hsl(var(--chart-2)/0.12),transparent_28%),linear-gradient(180deg,hsl(var(--card)/0.9),hsl(var(--card)/0.72))] shadow-[inset_0_1px_0_hsl(var(--background)/0.35),0_10px_30px_hsl(var(--background)/0.18)];
+  }
+
+  .ql-editor-inset {
+    @apply rounded-[12px] border border-border/70 bg-muted/15;
+  }
+
+  .ql-editor-state {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .ql-editor-status {
+    @apply text-[11px];
+  }
+
+  .ql-editor-status-unsaved {
+    @apply text-amber-400;
+  }
+
+  .ql-editor-status-saved {
+    @apply text-emerald-400;
+  }
+
+  .ql-editor-alert-error {
+    @apply rounded-sm border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive;
+  }
+
+  .ql-editor-alert-warning {
+    @apply rounded-sm border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200;
+  }
+
+  .ql-editor-alert-inline {
+    @apply rounded-sm border border-destructive/40 bg-destructive/10 px-2 py-1 text-[11px] text-destructive;
+  }
+
+  .ql-editor-skeleton-line {
+    @apply animate-pulse rounded-sm bg-muted/40;
+  }
+
+  .ql-editor-skeleton-line-subtle {
+    @apply animate-pulse rounded-sm bg-muted/30;
+  }
+
+  .ql-editor-skeleton-panel {
+    @apply rounded-sm border border-border bg-muted/10;
+  }
+
+  .ql-editor-hero {
+    @apply rounded-[18px] border border-border/80 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.18),transparent_32%),linear-gradient(180deg,hsl(var(--card)/0.92),hsl(var(--background)/0.92))] p-4 shadow-[0_1px_0_hsl(var(--border)/0.45),0_20px_50px_hsl(var(--background)/0.22)];
+  }
+
+  .ql-editor-toolbar {
+    @apply flex flex-wrap items-center gap-2 rounded-[14px] border border-border/70 bg-background/45 px-3 py-2 backdrop-blur-sm;
+  }
+
+  .ql-editor-stage {
+    @apply rounded-[18px] border border-border/80 bg-[radial-gradient(circle_at_top_left,hsl(var(--chart-4)/0.12),transparent_24%),radial-gradient(circle_at_top_right,hsl(var(--chart-2)/0.12),transparent_26%),linear-gradient(180deg,hsl(var(--background)/0.98),hsl(var(--card)/0.88))] p-2 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_16px_40px_hsl(var(--background)/0.28)];
+  }
+
+  .ql-editor-canvas {
+    @apply relative overflow-hidden rounded-[14px] border border-border/70 bg-[radial-gradient(circle_at_top,hsl(var(--primary)/0.08),transparent_28%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)/0.94))];
+  }
+
+  .ql-editor-artifact-stage {
+    @apply rounded-[18px] border border-border/70 bg-[radial-gradient(circle_at_top_left,hsl(var(--chart-4)/0.12),transparent_24%),radial-gradient(circle_at_top_right,hsl(var(--chart-2)/0.12),transparent_26%),linear-gradient(180deg,hsl(var(--background)/0.98),hsl(var(--card)/0.84))] p-4 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_20px_50px_hsl(var(--background)/0.24)];
+  }
+
+  .ql-editor-artifact-frame {
+    @apply mx-auto min-h-full rounded-[16px] border border-border/70 bg-[radial-gradient(circle_at_top,hsl(var(--foreground)/0.03),transparent_34%),linear-gradient(180deg,hsl(var(--background)/0.98),hsl(var(--background)/0.94))] shadow-[inset_0_1px_0_hsl(var(--foreground)/0.05),0_24px_60px_hsl(var(--background)/0.28)];
+  }
+
+  .ql-editor-kicker {
+    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  .ql-editor-caption {
+    @apply text-[11px] text-muted-foreground;
+  }
+}
