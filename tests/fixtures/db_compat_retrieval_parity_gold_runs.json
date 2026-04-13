@@ -1,0 +1,7 @@
+{
+  "vapor recovery": ["chunk_a1", "chunk_a2", "chunk_x9"],
+  "\"vapor recovery\"": ["chunk_b2", "chunk_b1", "chunk_b3"],
+  "boiler feedwater chemistry": ["chunk_c1", "chunk_c3", "chunk_c2"],
+  "flue gas analysis": ["chunk_d3", "chunk_d2", "chunk_d1"],
+  "site:boiler feedwater chemistry": ["chunk_e1", "chunk_e2", "chunk_c1"]
+}

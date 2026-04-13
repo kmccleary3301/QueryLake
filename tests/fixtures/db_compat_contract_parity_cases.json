@@ -1,0 +1,47 @@
+[
+  {
+    "case_id": "bm25_simple",
+    "route": "search_bm25",
+    "table": "document_chunk",
+    "query": "vapor recovery",
+    "limit": 10
+  },
+  {
+    "case_id": "bm25_phrase",
+    "route": "search_bm25",
+    "table": "document_chunk",
+    "query": "\"vapor recovery\"",
+    "limit": 10
+  },
+  {
+    "case_id": "bm25_hard_constraint",
+    "route": "search_bm25",
+    "table": "document_chunk",
+    "query": "title:boiler",
+    "limit": 10
+  },
+  {
+    "case_id": "hybrid_dense_lexical",
+    "route": "search_hybrid",
+    "query": "vapor recovery",
+    "use_bm25": true,
+    "use_similarity": true,
+    "use_sparse": false,
+    "limit": 10
+  },
+  {
+    "case_id": "hybrid_three_lane",
+    "route": "search_hybrid",
+    "query": "vapor recovery",
+    "use_bm25": true,
+    "use_similarity": true,
+    "use_sparse": true,
+    "limit": 10
+  },
+  {
+    "case_id": "file_chunk_simple",
+    "route": "search_file_chunks",
+    "query": "vapor recovery",
+    "limit": 10
+  }
+]

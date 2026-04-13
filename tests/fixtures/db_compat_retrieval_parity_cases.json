@@ -1,0 +1,46 @@
+[
+  {
+    "case_id": "bm25_simple",
+    "route": "search_bm25.document_chunk",
+    "query": "vapor recovery",
+    "expected_ids": ["chunk_a1"]
+  },
+  {
+    "case_id": "bm25_phrase",
+    "route": "search_bm25.document_chunk",
+    "query": "\"vapor recovery\"",
+    "expected_ids": ["chunk_b2"],
+    "split_expected_state": "degraded",
+    "min_overlap": 0.8,
+    "max_mrr_drop": 0.1,
+    "max_latency_ratio": 1.35
+  },
+  {
+    "case_id": "hybrid_dense_lexical",
+    "route": "search_hybrid.document_chunk",
+    "query": "boiler feedwater chemistry",
+    "expected_ids": ["chunk_c1"],
+    "split_expected_state": "supported",
+    "min_overlap": 0.75,
+    "max_mrr_drop": 0.1,
+    "max_latency_ratio": 1.35
+  },
+  {
+    "case_id": "file_chunk_simple",
+    "route": "search_file_chunks",
+    "query": "flue gas analysis",
+    "expected_ids": ["chunk_d3"],
+    "split_expected_state": "supported",
+    "min_overlap": 0.5,
+    "max_mrr_drop": 0.1,
+    "max_latency_ratio": 1.5
+  },
+  {
+    "case_id": "hybrid_hard_constraint_unsupported",
+    "route": "search_hybrid.document_chunk",
+    "query": "site:boiler feedwater chemistry",
+    "expected_ids": ["chunk_e1"],
+    "split_expected_state": "unsupported",
+    "unsupported_expect_empty": true
+  }
+]

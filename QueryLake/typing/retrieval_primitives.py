@@ -23,6 +23,8 @@ class RetrievalRequest(BaseModel):
     filters: Dict[str, Any] = Field(default_factory=dict)
     budgets: Dict[str, Any] = Field(default_factory=dict)
     options: Dict[str, Any] = Field(default_factory=dict)
+    query_ir_v2: Dict[str, Any] = Field(default_factory=dict)
+    projection_ir_v2: Dict[str, Any] = Field(default_factory=dict)
     actor_user: Optional[str] = None
 
 

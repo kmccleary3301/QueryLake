@@ -1,8 +1,6 @@
 
-
 # from ray import serve
 
-from lmformatenforcer.integrations.vllm import VLLMLogitsProcessor
 import re
 from pydantic import BaseModel
 from typing import Optional, Literal, Tuple, List, Union
@@ -10,7 +8,11 @@ from lmformatenforcer import JsonSchemaParser
 
 # from lmformatenforcer import CharacterLevelParser
 # from lmformatenforcer.integrations.vllm import build_vllm_logits_processor, build_vllm_token_enforcer_tokenizer_data
-from .vllm_lmformating_modifed_banned_tokens import build_vllm_logits_processor, build_vllm_token_enforcer_tokenizer_data
+from .vllm_lmformating_modifed_banned_tokens import (
+    VLLMLogitsProcessor,
+    build_vllm_logits_processor,
+    build_vllm_token_enforcer_tokenizer_data,
+)
 
 from lmformatenforcer.regexparser import RegexParser
 # from ray.serve.handle import DeploymentHandle

@@ -97,7 +97,24 @@ class EventStore:
             .order_by(ToolchainSessionSnapshot.rev.desc())
             .limit(1)
         ).first()
-        return result
+        return self._unwrap_model_row(result)
+
+    @staticmethod
+    def _unwrap_model_row(record: Any) -> Any:
+        if record is None:
+            return None
+        if hasattr(record, "rev") or hasattr(record, "job_id") or hasattr(record, "session_id"):
+            return record
+        if hasattr(record, "_mapping"):
+            mapping = dict(record._mapping)
+            if len(mapping) == 1:
+                return next(iter(mapping.values()))
+        try:
+            if len(record) == 1:
+                return record[0]
+        except Exception:
+            pass
+        return record
 
     def list_events(self, session_id: str, since_rev: Optional[int] = None) -> List[EventEnvelope]:
         statement = select(ToolchainSessionEvent).where(ToolchainSessionEvent.session_id == session_id)
@@ -106,7 +123,8 @@ class EventStore:
         statement = statement.order_by(ToolchainSessionEvent.rev.asc())
         records = self.db.exec(statement).all()
         envelopes: List[EventEnvelope] = []
-        for record in records:
+        for raw_record in records:
+            record = self._unwrap_model_row(raw_record)
             if hasattr(record, "rev"):
                 envelopes.append(
                     EventEnvelope(
@@ -213,9 +231,12 @@ class EventStore:
         )
 
     def list_jobs(self, session_id: str) -> List[ToolchainJob]:
-        return self.db.exec(
-            select(ToolchainJob).where(ToolchainJob.session_id == session_id)
-        ).all()
+        return [
+            self._unwrap_model_row(record)
+            for record in self.db.exec(
+                select(ToolchainJob).where(ToolchainJob.session_id == session_id)
+            ).all()
+        ]
 
     def get_job(self, job_id: str) -> Optional[ToolchainJob]:
         return self.db.get(ToolchainJob, job_id)

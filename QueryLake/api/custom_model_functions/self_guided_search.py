@@ -1,4 +1,4 @@
-from typing import Callable, Any, Union, Awaitable, List, Dict
+from typing import Callable, Any, Union, Awaitable, List, Dict, Optional
 from sqlmodel import Session
 from ...typing.config import AuthType
 from ..single_user_auth import get_user
@@ -116,7 +116,7 @@ async def self_guided_search(
     auth : AuthType,
     toolchain_function_caller: Callable[[Any], Union[Callable, Awaitable[Callable]]],
     question: str,
-    collection_ids: List[str] = [],
+    collection_ids: Optional[List[str]] = None,
     model : str = None,
     max_searches : int = 5,
     use_hybrid: bool = False,
@@ -130,6 +130,7 @@ async def self_guided_search(
     Self guided search.
     """
     (_, _) = get_user(database, auth)
+    collection_ids = list(collection_ids or [])
 
     start_time = time.time()
     resolved_tenant_scope = tenant_scope

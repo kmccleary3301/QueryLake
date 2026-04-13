@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
 
 from QueryLake.typing.toolchains import (
     Mapping,
@@ -32,6 +33,8 @@ def _route_to_jsonpath(route: Optional[List[Any]]) -> str:
 
 
 def _value_obj_to_literal(obj: Any) -> Any:
+    if isinstance(obj, BaseModel):
+        obj = obj.model_dump(exclude_none=True)
     if isinstance(obj, list):
         return [_value_obj_to_literal(item) for item in obj]
     if not isinstance(obj, dict):
@@ -98,9 +101,9 @@ def _set_literal_at_path(container: Any, path: List[Any], expression: ValueExpre
         index = int(final_key)
         while len(current) <= index:
             current.append(None)
-        current[index] = expression.model_dump()
+        current[index] = expression.model_dump(exclude_none=True)
     else:
-        current[final_key] = expression.model_dump()
+        current[final_key] = expression.model_dump(exclude_none=True)
 
 
 def _convert_append_action(
@@ -124,7 +127,11 @@ def _convert_append_action(
             if val_spec is None:
                 expr = src_expression
             else:
-                expr = ValueExpression.from_any({"literal": _value_obj_to_literal(val_spec)})
+                literal_value = _value_obj_to_literal(val_spec)
+                if isinstance(literal_value, dict) and set(literal_value.keys()) == {"ref"}:
+                    expr = ValueExpression.from_any(literal_value)
+                else:
+                    expr = ValueExpression.from_any({"literal": literal_value})
         else:
             expr = src_expression
         _set_literal_at_path(literal_copy, insertion_path, expr)
@@ -184,7 +191,10 @@ def _convert_input_argument(arg: legacy.nodeInputArgument, node_id: str, optiona
         optional.append(arg.key)
     if arg.default_value is not None:
         return ValueExpression.from_any({"literal": arg.default_value})
-    return None
+    # Legacy bare input arguments implicitly read from the current node input bag
+    # using the same key. This preserves old `from_user`-style inherited routing
+    # once upstream payloads have already been merged into the node inbox.
+    return ValueExpression(ref=ValueRef(source="inputs", path=f"$.{arg.key}"))
 
 
 def convert_toolchain(legacy_toolchain: legacy.ToolChain) -> ToolChainV2:

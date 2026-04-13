@@ -29,10 +29,10 @@ async def llm_call(
     self, # Umbrella class, can't type hint because of circular imports
     auth : AuthType, 
     question : str = None,
-    model_parameters : dict = {},
+    model_parameters : Optional[dict] = None,
     model : str = None,
     lora_id : str = None,
-    sources : List[dict] = [],
+    sources : Optional[List[dict]] = None,
     chat_history : List[dict] = None,
     stream_callables: Dict[str, Awaitable[Callable[[str], None]]] = None,
     functions_available: List[Union[FunctionCallDefinition, dict]] = None,
@@ -42,6 +42,8 @@ async def llm_call(
     """
     Call an LLM model, possibly with parameters.
     """
+    model_parameters = dict(model_parameters or {})
+    sources = list(sources or [])
     (_, user_auth, original_auth, auth_type) = api.get_user(self.database, auth, return_auth_type=True)
     
     if not question is None:

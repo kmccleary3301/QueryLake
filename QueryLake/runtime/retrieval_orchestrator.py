@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 from typing import Dict, List, Optional
 
+from QueryLake.runtime.db_compat import get_deployment_profile
+from QueryLake.runtime.retrieval_lanes import resolve_retrieval_adapter
 from QueryLake.typing.retrieval_primitives import (
     ContextPackingPrimitive,
     FusionPrimitive,
@@ -114,6 +116,17 @@ class PipelineOrchestrator:
                     "warnings": warnings,
                     "pipeline_id": pipeline.pipeline_id,
                     "pipeline_version": pipeline.version,
+                    "route_id": str(request.query_ir_v2.get("route_id") or request.route or ""),
+                    "representation_scope_id": str(
+                        request.query_ir_v2.get("representation_scope_id")
+                        or request.projection_ir_v2.get("representation_scope_id")
+                        or ""
+                    ),
+                    "planning_surface": str(
+                        request.projection_ir_v2.get("metadata", {}).get("planning_surface")
+                        or request.query_ir_v2.get("metadata", {}).get("planning_surface")
+                        or "route_resolution"
+                    ),
                 },
             )
         )
@@ -140,6 +153,10 @@ class PipelineOrchestrator:
             primitive = retrievers.get(stage.stage_id)
             if primitive is None:
                 continue
+            adapter_resolution = resolve_retrieval_adapter(
+                stage.primitive_id,
+                profile=get_deployment_profile(),
+            ).to_payload()
             stage_request = request.model_copy(deep=True)
             stage_request.options = {**request.options, **stage.config}
             t_1 = time.time()
@@ -158,7 +175,24 @@ class PipelineOrchestrator:
                     duration_ms=(t_2 - t_1) * 1000.0,
                     input_count=0,
                     output_count=len(candidates),
-                    details={"primitive_id": stage.primitive_id},
+                    details={
+                        "primitive_id": stage.primitive_id,
+                        "adapter": adapter_resolution,
+                        "route_id": str(request.query_ir_v2.get("route_id") or request.route or ""),
+                        "representation_scope_id": str(
+                            request.query_ir_v2.get("representation_scope_id")
+                            or request.projection_ir_v2.get("representation_scope_id")
+                            or ""
+                        ),
+                        "planning_surface": str(
+                            request.projection_ir_v2.get("metadata", {}).get("planning_surface")
+                            or request.query_ir_v2.get("metadata", {}).get("planning_surface")
+                            or "route_resolution"
+                        ),
+                        "projection_buildability_class": str(
+                            request.projection_ir_v2.get("buildability_class") or ""
+                        ),
+                    },
                 )
             )
 
@@ -228,5 +262,9 @@ class PipelineOrchestrator:
             pipeline_version=pipeline.version,
             candidates=fused,
             traces=traces,
-            metadata={"candidate_sources": list(candidates_by_source.keys())},
+            metadata={
+                "candidate_sources": list(candidates_by_source.keys()),
+                "query_ir_v2": dict(request.query_ir_v2 or {}),
+                "projection_ir_v2": dict(request.projection_ir_v2 or {}),
+            },
         )

@@ -11,8 +11,13 @@ from typing import List, Tuple
 from pgvector.sqlalchemy import Vector
 
 from .sql_db_tables import *
-
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_SQL_DATABASE_URL = "postgresql://querylake_access:querylake_access_password@localhost:5444/querylake_database"
+DATABASE_URL_ENV = "QUERYLAKE_DATABASE_URL"
+AUTHORITY_DATABASE_URL_ENV = "QUERYLAKE_AUTHORITY_DATABASE_URL"
+DB_CONNECT_TIMEOUT_ENV = "QUERYLAKE_DB_CONNECT_TIMEOUT"
 
 
 CHECK_INDEX_EXISTS_SQL = f"""
@@ -67,6 +72,25 @@ def _sparse_index_dimensions_default() -> int:
 
 def configured_sparse_index_dimensions() -> int:
     return _sparse_index_dimensions_default()
+
+
+def configured_database_url() -> str:
+    return str(os.environ.get(DATABASE_URL_ENV, DEFAULT_SQL_DATABASE_URL)).strip() or DEFAULT_SQL_DATABASE_URL
+
+
+def configured_authority_database_url() -> str:
+    override = str(os.environ.get(AUTHORITY_DATABASE_URL_ENV, "")).strip()
+    if override:
+        return override
+    return configured_database_url()
+
+
+def configured_database_connect_timeout() -> int:
+    try:
+        value = int(os.environ.get(DB_CONNECT_TIMEOUT_ENV, "5"))
+    except Exception:
+        return 5
+    return max(1, value)
 
 
 def create_sparse_vector_index_sql(dimensions: int) -> str:
@@ -162,8 +186,15 @@ def check_sparse_index_created(database: Session):
     return index_exists
 
 def initialize_database_engine() -> Session:
-    url = "postgresql://querylake_access:querylake_access_password@localhost:5444/querylake_database"
-    connect_timeout = int(os.environ.get("QUERYLAKE_DB_CONNECT_TIMEOUT", "5"))
+    from QueryLake.runtime.db_compat import (
+        validate_current_db_profile,
+        validate_profile_configuration_requirements,
+    )
+
+    profile = validate_current_db_profile()
+    validate_profile_configuration_requirements()
+    url = configured_authority_database_url() if profile.backend_stack.authority in {"postgresql", "aurora_postgresql"} else configured_database_url()
+    connect_timeout = configured_database_connect_timeout()
     engine = create_engine(
         url,
         pool_pre_ping=True,

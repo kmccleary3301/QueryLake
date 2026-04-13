@@ -1,0 +1,17 @@
+{
+  "search_bm25.document_chunk": {
+    "min_overlap": 0.85,
+    "max_mrr_drop": 0.05,
+    "max_latency_ratio": 1.35
+  },
+  "search_hybrid.document_chunk": {
+    "min_overlap": 0.75,
+    "max_mrr_drop": 0.10,
+    "max_latency_ratio": 1.35
+  },
+  "search_file_chunks": {
+    "min_overlap": 0.50,
+    "max_mrr_drop": 0.10,
+    "max_latency_ratio": 1.50
+  }
+}

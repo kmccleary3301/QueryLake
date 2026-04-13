@@ -10,6 +10,7 @@ from fastapi import HTTPException, status
 
 from QueryLake.api import toolchains as toolchains_api
 from QueryLake.database import sql_db_tables
+from QueryLake.runtime.db_compat import QueryLakeUnsupportedFeatureError
 from QueryLake.runtime.events import EventEnvelope, EventStore
 from QueryLake.runtime.jobs import JobRegistry, JobStatus
 from QueryLake.runtime.session import ToolchainSessionV2
@@ -189,6 +190,71 @@ class ToolchainRuntimeService:
                 )
                 self._persist_session_state(entry)
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Event cancelled")
+            except HTTPException:
+                self._emit_event(
+                    entry,
+                    "EVENT_FAILED",
+                    {
+                        "session_id": session_id,
+                        "node_id": node_id,
+                        "actor": actor,
+                        "correlation_id": correlation_id,
+                    },
+                    snapshot=True,
+                )
+                self._persist_session_state(entry)
+                raise
+            except QueryLakeUnsupportedFeatureError as exc:
+                detail = exc.to_payload()
+                self._emit_event(
+                    entry,
+                    "EVENT_FAILED",
+                    {
+                        "session_id": session_id,
+                        "node_id": node_id,
+                        "actor": actor,
+                        "error": detail.get("message"),
+                        "capability_error": detail,
+                        "correlation_id": correlation_id,
+                    },
+                    snapshot=True,
+                )
+                self._persist_session_state(entry)
+                raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=detail)
+            except AssertionError as exc:
+                detail = str(exc) or "Runtime capability unavailable"
+                self._emit_event(
+                    entry,
+                    "EVENT_FAILED",
+                    {
+                        "session_id": session_id,
+                        "node_id": node_id,
+                        "actor": actor,
+                        "error": detail,
+                        "correlation_id": correlation_id,
+                    },
+                    snapshot=True,
+                )
+                self._persist_session_state(entry)
+                if "disabled on this QueryLake Deployment" in detail:
+                    raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail)
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
+            except Exception as exc:
+                detail = str(exc) or "Runtime execution failed"
+                self._emit_event(
+                    entry,
+                    "EVENT_FAILED",
+                    {
+                        "session_id": session_id,
+                        "node_id": node_id,
+                        "actor": actor,
+                        "error": detail,
+                        "correlation_id": correlation_id,
+                    },
+                    snapshot=True,
+                )
+                self._persist_session_state(entry)
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
 
             self._emit_event(
                 entry,

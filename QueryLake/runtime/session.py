@@ -128,14 +128,17 @@ class ToolchainSessionV2:
         correlation_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         queue: Deque[Tuple[str, Dict[str, Any]]] = deque([(node_id, payload)])
+        queued_nodes = {node_id}
         user_payload: Dict[str, Any] = {}
 
         while queue:
             current_id, current_payload = queue.popleft()
+            queued_nodes.discard(current_id)
             node = self.node_map.get(current_id)
             if node is None:
                 continue
 
+            current_payload = deepcopy(self.node_inbox.pop(current_id, current_payload))
             context = ExecutionContext(
                 state=self.state,
                 inputs=deepcopy(current_payload),
@@ -166,10 +169,15 @@ class ToolchainSessionV2:
                 user_payload.update(node_result["user"])
 
             for target_node, arguments in node_result.get("next_nodes", []):
-                merged = self.node_inbox.get(target_node, {})
+                merged = deepcopy(self.node_inbox.get(target_node, {}))
+                if not merged:
+                    merged.update(deepcopy(context.inputs))
                 merged.update(arguments)
-                self.node_inbox[target_node] = {}
+                self.node_inbox[target_node] = merged
+                if target_node in queued_nodes:
+                    continue
                 queue.append((target_node, merged))
+                queued_nodes.add(target_node)
 
             self._emit(
                 "NODE_COMPLETED",
@@ -222,14 +230,18 @@ class ToolchainSessionV2:
                 resolved_inputs = dict(resolved_inputs)
                 resolved_inputs["job_signal"] = job_signal
 
-        # Inject auth from server context if the target expects it and it's absent
+        # Inject framework/system arguments from server_context for legacy API calls.
         try:
             signature = inspect.signature(call_target)
-            if "auth" in signature.parameters and "auth" not in resolved_inputs:
-                auth_from_ctx = self.server_context.get("auth")
-                if auth_from_ctx is not None:
-                    resolved_inputs = dict(resolved_inputs)
-                    resolved_inputs["auth"] = auth_from_ctx
+            missing_from_signature = {
+                name: self.server_context[name]
+                for name in signature.parameters
+                if name in self.server_context
+                and (name not in resolved_inputs or resolved_inputs.get(name) is None)
+            }
+            if missing_from_signature:
+                resolved_inputs = dict(resolved_inputs)
+                resolved_inputs.update(missing_from_signature)
         except Exception:
             pass
 
@@ -400,7 +412,7 @@ class ToolchainSessionV2:
         correlation_id: Optional[str],
     ) -> Dict[str, Any]:
         user_payload: Dict[str, Any] = {}
-        next_nodes: List[Tuple[str, Dict[str, Any]]] = []
+        next_node_inputs: Dict[str, Dict[str, Any]] = {}
 
         for mapping in node.mappings:
             if mapping.iterate is not None:
@@ -422,7 +434,9 @@ class ToolchainSessionV2:
                         elif mapping.destination.kind == "user":
                             self._apply_to_user(mapping.path, value_i, user_payload, actor, correlation_id)
                         elif mapping.destination.kind == "node":
-                            next_nodes.append((mapping.destination.id, self._value_to_nested(mapping.path, value_i, mapping.mode)))
+                            next_node_inputs.setdefault(mapping.destination.id, {}).update(
+                                self._value_to_nested(mapping.path, value_i, mapping.mode)
+                            )
                         elif mapping.destination.kind == "files":
                             self._apply_to_files(mapping.path, value_i, mapping.mode, actor, correlation_id)
                 finally:
@@ -442,11 +456,13 @@ class ToolchainSessionV2:
             elif mapping.destination.kind == "user":
                 self._apply_to_user(mapping.path, value, user_payload, actor, correlation_id)
             elif mapping.destination.kind == "node":
-                node_inputs = next_nodes
-                node_inputs.append((mapping.destination.id, self._value_to_nested(mapping.path, value, mapping.mode)))
+                next_node_inputs.setdefault(mapping.destination.id, {}).update(
+                    self._value_to_nested(mapping.path, value, mapping.mode)
+                )
             elif mapping.destination.kind == "files":
                 self._apply_to_files(mapping.path, value, mapping.mode, actor, correlation_id)
 
+        next_nodes = [(node_id, arguments) for node_id, arguments in next_node_inputs.items()]
         return {"user": user_payload, "next_nodes": next_nodes}
 
     def _apply_to_state(
@@ -574,10 +590,103 @@ class ToolchainSessionV2:
             if set(literal.keys()) == {"ref"}:
                 ref = ValueRef.model_validate(literal["ref"])
                 return self._resolve_ref(ref, context)
+            if set(literal.keys()).issubset({"ref", "literal"}):
+                if literal.get("ref") is not None:
+                    ref = ValueRef.model_validate(literal["ref"])
+                    return self._resolve_ref(ref, context)
+                return self._resolve_literal(literal.get("literal"), context)
             return {k: self._resolve_literal(v, context) for k, v in literal.items()}
         if isinstance(literal, list):
             return [self._resolve_literal(item, context) for item in literal]
         return literal
+
+    def _find_output_ref_slots(self, literal: Any, route: Optional[List[Any]] = None) -> List[Tuple[List[Any], ValueRef]]:
+        route = route or []
+        slots: List[Tuple[List[Any], ValueRef]] = []
+        if isinstance(literal, dict):
+            if set(literal.keys()) == {"ref"}:
+                ref = ValueRef.model_validate(literal["ref"])
+                if ref.source == "outputs":
+                    slots.append((route, ref))
+                return slots
+            if set(literal.keys()).issubset({"ref", "literal"}):
+                if literal.get("ref") is not None:
+                    ref = ValueRef.model_validate(literal["ref"])
+                    if ref.source == "outputs":
+                        slots.append((route, ref))
+                    return slots
+                return self._find_output_ref_slots(literal.get("literal"), route)
+            for key, value in literal.items():
+                slots.extend(self._find_output_ref_slots(value, route + [key]))
+            return slots
+        if isinstance(literal, list):
+            for index, value in enumerate(literal):
+                slots.extend(self._find_output_ref_slots(value, route + [index]))
+        return slots
+
+    def _resolve_stream_seed_literal(
+        self,
+        literal: Any,
+        context: ExecutionContext,
+        *,
+        output_slot: List[Any],
+        stream_initial: Any,
+        route: Optional[List[Any]] = None,
+    ) -> Any:
+        route = route or []
+        if route == output_slot:
+            return deepcopy(stream_initial)
+        if isinstance(literal, dict):
+            if set(literal.keys()) == {"ref"}:
+                ref = ValueRef.model_validate(literal["ref"])
+                return self._resolve_ref(ref, context)
+            if set(literal.keys()).issubset({"ref", "literal"}):
+                if literal.get("ref") is not None:
+                    ref = ValueRef.model_validate(literal["ref"])
+                    return self._resolve_ref(ref, context)
+                return self._resolve_stream_seed_literal(
+                    literal.get("literal"),
+                    context,
+                    output_slot=output_slot,
+                    stream_initial=stream_initial,
+                    route=route,
+                )
+            return {
+                key: self._resolve_stream_seed_literal(
+                    value,
+                    context,
+                    output_slot=output_slot,
+                    stream_initial=stream_initial,
+                    route=route + [key],
+                )
+                for key, value in literal.items()
+            }
+        if isinstance(literal, list):
+            return [
+                self._resolve_stream_seed_literal(
+                    value,
+                    context,
+                    output_slot=output_slot,
+                    stream_initial=stream_initial,
+                    route=route + [index],
+                )
+                for index, value in enumerate(literal)
+            ]
+        return deepcopy(literal)
+
+    def _route_to_jsonpath_string(self, route: List[Any]) -> str:
+        if not route:
+            return "$"
+        parts: List[str] = ["$"]
+        for segment in route:
+            if isinstance(segment, int):
+                parts.append(f"[{segment}]")
+            elif str(segment).isidentifier():
+                parts.append(f".{segment}")
+            else:
+                safe = str(segment).replace("'", "\\'")
+                parts.append(f"['{safe}']")
+        return "".join(parts)
 
     def _resolve_ref(self, ref: ValueRef, context: ExecutionContext) -> Any:
         if ref.source == "const":
@@ -597,7 +706,8 @@ class ToolchainSessionV2:
         matches = [match.value for match in finder.find(base)]
         if not matches:
             return None
-        return matches[0] if len(matches) == 1 else matches
+        value = matches[0] if len(matches) == 1 else matches
+        return deepcopy(value)
 
     def _prepare_stream_callbacks(
         self,
@@ -614,14 +724,36 @@ class ToolchainSessionV2:
                 continue
             if mapping.destination.kind != "state":
                 raise NotImplementedError("Streaming currently supported only for state destinations")
-            if mapping.value.ref is None or mapping.value.ref.source != "outputs":
-                raise ValueError("Streaming mappings must reference node outputs")
             stream_id = uuid.uuid4().hex
-            output_key = self._top_level_key(mapping.value.ref.path)
+            output_key: str
             dest_path = mapping.path
+            stream_apply_path = dest_path
+            stream_apply_mode = mapping.stream.mode
 
-            if mapping.stream.initial is not None:
-                self._apply_to_state(dest_path, mapping.stream.initial, "set", actor, correlation_id)
+            if mapping.value.ref is not None and mapping.value.ref.source == "outputs":
+                output_key = self._top_level_key(mapping.value.ref.path)
+                if mapping.stream.initial is not None:
+                    self._apply_to_state(dest_path, mapping.stream.initial, "set", actor, correlation_id)
+            elif mapping.value.literal is not None:
+                output_slots = self._find_output_ref_slots(mapping.value.literal)
+                if len(output_slots) != 1:
+                    raise ValueError("Streaming mappings must reference node outputs")
+                output_slot_route, output_ref = output_slots[0]
+                output_key = self._top_level_key(output_ref.path)
+                seed_value = self._resolve_stream_seed_literal(
+                    mapping.value.literal,
+                    context,
+                    output_slot=output_slot_route,
+                    stream_initial=mapping.stream.initial,
+                )
+                if mapping.mode != "append":
+                    raise ValueError("Composite streaming mappings currently require append mode")
+                self._apply_to_state(dest_path, seed_value, mapping.mode, actor, correlation_id)
+                stream_apply_path = self._route_to_jsonpath_string(
+                    self._jsonpath_to_route(dest_path) + [-1] + output_slot_route
+                )
+            else:
+                raise ValueError("Streaming mappings must reference node outputs")
 
             self._emit(
                 "STREAM_OPEN",
@@ -631,12 +763,12 @@ class ToolchainSessionV2:
                     "stream_id": stream_id,
                     "actor": actor,
                     "correlation_id": correlation_id,
-                    "path": dest_path,
+                    "path": stream_apply_path,
                 },
                 snapshot=False,
             )
 
-            async def on_chunk(chunk: str, *, _path=dest_path, _mode=mapping.stream.mode, _stream_id=stream_id):
+            async def on_chunk(chunk: str, *, _path=stream_apply_path, _mode=stream_apply_mode, _stream_id=stream_id):
                 before = deepcopy(self.state)
                 self._assign(self.state, _path, chunk if _mode == "set" else chunk, _mode)
                 patch = jsonpatch.JsonPatch.from_diff(before, self.state)

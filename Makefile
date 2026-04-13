@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap up-db down-db up-redis down-redis run run-api-only health test ci-docs ci-unification ci-retrieval-smoke ci-runtime-profile ci-runtime-delta ci-legacy-path-guard sdk-install-dev sdk-precommit-install sdk-precommit-run sdk-lint sdk-type sdk-test sdk-build sdk-ci sdk-smoke sdk-release-check sdk-release-testpypi sdk-release-pypi sdk-publish-guard sdk-dryrun-version
+.PHONY: bootstrap up-db down-db up-redis down-redis run run-api-only health test ci-docs ci-unification ci-db-compat ci-db-compat-bringup ci-db-compat-bootstrap ci-retrieval-smoke ci-runtime-profile ci-runtime-delta ci-legacy-path-guard sdk-install-dev sdk-precommit-install sdk-precommit-run sdk-lint sdk-type sdk-test sdk-build sdk-ci sdk-smoke sdk-release-check sdk-release-testpypi sdk-release-pypi sdk-publish-guard sdk-dryrun-version
 
 bootstrap:
 	./scripts/dev/bootstrap.sh
@@ -64,6 +64,48 @@ ci-docs:
 
 ci-unification:
 	uv run --no-project bash scripts/ci_unification_checks.sh
+
+ci-db-compat:
+	uv run --no-project bash scripts/ci_db_compat_contract.sh
+
+ci-db-compat-bringup:
+	python scripts/db_compat_profile_bringup_smoke.py \
+	  --profile aws_aurora_pg_opensearch_v1 \
+	  --env QUERYLAKE_SEARCH_BACKEND_URL=https://example-opensearch.local \
+	  --env QUERYLAKE_SEARCH_INDEX_NAMESPACE=querylake \
+	  --env QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS=1024 \
+	  --enable-ready-split-stack-projections \
+	  --expect-boot-ready true \
+	  --expect-configuration-ready true \
+	  --expect-route-runtime-ready true \
+	  --expect-ready-projection-count 3 \
+	  --expect-route-runtime search_hybrid.document_chunk=true \
+	  --expect-route-runtime search_bm25.document_chunk=true \
+	  --expect-route-runtime search_file_chunks=true \
+	  --expect-required-projection-status-count ready=3 \
+	  --expect-route-lexical-support-class-count unsupported=3 \
+	  --expect-lexical-degraded-route search_bm25.document_chunk \
+	  --expect-lexical-gold-recommended-route search_bm25.document_chunk
+
+ci-db-compat-bootstrap:
+	pytest -q tests/test_db_compat_profile_bootstrap_script.py
+	python scripts/db_compat_profile_bringup_smoke.py \
+	  --profile aws_aurora_pg_opensearch_v1 \
+	  --env QUERYLAKE_SEARCH_BACKEND_URL=https://example-opensearch.local \
+	  --env QUERYLAKE_SEARCH_INDEX_NAMESPACE=querylake \
+	  --env QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS=1024 \
+	  --enable-ready-split-stack-projections \
+	  --expect-boot-ready true \
+	  --expect-configuration-ready true \
+	  --expect-route-runtime-ready true \
+	  --expect-ready-projection-count 3 \
+	  --expect-route-runtime search_hybrid.document_chunk=true \
+	  --expect-route-runtime search_bm25.document_chunk=true \
+	  --expect-route-runtime search_file_chunks=true \
+	  --expect-required-projection-status-count ready=3 \
+	  --expect-route-lexical-support-class-count unsupported=3 \
+	  --expect-lexical-degraded-route search_bm25.document_chunk \
+	  --expect-lexical-gold-recommended-route search_bm25.document_chunk
 
 ci-retrieval-smoke:
 	CI_RETRIEVAL_OUT_DIR=docs_tmp/RAG/ci/local/make_smoke uv run --no-project bash scripts/ci_retrieval_preflight.sh smoke

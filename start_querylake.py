@@ -40,6 +40,7 @@ import subprocess
 import sys
 import time
 import traceback
+import resource
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -72,7 +73,7 @@ except OSError as _exc:  # pragma: no cover - best effort guardrail
     os.environ.pop("RAY_TMPDIR", None)
 
 import ray  # noqa: E402  pylint: disable=wrong-import-position
-from ray import serve  # noqa: E402  pylint: disable=wrong-import-position
+from ray import exceptions as ray_exceptions  # noqa: E402
 try:
     from ray.logging_config import LoggingConfig  # noqa: E402
 except ImportError:  # pragma: no cover
@@ -99,8 +100,7 @@ from pydantic import ValidationError
 from QueryLake.typing.config import Config, ToolChain
 from QueryLake.typing.toolchains import ToolChainV2
 from QueryLake.toolchains.legacy_converter import convert_toolchain_dict
-# This function is the new entrypoint for the application, created in server.py
-from server import build_and_run_application
+from QueryLake.runtime.startup_networking import compute_ray_worker_port_plan, preferred_ray_node_ip
 
 # Configure logging
 logging.basicConfig(
@@ -125,6 +125,163 @@ logger.info(
     os.environ.get("RAY_DEDUP_LOGS"),
     os.environ.get("RAY_TMPDIR") or "<ray default>",
 )
+
+
+def _ray_cli() -> str:
+    return os.getenv("QUERYLAKE_RAY_CLI", "ray")
+
+
+def _warn_if_open_file_limit_low(target_min: int = 65536) -> None:
+    try:
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    except Exception:
+        return
+    if int(soft_limit) < int(target_min):
+        logger.warning(
+            "Low open-file limit detected (soft=%s hard=%s). Ray Serve may fail under load; raise `ulimit -n` to at least %s.",
+            soft_limit,
+            hard_limit,
+            target_min,
+        )
+
+
+def ports_to_clean_for_default_mode(
+    *,
+    cluster_config,
+    port_plan: dict,
+    api_only: bool,
+    with_gpu_workers: bool,
+) -> List[int]:
+    ports_to_clean = [cluster_config.head_port, cluster_config.dashboard_port]
+    head_min, head_max = port_plan["head_range"]
+    ports_to_clean.extend(range(head_min, head_max + 1))
+    if api_only and not with_gpu_workers:
+        return ports_to_clean
+    for min_port, max_port in port_plan["worker_ranges"]:
+        ports_to_clean.extend(range(min_port, max_port + 1))
+    return ports_to_clean
+
+
+def listening_pids_by_port(ports: List[int]) -> Dict[int, List[str]]:
+    target_ports = {int(port) for port in ports}
+    if not target_ports:
+        return {}
+    try:
+        result = subprocess.run(
+            ["lsof", "-nP", "-F", "pn", "-iTCP", "-sTCP:LISTEN"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return {}
+    if result.returncode not in (0, 1):
+        return {}
+
+    port_to_pids: Dict[int, List[str]] = {}
+    current_pid: Optional[str] = None
+    for raw_line in result.stdout.splitlines():
+        if not raw_line:
+            continue
+        prefix, payload = raw_line[0], raw_line[1:]
+        if prefix == "p":
+            current_pid = payload
+            continue
+        if prefix != "n" or current_pid is None:
+            continue
+        # Examples:
+        #   TCP 127.0.0.1:6394 (LISTEN)
+        #   TCP *:8269 (LISTEN)
+        if ":" not in payload:
+            continue
+        port_fragment = payload.rsplit(":", 1)[-1].split()[0]
+        if not port_fragment.isdigit():
+            continue
+        port = int(port_fragment)
+        if port in target_ports:
+            port_to_pids.setdefault(port, []).append(current_pid)
+    return port_to_pids
+
+
+def shutdown_serve_best_effort(timeout_s: float = 5.0) -> None:
+    try:
+        from ray.serve._private.api import _get_global_client, _set_global_client
+    except Exception:
+        return
+
+    try:
+        client = _get_global_client(raise_if_no_controller_running=False)
+    except Exception:
+        client = None
+
+    if client is None:
+        return
+
+    try:
+        client.shutdown_cached_handles()
+    except Exception as exc:
+        logger.warning("  - Serve handle shutdown reported an issue: %s", exc)
+
+    try:
+        ray.get(client._controller.graceful_shutdown.remote(), timeout=timeout_s)
+        logger.info("  - Serve controller shutdown complete.")
+    except ray_exceptions.RayActorError:
+        logger.info("  - Serve controller already stopped.")
+    except TimeoutError:
+        logger.warning(
+            "  - Serve controller did not shut down within %.1fs; proceeding with process teardown.",
+            timeout_s,
+        )
+    except Exception as exc:
+        logger.warning("  - Serve controller shutdown reported an issue: %s", exc)
+    finally:
+        try:
+            _set_global_client(None)
+        except Exception:
+            pass
+
+
+def wait_for_head_cluster_registration(
+    address: str,
+    *,
+    timeout_s: float = 45.0,
+    namespace: str = "querylake",
+) -> bool:
+    """Wait until the Ray head node is fully registered with GCS."""
+    deadline = time.time() + float(timeout_s)
+    while time.time() < deadline:
+        try:
+            if ray.is_initialized():
+                ray.shutdown()
+            init_kwargs: Dict[str, Any] = {
+                "address": address,
+                "namespace": namespace,
+                "log_to_driver": False,
+                "logging_level": logging.WARNING,
+            }
+            ray_tmpdir = os.environ.get("RAY_TMPDIR")
+            if ray_tmpdir:
+                init_kwargs["_temp_dir"] = ray_tmpdir
+            if LoggingConfig is not None:
+                init_kwargs["logging_config"] = LoggingConfig(
+                    log_level="WARNING",
+                    encoding="TEXT",
+                )
+            ray.init(**init_kwargs)
+            cluster_resources = ray.cluster_resources() or {}
+            alive_nodes = [node for node in ray.nodes() if node.get("alive", False)]
+            if cluster_resources.get("node:__internal_head__", 0) >= 0.001 and len(alive_nodes) >= 1:
+                return True
+        except Exception:
+            pass
+        finally:
+            if ray.is_initialized():
+                try:
+                    ray.shutdown()
+                except Exception:
+                    pass
+        time.sleep(1)
+    return False
 
 def load_config_and_toolchains(
     config_path: str = "config.json",
@@ -189,6 +346,7 @@ class RayGPUCluster:
         self._started_worker_gpus: Optional[List[Dict[str, Any]]] = None
         self.cluster_ready = False
         self._managed_chandra_vllm_servers: List[Dict[str, Any]] = []
+        self._shutdown_started = False
         
         # Setup signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -452,33 +610,40 @@ class RayGPUCluster:
     def cleanup_ports(self, ports: List[int]):
         """Clean up any processes using target ports before startup."""
         logger.info("🧹 Cleaning up existing processes on target ports...")
-        for port in ports:
-            try:
-                # Use `lsof` to find PIDs listening on the port
-                check_cmd = f"lsof -ti :{port}"
-                result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
-                if result.returncode == 0 and result.stdout.strip():
-                    pids = result.stdout.strip().split('\n')
-                    logger.info(f"  🔧 Found {len(pids)} process(es) on port {port}. Terminating...")
-                    
-                    # Kill the found processes
-                    kill_cmd = f"kill -9 {' '.join(pids)}"
-                    kill_result = subprocess.run(kill_cmd, shell=True, capture_output=True)
-                    if kill_result.returncode == 0:
-                        logger.info(f"  ✅ Cleaned up port {port}")
-                    else:
-                        logger.warning(f"  ⚠️ Failed to clean port {port}. Stderr: {kill_result.stderr}")
-                else:
-                    logger.info(f"  ✅ Port {port} is already clean")
-            except Exception as e:
-                logger.warning(f"  ⚠️ Error during cleanup for port {port}: {e}")
+        unique_ports = sorted({int(port) for port in ports})
+        try:
+            port_to_pids = listening_pids_by_port(unique_ports)
+            occupied_ports = sorted(port_to_pids.keys())
+            if not occupied_ports:
+                logger.info("  ✅ All %s target ports are already clean", len(unique_ports))
+                time.sleep(1)
+                return
+            unique_pids = sorted({pid for pids in port_to_pids.values() for pid in pids})
+            logger.info(
+                "  🔧 Found %s process(es) across %s occupied target port(s); terminating...",
+                len(unique_pids),
+                len(occupied_ports),
+            )
+            kill_result = subprocess.run(
+                ["kill", "-9", *unique_pids],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if kill_result.returncode == 0:
+                logger.info("  ✅ Cleaned up %s occupied target port(s)", len(occupied_ports))
+            else:
+                stderr = (kill_result.stderr or "").strip()
+                logger.warning("  ⚠️ Failed bulk cleanup of target ports. Stderr: %s", stderr or "<empty>")
+        except Exception as e:
+            logger.warning(f"  ⚠️ Error during cleanup of target ports: {e}")
         time.sleep(2) # Give OS time to release ports
     
     def force_stop_existing_cluster(self) -> None:
         """Best-effort shutdown of any previously running local Ray cluster."""
         try:
             result = subprocess.run(
-                ["ray", "stop", "--force"],
+                [_ray_cli(), "stop", "--force"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -503,30 +668,30 @@ class RayGPUCluster:
         if not self.available_gpus:
             self.available_gpus = self.get_gpu_info()
         gpu_count = max(len(self.available_gpus) if self.available_gpus else 0, 1)
-        port_base = getattr(cluster_config, "worker_port_base", None)
-        port_step = getattr(cluster_config, "worker_port_step", None)
-        head_min_port = None
-        head_max_port = None
-        if port_base is not None and port_step is not None:
-            # Reserve one additional slot worth of ports for local drivers and job submissions.
-            head_min_port = port_base
-            head_max_port = port_base + port_step * (gpu_count + 1) - 1
+        port_plan = compute_ray_worker_port_plan(
+            head_port=cluster_config.head_port,
+            dashboard_port=cluster_config.dashboard_port,
+            worker_port_base=cluster_config.worker_port_base,
+            worker_port_step=cluster_config.worker_port_step,
+            gpu_count=gpu_count,
+        )
+        head_min_port, head_max_port = port_plan["head_range"]
+        bind_ip = preferred_ray_node_ip()
         try:
             logger.info(f"🚀 Starting Ray head node on port {cluster_config.head_port}...")
             
             head_cmd = [
-                "ray", "start", "--head", "--num-gpus=0",
-                "--node-ip-address=127.0.0.1",
+                _ray_cli(), "start", "--head", "--num-gpus=0",
+                f"--node-ip-address={bind_ip}",
                 f"--dashboard-port={cluster_config.dashboard_port}",
                 f"--port={cluster_config.head_port}",
                 "--block",
                 "--disable-usage-stats"
             ]
-            if head_min_port is not None and head_max_port is not None:
-                head_cmd.extend([
-                    f"--min-worker-port={head_min_port}",
-                    f"--max-worker-port={head_max_port}",
-                ])
+            head_cmd.extend([
+                f"--min-worker-port={head_min_port}",
+                f"--max-worker-port={head_max_port}",
+            ])
             ray_tmpdir = os.environ.get("RAY_TMPDIR")
             if ray_tmpdir:
                 head_cmd.insert(-1, f"--temp-dir={ray_tmpdir}")
@@ -539,17 +704,28 @@ class RayGPUCluster:
                     env=os.environ.copy(),
                 )
             
-            logger.info("⏳ Waiting for head node to initialize (8s)...")
-            time.sleep(8)
-            
-            # Verify the head node is accessible on its port
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.settimeout(5)
-                if s.connect_ex(('127.0.0.1', cluster_config.head_port)) == 0:
-                    logger.info("✅ Head node started successfully and is accessible.")
-                    return True
-            
-            logger.error("❌ Head node port is not accessible after startup.")
+            logger.info("⏳ Waiting for head node port to open...")
+            deadline = time.time() + 45
+            while time.time() < deadline:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(5)
+                    if s.connect_ex((bind_ip, cluster_config.head_port)) == 0:
+                        logger.info("✅ Head node port is reachable. Verifying Ray head registration...")
+                        break
+                time.sleep(1)
+
+            else:
+                logger.error("❌ Head node port is not accessible after startup.")
+                return False
+
+            if wait_for_head_cluster_registration(
+                f"{bind_ip}:{cluster_config.head_port}",
+                timeout_s=45.0,
+            ):
+                logger.info("✅ Head node registered with GCS and advertised head resources.")
+                return True
+
+            logger.error("❌ Head node port opened, but Ray head registration did not complete.")
             return False
             
         except Exception as e:
@@ -591,6 +767,14 @@ class RayGPUCluster:
                 return True
 
             logger.info(f"🔧 Starting {len(candidate_gpus)} worker nodes, connecting to {head_address}...")
+            port_plan = compute_ray_worker_port_plan(
+                head_port=cluster_config.head_port,
+                dashboard_port=cluster_config.dashboard_port,
+                worker_port_base=cluster_config.worker_port_base,
+                worker_port_step=cluster_config.worker_port_step,
+                gpu_count=len(candidate_gpus),
+            )
+            bind_ip = preferred_ray_node_ip()
 
             for i, gpu in enumerate(candidate_gpus):
                 logger.info(f"  📦 Starting worker {i+1}/{len(candidate_gpus)} for GPU {gpu['index']}...")
@@ -604,12 +788,11 @@ class RayGPUCluster:
                 resources = json.dumps({"VRAM_MB": vram_mb})
                 
                 # Assign a unique port range to prevent gRPC conflicts
-                min_port = cluster_config.worker_port_base + (i * cluster_config.worker_port_step)
-                max_port = min_port + cluster_config.worker_port_step - 1
+                min_port, max_port = port_plan["worker_ranges"][i]
                 
                 worker_cmd = [
-                    "ray", "start", f"--address={head_address}",
-                    "--node-ip-address=127.0.0.1",
+                    _ray_cli(), "start", f"--address={head_address}",
+                    f"--node-ip-address={bind_ip}",
                     "--num-gpus=1",  # This worker provides exactly 1 GPU to the cluster
                     f"--resources={resources}",
                     f"--min-worker-port={min_port}",
@@ -722,6 +905,7 @@ class RayGPUCluster:
 
         try:
             logger.info(f"🚀 Deploying QueryLake application with '{strategy}' strategy...")
+            from server import build_and_run_application
             # Ray Serve will handle placement groups internally now
             build_and_run_application(
                 strategy=strategy,
@@ -737,17 +921,22 @@ class RayGPUCluster:
 
     def shutdown(self):
         """Gracefully shut down all managed Ray processes."""
+        if self._shutdown_started:
+            logger.info("🛑 Shutdown already in progress or completed. Skipping duplicate request.")
+            return
+        self._shutdown_started = True
         logger.info("🛑 Shutting down the cluster...")
         
         try:
             # Disconnect client and shut down Serve
             if self.cluster_ready and ray.is_initialized():
-                serve.shutdown()
+                shutdown_serve_best_effort(timeout_s=5.0)
                 try:
-                    ray.disconnect()
-                    logger.info("  - Ray client disconnected.")
-                except AttributeError:
-                    logger.warning("  - `ray.disconnect()` not available in this version of Ray. Skipping.")
+                    ray.shutdown()
+                    logger.info("  - Ray client shutdown complete.")
+                except Exception as exc:
+                    logger.warning("  - Ray client shutdown reported an issue: %s", exc)
+                self.cluster_ready = False
 
             # Terminate worker processes
             for i, proc in enumerate(self.worker_processes):
@@ -830,6 +1019,7 @@ Examples:
     config, toolchains, toolchains_v2 = load_config_and_toolchains(args.config)
     if not config:
         sys.exit(1)
+    _warn_if_open_file_limit_low()
 
     # Override strategy if provided via CLI
     strategy = args.strategy or config.ray_cluster.default_gpu_strategy
@@ -842,8 +1032,25 @@ Examples:
             # --- Head + Worker Mode (Default) ---
             logger.info("🚀 Starting in default mode: Head + Workers on this machine.")
             cluster_config = config.ray_cluster
-            ports_to_clean = [cluster_config.head_port, cluster_config.dashboard_port]
-            # Add worker ports to cleanup list later if needed
+            api_only = os.environ.get("QUERYLAKE_API_ONLY", "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            )
+            port_plan = compute_ray_worker_port_plan(
+                head_port=cluster_config.head_port,
+                dashboard_port=cluster_config.dashboard_port,
+                worker_port_base=cluster_config.worker_port_base,
+                worker_port_step=cluster_config.worker_port_step,
+                gpu_count=max(len(cluster.get_gpu_info()), 1),
+            )
+            ports_to_clean = ports_to_clean_for_default_mode(
+                cluster_config=cluster_config,
+                port_plan=port_plan,
+                api_only=api_only,
+                with_gpu_workers=args.with_gpu_workers,
+            )
             
             if args.allow_ray_stop:
                 cluster.force_stop_existing_cluster()
@@ -856,13 +1063,7 @@ Examples:
             if not cluster.start_head_node():
                 raise RuntimeError("Failed to start the head node.")
             
-            head_address = f"127.0.0.1:{cluster_config.head_port}"
-            api_only = os.environ.get("QUERYLAKE_API_ONLY", "").strip().lower() in (
-                "1",
-                "true",
-                "yes",
-                "on",
-            )
+            head_address = f"{preferred_ray_node_ip()}:{cluster_config.head_port}"
             if api_only and not args.with_gpu_workers:
                 logger.info(
                     "QUERYLAKE_API_ONLY=1: skipping GPU worker nodes (pass --with-gpu-workers to override)."
@@ -898,7 +1099,7 @@ Examples:
         
         logger.info("🎉 System startup complete!")
         if not args.workers:
-            logger.info(f"   - Ray Dashboard: http://127.0.0.1:{config.ray_cluster.dashboard_port}")
+            logger.info(f"   - Ray Dashboard: http://{preferred_ray_node_ip()}:{config.ray_cluster.dashboard_port}")
         logger.info(f"   - Connected to head at: {ray.get_runtime_context().gcs_address}")
         
         if not args.no_monitor:

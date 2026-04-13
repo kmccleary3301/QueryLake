@@ -37,6 +37,9 @@ class LocalCASObjectStore(ObjectStore):
         shard = cas[:2]
         return self.base_dir / shard / cas
 
+    def path_for(self, cas: str) -> Path:
+        return self._path_for(cas)
+
     def put_bytes(self, data: bytes) -> str:
         cas = self._sha256(data)
         path = self._path_for(cas)
@@ -57,4 +60,3 @@ class LocalCASObjectStore(ObjectStore):
 
     def exists(self, cas: str) -> bool:
         return self._path_for(cas).exists()
-

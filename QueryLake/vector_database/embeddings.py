@@ -33,6 +33,11 @@ import json
 import bisect
 from ..database.create_db_session import initialize_database_engine
 from ..database.create_db_session import configured_sparse_index_dimensions
+from .sparse_projection import (
+    SparseDimensionMismatchError,
+    project_sparse_mapping,
+    project_sparse_vector,
+)
 from ..typing.api_inputs import TextChunks
 import logging
 from ..observability import metrics
@@ -45,9 +50,6 @@ from ..runtime.embedding_records import (
 
 logger = logging.getLogger(__name__)
 
-
-class SparseDimensionMismatchError(ValueError):
-    pass
 
 def binary_search(sorted_list, target):
 	index = bisect.bisect_right(sorted_list, target)
@@ -128,26 +130,22 @@ def _extract_sparse_embedding(
 
     try:
         if isinstance(value, pgvector.SparseVector):
-            if value.dimensions() == dimensions:
-                return value
-            if strict_dimensions:
-                raise SparseDimensionMismatchError(
-                    f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {value.dimensions()}"
-                )
-            mapping = {int(idx): float(weight) for idx, weight in zip(value.indices(), value.values())}
-            return pgvector.SparseVector(mapping, dimensions)
+            return project_sparse_vector(
+                value,
+                dimensions,
+                strict_dimensions=strict_dimensions,
+                source_label=source_label,
+            )
 
         # Allow callers to pass pgvector literal directly.
         if isinstance(value, str):
             parsed = pgvector.SparseVector.from_text(value)
-            if parsed.dimensions() != dimensions:
-                if strict_dimensions:
-                    raise SparseDimensionMismatchError(
-                        f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {parsed.dimensions()}"
-                    )
-                mapping = {int(idx): float(weight) for idx, weight in zip(parsed.indices(), parsed.values())}
-                return pgvector.SparseVector(mapping, dimensions)
-            return parsed
+            return project_sparse_vector(
+                parsed,
+                dimensions,
+                strict_dimensions=strict_dimensions,
+                source_label=source_label,
+            )
 
         if isinstance(value, ndarray):
             value = value.tolist()
@@ -166,20 +164,21 @@ def _extract_sparse_embedding(
                 if val is None:
                     continue
                 mapping[int(idx)] = float(val)
-            return pgvector.SparseVector(mapping, dim)
+            projected = project_sparse_mapping(
+                mapping,
+                dimensions,
+                strict_dimensions=False,
+                source_label=source_label,
+            )
+            return pgvector.SparseVector(projected, dimensions)
 
         if isinstance(value, dict):
-            mapping: Dict[int, float] = {}
-            for key, weight in value.items():
-                if weight is None:
-                    continue
-                try:
-                    idx = int(key)
-                    val = float(weight)
-                except Exception:
-                    continue
-                if val != 0.0:
-                    mapping[idx] = val
+            mapping = project_sparse_mapping(
+                value,
+                dimensions,
+                strict_dimensions=False,
+                source_label=source_label,
+            )
             return pgvector.SparseVector(mapping, dimensions)
 
         # Dense vector input fallback; compress non-zero entries.
@@ -196,7 +195,13 @@ def _extract_sparse_embedding(
                     continue
                 if val != 0.0:
                     mapping[idx] = val
-            return pgvector.SparseVector(mapping, dimensions)
+            projected = project_sparse_mapping(
+                mapping,
+                dimensions,
+                strict_dimensions=False,
+                source_label=source_label,
+            )
+            return pgvector.SparseVector(projected, dimensions)
     except SparseDimensionMismatchError:
         raise
     except Exception:

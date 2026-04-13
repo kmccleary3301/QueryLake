@@ -58,10 +58,11 @@ def add_models_to_database(database : Session, models : List[Model]) -> None:
             database.commit()
         
         
+        path_on_server = model_config.system_path or model_config.source or "unconfigured"
         new_model = sql_db_tables.model(
             id=model_config.id,
             name=model_config.name,
-            path_on_server=model_config.system_path,
+            path_on_server=path_on_server,
             default_settings=json.dumps(model_config.default_parameters, indent=4),
             system_instruction_wrapper=model_config.padding.system_instruction_wrap,
             context_wrapper=model_config.padding.context_wrap,

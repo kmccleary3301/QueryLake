@@ -25,6 +25,7 @@ from ..typing.config import AuthType
 from ..typing.api_inputs import DocumentModifierArgs
 from ..misc_functions.function_run_clean import file_size_as_string
 from ..runtime.ingestion_lineage import create_upload_lineage_rows
+from .document_deletion import delete_document_record
 import asyncio
 import bisect
 import concurrent.futures
@@ -698,11 +699,7 @@ def delete_document(database : Session,
     else:
         raise ValueError(f"Collection type `{collection.collection_type}` not supported on this method yet.")
 
-    database.exec(delete(sql_db_tables.DocumentChunk).where(sql_db_tables.DocumentChunk.document_id == hash_id))
-    
-    aes_delete_file_from_zip_blob(database, document.id)
-    
-    database.delete(document)
+    delete_document_record(database, document)
 
     collection.document_count -= 1
     database.commit()

@@ -9,6 +9,7 @@ from ..misc_functions.function_run_clean import file_size_as_string
 from ..database import encryption
 from io import BytesIO
 from tqdm import tqdm
+from .document_deletion import delete_collection_documents
 
 def fetch_document_collections_belonging_to(database : Session, 
                                             auth : AuthType, 
@@ -303,11 +304,14 @@ def delete_document_collection(database : Session,
     else:
         raise Exception(f"Invalid collection type `{collection.collection_type}`")
     
-    # Wipe the chunks for all documents in the collection.
-    database.exec(delete(sql_db_tables.DocumentChunk).where(sql_db_tables.DocumentChunk.collection_id == collection_id))
-    # Wipe the documents
-    database.exec(delete(sql_db_tables.document_raw).where(sql_db_tables.document_raw.document_collection_id == collection_id))
-    # Wipe the zip blobs for the document bytes
+    documents = list(
+        database.exec(
+            select(sql_db_tables.document_raw).where(
+                sql_db_tables.document_raw.document_collection_id == collection_id
+            )
+        ).all()
+    )
+    delete_collection_documents(database, documents)
     database.exec(delete(sql_db_tables.document_zip_blob).where(sql_db_tables.document_zip_blob.document_collection_id == collection_id))
     
     database.delete(collection)

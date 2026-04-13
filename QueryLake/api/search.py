@@ -62,11 +62,25 @@ from ..runtime.retrieval_primitives_legacy import (
     DiversityAwarePacker,
     TokenBudgetPacker,
 )
+from ..runtime.db_compat import get_deployment_profile, require_capability
+from ..runtime.lexical_capability_planner import require_lexical_query_capabilities
+from ..runtime.retrieval_route_executors import (
+    resolve_search_bm25_route_executor,
+    resolve_search_file_chunks_route_executor,
+    resolve_search_hybrid_route_executor,
+)
+from ..runtime.route_planning_v2 import instantiate_route_planning_v2
 from ..typing.retrieval_primitives import (
     RetrievalCandidate,
     RetrievalPipelineStage,
     RetrievalPipelineSpec,
     RetrievalRequest,
+)
+from ..vector_database.sparse_projection import (
+    SparseDimensionMismatchError,
+    project_sparse_mapping,
+    project_sparse_vector,
+    sparse_vector_to_mapping,
 )
 
 ADAPTIVE_PROFILE_DEFAULT = "natural_language"
@@ -285,32 +299,28 @@ def _normalize_sparse_query_value(
 
     try:
         if isinstance(current, pgvector.SparseVector):
-            if current.dimensions() == dimensions:
-                return current
-            if strict_dimensions:
-                raise ValueError(
-                    f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {current.dimensions()}"
-                )
-            mapping = {int(idx): float(weight) for idx, weight in zip(current.indices(), current.values())}
-            return pgvector.SparseVector(mapping, dimensions)
+            return project_sparse_vector(
+                current,
+                dimensions,
+                strict_dimensions=strict_dimensions,
+                source_label=source_label,
+            )
 
         if isinstance(current, str):
             parsed = pgvector.SparseVector.from_text(current)
-            if parsed.dimensions() != dimensions:
-                if strict_dimensions:
-                    raise ValueError(
-                        f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {parsed.dimensions()}"
-                    )
-                mapping = {int(idx): float(weight) for idx, weight in zip(parsed.indices(), parsed.values())}
-                return pgvector.SparseVector(mapping, dimensions)
-            return parsed
+            return project_sparse_vector(
+                parsed,
+                dimensions,
+                strict_dimensions=strict_dimensions,
+                source_label=source_label,
+            )
 
         if isinstance(current, dict) and "indices" in current and "values" in current:
             indices = current.get("indices") or []
             values = current.get("values") or []
             dim = int(current.get("dimensions", dimensions))
             if strict_dimensions and dim != dimensions:
-                raise ValueError(
+                raise SparseDimensionMismatchError(
                     f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {dim}"
                 )
             mapping = {}
@@ -318,28 +328,23 @@ def _normalize_sparse_query_value(
                 if weight is None:
                     continue
                 mapping[int(idx)] = float(weight)
-            return pgvector.SparseVector(mapping, dim)
+            return pgvector.SparseVector(
+                project_sparse_mapping(mapping, dimensions, source_label=source_label),
+                dimensions,
+            )
 
         if isinstance(current, dict):
-            mapping = {}
-            for key, weight in current.items():
-                if weight is None:
-                    continue
-                try:
-                    idx = int(key)
-                    val = float(weight)
-                except Exception:
-                    continue
-                if val != 0.0:
-                    mapping[idx] = val
-            return pgvector.SparseVector(mapping, dimensions)
+            return pgvector.SparseVector(
+                project_sparse_mapping(current, dimensions, source_label=source_label),
+                dimensions,
+            )
 
         if isinstance(current, tuple):
             current = list(current)
 
         if isinstance(current, list):
             if strict_dimensions and len(current) > 0 and len(current) != dimensions:
-                raise ValueError(
+                raise SparseDimensionMismatchError(
                     f"Sparse dimension mismatch for {source_label}: expected {dimensions}, observed {len(current)}"
                 )
             mapping = {}
@@ -350,10 +355,13 @@ def _normalize_sparse_query_value(
                     continue
                 if val != 0.0:
                     mapping[idx] = val
-            return pgvector.SparseVector(mapping, dimensions)
-    except ValueError as exc:
-        if "Sparse dimension mismatch" in str(exc):
-            raise
+            return pgvector.SparseVector(
+                project_sparse_mapping(mapping, dimensions, source_label=source_label),
+                dimensions,
+            )
+    except SparseDimensionMismatchError:
+        raise
+    except ValueError:
         return None
     except Exception:
         return None
@@ -422,18 +430,18 @@ def _infer_adaptive_query_profile(query_text: str) -> str:
 
 
 def _sparse_vector_to_entries(vector_value: pgvector.SparseVector) -> List[Tuple[int, float]]:
-    coo = vector_value.to_coo()
-    cols = getattr(coo, "col", [])
-    vals = getattr(coo, "data", [])
-    entries: List[Tuple[int, float]] = []
-    for idx, val in zip(cols, vals):
-        try:
-            float_val = float(val)
-        except Exception:
+    return list(sparse_vector_to_mapping(vector_value).items())
+
+
+def _normalize_collection_ids_for_bound_query(collection_ids: List[str]) -> List[str]:
+    allowed: List[str] = []
+    for raw in collection_ids:
+        if not isinstance(raw, str):
             continue
-        if float_val != 0.0:
-            entries.append((int(idx), float_val))
-    return entries
+        value = raw.strip()
+        if re.fullmatch(r"[a-zA-Z0-9_-]{4,256}", value):
+            allowed.append(value)
+    return allowed
 
 
 def _apply_sparse_pruning_and_calibration(
@@ -676,6 +684,42 @@ def group_adjacent_chunks(chunks: List[DocumentChunkDictionary]) -> List[Documen
 def _env_flag(name: str, default: bool) -> bool:
     raw = (os.getenv(name, "1" if default else "0") or "").strip().lower()
     return raw in {"1", "true", "yes", "on"}
+
+
+def _build_route_planning_context_v2(
+    route_resolution_payload: Dict[str, Any],
+    *,
+    raw_query_text: str,
+    lexical_query_text: Optional[str] = None,
+    normalized_query_text: Optional[str] = None,
+    use_dense: bool,
+    use_sparse: bool,
+    collection_ids: Optional[List[str]] = None,
+    document_ids: Optional[List[str]] = None,
+    metadata_filters: Optional[List[Dict[str, Any]]] = None,
+    planner_hints: Optional[Dict[str, Any]] = None,
+    query_metadata: Optional[Dict[str, Any]] = None,
+    projection_metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Dict[str, Any]]:
+    planning_v2 = instantiate_route_planning_v2(
+        route_resolution_payload,
+        raw_query_text=str(raw_query_text),
+        lexical_query_text=str(lexical_query_text if lexical_query_text is not None else raw_query_text),
+        normalized_query_text=normalized_query_text,
+        use_dense=bool(use_dense),
+        use_sparse=bool(use_sparse),
+        collection_ids=list(collection_ids or []),
+        document_ids=list(document_ids or []),
+        metadata_filters=list(metadata_filters or []),
+        planner_hints=dict(planner_hints or {}),
+        query_metadata=dict(query_metadata or {}),
+        projection_metadata=dict(projection_metadata or {}),
+    )
+    return {
+        "planning_v2": dict(planning_v2),
+        "query_ir_v2": dict(planning_v2.get("query_ir_v2_template") or {}),
+        "projection_ir_v2": dict(planning_v2.get("projection_ir_v2") or {}),
+    }
 
 
 def _env_int(name: str, default: int, *, minimum: Optional[int] = None, maximum: Optional[int] = None) -> int:
@@ -943,6 +987,11 @@ async def search_hybrid(
 ) -> List[DocumentChunkDictionary]:
     # TODO: Check permissions on specified collections.
     t_1 = time.time()
+    profile = get_deployment_profile()
+    lexical_capability_plan = None
+    lexical_query_ir_v2 = None
+    hybrid_route_resolution = None
+    hybrid_projection_ir_v2: Dict[str, Any] = {}
     
     (_, user_auth) = get_user(database, auth)
     
@@ -1175,6 +1224,66 @@ async def search_hybrid(
     use_bm25 = bool(limit_bm25 > 0 and bm25_weight > 0) if explicit_use_bm25 is None else bool(explicit_use_bm25)
     use_similarity = bool(limit_similarity > 0 and similarity_weight > 0) if explicit_use_similarity is None else bool(explicit_use_similarity)
     use_sparse = bool(limit_sparse > 0 and sparse_weight > 0) if explicit_use_sparse is None else bool(explicit_use_sparse)
+    if use_bm25:
+        require_capability(
+            "retrieval.lexical.bm25",
+            profile=profile,
+            hint="Disable BM25 weighting or deploy the ParadeDB/Postgres gold profile.",
+            message=f"BM25 lexical retrieval is not supported by deployment profile '{profile.id}'.",
+        )
+        lexical_query_seed = str(query.get("bm25", ""))
+        if isinstance(constraint_query_text, str) and len(constraint_query_text.strip()) > 0:
+            lexical_query_seed = str(constraint_query_text)
+        if len(str(lexical_query_seed).strip()) > 0:
+            hybrid_route_resolution = resolve_search_hybrid_route_executor(
+                use_bm25=bool(use_bm25),
+                use_similarity=bool(use_similarity),
+                use_sparse=bool(use_sparse),
+                profile=profile,
+            )
+            hybrid_representation_scope_id = (
+                str(hybrid_route_resolution.resolution.representation_scope_id or "").strip()
+                or "document_chunk"
+            )
+            hybrid_planning_context_v2 = _build_route_planning_context_v2(
+                hybrid_route_resolution.resolution.to_payload(),
+                raw_query_text=str(lexical_query_seed),
+                lexical_query_text=str(lexical_query_seed),
+                use_dense=bool(use_similarity),
+                use_sparse=bool(use_sparse),
+                collection_ids=list(collection_ids or []),
+                planner_hints={
+                    "bm25_enabled": bool(use_bm25),
+                    "dense_enabled": bool(use_similarity),
+                    "sparse_enabled": bool(use_sparse),
+                },
+                projection_metadata={
+                    "planning_surface": "route_resolution",
+                    "fallback_projection_ir_v2": True,
+                },
+            )
+            lexical_query_ir_v2 = dict(hybrid_planning_context_v2.get("query_ir_v2") or {})
+            hybrid_projection_ir_v2 = dict(hybrid_planning_context_v2.get("projection_ir_v2") or {})
+            lexical_capability_plan = require_lexical_query_capabilities(
+                lexical_query_seed,
+                profile=profile,
+                route_label="Hybrid lexical retrieval",
+                query_ir_v2=lexical_query_ir_v2,
+            )
+    if use_similarity:
+        require_capability(
+            "retrieval.dense.vector",
+            profile=profile,
+            hint="Disable dense retrieval or deploy a profile with dense vector support.",
+            message=f"Dense vector retrieval is not supported by deployment profile '{profile.id}'.",
+        )
+    if use_sparse:
+        require_capability(
+            "retrieval.sparse.vector",
+            profile=profile,
+            hint="Disable sparse retrieval or deploy the ParadeDB/Postgres gold profile.",
+            message=f"Sparse vector retrieval is not supported by deployment profile '{profile.id}'.",
+        )
     configured_sparse_dims = configured_sparse_index_dimensions()
     if bool(use_sparse) and int(sparse_dimensions) != int(configured_sparse_dims):
         raise ValueError(
@@ -1224,8 +1333,7 @@ async def search_hybrid(
             "Embedding must be a list of 1024 floats"
     t_2 = time.time()
     
-    # Prevent SQL injection with the collection ids.
-    collection_ids = list(map(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x), collection_ids))
+    collection_ids = _normalize_collection_ids_for_bound_query(collection_ids)
     
     assert_collections_priviledge(database, auth, collection_ids)
     t_3 = time.time()
@@ -1349,7 +1457,7 @@ async def search_hybrid(
                     _normalize_sparse_query_value(
                         orchestrated_sparse_query_value,
                         sparse_dimensions,
-                        strict_dimensions=True,
+                        strict_dimensions=False,
                         source_label="embedding_sparse_input",
                     )
                     if orchestrated_sparse_query_value is not None
@@ -1359,7 +1467,7 @@ async def search_hybrid(
                     sparse_value = _normalize_sparse_query_value(
                         query.get("sparse"),
                         sparse_dimensions,
-                        strict_dimensions=True,
+                        strict_dimensions=False,
                         source_label="query.sparse",
                     )
                 if sparse_value is None:
@@ -1370,7 +1478,7 @@ async def search_hybrid(
                         sparse_value = _normalize_sparse_query_value(
                             sparse_cached,
                             sparse_dimensions,
-                            strict_dimensions=True,
+                            strict_dimensions=False,
                             source_label="sparse_cache",
                         )
                     if sparse_value is None:
@@ -1385,7 +1493,7 @@ async def search_hybrid(
                             sparse_value = _normalize_sparse_query_value(
                                 sparse_payload,
                                 sparse_dimensions,
-                                strict_dimensions=True,
+                                strict_dimensions=False,
                                 source_label=f"{sparse_embedding_function}[0]",
                             )
                             if sparse_value is not None:
@@ -1399,6 +1507,8 @@ async def search_hybrid(
                 query_text=str(query.get("bm25", "")),
                 query_embedding=orchestrated_query_embedding,
                 collection_ids=collection_ids,
+                query_ir_v2=dict(lexical_query_ir_v2 or {}),
+                projection_ir_v2=dict(hybrid_projection_ir_v2 or {}),
                 options={
                     "limit": int(limit_bm25 + limit_similarity + limit_sparse),
                     "limit_bm25": int(limit_bm25),
@@ -1509,6 +1619,16 @@ async def search_hybrid(
                     pipeline=pipeline,
                     options=request_obj.options,
                     pipeline_resolution=pipeline_resolution,
+                    route_executor=(
+                        hybrid_route_resolution.to_payload()
+                        if hybrid_route_resolution is not None
+                        else {}
+                    ),
+                    query_ir_v2=lexical_query_ir_v2,
+                    projection_ir_v2=hybrid_projection_ir_v2,
+                    lexical_capability_plan=(
+                        lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                    ),
                     lane_state={
                         "use_bm25": bool(use_bm25),
                         "use_similarity": bool(use_similarity),
@@ -1696,7 +1816,7 @@ async def search_hybrid(
             _normalize_sparse_query_value(
                 embedding_sparse,
                 sparse_dimensions,
-                strict_dimensions=True,
+                strict_dimensions=False,
                 source_label="embedding_sparse_input",
             )
             if embedding_sparse is not None
@@ -1706,7 +1826,7 @@ async def search_hybrid(
             sparse_value = _normalize_sparse_query_value(
                 query.get("sparse"),
                 sparse_dimensions,
-                strict_dimensions=True,
+                strict_dimensions=False,
                 source_label="query.sparse",
             )
         if sparse_value is None:
@@ -1717,7 +1837,7 @@ async def search_hybrid(
                 sparse_value = _normalize_sparse_query_value(
                     sparse_cached,
                     sparse_dimensions,
-                    strict_dimensions=True,
+                    strict_dimensions=False,
                     source_label="sparse_cache",
                 )
                 sparse_embedding_cache_hit = sparse_value is not None
@@ -1733,7 +1853,7 @@ async def search_hybrid(
                     sparse_value = _normalize_sparse_query_value(
                         sparse_payload,
                         sparse_dimensions,
-                        strict_dimensions=True,
+                        strict_dimensions=False,
                         source_label=f"{sparse_embedding_function}[0]",
                     )
                     if sparse_value is not None:
@@ -1784,120 +1904,63 @@ async def search_hybrid(
         if strong_where_clause is not None
         else f"WHERE {collection_spec_new}"
     )
+    hybrid_route_executor = locals().get("hybrid_route_resolution") or resolve_search_hybrid_route_executor(
+        use_bm25=bool(use_bm25),
+        use_similarity=bool(use_similarity),
+        use_sparse=bool(use_sparse),
+        profile=profile,
+    )
+    hybrid_route_executor.require_executable(allow_plan_only=bool(return_statement))
     t_5 = time.time()
 
-    bm25_filter_expr = f"({collection_spec}) AND ({formatted_query})"
-    if strict_constraint_prefilter and strong_where_clause is not None:
-        bm25_filter_expr = f"({collection_spec}) AND ({strong_where_clause}) AND ({formatted_query})"
-
-    bm25_ranked_cte = f"""
-    bm25_candidates AS (
-        SELECT id
-        FROM {DocumentChunk.__tablename__}
-        WHERE id @@@ paradedb.parse('{bm25_filter_expr}')
-        ORDER BY paradedb.score(id) DESC
-        LIMIT :limit_bm25
-    ),
-    bm25_ranked AS (
-        SELECT id, RANK() OVER (ORDER BY paradedb.score(id) DESC) AS rank
-        FROM bm25_candidates
-    )
-    """ if use_bm25 else """
-    bm25_ranked AS (
-        SELECT NULL::text AS id, NULL::bigint AS rank WHERE FALSE
-    )
-    """
-
-    semantic_search_cte = f"""
-    semantic_search AS (
-        SELECT id, RANK() OVER (ORDER BY embedding <=> :embedding_in) AS rank
-        FROM {DocumentChunk.__tablename__}
-        {similarity_constraint} AND embedding IS NOT NULL
-        ORDER BY embedding <=> :embedding_in
-        LIMIT :limit_similarity
-    )
-    """ if use_similarity else """
-    semantic_search AS (
-        SELECT NULL::text AS id, NULL::bigint AS rank WHERE FALSE
-    )
-    """
-
-    sparse_search_cte = f"""
-    sparse_search AS (
-        SELECT id, RANK() OVER (
-            ORDER BY (embedding_sparse::sparsevec({int(sparse_dimensions)})) <=> CAST(:sparse_embedding_in AS sparsevec({int(sparse_dimensions)}))
-        ) AS rank
-        FROM {DocumentChunk.__tablename__}
-        {similarity_constraint} AND embedding_sparse IS NOT NULL
-        ORDER BY (embedding_sparse::sparsevec({int(sparse_dimensions)})) <=> CAST(:sparse_embedding_in AS sparsevec({int(sparse_dimensions)}))
-        LIMIT :limit_sparse
-    )
-    """ if use_sparse else """
-    sparse_search AS (
-        SELECT NULL::text AS id, NULL::bigint AS rank WHERE FALSE
-    )
-    """
-
-    total_limit = int(limit_bm25 + limit_similarity + limit_sparse)
-    assert total_limit > 0, "At least one lane must have a positive limit"
-
-    stmt_text = text(f"""
-        WITH
-        {bm25_ranked_cte},
-        {semantic_search_cte},
-        {sparse_search_cte},
-        candidate_ids AS (
-            SELECT id FROM bm25_ranked
-            UNION
-            SELECT id FROM semantic_search
-            UNION
-            SELECT id FROM sparse_search
-        )
-        SELECT
-            candidate_ids.id AS id,
-            COALESCE(1.0 / (60 + semantic_search.rank), 0.0) AS semantic_score,
-            COALESCE(1.0 / (60 + bm25_ranked.rank), 0.0) AS bm25_score,
-            COALESCE(1.0 / (60 + sparse_search.rank), 0.0) AS sparse_score,
-            (
-                COALESCE(1.0 / (60 + semantic_search.rank), 0.0) * :similarity_weight +
-                COALESCE(1.0 / (60 + bm25_ranked.rank), 0.0) * :bm25_weight +
-                COALESCE(1.0 / (60 + sparse_search.rank), 0.0) * :sparse_weight
-            ) AS score,
-            {retrieved_fields_string}
-        FROM candidate_ids
-        LEFT JOIN semantic_search ON candidate_ids.id = semantic_search.id
-        LEFT JOIN bm25_ranked ON candidate_ids.id = bm25_ranked.id
-        LEFT JOIN sparse_search ON candidate_ids.id = sparse_search.id
-        JOIN {DocumentChunk.__tablename__} ON {DocumentChunk.__tablename__}.id = candidate_ids.id
-        ORDER BY score DESC, text
-        LIMIT :sum;
-    """)
-    bind_values = {
-        "similarity_weight": float(similarity_weight),
-        "bm25_weight": float(bm25_weight),
-        "sparse_weight": float(sparse_weight),
-        "sum": total_limit,
-    }
-    if use_bm25:
-        bind_values["limit_bm25"] = limit_bm25
-    if use_similarity:
-        bind_values["limit_similarity"] = limit_similarity
-        bind_values["embedding_in"] = str(embedding)
-    if use_sparse:
-        bind_values["limit_sparse"] = limit_sparse
-        bind_values["sparse_embedding_in"] = (
-            embedding_sparse.to_text()
-            if hasattr(embedding_sparse, "to_text")
-            else str(embedding_sparse)
-        )
-    STMT = stmt_text.bindparams(**bind_values)
-    
     if return_statement:
-        return str(STMT.compile(compile_kwargs={"literal_binds": True}))
+        return hybrid_route_executor.executor.execute(
+            database,
+            raw_query_text=bm25_query_text,
+            collection_ids=collection_ids,
+            collection_spec=collection_spec,
+            formatted_query=formatted_query,
+            strong_where_clause=strong_where_clause if strict_constraint_prefilter else None,
+            similarity_constraint=similarity_constraint,
+            retrieved_fields_string=retrieved_fields_string,
+            use_bm25=bool(use_bm25),
+            use_similarity=bool(use_similarity),
+            use_sparse=bool(use_sparse),
+            limit_bm25=int(limit_bm25),
+            limit_similarity=int(limit_similarity),
+            limit_sparse=int(limit_sparse),
+            similarity_weight=float(similarity_weight),
+            bm25_weight=float(bm25_weight),
+            sparse_weight=float(sparse_weight),
+            embedding=embedding,
+            embedding_sparse=embedding_sparse,
+            sparse_dimensions=int(sparse_dimensions),
+            return_statement=True,
+        )
 
     try:
-        results = database.exec(STMT)
-        results = list(results)
+        results = hybrid_route_executor.executor.execute(
+            database,
+            raw_query_text=bm25_query_text,
+            collection_ids=collection_ids,
+            collection_spec=collection_spec,
+            formatted_query=formatted_query,
+            strong_where_clause=strong_where_clause if strict_constraint_prefilter else None,
+            similarity_constraint=similarity_constraint,
+            retrieved_fields_string=retrieved_fields_string,
+            use_bm25=bool(use_bm25),
+            use_similarity=bool(use_similarity),
+            use_sparse=bool(use_sparse),
+            limit_bm25=int(limit_bm25),
+            limit_similarity=int(limit_similarity),
+            limit_sparse=int(limit_sparse),
+            similarity_weight=float(similarity_weight),
+            bm25_weight=float(bm25_weight),
+            sparse_weight=float(sparse_weight),
+            embedding=embedding,
+            embedding_sparse=embedding_sparse,
+            sparse_dimensions=int(sparse_dimensions),
+        )
         results = list(filter(lambda x: not x[0] is None, results))
         t_6 = time.time()
         
@@ -2025,11 +2088,37 @@ async def search_hybrid(
                 },
                 result_rows=results,
                 status="ok",
+                md={
+                    "route_executor": hybrid_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                },
             )
         response_payload = {"rows": results, **result_metrics}
         if explain_plan:
             response_payload["plan_explain"] = {
                 "route": "search_hybrid",
+                "route_executor": hybrid_route_executor.to_payload(),
+                **(
+                    {"query_ir_v2": dict(lexical_query_ir_v2)}
+                    if lexical_query_ir_v2 is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "projection_ir_v2": dict(hybrid_projection_ir_v2)
+                    }
+                    if hybrid_projection_ir_v2
+                    else {}
+                ),
+                **(
+                    {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                    if lexical_capability_plan is not None
+                    else {}
+                ),
                 "pipeline": {
                     "pipeline_id": "orchestrated.search_hybrid.sql",
                     "pipeline_version": "v1",
@@ -2083,6 +2172,14 @@ async def search_hybrid(
                 result_rows=[],
                 status="error",
                 error=str(e),
+                md={
+                    "route_executor": hybrid_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                },
             )
         database.rollback()
         raise e
@@ -2105,6 +2202,37 @@ def search_bm25(
     _pipeline_override: Optional[Dict[str, str]] = None,
 ) -> List[DocumentChunkDictionary]:
     t_1 = time.time()
+    profile = get_deployment_profile()
+    lexical_capability_plan = None
+    require_capability(
+        "retrieval.lexical.bm25",
+        profile=profile,
+        hint="Use a deployment profile with lexical BM25 support or switch to dense retrieval endpoints.",
+        message=f"BM25 lexical retrieval is not supported by deployment profile '{profile.id}'.",
+    )
+    if bool(query):
+        bm25_route_resolution = resolve_search_bm25_route_executor(table=table, profile=profile)
+        bm25_planning_v2 = _build_route_planning_context_v2(
+            bm25_route_resolution.resolution.to_payload(),
+            raw_query_text=str(query),
+            lexical_query_text=str(query),
+            use_dense=False,
+            use_sparse=False,
+            collection_ids=list(collection_ids or []),
+            planner_hints={"table": str(table)},
+            query_metadata={"table": str(table)},
+            projection_metadata={
+                "planning_surface": "route_resolution",
+                "fallback_projection_ir_v2": True,
+            },
+        )
+        lexical_query_ir_v2 = dict(bm25_planning_v2.get("query_ir_v2") or {})
+        lexical_capability_plan = require_lexical_query_capabilities(
+            query,
+            profile=profile,
+            route_label="BM25 retrieval",
+            query_ir_v2=lexical_query_ir_v2,
+        )
     
     (_, user_auth) = get_user(database, auth)
     
@@ -2137,8 +2265,16 @@ def search_bm25(
     
     
     
-    # Prevent SQL injection with the collection ids.
-    collection_ids = list(map(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x), collection_ids))
+    raw_collection_ids = list(collection_ids or [])
+    collection_ids = _normalize_collection_ids_for_bound_query(raw_collection_ids)
+    if not collection_ids and _direct_stage_call and raw_collection_ids:
+        collection_ids = [
+            str(value).strip()
+            for value in raw_collection_ids
+            if isinstance(value, str) and len(str(value).strip()) > 0
+        ]
+    if not collection_ids:
+        return []
     
     assert_collections_priviledge(database, auth, collection_ids)
 
@@ -2173,6 +2309,10 @@ def search_bm25(
                 route=f"search_bm25.{table}",
                 query_text=query,
                 collection_ids=collection_ids,
+                query_ir_v2=dict(lexical_query_ir_v2 or {}),
+                projection_ir_v2=dict(
+                    bm25_planning_v2.get("projection_ir_v2") or {}
+                ),
                 options={
                     "limit": int(limit),
                     "offset": int(offset),
@@ -2238,6 +2378,11 @@ def search_bm25(
                     md={
                         "stage_trace": [trace.model_dump() for trace in run_result.traces],
                         "pipeline_resolution": pipeline_resolution,
+                        **(
+                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                            if lexical_capability_plan is not None
+                            else {}
+                        ),
                     },
                 )
             database.rollback()
@@ -2265,7 +2410,14 @@ def search_bm25(
                     result_rows=[],
                     status="error",
                     error=str(e),
-                    md={"pipeline_resolution": pipeline_resolution},
+                    md={
+                        "pipeline_resolution": pipeline_resolution,
+                        **(
+                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                            if lexical_capability_plan is not None
+                            else {}
+                        ),
+                    },
                 )
             database.rollback()
             raise e
@@ -2275,125 +2427,36 @@ def search_bm25(
     
     collection_string = str(collection_ids).replace("'", "")
     
-    formatted_query, strong_where_clause = parse_search(query, valid_fields, catch_all_fields=chosen_catch_alls)
-    
-    # print("Formatted query:", formatted_query)
-    collection_spec = (
-        f"""collection_id:IN {str(collection_ids).replace("'", "")}"""
-        if (table == "document_chunk")
-        else " OR ".join([
-            f"""({collection_attr}:IN {str(collection_ids).replace("'", "")})"""
-            for collection_attr in document_collection_attrs
-        ])
-    )
-    
-    score_field = "paradedb.score(id) AS score, " if formatted_query != "()" else ""
-    
-    assert not (sort_by == "score" and formatted_query == "()"), \
-        "Cannot sort by score if no query is specified"
-    
     assert sort_by in valid_fields or sort_by == "score", \
         f"sort_by must be one of {valid_fields}, not {sort_by}"
     
     assert sort_dir in ["DESC", "ASC"], \
         "sort_dir must be either 'DESC' or 'ASC'"
-    
-    order_by_field = f"ORDER BY {sort_by} {sort_dir}" + (", id ASC" if sort_by != "id" else "")
-    
-    if table == "segment":
-        assert sort_by != "md", "sort_by='md' is not supported for table='segment'"
-        segment_collection_filter = ""
-        if len(collection_ids) > 0:
-            clean_collection_ids = ",".join([f"'{c}'" for c in collection_ids])
-            segment_collection_filter = f" AND COALESCE({SegmentTable.__tablename__}.md->>'collection_id', '') IN ({clean_collection_ids})"
-        parse_field = formatted_query
-    else:
-        if formatted_query.startswith("() NOT "):
-            formatted_query = formatted_query[3:]
-            parse_field = f"({collection_spec}) {formatted_query}"
-        else:
-            parse_field = f"({collection_spec}) AND ({formatted_query})" \
-                if formatted_query != "()" else f"{collection_spec}"
-    
-    quoted_phrases = _extract_quoted_phrases(query, max_phrases=4)
-    phrase_rerank_enabled = (
-        formatted_query != "()"
-        and sort_by == "score"
-        and sort_dir == "DESC"
-        and table in {"document_chunk", "segment"}
-        and len(quoted_phrases) > 0
-    )
 
-    if phrase_rerank_enabled:
-        score_bind_params: Dict[str, Any] = {}
-        phrase_boost_terms: List[str] = []
-        for i, phrase in enumerate(quoted_phrases):
-            key = f"phrase_boost_{i}"
-            score_bind_params[key] = phrase
-            phrase_boost_terms.append(
-                f"CASE WHEN POSITION(LOWER(:{key}) IN LOWER({chosen_table.__tablename__}.text)) > 0 THEN 1000 ELSE 0 END"
-            )
-        phrase_boost_expr = " + ".join(phrase_boost_terms)
-        candidate_limit = min(400, max(int(limit) * 8, int(offset) + int(limit) * 4, 80))
-        segment_filter_clause = segment_collection_filter if table == "segment" else ""
-        STMT = text(f"""
-        WITH bm25_candidates AS (
-            SELECT id, paradedb.score(id) AS base_score
-            FROM {chosen_table.__tablename__}
-            WHERE id @@@ paradedb.parse('{parse_field}')
-            {segment_filter_clause}
-            ORDER BY paradedb.score(id) DESC
-            LIMIT :candidate_limit
-        )
-        SELECT
-            {chosen_table.__tablename__}.id AS id,
-            (bm25_candidates.base_score + {phrase_boost_expr}) AS score,
-            {chosen_attributes}
-        FROM bm25_candidates
-        JOIN {chosen_table.__tablename__} ON {chosen_table.__tablename__}.id = bm25_candidates.id
-        ORDER BY score DESC, {chosen_table.__tablename__}.id ASC
-        LIMIT :limit
-        OFFSET :offset;
-        """).bindparams(
-            limit=limit,
-            offset=offset,
-            candidate_limit=candidate_limit,
-            **score_bind_params,
-        )
-    elif table == "segment":
-        STMT = text(f"""
-        SELECT id, {score_field}{chosen_attributes}
-        FROM {chosen_table.__tablename__}
-        WHERE id @@@ paradedb.parse('{parse_field}')
-        {segment_collection_filter}
-        {order_by_field}
-        LIMIT :limit
-        OFFSET :offset;
-        """).bindparams(
-            limit=limit,
-            offset=offset,
-        )
-    else:
-        STMT = text(f"""
-        SELECT id, {score_field}{chosen_attributes}
-        FROM {chosen_table.__tablename__}
-        WHERE id @@@ paradedb.parse('{parse_field}')
-        {order_by_field}
-        LIMIT :limit
-        OFFSET :offset;
-        """).bindparams(
-            limit=limit,
-            offset=offset,
-        )
-    
-    
+    bm25_route_executor = locals().get("bm25_route_resolution") or resolve_search_bm25_route_executor(table=table, profile=profile)
+    bm25_route_executor.require_executable(allow_plan_only=bool(return_statement))
+    bm25_execution = bm25_route_executor.executor.execute(
+        database,
+        query=query,
+        valid_fields=valid_fields,
+        catch_all_fields=chosen_catch_alls,
+        table=table,
+        collection_ids=collection_ids,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+        document_collection_attrs=document_collection_attrs,
+        chosen_table_name=chosen_table.__tablename__,
+        chosen_attributes=chosen_attributes,
+        limit=int(limit),
+        offset=int(offset),
+        return_statement=return_statement,
+    )
     if return_statement:
-        return str(STMT.compile(compile_kwargs={"literal_binds": True}))
+        return bm25_execution.rows_or_statement
     
     try:
-        subset_start = 1 if formatted_query == "()" else 2
-        results = database.exec(STMT)
-        results = list(results)
+        subset_start = 1 if bm25_execution.formatted_query == "()" else 2
+        results = bm25_execution.rows_or_statement
         if table == "document_chunk":
             results_made : List[DocumentChunkDictionary] = list(map(lambda x: convert_chunk_query_result(x[subset_start:]), results))
         elif table == "segment":
@@ -2401,7 +2464,7 @@ def search_bm25(
         else:
             results_made : List[DocumentRawDictionary] = list(map(lambda x: convert_doc_query_result(x[subset_start:]), results))
         
-        if formatted_query != "()":
+        if bm25_execution.formatted_query != "()":
             for i, chunk in enumerate(results):
                 results_made[i].bm25_score = float(chunk[1])
         
@@ -2439,6 +2502,14 @@ def search_bm25(
                 },
                 result_rows=results_dump,
                 status="ok",
+                md={
+                    "route_executor": bm25_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                },
             )
         database.rollback()
         return results_made
@@ -2469,6 +2540,14 @@ def search_bm25(
                 result_rows=[],
                 status="error",
                 error=str(e),
+                md={
+                    "route_executor": bm25_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                },
             )
         database.rollback()
         raise e
@@ -2486,8 +2565,7 @@ def get_random_chunks(database: Session,
     assert (isinstance(limit, int) and limit >= 0 and limit <= 2000), \
         "limit must be an int between 0 and 2000"
     
-    # Prevent SQL injection with the collection ids.
-    collection_ids = list(map(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x), collection_ids))
+    collection_ids = _normalize_collection_ids_for_bound_query(collection_ids)
     
     results = database.exec(
         select(*column_attributes)
@@ -2509,8 +2587,9 @@ def count_chunks(database: Session,
     
     (_, _) = get_user(database, auth)
     
-    # Prevent SQL injection with the collection ids.
-    collection_ids = list(map(lambda x: re.sub(r'[^a-zA-Z0-9]', '', x), collection_ids))
+    collection_ids = _normalize_collection_ids_for_bound_query(collection_ids)
+    if not collection_ids:
+        return 0
     
     count = database.exec(
         select(func.count())
@@ -2644,12 +2723,46 @@ def search_file_chunks(
     offset: int = 0,
     sort_by: str = "score",
     sort_dir: str = "DESC",
+    explain_plan: bool = False,
     return_statement: bool = False,
     _direct_stage_call: bool = False,
     _skip_observability: bool = False,
     _pipeline_override: Optional[Dict[str, str]] = None,
 ):
     t_1 = time.time()
+    profile = get_deployment_profile()
+    lexical_capability_plan = None
+    lexical_query_ir_v2: Dict[str, Any] = {}
+    file_chunk_projection_ir_v2: Dict[str, Any] = {}
+    file_chunk_route_resolution = None
+    require_capability(
+        "retrieval.lexical.bm25",
+        profile=profile,
+        message="File-chunk lexical search requires BM25 lexical retrieval support on the active deployment profile.",
+        hint="Use the ParadeDB/PostgreSQL gold profile, or disable file-chunk lexical search on this deployment.",
+    )
+    if bool(query) or bool(explain_plan):
+        file_chunk_route_resolution = resolve_search_file_chunks_route_executor(profile=profile)
+        file_chunk_planning_v2 = _build_route_planning_context_v2(
+            file_chunk_route_resolution.resolution.to_payload(),
+            raw_query_text=str(query),
+            lexical_query_text=str(query),
+            use_dense=False,
+            use_sparse=False,
+            projection_metadata={
+                "planning_surface": "route_resolution",
+                "fallback_projection_ir_v2": True,
+            },
+        )
+        lexical_query_ir_v2 = dict(file_chunk_planning_v2.get("query_ir_v2") or {})
+        file_chunk_projection_ir_v2 = dict(file_chunk_planning_v2.get("projection_ir_v2") or {})
+    if bool(query):
+        lexical_capability_plan = require_lexical_query_capabilities(
+            query,
+            profile=profile,
+            route_label="File-chunk lexical retrieval",
+            query_ir_v2=lexical_query_ir_v2,
+        )
     # Restrict to current user's files
     (_, user_auth) = get_user(database, auth)
     username = user_auth.username
@@ -2679,6 +2792,8 @@ def search_file_chunks(
                 route="search_file_chunks",
                 query_text=query,
                 collection_ids=[],
+                query_ir_v2=dict(lexical_query_ir_v2 or {}),
+                projection_ir_v2=dict(file_chunk_projection_ir_v2 or {}),
                 options={
                     "limit": int(limit),
                     "offset": int(offset),
@@ -2714,6 +2829,25 @@ def search_file_chunks(
                 )
             )
             results = [_candidate_to_file_chunk_result(candidate) for candidate in run_result.candidates]
+            plan_explain_payload = None
+            if explain_plan:
+                route_executor_payload = (
+                    file_chunk_route_resolution.to_payload()
+                    if file_chunk_route_resolution is not None
+                    else None
+                )
+                plan_explain_payload = build_retrieval_plan_explain(
+                    route="search_file_chunks",
+                    pipeline=pipeline,
+                    options=request_obj.options,
+                    pipeline_resolution=pipeline_resolution,
+                    route_executor=route_executor_payload,
+                    query_ir_v2=lexical_query_ir_v2,
+                    projection_ir_v2=file_chunk_projection_ir_v2,
+                    lexical_capability_plan=(
+                        lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                    ),
+                )
             if not _skip_observability:
                 metrics.record_retrieval(
                     route="search_file_chunks",
@@ -2744,10 +2878,19 @@ def search_file_chunks(
                     md={
                         "stage_trace": [trace.model_dump() for trace in run_result.traces],
                         "pipeline_resolution": pipeline_resolution,
+                        **(
+                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                            if lexical_capability_plan is not None
+                            else {}
+                        ),
+                        **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
                     },
                 )
             database.rollback()
-            return {"results": results}
+            response_payload = {"results": results}
+            if plan_explain_payload is not None:
+                response_payload["plan_explain"] = plan_explain_payload
+            return response_payload
         except Exception as e:
             if not _skip_observability:
                 metrics.record_retrieval(
@@ -2771,49 +2914,39 @@ def search_file_chunks(
                     result_rows=[],
                     status="error",
                     error=str(e),
-                    md={"pipeline_resolution": pipeline_resolution},
+                    md={
+                        "pipeline_resolution": pipeline_resolution,
+                        **(
+                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                            if lexical_capability_plan is not None
+                            else {}
+                        ),
+                    },
                 )
             database.rollback()
             raise e
 
-    formatted_query, _ = parse_search(query, FILE_FIELDS, catch_all_fields=["text"])
-
-    query_is_empty = (formatted_query == "()")
-    if query_is_empty and sort_by == "score":
-        # For wildcard/empty queries there is no BM25 score; use recency ordering.
-        sort_by = "created_at"
-    score_field = "paradedb.score(fc.id) AS score, " if not query_is_empty else ""
     assert sort_by in FILE_FIELDS or sort_by == "score", f"sort_by must be one of {FILE_FIELDS} or 'score'"
     assert sort_dir in ["DESC", "ASC"], "sort_dir must be 'DESC' or 'ASC'"
 
-    if sort_by == "score":
-        order_by_field = "ORDER BY score DESC, fc.id ASC"
-    else:
-        order_by_field = f"ORDER BY {sort_by} {sort_dir}" + (", fc.id ASC" if sort_by != "id" else "")
-
-    where_clause = "f.created_by = :username"
-    if not query_is_empty:
-        where_clause = f"{where_clause} AND fc.id @@@ paradedb.parse('{formatted_query}')"
-
-    STMT = text(
-        f"""
-    SELECT fc.id, {score_field}fc.id, fc.text, fc.md, fc.created_at, fc.file_version_id
-    FROM {FileChunkTable.__tablename__} fc
-    JOIN {FileVersionTable.__tablename__} fv ON fc.file_version_id = fv.id
-    JOIN {FileTable.__tablename__} f ON fv.file_id = f.id
-    WHERE {where_clause}
-    {order_by_field}
-    LIMIT :limit
-    OFFSET :offset;
-    """
-    ).bindparams(username=username, limit=limit, offset=offset)
-
-    if return_statement:
-        return str(STMT.compile(compile_kwargs={"literal_binds": True}))
-
+    file_chunk_route_executor = file_chunk_route_resolution or resolve_search_file_chunks_route_executor(profile=profile)
+    file_chunk_route_executor.require_executable(allow_plan_only=bool(return_statement))
     try:
+        file_chunk_execution = file_chunk_route_executor.executor.execute(
+            database,
+            username=username,
+            query=query,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            limit=limit,
+            offset=offset,
+            return_statement=return_statement,
+        )
+        if return_statement:
+            return file_chunk_execution.rows_or_statement
+        query_is_empty = file_chunk_execution.query_is_empty
         subset_start = 1 if query_is_empty else 2
-        rows = list(database.exec(STMT))
+        rows = list(file_chunk_execution.rows_or_statement)
         results = []
         for row in rows:
             # row layout: [fc.id, maybe score, fc.id, fc.text, fc.md, fc.created_at, fc.file_version_id]
@@ -2827,6 +2960,29 @@ def search_file_chunks(
                     "file_version_id": row[idx + 4],
                     **({"bm25_score": float(row[1])} if not query_is_empty else {}),
                 }
+            )
+        plan_explain_payload = None
+        if explain_plan:
+            plan_explain_payload = build_retrieval_plan_explain(
+                route="search_file_chunks",
+                pipeline=RetrievalPipelineSpec(
+                    pipeline_id="search_file_chunks.direct",
+                    version="v2",
+                    stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB")],
+                ),
+                options={
+                    "limit": int(limit),
+                    "offset": int(offset),
+                    "sort_by": sort_by,
+                    "sort_dir": sort_dir,
+                    "bm25_query_text": query,
+                },
+                route_executor=file_chunk_route_executor.to_payload(),
+                query_ir_v2=lexical_query_ir_v2,
+                projection_ir_v2=file_chunk_projection_ir_v2,
+                lexical_capability_plan=(
+                    lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                ),
             )
         if not _skip_observability:
             metrics.record_retrieval(
@@ -2853,9 +3009,21 @@ def search_file_chunks(
                 counters={"rows_returned": len(results)},
                 result_rows=results,
                 status="ok",
+                md={
+                    "route_executor": file_chunk_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                    **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
+                },
             )
         database.rollback()
-        return {"results": results}
+        response_payload = {"results": results}
+        if plan_explain_payload is not None:
+            response_payload["plan_explain"] = plan_explain_payload
+        return response_payload
     except Exception as e:
         if not _skip_observability:
             metrics.record_retrieval(
@@ -2879,6 +3047,14 @@ def search_file_chunks(
                 result_rows=[],
                 status="error",
                 error=str(e),
+                md={
+                    "route_executor": file_chunk_route_executor.to_payload(),
+                    **(
+                        {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                        if lexical_capability_plan is not None
+                        else {}
+                    ),
+                },
             )
         database.rollback()
         raise e

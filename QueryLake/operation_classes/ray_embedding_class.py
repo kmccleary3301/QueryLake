@@ -113,8 +113,26 @@ class EmbeddingDeployment(RuntimeIntrospectionMixin):
         self._publish_runtime_metadata()
         print("DONE INITIALIZING EMBEDDING DEPLOYMENT")
 
+    @staticmethod
+    def _normalize_sparse_row(row):
+        if row is None:
+            return {}
+        if isinstance(row, dict):
+            normalized = {}
+            for key, value in row.items():
+                if value is None:
+                    continue
+                try:
+                    numeric = float(value)
+                except Exception:
+                    continue
+                if numeric != 0.0:
+                    normalized[int(key)] = numeric
+            return normalized
+        return {}
+
     @serve.batch(max_batch_size=128, batch_wait_timeout_s=0.05)
-    async def handle_batch(self, inputs: List[str]) -> List[List[float]]:
+    async def handle_batch(self, inputs: List[str]) -> List[dict]:
         
         m_1 = time.time()
         print("Handling batch of size", len(inputs))
@@ -138,11 +156,19 @@ class EmbeddingDeployment(RuntimeIntrospectionMixin):
         token_counts = [sum([1 for x in y if x != pad_id]) for y in inputs_tokenized]
         
         embed_list = sentence_embeddings['dense_vecs'].tolist()
+        lexical_weights = sentence_embeddings.get("lexical_weights") or [{} for _ in range(len(inputs))]
         print("Done handling batch of size", len(inputs))
         m_2 = time.time()
         print("Time taken for batch:", m_2 - m_1)
         
-        return [{"embedding": embed_list[i], "token_count": token_counts[i]} for i in range(len(inputs))]
+        return [
+            {
+                "embedding": embed_list[i],
+                "lexical_weights": self._normalize_sparse_row(lexical_weights[i]),
+                "token_count": token_counts[i],
+            }
+            for i in range(len(inputs))
+        ]
     
     async def run(self, request_dict : Union[dict, List[str]]) -> List[List[float]]:
         

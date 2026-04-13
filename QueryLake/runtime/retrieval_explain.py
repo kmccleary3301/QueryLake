@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from QueryLake.runtime.db_compat import get_deployment_profile
+from QueryLake.runtime.route_planning_v2 import instantiate_route_planning_v2
+from QueryLake.runtime.retrieval_lanes import resolve_retrieval_adapter
 from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec
 
 
@@ -55,9 +58,29 @@ def build_retrieval_plan_explain(
     options: Optional[Dict[str, Any]] = None,
     pipeline_resolution: Optional[Dict[str, Any]] = None,
     lane_state: Optional[Dict[str, Any]] = None,
+    route_executor: Optional[Dict[str, Any]] = None,
+    lexical_capability_plan: Optional[Dict[str, Any]] = None,
+    query_ir_v2: Optional[Dict[str, Any]] = None,
+    projection_ir_v2: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     opts = dict(options or {})
     flags = dict(pipeline.flags or {})
+    profile = get_deployment_profile()
+    route_executor_payload = dict(route_executor or {})
+    if query_ir_v2 is not None or projection_ir_v2 is not None:
+        route_executor_payload = dict(route_executor_payload)
+        route_executor_payload["planning_v2"] = {
+            "query_ir_v2_template": dict(query_ir_v2 or route_executor_payload.get("planning_v2", {}).get("query_ir_v2_template") or {}),
+            "projection_ir_v2": dict(projection_ir_v2 or route_executor_payload.get("planning_v2", {}).get("projection_ir_v2") or {}),
+            **{
+                key: value
+                for key, value in dict(route_executor_payload.get("planning_v2") or {}).items()
+                if key not in {"query_ir_v2_template", "projection_ir_v2"}
+            },
+        }
+    effective_planning_v2 = instantiate_route_planning_v2(route_executor_payload)
+    effective_query_ir_v2: Dict[str, Any] = dict(effective_planning_v2.get("query_ir_v2_template") or {})
+    effective_projection_ir_v2: Dict[str, Any] = dict(effective_planning_v2.get("projection_ir_v2") or {})
 
     return {
         "route": str(route),
@@ -74,6 +97,7 @@ def build_retrieval_plan_explain(
                     "primitive_id": stage.primitive_id,
                     "enabled": bool(stage.enabled),
                     "config": dict(stage.config or {}),
+                    "adapter": resolve_retrieval_adapter(stage.primitive_id, profile=profile).to_payload(),
                 }
                 for stage in pipeline.stages
             ],
@@ -88,6 +112,23 @@ def build_retrieval_plan_explain(
                 "limit_sparse": opts.get("limit_sparse"),
             },
             "lane_state": dict(lane_state or {}),
+            "profile": {
+                "id": profile.id,
+                "backend_stack": {
+                    "authority": profile.backend_stack.authority,
+                    "lexical": profile.backend_stack.lexical,
+                    "dense": profile.backend_stack.dense,
+                    "sparse": profile.backend_stack.sparse,
+                    "graph": profile.backend_stack.graph,
+                },
+            },
+            **({"route_executor": route_executor_payload} if route_executor is not None else {}),
+            **({"query_ir_v2": effective_query_ir_v2} if effective_query_ir_v2 else {}),
+            **({"projection_ir_v2": effective_projection_ir_v2} if effective_projection_ir_v2 else {}),
+            **(
+                {"lexical_capability_plan": dict(lexical_capability_plan)}
+                if lexical_capability_plan is not None
+                else {}
+            ),
         },
     }
-

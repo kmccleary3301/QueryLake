@@ -72,9 +72,27 @@ def test_sse_hub_publish_and_backlog_replay():
 
 
 def test_render_cache_key_is_stable_and_page_sensitive():
-    key_1 = FilesRuntimeService._compute_render_cache_key("abc123", dpi=144, page_num=1)
-    key_2 = FilesRuntimeService._compute_render_cache_key("abc123", dpi=144, page_num=1)
-    key_3 = FilesRuntimeService._compute_render_cache_key("abc123", dpi=144, page_num=2)
+    key_1 = FilesRuntimeService._compute_render_cache_key(
+        "abc123",
+        dpi=144,
+        page_num=1,
+        profile="speed",
+        max_image_pixels=589824,
+    )
+    key_2 = FilesRuntimeService._compute_render_cache_key(
+        "abc123",
+        dpi=144,
+        page_num=1,
+        profile="speed",
+        max_image_pixels=589824,
+    )
+    key_3 = FilesRuntimeService._compute_render_cache_key(
+        "abc123",
+        dpi=144,
+        page_num=2,
+        profile="speed",
+        max_image_pixels=589824,
+    )
     assert key_1 == key_2
     assert key_1 != key_3
 
@@ -202,3 +220,37 @@ def test_pdf_text_layer_mixed_mode_handles_zero_selected(monkeypatch):
     assert decision["selected"] is False
     assert decision["selected_pages"] == 0
     assert decision["selected_page_indices"] == []
+
+
+def test_pdf_output_contract_helpers():
+    page_sources = FilesRuntimeService._build_page_source_by_page(
+        4,
+        text_layer_page_indices={0, 3},
+    )
+    assert page_sources == {
+        "0001": "text_layer",
+        "0002": "ocr",
+        "0003": "ocr",
+        "0004": "text_layer",
+    }
+    assert FilesRuntimeService._resolve_pdf_output_contract(4, text_layer_pages=0) == "ocr_markdown"
+    assert FilesRuntimeService._resolve_pdf_output_contract(4, text_layer_pages=4) == "text_layer_fastpath_markdown"
+    assert FilesRuntimeService._resolve_pdf_output_contract(4, text_layer_pages=2) == "mixed_text_layer_fastpath_markdown"
+
+
+def test_try_extract_pdf_text_layer_emits_fastpath_contract(monkeypatch):
+    monkeypatch.setenv("QUERYLAKE_PDF_TEXT_LAYER_MODE", "prefer")
+    service = FilesRuntimeService(_DummyDB(), object_store=LocalCASObjectStore(), umbrella=_DummyUmbrella())
+
+    def _fake_extract(_data):
+        return ["A" * 120, "B" * 90], {"engine": "pdf_text_layer", "status": "not_selected"}
+
+    service._extract_pdf_text_layer_pages = _fake_extract  # type: ignore[method-assign]
+    text, meta = service._try_extract_pdf_text_layer(b"pdf")
+    assert text is not None
+    assert meta["output_contract"] == "text_layer_fastpath_markdown"
+    assert meta["page_source_counts"] == {"text_layer": 2, "ocr": 0}
+    assert meta["page_source_by_page"] == {
+        "0001": "text_layer",
+        "0002": "text_layer",
+    }

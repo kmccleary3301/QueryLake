@@ -55,6 +55,49 @@ async def embedding_call(
     
     return embedding if not return_tokens_usage else (embedding, total_tokens)
 
+
+async def embedding_sparse_call(
+    self,  # Umbrella class, can't type hint because of circular imports
+    auth: AuthType,
+    inputs: List[str],
+    model: str = None,
+    return_tokens_usage: bool = False,
+):
+    assert self.config.enabled_model_classes.embedding, "Embedding models are disabled on this QueryLake Deployment"
+    if model is None:
+        model = self.config.default_models.embedding
+    assert model in self.embedding_handles, f"Model choice [{model}] not available for embeddings"
+    (user, user_auth, original_auth, auth_type) = api.get_user(self.database, auth, return_auth_type=True)
+    result = await self.embedding_handles[model].run.remote({"text": inputs})
+
+    if isinstance(result, list):
+        sparse_embeddings = [entry.get("lexical_weights", {}) for entry in result]
+        total_tokens = sum([entry["token_count"] for entry in result])
+    else:
+        sparse_embeddings = result.get("lexical_weights", {})
+        total_tokens = result["token_count"]
+
+    api.increment_usage_tally(self.database, user_auth, {
+        "embedding": {
+            self.config.default_models.embedding: {"tokens": total_tokens}
+        }
+    }, **({"api_key_id": original_auth} if auth_type == 2 else {}))
+
+    log_usage_event(
+        build_usage_event(
+            kind="embedding_sparse",
+            request_id=get_request_id() or "unknown",
+            route="/v1/embeddings",
+            model=model,
+            principal_id=getattr(user_auth, "username", None),
+            provider="local",
+            usage={"tokens": total_tokens},
+            status="ok",
+        )
+    )
+
+    return sparse_embeddings if not return_tokens_usage else (sparse_embeddings, total_tokens)
+
 async def rerank_call(
     self, # Umbrella class, can't type hint because of circular imports
     auth : AuthType,

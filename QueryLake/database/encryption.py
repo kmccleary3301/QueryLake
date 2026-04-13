@@ -177,7 +177,9 @@ def aes_decrypt_zip_file(database: Session,
         return file_data
 
 def aes_delete_file_from_zip_blob(database: Session,
-                                  document_id : str):
+                                  document_id : str,
+                                  *,
+                                  commit: bool = True):
     """
     Couldn't figure out an efficient way to delete a file using py7zr.
     Instead, we lower the file count on the blob table by 1.
@@ -186,20 +188,25 @@ def aes_delete_file_from_zip_blob(database: Session,
     The py7zr library doesn't seem to support r+w mode, so we can't do it efficiently.
     """
     document = database.exec(select(document_raw).where(document_raw.id == document_id)).first()
-    document_blob = database.exec(select(document_zip_blob).where(document_zip_blob.id == document.blob_id)).first()
-    assert document_blob is not None, "Document blob not found in database."
-    directory = document.blob_dir
-    assert not directory is None, "Document doesn't contain a blob directory."
-
-    if document_blob is None:
+    if document is None:
         raise FileNotFoundError("Document id not found in database.")
+    if document.blob_id is None or document.blob_dir is None:
+        return False
+    document_blob = database.exec(select(document_zip_blob).where(document_zip_blob.id == document.blob_id)).first()
+    if document_blob is None:
+        document.blob_id = None
+        if commit:
+            database.commit()
+        return False
     
     document_blob.file_count -= 1
     document.blob_id = None
     
     if document_blob.file_count <= 0:
         database.delete(document_blob)
-    database.commit()
+    if commit:
+        database.commit()
+    return True
 
 
 def aes_recrypt_zip_file(

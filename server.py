@@ -24,6 +24,20 @@ from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 from QueryLake.api import api
 from QueryLake.database import database_admin_operations
 from QueryLake.database.create_db_session import initialize_database_engine
+from QueryLake.runtime.db_compat import (
+    DeploymentProfile,
+    build_capabilities_payload,
+    build_profile_diagnostics_payload,
+    validate_current_db_profile,
+)
+from QueryLake.runtime.profile_bringup import build_profile_bringup_payload
+from QueryLake.runtime.projection_refresh import (
+    ProjectionRefreshRequest,
+    build_projection_diagnostics_payload,
+    explain_projection_refresh_plan,
+    execute_projection_refresh_plan,
+    build_projection_refresh_plan,
+)
 from QueryLake.typing.config import Config, AuthType, Model
 from QueryLake.typing.toolchains import ToolChain, ToolChainV2
 try:
@@ -67,6 +81,7 @@ from QueryLake.routing.llm_call import llm_call
 from QueryLake.routing.upload_documents import handle_document
 from QueryLake.routing.misc_models import (
     embedding_call,
+    embedding_sparse_call,
     rerank_call,
     web_scrape_call
 )
@@ -112,6 +127,42 @@ def _ensure_logging_configured() -> None:
 _ensure_logging_configured()
 
 logger = logging.getLogger(__name__)
+
+
+def build_readyz_payload(
+    *,
+    model_ids: List[str],
+    profile: Optional[DeploymentProfile] = None,
+    metadata_store_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    capabilities_payload = build_capabilities_payload(profile)
+    profile_diagnostics_payload = build_profile_diagnostics_payload(
+        profile,
+        metadata_store_path=metadata_store_path,
+    )
+    profile_bringup_payload = build_profile_bringup_payload(
+        profile=profile,
+        metadata_store_path=metadata_store_path,
+    )
+    return {
+        "ok": True,
+        "db": "ok",
+        "models": list(model_ids),
+        "db_profile": capabilities_payload.get("profile"),
+        "db_profile_diagnostics": profile_diagnostics_payload.get("startup_validation"),
+        "db_profile_bringup": {
+            "summary": dict(profile_bringup_payload.get("summary") or {}),
+            "projection_ids_needing_build": list(
+                profile_bringup_payload.get("projection_ids_needing_build") or []
+            ),
+            "route_runtime_blocked_ids": list(
+                profile_bringup_payload.get("route_runtime_blocked_ids") or []
+            ),
+            "backend_unreachable_planes": list(
+                profile_bringup_payload.get("backend_unreachable_planes") or []
+            ),
+        },
+    }
 
 def _recommend_gpu_memory_fraction(
     required_vram: int,
@@ -352,6 +403,7 @@ class UmbrellaClass:
             "llm": self.llm_call,
             "llm_count_tokens": self.llm_count_tokens,
             "embedding": self.embedding_call,
+            "embedding_sparse": self.embedding_sparse_call,
             "rerank": self.rerank_call,
             "web_scrape": self.web_scrape_call,
             "find_function_calls": find_function_calls,
@@ -388,6 +440,14 @@ class UmbrellaClass:
                              inputs : List[str],
                              model: str = None):
         return await embedding_call(self, auth, inputs, model)
+
+    async def embedding_sparse_call(
+        self,
+        auth: AuthType,
+        inputs: List[str],
+        model: str = None,
+    ):
+        return await embedding_sparse_call(self, auth, inputs, model)
     
     async def rerank_call(
         self, 
@@ -526,6 +586,59 @@ class UmbrellaClass:
     @fastapi_app.get("/v2/kernel/ping")
     async def ping_function_v2(self, req: Request):
         return await self.ping_function(req)
+
+    @fastapi_app.get("/v1/capabilities")
+    async def capabilities(self):
+        return build_capabilities_payload()
+
+    @fastapi_app.get("/v2/kernel/capabilities")
+    async def capabilities_v2(self):
+        return build_capabilities_payload()
+
+    @fastapi_app.get("/v1/profile-diagnostics")
+    async def profile_diagnostics(self):
+        return build_profile_diagnostics_payload()
+
+    @fastapi_app.get("/v2/kernel/profile-diagnostics")
+    async def profile_diagnostics_v2(self):
+        return build_profile_diagnostics_payload()
+
+    @fastapi_app.get("/v1/projection-diagnostics")
+    async def projection_diagnostics(self):
+        return build_projection_diagnostics_payload()
+
+    @fastapi_app.get("/v2/kernel/projection-diagnostics")
+    async def projection_diagnostics_v2(self):
+        return build_projection_diagnostics_payload()
+
+    @fastapi_app.get("/v1/profile-bringup")
+    async def profile_bringup(self):
+        return build_profile_bringup_payload()
+
+    @fastapi_app.get("/v2/kernel/profile-bringup")
+    async def profile_bringup_v2(self):
+        return build_profile_bringup_payload()
+
+    @fastapi_app.post("/v1/projection-plan/explain")
+    async def projection_plan_explain(self, request: Request):
+        body = await request.json()
+        refresh_request = ProjectionRefreshRequest.model_validate(body or {})
+        return explain_projection_refresh_plan(refresh_request).model_dump()
+
+    @fastapi_app.post("/v2/kernel/projection-plan/explain")
+    async def projection_plan_explain_v2(self, request: Request):
+        return await self.projection_plan_explain(request)
+
+    @fastapi_app.post("/v1/projection-refresh/run")
+    async def projection_refresh_run(self, request: Request):
+        body = await request.json()
+        refresh_request = ProjectionRefreshRequest.model_validate(body or {})
+        plan = build_projection_refresh_plan(refresh_request)
+        return execute_projection_refresh_plan(plan, database=self.database).model_dump()
+
+    @fastapi_app.post("/v2/kernel/projection-refresh/run")
+    async def projection_refresh_run_v2(self, request: Request):
+        return await self.projection_refresh_run(request)
 
     # -----------------
     # Files v1 endpoints
@@ -711,7 +824,7 @@ class UmbrellaClass:
             self.database.exec(text("SELECT 1"))
         except Exception as e:
             raise HTTPException(status_code=503, detail=f"db not ready: {e}")
-        return {"ok": True, "db": "ok", "models": list(self.llm_configs.keys())}
+        return build_readyz_payload(model_ids=list(self.llm_configs.keys()))
     
     # Callable by POST and GET
     @fastapi_app.post("/api/{rest_of_path:path}")

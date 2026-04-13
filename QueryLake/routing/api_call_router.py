@@ -1,10 +1,12 @@
-from fastapi import UploadFile, Request
-from fastapi.responses import StreamingResponse, FileResponse, Response
+from fastapi import UploadFile, Request, HTTPException
+from fastapi.responses import StreamingResponse, FileResponse, Response, JSONResponse
 import asyncio
 import json
 import inspect
 import logging
 import traceback
+
+from QueryLake.runtime.db_compat import QueryLakeUnsupportedFeatureError, QueryLakeProfileConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +78,62 @@ async def api_general_call(
             elif args_get is True:
                 return {"success": True}
             return {"success": True, "result": args_get}
-    except Exception as e:
-        
+    except (QueryLakeUnsupportedFeatureError, QueryLakeProfileConfigurationError) as e:
         self.database.rollback()
         self.database.flush()
-        
+        logger.warning("Capability/profile error on %s: %s", rest_of_path, str(e))
+        status_code = 501 if isinstance(e, QueryLakeUnsupportedFeatureError) else 500
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                "success": False,
+                "error": str(e),
+                "detail": e.to_payload(),
+            },
+        )
+    except HTTPException as e:
+        self.database.rollback()
+        self.database.flush()
+        detail = e.detail
+        if isinstance(detail, dict):
+            message = detail.get("message") or detail.get("error") or str(detail)
+        else:
+            message = str(detail)
+        logger.warning("HTTP error on %s: %s", rest_of_path, message)
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "error": message,
+                "detail": detail,
+            },
+        )
+    except AssertionError as e:
+        self.database.rollback()
+        self.database.flush()
+        detail = {
+            "type": "invalid_request",
+            "code": "ql.invalid_request",
+            "message": str(e) or "Invalid request",
+            "docs_ref": "docs/sdk/API_REFERENCE.md",
+            "retryable": False,
+        }
+        logger.warning("Assertion error on %s: %s", rest_of_path, detail["message"])
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "error": detail["message"],
+                "detail": detail,
+            },
+        )
+    except Exception as e:
+        self.database.rollback()
+        self.database.flush()
         error_message = str(e)
         stack_trace = traceback.format_exc()
-        return_dict = {"success": False, "error": error_message, "trace": stack_trace}
         logger.exception("API call to %s failed: %s", rest_of_path, error_message)
-        return return_dict
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": error_message, "trace": stack_trace},
+        )
