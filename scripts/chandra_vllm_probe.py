@@ -70,7 +70,7 @@ def _run_generate_probe(
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image", "image": image},
+                        {"type": "image_pil", "image_pil": image},
                     ],
                 }
             ],
@@ -79,7 +79,7 @@ def _run_generate_probe(
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_pil", "image_pil": image},
+                        {"type": "image", "image": image},
                     ],
                 }
             ],
@@ -322,7 +322,7 @@ def main() -> None:
     parser.add_argument("--tensor-parallel-size", type=int, default=1)
     parser.add_argument("--gpu-memory-utilization", type=float, default=0.85)
     parser.add_argument("--max-num-seqs", type=int, default=8)
-    parser.add_argument("--max-model-len", type=int, default=None)
+    parser.add_argument("--max-model-len", type=int, default=131072)
     parser.add_argument("--dtype", default="auto")
     parser.add_argument("--enforce-eager", action="store_true")
     parser.add_argument("--trust-remote-code", action="store_true")

@@ -9,19 +9,161 @@ import json
 import logging
 import os
 import re
+import platform
 import threading
 import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
+from importlib import metadata as importlib_metadata
+
 from ray import serve
 
+os.environ.setdefault("VLLM_TARGET_DEVICE", "cuda")
+
 logger = logging.getLogger(__name__)
-FIXED_OUTPUT_MAX_NEW_TOKENS = 768
+DEFAULT_OUTPUT_MAX_NEW_TOKENS = 768
+SPEED_PROFILE_MAX_IMAGE_PIXELS = 589_824
+BALANCED_PROFILE_MAX_IMAGE_PIXELS = 1_048_576
+QUALITY_PROFILE_MAX_IMAGE_PIXELS = 2_097_152
+
+PROFILE_MAX_IMAGE_PIXELS_DEFAULTS = {
+    "speed": SPEED_PROFILE_MAX_IMAGE_PIXELS,
+    "balanced": BALANCED_PROFILE_MAX_IMAGE_PIXELS,
+    "quality": QUALITY_PROFILE_MAX_IMAGE_PIXELS,
+}
+
+
+def resolve_profile_max_image_pixels(profile: str) -> int:
+    normalized = str(profile or "balanced").strip().lower()
+    return int(PROFILE_MAX_IMAGE_PIXELS_DEFAULTS.get(normalized, BALANCED_PROFILE_MAX_IMAGE_PIXELS))
+
+
+def resolve_pdf_render_scale(
+    page_width_points: float,
+    page_height_points: float,
+    *,
+    dpi: int,
+    max_image_pixels: Optional[int],
+) -> float:
+    base_scale = max(0.01, float(dpi) / 72.0)
+    if not max_image_pixels:
+        return base_scale
+    width_points = max(1.0, float(page_width_points))
+    height_points = max(1.0, float(page_height_points))
+    area_points = width_points * height_points
+    if area_points <= 0.0:
+        return base_scale
+    capped_scale = (float(max_image_pixels) / area_points) ** 0.5
+    return max(0.01, min(base_scale, capped_scale))
+
+
+def analyze_ocr_page_complexity(image: Any, *, sample_size: int = 96) -> Dict[str, Any]:
+    try:
+        from PIL import Image, ImageStat
+    except Exception as exc:  # pragma: no cover
+        raise RuntimeError("Pillow is required to analyze OCR page complexity") from exc
+
+    source_image = image.image if isinstance(image, ChandraImagePayload) else image
+    if not isinstance(source_image, Image.Image):
+        raise ValueError("OCR page complexity analysis requires a PIL image or ChandraImagePayload")
+
+    width, height = source_image.size
+    grayscale = source_image.convert("L")
+    sample_w = max(1, min(sample_size, width))
+    sample_h = max(1, min(sample_size, height))
+    if grayscale.size != (sample_w, sample_h):
+        grayscale = grayscale.resize((sample_w, sample_h), Image.Resampling.BILINEAR)
+
+    histogram = grayscale.histogram()
+    total = float(sum(histogram) or 1.0)
+    near_white_fraction = round(sum(histogram[245:]) / total, 6)
+    ink_fraction = round(sum(histogram[:225]) / total, 6)
+    variance = float(ImageStat.Stat(grayscale).var[0] or 0.0)
+
+    pixel_accessor = grayscale.load()
+    edge_threshold = 18
+    edge_hits = 0
+    comparisons = 0
+    for y in range(sample_h):
+        for x in range(sample_w):
+            current = int(pixel_accessor[x, y])
+            if x + 1 < sample_w:
+                comparisons += 1
+                if abs(current - int(pixel_accessor[x + 1, y])) >= edge_threshold:
+                    edge_hits += 1
+            if y + 1 < sample_h:
+                comparisons += 1
+                if abs(current - int(pixel_accessor[x, y + 1])) >= edge_threshold:
+                    edge_hits += 1
+    edge_density = round((edge_hits / float(comparisons)) if comparisons > 0 else 0.0, 6)
+
+    sparse_page_signature = (
+        near_white_fraction >= 0.74
+        and ink_fraction <= 0.02
+        and edge_density <= 0.03
+        and variance <= 120.0
+    )
+    light_page_signature = (
+        near_white_fraction >= 0.70
+        and ink_fraction <= 0.05
+        and edge_density <= 0.06
+        and variance <= 220.0
+    )
+
+    if sparse_page_signature or (
+        near_white_fraction >= 0.94 and ink_fraction <= 0.07 and edge_density <= 0.09 and variance <= 700.0
+    ):
+        complexity_class = "simple"
+    elif light_page_signature or (
+        near_white_fraction >= 0.84 and ink_fraction <= 0.18 and edge_density <= 0.17 and variance <= 1900.0
+    ):
+        complexity_class = "mixed"
+    else:
+        complexity_class = "complex"
+
+    return {
+        "class": complexity_class,
+        "width": int(width),
+        "height": int(height),
+        "pixels": int(width * height),
+        "sample_width": int(sample_w),
+        "sample_height": int(sample_h),
+        "near_white_fraction": near_white_fraction,
+        "ink_fraction": ink_fraction,
+        "edge_density": edge_density,
+        "variance": round(variance, 2),
+    }
+
+
+@dataclass(frozen=True)
+class ChandraImagePayload:
+    image: Any
+    png_bytes: Optional[bytes] = None
+    file_path: Optional[str] = None
+    media_uuid: Optional[str] = None
+
+    @property
+    def size(self) -> Tuple[int, int]:
+        return tuple(getattr(self.image, "size", (0, 0)))  # type: ignore[return-value]
+
+    @property
+    def mode(self) -> str:
+        return str(getattr(self.image, "mode", "RGB"))
+
+    def copy(self) -> "ChandraImagePayload":
+        copied_image = self.image.copy() if hasattr(self.image, "copy") else self.image
+        return ChandraImagePayload(
+            image=copied_image,
+            png_bytes=self.png_bytes,
+            file_path=self.file_path,
+            media_uuid=self.media_uuid,
+        )
 
 
 @dataclass(frozen=True)
@@ -29,12 +171,96 @@ class ChandraRequest:
     image: Any
     prompt: str
     max_new_tokens: int
+    repetition_penalty: float = 1.0
+    blocked_phrases: Tuple[str, ...] = ()
     max_image_pixels: Optional[int] = None
     cache_key: Optional[str] = None
+    cache_key_build_seconds: float = 0.0
     allow_escalation: bool = False
     escalation_max_new_tokens: Optional[int] = None
     escalation_max_image_pixels: Optional[int] = None
     adaptive_rerun_limit: Optional[int] = None
+
+
+def _safe_package_version(package_name: str) -> Optional[str]:
+    try:
+        return importlib_metadata.version(package_name)
+    except Exception:
+        return None
+
+
+def _read_local_model_config(model_path: str) -> Optional[Dict[str, Any]]:
+    try:
+        model_config_path = Path(model_path).expanduser() / "config.json"
+        if not model_config_path.exists():
+            return None
+        with model_config_path.open("r", encoding="utf-8") as handle:
+            raw = json.load(handle)
+        if isinstance(raw, dict):
+            return raw
+    except Exception:
+        return None
+    return None
+
+
+def build_chandra_runtime_compatibility_snapshot(runtime: Any) -> Dict[str, Any]:
+    model_path = str(getattr(runtime, "_model_path", "") or "")
+    model_config = _read_local_model_config(model_path) if model_path else None
+    configured_backend = str(getattr(runtime, "_configured_runtime_backend", getattr(runtime, "_runtime_backend", "hf")))
+    effective_backend = str(getattr(runtime, "_runtime_backend", configured_backend))
+    vllm_server_base_urls = list(getattr(runtime, "_vllm_server_base_urls", []) or [])
+    return {
+        "snapshot_version": 1,
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "configured_runtime_backend": configured_backend,
+        "effective_runtime_backend": effective_backend,
+        "model_path": model_path or None,
+        "model_path_is_local": bool(model_path and Path(model_path).expanduser().exists()),
+        "model_config_path": str(Path(model_path).expanduser() / "config.json") if model_path else None,
+        "model_config": model_config,
+        "package_versions": {
+            "torch": _safe_package_version("torch"),
+            "transformers": _safe_package_version("transformers"),
+            "vllm": _safe_package_version("vllm"),
+            "ray": _safe_package_version("ray"),
+            "pillow": _safe_package_version("Pillow"),
+            "pypdfium2": _safe_package_version("pypdfium2"),
+        },
+        "runtime_state": {
+            "processor_initialized": bool(getattr(runtime, "_processor", None) is not None),
+            "model_initialized": bool(getattr(runtime, "_model", None) is not None),
+            "vllm_llm_initialized": bool(getattr(runtime, "_vllm_llm", None) is not None),
+        },
+        "profile_defaults": {
+            "default_profile": str(getattr(runtime, "_default_profile", "balanced")),
+            "fixed_max_new_tokens": int(getattr(runtime, "_fixed_max_new_tokens", 0) or 0),
+            "speed_max_new_tokens": int(getattr(runtime, "_profile_settings", {}).get("speed", {}).get("max_new_tokens", 0) or 0),
+            "balanced_max_new_tokens": int(getattr(runtime, "_profile_settings", {}).get("balanced", {}).get("max_new_tokens", 0) or 0),
+            "quality_max_new_tokens": int(getattr(runtime, "_profile_settings", {}).get("quality", {}).get("max_new_tokens", 0) or 0),
+            "speed_repetition_penalty": float(getattr(runtime, "_profile_settings", {}).get("speed", {}).get("repetition_penalty", 1.0) or 1.0),
+            "balanced_repetition_penalty": float(getattr(runtime, "_profile_settings", {}).get("balanced", {}).get("repetition_penalty", 1.0) or 1.0),
+            "quality_repetition_penalty": float(getattr(runtime, "_profile_settings", {}).get("quality", {}).get("repetition_penalty", 1.0) or 1.0),
+            "speed_max_image_pixels": int(getattr(runtime, "_profile_settings", {}).get("speed", {}).get("max_image_pixels", 0) or 0),
+            "balanced_max_image_pixels": int(getattr(runtime, "_profile_settings", {}).get("balanced", {}).get("max_image_pixels", 0) or 0),
+            "quality_max_image_pixels": int(getattr(runtime, "_profile_settings", {}).get("quality", {}).get("max_image_pixels", 0) or 0),
+        },
+        "vllm_server": {
+            "base_urls": vllm_server_base_urls,
+            "model": str(getattr(runtime, "_vllm_server_model", "") or ""),
+            "allowed_local_media_path": getattr(runtime, "_vllm_server_allowed_local_media_path", None),
+            "timeout_seconds": float(getattr(runtime, "_vllm_server_timeout_seconds", 0.0) or 0.0),
+            "max_retries": int(getattr(runtime, "_vllm_server_max_retries", 0) or 0),
+            "retry_backoff_seconds": float(getattr(runtime, "_vllm_server_retry_backoff_seconds", 0.0) or 0.0),
+            "parallel_requests": int(getattr(runtime, "_vllm_server_parallel_requests", 0) or 0),
+            "probe_on_init": bool(getattr(runtime, "_vllm_server_probe_on_init", False)),
+            "fallback_to_hf_on_error": bool(getattr(runtime, "_vllm_server_fallback_to_hf_on_error", False)),
+            "circuit_breaker_threshold": int(getattr(runtime, "_vllm_server_circuit_breaker_threshold", 0) or 0),
+            "circuit_open": bool(getattr(runtime, "_vllm_server_circuit_open", False)),
+            "consecutive_failures": int(getattr(runtime, "_vllm_server_consecutive_failures", 0) or 0),
+            "rr_index": int(getattr(runtime, "_vllm_server_rr_index", 0) or 0),
+        },
+    }
 
 
 class _MicroBatcher:
@@ -109,8 +335,8 @@ class ChandraDeployment:
     - quality: higher fidelity, slower
     - adaptive: speed-first with bounded rerun escalation for flagged outputs
 
-    Note: output token budget is fixed globally to avoid using truncation-prone token caps
-    as a tuning lever. Profile differences come from image policy + escalation only.
+    Output token budget defaults remain conservative, but explicit runtime/profile overrides
+    are honored so OCR quality/performance retuning can be benchmarked directly.
     """
 
     def __init__(
@@ -132,10 +358,13 @@ class ChandraDeployment:
         enable_timing_logs: bool = True,
         default_profile: str = "balanced",
         profile_speed_max_new_tokens: int = 512,
-        profile_speed_max_image_pixels: int = 1_048_576,
+        profile_speed_repetition_penalty: float = 1.0,
+        profile_speed_max_image_pixels: int = SPEED_PROFILE_MAX_IMAGE_PIXELS,
         profile_balanced_max_new_tokens: int = 768,
+        profile_balanced_repetition_penalty: float = 1.0,
         profile_balanced_max_image_pixels: int = 1_048_576,
         profile_quality_max_new_tokens: int = 1024,
+        profile_quality_repetition_penalty: float = 1.0,
         profile_quality_max_image_pixels: int = 2_097_152,
         adaptive_high_max_new_tokens: int = 1024,
         adaptive_high_max_image_pixels: int = 2_097_152,
@@ -170,10 +399,11 @@ class ChandraDeployment:
         vllm_server_probe_on_init: bool = True,
         vllm_server_fallback_to_hf_on_error: bool = True,
         vllm_server_circuit_breaker_threshold: int = 3,
+        vllm_server_allowed_local_media_path: Optional[str] = None,
     ) -> None:
         self._model_path = model_path
         self._prompt = prompt
-        self._fixed_max_new_tokens = int(FIXED_OUTPUT_MAX_NEW_TOKENS)
+        self._fixed_max_new_tokens = max(1, int(max_new_tokens))
         self._max_batch_size = int(max_batch_size)
         self._max_batch_wait_ms = int(max_batch_wait_ms)
         self._max_image_pixels = int(max_image_pixels) if max_image_pixels else None
@@ -182,16 +412,22 @@ class ChandraDeployment:
         self._default_profile = str(default_profile or "balanced").strip().lower()
         self._profile_settings = {
             "speed": {
+                "max_new_tokens": max(1, int(profile_speed_max_new_tokens)),
+                "repetition_penalty": max(0.5, float(profile_speed_repetition_penalty)),
                 "max_image_pixels": int(profile_speed_max_image_pixels),
             },
             "balanced": {
+                "max_new_tokens": max(1, int(profile_balanced_max_new_tokens)),
+                "repetition_penalty": max(0.5, float(profile_balanced_repetition_penalty)),
                 "max_image_pixels": int(profile_balanced_max_image_pixels),
             },
             "quality": {
+                "max_new_tokens": max(1, int(profile_quality_max_new_tokens)),
+                "repetition_penalty": max(0.5, float(profile_quality_repetition_penalty)),
                 "max_image_pixels": int(profile_quality_max_image_pixels),
             },
         }
-        self._adaptive_high_max_new_tokens = int(self._fixed_max_new_tokens)
+        self._adaptive_high_max_new_tokens = max(1, int(adaptive_high_max_new_tokens))
         self._adaptive_high_max_image_pixels = int(adaptive_high_max_image_pixels)
         self._adaptive_min_chars = max(1, int(adaptive_min_chars))
         self._adaptive_max_reruns_per_batch = max(0, int(adaptive_max_reruns_per_batch))
@@ -202,6 +438,7 @@ class ChandraDeployment:
         self._cache_lock = asyncio.Lock()
         self._cache_evictions = 0
         self._torch_dtype = torch_dtype
+        self._configured_runtime_backend = str(runtime_backend or "hf").strip().lower()
         self._runtime_backend = str(runtime_backend or "hf").strip().lower()
         if self._runtime_backend not in {"hf", "vllm", "vllm_server"}:
             raise ValueError(f"Unsupported Chandra runtime_backend: {runtime_backend}")
@@ -224,26 +461,20 @@ class ChandraDeployment:
         self._vllm_server_probe_on_init = bool(vllm_server_probe_on_init)
         self._vllm_server_fallback_to_hf_on_error = bool(vllm_server_fallback_to_hf_on_error)
         self._vllm_server_circuit_breaker_threshold = max(1, int(vllm_server_circuit_breaker_threshold))
+        allowed_media_path = (
+            str(vllm_server_allowed_local_media_path)
+            if vllm_server_allowed_local_media_path is not None
+            else os.getenv("QUERYLAKE_CHANDRA_VLLM_SERVER_ALLOWED_LOCAL_MEDIA_PATH", "").strip()
+        )
+        self._vllm_server_allowed_local_media_path = allowed_media_path or None
         self._vllm_server_consecutive_failures = 0
         self._vllm_server_circuit_open = False
         self._vllm_server_rr_index = 0
         self._vllm_server_rr_lock = threading.Lock()
         self._fallback_to_hf_count = 0
 
-        if any(
-            int(value) != self._fixed_max_new_tokens
-            for value in (
-                max_new_tokens,
-                profile_speed_max_new_tokens,
-                profile_balanced_max_new_tokens,
-                profile_quality_max_new_tokens,
-                adaptive_high_max_new_tokens,
-            )
-        ):
-            logger.warning(
-                "Chandra max_new_tokens runtime knobs are deprecated and ignored; using fixed output token budget=%s.",
-                self._fixed_max_new_tokens,
-            )
+        if self._adaptive_high_max_new_tokens < self._fixed_max_new_tokens:
+            self._adaptive_high_max_new_tokens = self._fixed_max_new_tokens
 
         if self._runtime_backend == "vllm":
             fallback_to_hf = bool(vllm_fallback_to_hf_on_error)
@@ -408,6 +639,9 @@ class ChandraDeployment:
             torch_dtype=self._torch_dtype,
         )
 
+    def runtime_compatibility_snapshot(self) -> Dict[str, Any]:
+        return build_chandra_runtime_compatibility_snapshot(self)
+
     def _probe_vllm_server_health(self) -> None:
         failures: List[str] = []
         for base_url in self._vllm_server_base_urls:
@@ -430,6 +664,7 @@ class ChandraDeployment:
         prompt: Optional[str] = None,
         max_new_tokens: Optional[int] = None,
         max_image_pixels: Optional[int] = None,
+        blocked_phrases: Optional[List[str]] = None,
         profile: Optional[str] = None,
         adaptive_rerun_limit: Optional[int] = None,
         cache_bypass: bool = False,
@@ -443,7 +678,15 @@ class ChandraDeployment:
         else:
             base_settings = self._profile_settings.get(profile_name, self._profile_settings["balanced"])
 
-        request_max_new_tokens = int(self._fixed_max_new_tokens)
+        request_max_new_tokens = int(
+            max_new_tokens
+            if max_new_tokens is not None
+            else base_settings.get("max_new_tokens", self._fixed_max_new_tokens)
+        )
+        request_repetition_penalty = float(base_settings.get("repetition_penalty", 1.0))
+        request_blocked_phrases = tuple(
+            str(item).strip() for item in (blocked_phrases or []) if str(item).strip()
+        )
         request_max_pixels = int(max_image_pixels if max_image_pixels is not None else base_settings["max_image_pixels"])
         if request_max_pixels <= 0:
             request_max_pixels = None
@@ -453,7 +696,9 @@ class ChandraDeployment:
             and max_image_pixels is None
             and self._adaptive_max_reruns_per_batch > 0
         )
-        escalation_max_new_tokens = int(self._fixed_max_new_tokens)
+        escalation_max_new_tokens = int(
+            max(request_max_new_tokens, self._adaptive_high_max_new_tokens)
+        )
         escalation_max_image_pixels = max(
             request_max_pixels or 0,
             self._adaptive_high_max_image_pixels,
@@ -463,17 +708,22 @@ class ChandraDeployment:
 
         request_prompt = prompt or self._prompt
         request_cache_key = None
+        cache_key_build_seconds = 0.0
         if not cache_bypass:
+            cache_key_build_start = time.perf_counter()
             request_cache_key = self._build_cache_key(
                 image=image,
                 prompt=request_prompt,
                 max_new_tokens=request_max_new_tokens,
+                repetition_penalty=request_repetition_penalty,
+                blocked_phrases=request_blocked_phrases,
                 max_image_pixels=request_max_pixels,
                 profile=profile_name,
                 allow_escalation=allow_escalation,
                 escalation_max_new_tokens=escalation_max_new_tokens,
                 escalation_max_image_pixels=escalation_max_image_pixels,
             )
+            cache_key_build_seconds = time.perf_counter() - cache_key_build_start
         if self._cache_enabled and request_cache_key is not None:
             cached = await self._cache_get(request_cache_key)
             if cached is not None:
@@ -483,14 +733,44 @@ class ChandraDeployment:
             image=image,
             prompt=request_prompt,
             max_new_tokens=request_max_new_tokens,
+            repetition_penalty=request_repetition_penalty,
+            blocked_phrases=request_blocked_phrases,
             max_image_pixels=request_max_pixels,
             cache_key=request_cache_key,
             allow_escalation=allow_escalation,
             escalation_max_new_tokens=escalation_max_new_tokens,
             escalation_max_image_pixels=escalation_max_image_pixels,
             adaptive_rerun_limit=max(0, int(adaptive_rerun_limit)) if adaptive_rerun_limit is not None else None,
+            cache_key_build_seconds=cache_key_build_seconds,
         )
         return await self._batcher.submit(request)
+
+    async def transcribe_many(
+        self,
+        images: List[Any],
+        prompt: Optional[str] = None,
+        max_new_tokens: Optional[int] = None,
+        max_image_pixels: Optional[int] = None,
+        blocked_phrases: Optional[List[str]] = None,
+        profile: Optional[str] = None,
+        adaptive_rerun_limit: Optional[int] = None,
+        cache_bypass: bool = False,
+    ) -> List[str]:
+        return await asyncio.gather(
+            *[
+                self.transcribe(
+                    image=image,
+                    prompt=prompt,
+                    max_new_tokens=max_new_tokens,
+                    max_image_pixels=max_image_pixels,
+                    blocked_phrases=blocked_phrases,
+                    profile=profile,
+                    adaptive_rerun_limit=adaptive_rerun_limit,
+                    cache_bypass=cache_bypass,
+                )
+                for image in images
+            ]
+        )
 
     async def _process_batch(self, requests: List[ChandraRequest]) -> List[str]:
         batch_start = time.perf_counter()
@@ -590,6 +870,8 @@ class ChandraDeployment:
                     image=req.image,
                     prompt=req.prompt,
                     max_new_tokens=int(escalation_max_new_tokens),
+                    repetition_penalty=float(req.repetition_penalty),
+                    blocked_phrases=tuple(req.blocked_phrases),
                     max_image_pixels=int(escalation_max_image_pixels) if escalation_max_image_pixels else None,
                 )
                 escalation_requests.append(escalation_req)
@@ -668,15 +950,30 @@ class ChandraDeployment:
 
         if image is None:
             raise ValueError("Image is required")
+        if isinstance(image, ChandraImagePayload):
+            capped = self._cap_image_pixels(image.image, max_image_pixels=max_image_pixels)
+            if capped is image.image:
+                return image
+            return ChandraImagePayload(image=capped, png_bytes=self._encode_png_bytes(capped))
         if isinstance(image, Image.Image):
-            return self._cap_image_pixels(image, max_image_pixels=max_image_pixels)
+            capped = self._cap_image_pixels(image, max_image_pixels=max_image_pixels)
+            return ChandraImagePayload(image=capped, png_bytes=self._encode_png_bytes(capped))
         if isinstance(image, (bytes, bytearray)):
-            return self._cap_image_pixels(Image.open(io.BytesIO(image)).convert("RGB"), max_image_pixels=max_image_pixels)
+            pil_image = Image.open(io.BytesIO(image)).convert("RGB")
+            capped = self._cap_image_pixels(pil_image, max_image_pixels=max_image_pixels)
+            return ChandraImagePayload(image=capped, png_bytes=bytes(image))
         if isinstance(image, str):
             if image.strip().startswith("data:image"):
                 b64 = image.split(",", 1)[-1]
-                return self._cap_image_pixels(Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB"), max_image_pixels=max_image_pixels)
-            return self._cap_image_pixels(Image.open(image).convert("RGB"), max_image_pixels=max_image_pixels)
+                raw_bytes = base64.b64decode(b64)
+                pil_image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
+                capped = self._cap_image_pixels(pil_image, max_image_pixels=max_image_pixels)
+                return ChandraImagePayload(image=capped, png_bytes=raw_bytes)
+            with open(image, "rb") as handle:
+                raw_bytes = handle.read()
+            pil_image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
+            capped = self._cap_image_pixels(pil_image, max_image_pixels=max_image_pixels)
+            return ChandraImagePayload(image=capped, png_bytes=raw_bytes)
         raise ValueError("Unsupported image type for Chandra")
 
     def _cap_image_pixels(self, image, max_image_pixels: Optional[int] = None):
@@ -699,7 +996,7 @@ class ChandraDeployment:
     def _build_size_buckets(self, images: List[Any]) -> List[List[int]]:
         indexed_areas = []
         for idx, image in enumerate(images):
-            width, height = image.size
+            width, height = self._image_size(image)
             indexed_areas.append((idx, max(1, width * height)))
         indexed_areas.sort(key=lambda pair: (pair[1], pair[0]))
 
@@ -736,11 +1033,21 @@ class ChandraDeployment:
     ) -> Tuple[Dict[int, str], List[dict]]:
         outputs: Dict[int, str] = {}
         timings: List[dict] = []
-        token_groups: Dict[int, List[int]] = {}
+        token_groups: Dict[Tuple[int, float, Tuple[str, ...]], List[int]] = {}
         for idx in sorted(indices):
-            token_groups.setdefault(int(requests[idx].max_new_tokens), []).append(idx)
+            token_groups.setdefault(
+                (
+                    int(requests[idx].max_new_tokens),
+                    float(requests[idx].repetition_penalty),
+                    tuple(requests[idx].blocked_phrases),
+                ),
+                [],
+            ).append(idx)
 
-        for token_limit, group_indices in sorted(token_groups.items(), key=lambda entry: entry[0]):
+        for (token_limit, repetition_penalty, blocked_phrases), group_indices in sorted(
+            token_groups.items(),
+            key=lambda entry: (entry[0][0], entry[0][1], entry[0][2]),
+        ):
             group_images = [images_by_index[idx] for idx in group_indices]
             group_prompts = [prompts_by_index[idx] for idx in group_indices]
             group_buckets = self._build_size_buckets(group_images)
@@ -752,12 +1059,16 @@ class ChandraDeployment:
                     images=bucket_images,
                     prompts=bucket_prompts,
                     max_new_tokens=token_limit,
+                    repetition_penalty=repetition_penalty,
+                    blocked_phrases=blocked_phrases,
                     stage_name=stage_name,
                     bucket_id=bucket_id,
                 )
                 for request_idx, text in zip(request_indices, decoded):
                     outputs[request_idx] = text
                 timing["token_limit"] = int(token_limit)
+                timing["repetition_penalty"] = round(float(repetition_penalty), 4)
+                timing["blocked_phrases"] = list(blocked_phrases)
                 timings.append(timing)
         return outputs, timings
 
@@ -766,6 +1077,8 @@ class ChandraDeployment:
         images: List[Any],
         prompts: List[str],
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
         stage_name: str,
         bucket_id: int,
     ) -> Tuple[List[str], dict]:
@@ -774,6 +1087,8 @@ class ChandraDeployment:
                 images=images,
                 prompts=prompts,
                 max_new_tokens=max_new_tokens,
+                repetition_penalty=repetition_penalty,
+                blocked_phrases=blocked_phrases,
                 stage_name=stage_name,
                 bucket_id=bucket_id,
             )
@@ -782,6 +1097,8 @@ class ChandraDeployment:
                 images=images,
                 prompts=prompts,
                 max_new_tokens=max_new_tokens,
+                repetition_penalty=repetition_penalty,
+                blocked_phrases=blocked_phrases,
                 stage_name=stage_name,
                 bucket_id=bucket_id,
             )
@@ -789,6 +1106,8 @@ class ChandraDeployment:
             images=images,
             prompts=prompts,
             max_new_tokens=max_new_tokens,
+            repetition_penalty=repetition_penalty,
+            blocked_phrases=blocked_phrases,
             stage_name=stage_name,
             bucket_id=bucket_id,
         )
@@ -798,6 +1117,8 @@ class ChandraDeployment:
         images: List[Any],
         prompts: List[str],
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
         stage_name: str,
         bucket_id: int,
     ) -> Tuple[List[str], dict]:
@@ -820,9 +1141,10 @@ class ChandraDeployment:
         chat_seconds = time.perf_counter() - chat_start
 
         encode_start = time.perf_counter()
+        pil_images = [self._unwrap_image(image) for image in images]
         inputs = self._processor(  # type: ignore[operator]
             text=chat_texts,
-            images=images,
+            images=pil_images,
             return_tensors="pt",
             padding=True,
         )
@@ -836,7 +1158,20 @@ class ChandraDeployment:
         move_seconds = time.perf_counter() - move_start
 
         generate_start = time.perf_counter()
-        outputs = self._model.generate(**inputs, max_new_tokens=max_new_tokens)  # type: ignore[union-attr]
+        generate_kwargs: Dict[str, Any] = {"max_new_tokens": max_new_tokens}
+        if abs(float(repetition_penalty) - 1.0) > 1e-6:
+            generate_kwargs["repetition_penalty"] = float(repetition_penalty)
+        if blocked_phrases:
+            tokenizer = getattr(self._processor, "tokenizer", None)  # type: ignore[union-attr]
+            if tokenizer is not None and hasattr(tokenizer, "encode"):
+                bad_words_ids = []
+                for phrase in blocked_phrases:
+                    token_ids = tokenizer.encode(str(phrase), add_special_tokens=False)
+                    if token_ids:
+                        bad_words_ids.append(token_ids)
+                if bad_words_ids:
+                    generate_kwargs["bad_words_ids"] = bad_words_ids
+        outputs = self._model.generate(**inputs, **generate_kwargs)  # type: ignore[union-attr]
         generate_seconds = time.perf_counter() - generate_start
 
         decode_start = time.perf_counter()
@@ -847,7 +1182,7 @@ class ChandraDeployment:
         cleaned = [self._clean_output(text, prompt) for text, prompt in zip(decoded, prompts)]
         clean_seconds = time.perf_counter() - clean_start
 
-        bucket_areas = [image.size[0] * image.size[1] for image in images]
+        bucket_areas = [self._image_area(image) for image in images]
         timing = {
             "stage": stage_name,
             "bucket_id": int(bucket_id),
@@ -869,6 +1204,8 @@ class ChandraDeployment:
         images: List[Any],
         prompts: List[str],
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
         stage_name: str,
         bucket_id: int,
     ) -> Tuple[List[str], dict]:
@@ -887,7 +1224,7 @@ class ChandraDeployment:
                         "role": "user",
                         "content": [
                             {"type": "text", "text": prompt},
-                            {"type": "image_pil", "image_pil": image},
+                            {"type": "image_pil", "image_pil": self._unwrap_image(image)},
                         ],
                     }
                 ]
@@ -898,6 +1235,8 @@ class ChandraDeployment:
             max_tokens=int(max_new_tokens),
             temperature=0.0,
             top_p=1.0,
+            repetition_penalty=float(repetition_penalty),
+            bad_words=list(blocked_phrases) if blocked_phrases else None,
         )
         infer_start = time.perf_counter()
         decoded_raw: List[str] = []
@@ -927,7 +1266,7 @@ class ChandraDeployment:
         cleaned = [self._clean_output(text, prompt) for text, prompt in zip(decoded_raw, prompts)]
         clean_seconds = time.perf_counter() - clean_start
 
-        bucket_areas = [image.size[0] * image.size[1] for image in images]
+        bucket_areas = [self._image_area(image) for image in images]
         timing = {
             "stage": stage_name,
             "bucket_id": int(bucket_id),
@@ -946,10 +1285,90 @@ class ChandraDeployment:
 
     @staticmethod
     def _image_to_data_url(image: Any) -> str:
+        if isinstance(image, ChandraImagePayload):
+            if image.png_bytes is not None:
+                png_bytes = bytes(image.png_bytes)
+            else:
+                buffer = io.BytesIO()
+                image.image.save(buffer, format="PNG")
+                png_bytes = buffer.getvalue()
+        else:
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            png_bytes = buffer.getvalue()
+        encoded = base64.b64encode(png_bytes).decode("utf-8")
+        return f"data:image/png;base64,{encoded}"
+
+    def _resolve_vllm_server_local_media_path(self, image: Any) -> Optional[str]:
+        if not isinstance(image, ChandraImagePayload):
+            return None
+        if not image.file_path:
+            return None
+        allowed_root = self._vllm_server_allowed_local_media_path
+        if not allowed_root:
+            return None
+        try:
+            image_path = Path(image.file_path).expanduser().resolve(strict=False)
+            allowed_path = Path(allowed_root).expanduser().resolve(strict=False)
+            if not image_path.exists():
+                return None
+            if image_path == allowed_path or image_path.is_relative_to(allowed_path):
+                return str(image_path)
+        except Exception:
+            return None
+        return None
+
+    @staticmethod
+    def _resolve_vllm_server_media_uuid(image: Any) -> Optional[str]:
+        if isinstance(image, ChandraImagePayload) and image.media_uuid:
+            return str(image.media_uuid)
+        return None
+
+    def _build_vllm_server_image_content(self, image: Any) -> Dict[str, Any]:
+        image_url = self._resolve_vllm_server_local_media_path(image)
+        if image_url is None:
+            image_url = self._image_to_data_url(image)
+        content: Dict[str, Any] = {"type": "image_url", "image_url": {"url": image_url}}
+        media_uuid = self._resolve_vllm_server_media_uuid(image)
+        if media_uuid:
+            content["uuid"] = media_uuid
+        return content
+
+    @staticmethod
+    def _unwrap_image(image: Any) -> Any:
+        if isinstance(image, ChandraImagePayload):
+            return image.image
+        return image
+
+    @staticmethod
+    def _resolve_png_bytes(image: Any) -> bytes:
+        if isinstance(image, ChandraImagePayload):
+            if image.png_bytes is not None:
+                return bytes(image.png_bytes)
+            buffer = io.BytesIO()
+            image.image.save(buffer, format="PNG")
+            return buffer.getvalue()
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
-        encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
-        return f"data:image/png;base64,{encoded}"
+        return buffer.getvalue()
+
+    @staticmethod
+    def _image_size(image: Any) -> Tuple[int, int]:
+        if isinstance(image, ChandraImagePayload):
+            return image.size
+        width, height = getattr(image, "size", (0, 0))
+        return int(width), int(height)
+
+    @classmethod
+    def _image_area(cls, image: Any) -> int:
+        width, height = cls._image_size(image)
+        return max(1, int(width) * int(height))
+
+    @classmethod
+    def _encode_png_bytes(cls, image: Any) -> bytes:
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
 
     @staticmethod
     def _extract_openai_message_content(content: Any) -> str:
@@ -976,6 +1395,8 @@ class ChandraDeployment:
         image: Any,
         prompt: str,
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
     ) -> str:
         selected_base_url = self._next_vllm_server_base_url()
         endpoint = f"{selected_base_url}/chat/completions"
@@ -986,7 +1407,7 @@ class ChandraDeployment:
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt},
-                        {"type": "image_url", "image_url": {"url": self._image_to_data_url(image)}},
+                        self._build_vllm_server_image_content(image),
                     ],
                 }
             ],
@@ -995,6 +1416,10 @@ class ChandraDeployment:
             "top_p": 1.0,
             "stream": False,
         }
+        if abs(float(repetition_penalty) - 1.0) > 1e-6:
+            payload["repetition_penalty"] = float(repetition_penalty)
+        if blocked_phrases:
+            payload["bad_words"] = list(blocked_phrases)
         body = json.dumps(payload).encode("utf-8")
         headers = {"Content-Type": "application/json"}
         if self._vllm_server_api_key:
@@ -1041,6 +1466,8 @@ class ChandraDeployment:
         images: List[Any],
         prompts: List[str],
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
         stage_name: str,
         bucket_id: int,
     ) -> Tuple[List[str], dict]:
@@ -1060,6 +1487,8 @@ class ChandraDeployment:
                     images=images,
                     prompts=prompts,
                     max_new_tokens=max_new_tokens,
+                    repetition_penalty=repetition_penalty,
+                    blocked_phrases=blocked_phrases,
                     stage_name=stage_name,
                     bucket_id=bucket_id,
                 )
@@ -1077,6 +1506,8 @@ class ChandraDeployment:
                         image,
                         prompt,
                         int(max_new_tokens),
+                        float(repetition_penalty),
+                        tuple(blocked_phrases),
                     )
                     for image, prompt in zip(images, prompts)
                 ]
@@ -1100,6 +1531,8 @@ class ChandraDeployment:
                     images=images,
                     prompts=prompts,
                     max_new_tokens=max_new_tokens,
+                    repetition_penalty=repetition_penalty,
+                    blocked_phrases=blocked_phrases,
                     stage_name=stage_name,
                     bucket_id=bucket_id,
                 )
@@ -1200,6 +1633,8 @@ class ChandraDeployment:
         image: Any,
         prompt: str,
         max_new_tokens: int,
+        repetition_penalty: float,
+        blocked_phrases: Tuple[str, ...],
         max_image_pixels: Optional[int],
         profile: str,
         allow_escalation: bool,
@@ -1215,6 +1650,8 @@ class ChandraDeployment:
             "model": self._model_path,
             "prompt": prompt,
             "max_new_tokens": int(max_new_tokens),
+            "repetition_penalty": round(float(repetition_penalty), 6),
+            "blocked_phrases": list(blocked_phrases),
             "max_image_pixels": int(max_image_pixels) if max_image_pixels else None,
             "profile": profile,
             "allow_escalation": bool(allow_escalation),
@@ -1234,10 +1671,25 @@ class ChandraDeployment:
         try:
             if image is None:
                 return None
+            if isinstance(image, ChandraImagePayload):
+                digest = hashlib.sha256()
+                digest.update(str(image.mode).encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(f"{int(image.size[0])}x{int(image.size[1])}".encode("utf-8"))
+                digest.update(b"\0")
+                if image.png_bytes is not None:
+                    digest.update(bytes(image.png_bytes))
+                else:
+                    digest.update(image.image.tobytes())
+                return digest.hexdigest()
             if isinstance(image, Image.Image):
-                buffer = io.BytesIO()
-                image.save(buffer, format="PNG")
-                return hashlib.sha256(buffer.getvalue()).hexdigest()
+                digest = hashlib.sha256()
+                digest.update(str(image.mode).encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(f"{int(image.size[0])}x{int(image.size[1])}".encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(image.tobytes())
+                return digest.hexdigest()
             if isinstance(image, (bytes, bytearray)):
                 return hashlib.sha256(bytes(image)).hexdigest()
             if isinstance(image, str):
@@ -1267,15 +1719,24 @@ class ChandraDeployment:
         escalation_dropped_budget_count: int = 0,
         escalation_dropped_timeout_count: int = 0,
     ) -> None:
-        image_pixels = [image.size[0] * image.size[1] for image in images]
+        image_pixels = [self._image_area(image) for image in images]
         max_tokens = max((req.max_new_tokens for req in requests), default=0)
+        cache_key_build_seconds = [max(0.0, float(req.cache_key_build_seconds)) for req in requests]
         payload = {
             "event": "chandra_batch_timing",
             "runtime_backend": self._runtime_backend,
             "batch_size": len(requests),
             "max_new_tokens": int(max_tokens),
+            "blocked_phrases": sorted({phrase for req in requests for phrase in req.blocked_phrases}),
             "load_ms": round(load_seconds * 1000.0, 2),
             "total_ms": round(total_seconds * 1000.0, 2),
+            "cache_key_build_ms_mean": round((sum(cache_key_build_seconds) / len(cache_key_build_seconds)) * 1000.0, 2)
+            if cache_key_build_seconds
+            else 0.0,
+            "cache_key_build_ms_total": round(sum(cache_key_build_seconds) * 1000.0, 2),
+            "cache_key_build_ms_max": round(max(cache_key_build_seconds) * 1000.0, 2)
+            if cache_key_build_seconds
+            else 0.0,
             "pixel_min": min(image_pixels) if image_pixels else 0,
             "pixel_max": max(image_pixels) if image_pixels else 0,
             "pixel_mean": round(sum(image_pixels) / len(image_pixels), 2) if image_pixels else 0,
@@ -1290,6 +1751,7 @@ class ChandraDeployment:
             "vllm_server_circuit_open": bool(self._vllm_server_circuit_open),
             "vllm_server_consecutive_failures": int(self._vllm_server_consecutive_failures),
             "vllm_server_endpoints": list(self._vllm_server_base_urls),
+            "vllm_server_allowed_local_media_path": self._vllm_server_allowed_local_media_path,
             "escalation_reason_counts": dict(escalation_reason_counts or {}),
             "escalation_dropped_budget_count": int(escalation_dropped_budget_count),
             "escalation_dropped_timeout_count": int(escalation_dropped_timeout_count),
@@ -1318,6 +1780,8 @@ class ChandraDeployment:
         cleaned = "\n".join(lines).strip()
         cleaned = self._unescape_markdown(cleaned)
         cleaned = self._normalize_tables(cleaned)
+        cleaned = self._remove_empty_markdown_images(cleaned)
+        cleaned = self._compact_contents_tables(cleaned)
         if re.search(
             r"</?(?:div|p|br|table|tr|td|th|math|sup|sub|img|ul|ol|li|h[1-6]|pre|code)\b",
             cleaned,
@@ -1439,3 +1903,81 @@ class ChandraDeployment:
             out.append(line)
             i += 1
         return "\n".join(out)
+
+    @staticmethod
+    def _remove_empty_markdown_images(text: str) -> str:
+        if not text:
+            return text
+        lines = text.splitlines()
+        out: List[str] = []
+        placeholder_re = re.compile(r"^\s*!\[[^\]]*\]\(\s*\)\s*$")
+        previous_blank = False
+        for line in lines:
+            if placeholder_re.match(line):
+                continue
+            is_blank = not line.strip()
+            if is_blank and previous_blank:
+                continue
+            out.append(line)
+            previous_blank = is_blank
+        return "\n".join(out).strip()
+
+    @staticmethod
+    def _compact_contents_tables(text: str) -> str:
+        lines = text.splitlines()
+        if not lines:
+            return text
+
+        def _is_contents_context(index: int) -> bool:
+            start = max(0, index - 3)
+            for ctx_line in lines[start:index]:
+                normalized = ctx_line.strip().strip("#* ").lower()
+                if normalized == "contents":
+                    return True
+            return False
+
+        def _looks_like_section(cell: str) -> bool:
+            return bool(re.fullmatch(r"\*{0,2}\s*\d+(?:\.\d+)*\s*\*{0,2}", cell.strip()))
+
+        def _looks_like_page(cell: str) -> bool:
+            return bool(re.fullmatch(r"\*{0,2}\s*\d+\s*\*{0,2}", cell.strip()))
+
+        out: List[str] = []
+        i = 0
+        separator_re = re.compile(r"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)+\|?\s*$")
+        while i < len(lines):
+            line = lines[i]
+            if "|" in line and i + 1 < len(lines) and separator_re.match(lines[i + 1]):
+                table_start = i
+                table_lines = [line, lines[i + 1]]
+                i += 2
+                while i < len(lines) and "|" in lines[i]:
+                    table_lines.append(lines[i])
+                    i += 1
+                if _is_contents_context(table_start):
+                    rows = [row.strip().strip("|").split("|") for row in table_lines]
+                    normalized_rows = [[cell.strip() for cell in row] for row in rows]
+                    if all(len(row) == 3 for row in normalized_rows):
+                        rewritten: List[str] = []
+                        can_rewrite = True
+                        for row_idx, row in enumerate(normalized_rows):
+                            if row_idx == 1:
+                                rewritten.append("| --- | --- |")
+                                continue
+                            first, second, third = row
+                            if row_idx == 0:
+                                rewritten.append("| " + " | ".join(row) + " |")
+                                continue
+                            if not _looks_like_section(first) or not _looks_like_page(third):
+                                can_rewrite = False
+                                break
+                            merged = f"{first} {second}".strip()
+                            rewritten.append(f"| {merged} | {third} |")
+                        if can_rewrite:
+                            out.extend(rewritten)
+                            continue
+                out.extend(table_lines)
+                continue
+            out.append(line)
+            i += 1
+        return "\n".join(out).strip()

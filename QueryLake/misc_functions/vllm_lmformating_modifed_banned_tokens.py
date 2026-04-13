@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise ImportError('vllm is not installed. Please install it with "pip install vllm"')
 from lmformatenforcer import CharacterLevelParser, TokenEnforcer, FormatEnforcerAnalyzer, TokenEnforcerTokenizerData
-from lmformatenforcer.integrations.vllm import build_vllm_token_enforcer_tokenizer_data
+from lmformatenforcer.integrations.transformers import build_token_enforcer_tokenizer_data
 # from lmformatenforcer.tokenizerprefixtree import TokenizerPrefixTree, TokenizerPrefixTreeNode, JsonFreetextTokenCache
 from typing import List, Optional, Union, Tuple, Set
 import math
@@ -43,6 +43,38 @@ class VLLMLogitsProcessor:
             scores[self.banned_tokens] = -math.inf
         
         return scores
+
+
+def build_vllm_token_enforcer_tokenizer_data(
+        tokenizer: Union[vllm.LLM, PreTrainedTokenizerBase, TokenEnforcerTokenizerData],
+        use_bitmask: bool = False,
+        vocab_size: int | None = None,
+    ) -> TokenEnforcerTokenizerData:
+    """
+    Compatibility wrapper for vLLM tokenizer handling.
+
+    lm-format-enforcer's packaged vLLM integration currently assumes an older
+    tokenizer API and hard-imports MistralTokenizer from a path that no longer
+    exists in vLLM 0.17+. QueryLake only needs tokenizer-data extraction, so we
+    normalize the tokenizer object locally and then delegate to the transformers
+    integration.
+    """
+    if isinstance(tokenizer, TokenEnforcerTokenizerData):
+        return tokenizer
+
+    if vocab_size is None and hasattr(tokenizer, "llm_engine"):
+        try:
+            vocab_size = tokenizer.llm_engine.get_model_config().get_vocab_size()
+        except Exception:
+            vocab_size = None
+
+    if hasattr(tokenizer, "get_tokenizer"):
+        tokenizer = tokenizer.get_tokenizer()
+
+    if hasattr(tokenizer, "tokenizer"):
+        tokenizer = tokenizer.tokenizer
+
+    return build_token_enforcer_tokenizer_data(tokenizer, use_bitmask, vocab_size)
 
 # def _add_token_to_tree(token_str: str, token_idx: int, node: TokenizerPrefixTreeNode):
 #     for character in token_str:

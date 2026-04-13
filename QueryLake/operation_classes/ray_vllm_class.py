@@ -1,8 +1,10 @@
 import asyncio
+import inspect
 import logging
 import time
 
 import re, json
+from typing import cast
 
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.engine.async_llm_engine import AsyncLLMEngine
@@ -25,24 +27,22 @@ from huggingface_hub import snapshot_download
 import os
 
 from typing import List, Union, Optional, Dict, Any
-from vllm.entrypoints.llm import ChatCompletionMessageParam, cast, is_list_of, TokensPrompt, TextPrompt, parse_chat_messages, MistralTokenizer
-from vllm.entrypoints.llm import apply_mistral_chat_template, apply_hf_chat_template
-from vllm.transformers_utils.tokenizer import AnyTokenizer
+from vllm.entrypoints.chat_utils import ChatCompletionMessageParam, parse_chat_messages
+from vllm.inputs.data import TokensPrompt, TextPrompt
+from vllm.utils.collection_utils import is_list_of
+from vllm.utils.mistral import is_mistral_tokenizer
 from vllm.config import ModelConfig
 from pydantic import BaseModel
-from vllm.entrypoints.openai.protocol import (
+from vllm.entrypoints.openai.chat_completion.protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
-    BeamSearchParams,
-    RequestResponseMetadata,
 )
+from vllm.sampling_params import BeamSearchParams
+from vllm.entrypoints.openai.engine.protocol import RequestResponseMetadata
 from vllm.outputs import RequestOutput
-from vllm.entrypoints.openai.serving_chat import (
-    OpenAIServingChat,
-    maybe_serialize_tool_calls,
-    truncate_tool_call_ids
-)
-from vllm.entrypoints.openai.serving_models import OpenAIServingModels, BaseModelPath
+from vllm.entrypoints.openai.chat_completion.serving import OpenAIServingChat
+from vllm.entrypoints.openai.models.serving import OpenAIServingModels
+from vllm.entrypoints.openai.models.protocol import BaseModelPath
 from fastapi import Request
 from vllm.usage.usage_lib import UsageContext
 import traceback
@@ -50,6 +50,56 @@ from vllm.lora.request import LoRARequest
 from QueryLake.operation_classes.runtime_introspection import RuntimeIntrospectionMixin
 
 logger = logging.getLogger(__name__)
+AnyTokenizer = Any
+
+
+def maybe_serialize_tool_calls(_request) -> None:
+    return None
+
+
+def truncate_tool_call_ids(_request) -> None:
+    return None
+
+
+def _apply_chat_template_compat(
+    tokenizer: AnyTokenizer,
+    conversation: list[dict[str, Any]],
+    chat_template: str,
+    add_generation_prompt: bool = True,
+    continue_final_message: bool = False,
+    tools: Optional[List[Dict[str, Any]]] = None,
+) -> Union[str, List[int]]:
+    """
+    vLLM 0.17 removed the older entrypoint chat-template helpers that this file
+    imported directly. QueryLake only needs prompt construction here, so we
+    normalize onto the underlying tokenizer's apply_chat_template method.
+    """
+    base_tokenizer = tokenizer.get_tokenizer() if hasattr(tokenizer, "get_tokenizer") else tokenizer
+    if hasattr(base_tokenizer, "tokenizer"):
+        base_tokenizer = base_tokenizer.tokenizer
+
+    if not hasattr(base_tokenizer, "apply_chat_template"):
+        raise ValueError("Tokenizer does not support apply_chat_template.")
+
+    template_kwargs = {
+        "chat_template": chat_template,
+        "tokenize": False,
+        "add_generation_prompt": add_generation_prompt,
+    }
+    if continue_final_message:
+        template_kwargs["continue_final_message"] = continue_final_message
+    if tools is not None:
+        template_kwargs["tools"] = tools
+
+    try:
+        return base_tokenizer.apply_chat_template(conversation, **template_kwargs)
+    except TypeError:
+        template_kwargs.pop("continue_final_message", None)
+        try:
+            return base_tokenizer.apply_chat_template(conversation, **template_kwargs)
+        except TypeError:
+            template_kwargs.pop("tools", None)
+            return base_tokenizer.apply_chat_template(conversation, **template_kwargs)
 
 def encode_chat(
     llm_engine: AsyncLLMEngine,
@@ -86,33 +136,20 @@ def encode_chat(
         # NOTE: _parse_chat_message_content_parts() currently doesn't
         # handle mm_processor_kwargs, since there is no implementation in
         # the chat message parsing for it.
-        model_config: ModelConfig = llm_engine.engine.get_model_config()
+        model_config: ModelConfig = llm_engine.model_config
 
         conversation, mm_data = parse_chat_messages(
             msgs, model_config, tokenizer, "openai")
 
-        prompt_data: Union[str, List[int]]
-        if isinstance(tokenizer, MistralTokenizer):
-            prompt_data = apply_mistral_chat_template(
-                tokenizer,
-                messages=msgs,
-                chat_template=chat_template,
-                add_generation_prompt=add_generation_prompt,
-                continue_final_message=continue_final_message,
-                tools=tools,
-            )
-        else:
-            
-            logger.debug("Conversation parsed for chat template: %s", conversation)
-            
-            prompt_data = apply_hf_chat_template(
-                tokenizer,
-                conversation=conversation,
-                chat_template=chat_template,
-                add_generation_prompt=add_generation_prompt,
-                continue_final_message=continue_final_message,
-                tools=tools,
-            )
+        logger.debug("Conversation parsed for chat template: %s", conversation)
+        prompt_data: Union[str, List[int]] = _apply_chat_template_compat(
+            tokenizer,
+            conversation=conversation,
+            chat_template=chat_template,
+            add_generation_prompt=add_generation_prompt,
+            continue_final_message=continue_final_message,
+            tools=tools,
+        )
 
         prompt: Union[TokensPrompt, TextPrompt]
         if is_list_of(prompt_data, int):
@@ -192,7 +229,7 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
             **kwargs,
             "gpu_memory_utilization": 0.4, # This should match the ray GPU allocation
             "enforce_eager": True,
-            "disable_log_requests": True,  # Had to mute this thing because it was spamming the logs.
+            "enable_log_requests": False,  # Had to mute this thing because it was spamming the logs.
             **(self.model_config_t.engine_args if not self.model_config_t.engine_args is None else {})
         }
         
@@ -259,8 +296,21 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
             )
         # --- LoRA Configuration End ---
 
-        args = AsyncEngineArgs( 
-            **engine_args_make,
+        async_engine_arg_names = set(inspect.signature(AsyncEngineArgs).parameters.keys())
+        filtered_engine_args = {
+            key: value for key, value in engine_args_make.items()
+            if key in async_engine_arg_names
+        }
+        dropped_engine_args = sorted(set(engine_args_make.keys()) - set(filtered_engine_args.keys()))
+        if dropped_engine_args:
+            logger.warning(
+                "Dropping unsupported vLLM engine args for %s: %s",
+                self.model_config_t.id,
+                ", ".join(dropped_engine_args),
+            )
+
+        args = AsyncEngineArgs(
+            **filtered_engine_args,
             model=self.model_config_t.system_path,
         )
         self.context_size_t = args.max_model_len
@@ -279,14 +329,17 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
         
         logger.info("Initializing vLLM deployment for model %s", self.model_config_t.id)
         
-        self.engine_t = AsyncLLMEngine.from_engine_args(args, usage_context=UsageContext.OPENAI_API_SERVER)
-        self.tokenizer_t = self.engine_t.engine.get_tokenizer()
+        self.engine_t = AsyncLLMEngine.from_engine_args(
+            args,
+            usage_context=UsageContext.OPENAI_API_SERVER,
+        )
+        self.tokenizer_t = self.engine_t.get_tokenizer()
         # tokenizer_tmp = self.engine.engine.tokenizer
         # self.special_token_ids = tokenizer_tmp.all_special_ids
         # self.space_tokens = [get_token_id(tokenizer_tmp, e) for e in ["\n", "\t", "\r", " \r"]]
-        self.tokenizer_data_t = build_vllm_token_enforcer_tokenizer_data(self.engine_t.engine)
-        
-        self.vllm_model_config_t = self.engine_t.engine.get_model_config()
+        self.tokenizer_data_t = build_vllm_token_enforcer_tokenizer_data(self.engine_t)
+
+        self.vllm_model_config_t = self.engine_t.model_config
         
         self.base_model_paths_t = [
             BaseModelPath(name=model_config.id, model_path=model_config.system_path)
@@ -294,13 +347,11 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
         
         self.openai_serving_models_t = OpenAIServingModels(
             engine_client=self.engine_t,
-            model_config=self.vllm_model_config_t,
             base_model_paths=self.base_model_paths_t,
         )
         
         super().__init__(
             engine_client=self.engine_t,
-            model_config=self.vllm_model_config_t,
             models=self.openai_serving_models_t,
             response_role="assistant",
             request_logger=None,
@@ -721,7 +772,7 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
                     return error_generator_protocol(self.create_error_response(
                         "tool_choice = \"required\" is not supported!"))
 
-                if isinstance(tokenizer, MistralTokenizer):
+                if is_mistral_tokenizer(tokenizer):
                     # because of issues with pydantic we need to potentially
                     # re-serialize the tool_calls field of the request
                     # for more info: see comment in `maybe_serialize_tool_calls`
@@ -730,7 +781,7 @@ class VLLMDeploymentClass(RuntimeIntrospectionMixin, OpenAIServingChat):
 
                 if (request.tool_choice == "auto" and
                         not (self.enable_auto_tools and tool_parser is not None)
-                        and not isinstance(tokenizer, MistralTokenizer)):
+                        and not is_mistral_tokenizer(tokenizer)):
                     # for hf tokenizers, "auto" tools requires
                     # --enable-auto-tool-choice and --tool-call-parser
                     return error_generator_protocol(self.create_error_response(

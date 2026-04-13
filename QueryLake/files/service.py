@@ -16,6 +16,12 @@ from sqlmodel import Session, select
 from QueryLake.files.object_store import LocalCASObjectStore, ObjectStore
 from QueryLake.database import sql_db_tables as T
 from QueryLake.observability import metrics
+from QueryLake.operation_classes.ray_chandra_class import (
+    ChandraImagePayload,
+    analyze_ocr_page_complexity,
+    resolve_pdf_render_scale,
+    resolve_profile_max_image_pixels,
+)
 from QueryLake.runtime.sse import SessionStreamHub
 from QueryLake.api.single_user_auth import get_user
 try:
@@ -143,10 +149,15 @@ class FilesRuntimeService:
         self.umbrella = umbrella
         self._proc_sem = asyncio.Semaphore(2)
         self._render_cache: "OrderedDict[str, str]" = OrderedDict()
+        self._render_image_cache: "OrderedDict[str, ChandraImagePayload]" = OrderedDict()
         self._render_cache_lock = asyncio.Lock()
         self._render_cache_max_entries = max(
             1,
             int(os.getenv("QUERYLAKE_CHANDRA_RENDER_CACHE_MAX_ENTRIES", "512") or 512),
+        )
+        self._render_image_cache_max_entries = max(
+            1,
+            int(os.getenv("QUERYLAKE_CHANDRA_RENDER_IMAGE_CACHE_MAX_ENTRIES", "128") or 128),
         )
         self._default_chandra_profile = os.getenv("QUERYLAKE_CHANDRA_PROFILE", "balanced").strip() or "balanced"
         self._default_chandra_dpi = max(
@@ -173,8 +184,17 @@ class FilesRuntimeService:
         self._pdf_text_min_coverage = min(1.0, max(0.0, self._pdf_text_min_coverage))
 
     @staticmethod
-    def _compute_render_cache_key(bytes_cas: str, dpi: int, page_num: int) -> str:
-        payload = f"{bytes_cas}|dpi={dpi}|page={page_num}".encode("utf-8")
+    def _compute_render_cache_key(
+        bytes_cas: str,
+        dpi: int,
+        page_num: int,
+        *,
+        profile: str,
+        max_image_pixels: Optional[int],
+    ) -> str:
+        payload = (
+            f"{bytes_cas}|dpi={dpi}|page={page_num}|profile={profile}|max_image_pixels={max_image_pixels or 0}"
+        ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
 
     async def _render_cache_get(self, key: str) -> Optional[str]:
@@ -191,6 +211,36 @@ class FilesRuntimeService:
             self._render_cache.move_to_end(key)
             while len(self._render_cache) > self._render_cache_max_entries:
                 self._render_cache.popitem(last=False)
+
+    async def _render_image_cache_get(self, key: str) -> Optional[ChandraImagePayload]:
+        async with self._render_cache_lock:
+            image = self._render_image_cache.get(key)
+            if image is None:
+                return None
+            self._render_image_cache.move_to_end(key)
+            return image.copy()
+
+    async def _render_image_cache_set(self, key: str, image: ChandraImagePayload) -> None:
+        async with self._render_cache_lock:
+            self._render_image_cache[key] = image
+            self._render_image_cache.move_to_end(key)
+            while len(self._render_image_cache) > self._render_image_cache_max_entries:
+                self._render_image_cache.popitem(last=False)
+
+    def _resolve_local_render_file_path(self, image_cas: str) -> Optional[str]:
+        path_for = getattr(self.store, "path_for", None)
+        if not callable(path_for):
+            return None
+        try:
+            path = path_for(image_cas)
+        except Exception:
+            return None
+        if path is None:
+            return None
+        try:
+            return str(path.resolve())
+        except Exception:
+            return str(path)
 
     async def _select_chandra_handle(self) -> Optional[Any]:
         handles = getattr(self.umbrella, "chandra_handles", None) if self.umbrella else None
@@ -358,7 +408,207 @@ class FilesRuntimeService:
         for page_idx, page_text in enumerate(page_texts, start=1):
             body = page_text if page_text else ""
             page_blocks.append(f"## Page {page_idx}\n\n{body}".strip())
+        meta.update(
+            {
+                "output_contract": "text_layer_fastpath_markdown",
+                "page_source_by_page": {
+                    f"{page_idx:04d}": "text_layer"
+                    for page_idx in range(1, len(page_texts) + 1)
+                },
+                "page_source_counts": {
+                    "text_layer": len(page_texts),
+                    "ocr": 0,
+                },
+            }
+        )
         return "\n\n".join(page_blocks), meta
+
+    @staticmethod
+    def _build_page_source_by_page(
+        page_count: int,
+        *,
+        text_layer_page_indices: Optional[set[int]] = None,
+    ) -> Dict[str, str]:
+        text_layer_page_indices = text_layer_page_indices or set()
+        return {
+            f"{page_num:04d}": ("text_layer" if (page_num - 1) in text_layer_page_indices else "ocr")
+            for page_num in range(1, max(0, int(page_count)) + 1)
+        }
+
+    @staticmethod
+    def _resolve_pdf_output_contract(
+        page_count: int,
+        *,
+        text_layer_pages: int,
+    ) -> str:
+        total_pages = max(0, int(page_count))
+        selected = max(0, int(text_layer_pages))
+        if selected <= 0:
+            return "ocr_markdown"
+        if selected >= total_pages and total_pages > 0:
+            return "text_layer_fastpath_markdown"
+        return "mixed_text_layer_fastpath_markdown"
+
+    async def _process_pdf_with_chandra_pages(
+        self,
+        data: bytes,
+        bytes_cas: str,
+        *,
+        profile: str,
+        dpi: int,
+        concurrency: int,
+        page_text_overrides: Optional[Dict[int, str]] = None,
+    ) -> Tuple[List[str], Dict[str, Any]]:
+        from io import BytesIO
+        from PIL import Image
+        import pypdfium2 as pdfium
+
+        page_text_overrides = page_text_overrides or {}
+
+        pdf_bytes = BytesIO(data)
+        pdf = pdfium.PdfDocument(pdf_bytes)
+        page_count = len(pdf)
+        base_scale = float(dpi) / 72.0
+        target_max_image_pixels = resolve_profile_max_image_pixels(profile)
+
+        ocr_jobs: List[Tuple[int, Any]] = []
+        render_hits = 0
+        render_misses = 0
+        render_capped_pages = 0
+        page_complexity_counts: Dict[str, int] = {"simple": 0, "mixed": 0, "complex": 0}
+        page_complexity_by_page: Dict[str, Dict[str, Any]] = {}
+        outputs: List[str] = [""] * page_count
+
+        for page_idx, text_override in page_text_overrides.items():
+            if 0 <= int(page_idx) < page_count:
+                outputs[int(page_idx)] = str(text_override or "")
+
+        for page_idx in range(page_count):
+            if page_idx in page_text_overrides:
+                continue
+            page_num = page_idx + 1
+            cache_key = self._compute_render_cache_key(
+                bytes_cas,
+                dpi,
+                page_num,
+                profile=profile,
+                max_image_pixels=target_max_image_pixels,
+            )
+            cached_cas = await self._render_cache_get(cache_key)
+            if cached_cas is not None:
+                cached_image = await self._render_image_cache_get(cache_key)
+                if cached_image is not None:
+                    render_hits += 1
+                    complexity = analyze_ocr_page_complexity(cached_image)
+                    page_complexity_counts[complexity["class"]] = page_complexity_counts.get(complexity["class"], 0) + 1
+                    page_complexity_by_page[f"{page_num:04d}"] = complexity
+                    ocr_jobs.append((page_idx, cached_image))
+                    continue
+                image_bytes = self.store.get_bytes(cached_cas)
+                if image_bytes is not None:
+                    render_hits += 1
+                    image = Image.open(BytesIO(image_bytes)).convert("RGB")
+                    file_path = self._resolve_local_render_file_path(cached_cas)
+                    payload = ChandraImagePayload(
+                        image=image,
+                        png_bytes=image_bytes,
+                        file_path=file_path,
+                        media_uuid=cached_cas,
+                    )
+                    complexity = analyze_ocr_page_complexity(payload)
+                    page_complexity_counts[complexity["class"]] = page_complexity_counts.get(complexity["class"], 0) + 1
+                    page_complexity_by_page[f"{page_num:04d}"] = complexity
+                    await self._render_image_cache_set(cache_key, payload)
+                    ocr_jobs.append((page_idx, payload))
+                    continue
+            page = pdf[page_idx]
+            page_width, page_height = page.get_size()
+            render_scale = resolve_pdf_render_scale(
+                page_width,
+                page_height,
+                dpi=dpi,
+                max_image_pixels=target_max_image_pixels,
+            )
+            if render_scale < (base_scale - 1e-6):
+                render_capped_pages += 1
+            image = page.render(scale=render_scale).to_pil().convert("RGB")
+            page.close()
+            render_misses += 1
+            target = BytesIO()
+            image.save(target, format="PNG")
+            png_bytes = target.getvalue()
+            image_cas = self.store.put_bytes(png_bytes)
+            await self._render_cache_set(cache_key, image_cas)
+            payload = ChandraImagePayload(
+                image=image,
+                png_bytes=png_bytes,
+                file_path=self._resolve_local_render_file_path(image_cas),
+                media_uuid=image_cas,
+            )
+            complexity = analyze_ocr_page_complexity(payload)
+            page_complexity_counts[complexity["class"]] = page_complexity_counts.get(complexity["class"], 0) + 1
+            page_complexity_by_page[f"{page_num:04d}"] = complexity
+            await self._render_image_cache_set(cache_key, payload)
+            ocr_jobs.append((page_idx, payload))
+        pdf.close()
+
+        if ocr_jobs:
+            handle = await self._select_chandra_handle()
+            if handle is None:
+                raise RuntimeError("No Chandra handle available.")
+            batch_method = getattr(handle, "transcribe_many", None)
+            if batch_method is not None and len(ocr_jobs) > 1:
+                batch_images = [img for _, img in ocr_jobs]
+                batch_outputs = await batch_method.remote(
+                    images=batch_images,
+                    profile=profile,
+                )
+                if len(batch_outputs) != len(ocr_jobs):
+                    raise RuntimeError(
+                        f"Chandra batch output length mismatch ({len(batch_outputs)} != {len(ocr_jobs)})."
+                    )
+                for (page_index, _), text in zip(ocr_jobs, batch_outputs):
+                    outputs[page_index] = text
+            else:
+                semaphore = asyncio.Semaphore(max(1, int(concurrency)))
+
+                async def _run_page(page_index: int, image_obj: Any) -> None:
+                    async with semaphore:
+                        outputs[page_index] = await handle.transcribe.remote(
+                            image=image_obj,
+                            profile=profile,
+                        )
+
+                await asyncio.gather(*[_run_page(idx, img) for idx, img in ocr_jobs])
+
+        page_source_by_page = self._build_page_source_by_page(
+            page_count,
+            text_layer_page_indices=set(int(idx) for idx in page_text_overrides.keys()),
+        )
+        return outputs, {
+            "engine": "chandra",
+            "profile": profile,
+            "pages": page_count,
+            "ocr_pages": len(ocr_jobs),
+            "text_layer_pages": len(page_text_overrides),
+            "output_contract": self._resolve_pdf_output_contract(
+                page_count,
+                text_layer_pages=len(page_text_overrides),
+            ),
+            "page_source_by_page": page_source_by_page,
+            "page_source_counts": {
+                "text_layer": len(page_text_overrides),
+                "ocr": len(ocr_jobs),
+            },
+            "render_cache_hits": render_hits,
+            "render_cache_misses": render_misses,
+            "render_capped_pages": render_capped_pages,
+            "render_cache_size": len(self._render_cache),
+            "render_dpi": dpi,
+            "render_target_max_image_pixels": target_max_image_pixels,
+            "page_complexity_counts": page_complexity_counts,
+            "page_complexity_by_page": page_complexity_by_page,
+        }
 
     async def _process_pdf_with_chandra(
         self,
@@ -370,77 +620,16 @@ class FilesRuntimeService:
         concurrency: int,
         page_text_overrides: Optional[Dict[int, str]] = None,
     ) -> Tuple[str, Dict[str, Any]]:
-        from io import BytesIO
-        from PIL import Image
-        import pypdfium2 as pdfium
-
-        page_text_overrides = page_text_overrides or {}
-
-        pdf_bytes = BytesIO(data)
-        pdf = pdfium.PdfDocument(pdf_bytes)
-        page_count = len(pdf)
-        scale = float(dpi) / 72.0
-
-        ocr_jobs: List[Tuple[int, Any]] = []
-        render_hits = 0
-        render_misses = 0
-        outputs: List[str] = [""] * page_count
-
-        for page_idx, text_override in page_text_overrides.items():
-            if 0 <= int(page_idx) < page_count:
-                outputs[int(page_idx)] = str(text_override or "")
-
-        for page_idx in range(page_count):
-            if page_idx in page_text_overrides:
-                continue
-            page_num = page_idx + 1
-            cache_key = self._compute_render_cache_key(bytes_cas, dpi, page_num)
-            cached_cas = await self._render_cache_get(cache_key)
-            if cached_cas is not None:
-                image_bytes = self.store.get_bytes(cached_cas)
-                if image_bytes is not None:
-                    render_hits += 1
-                    ocr_jobs.append((page_idx, Image.open(BytesIO(image_bytes)).convert("RGB")))
-                    continue
-            page = pdf[page_idx]
-            image = page.render(scale=scale).to_pil().convert("RGB")
-            page.close()
-            render_misses += 1
-            target = BytesIO()
-            image.save(target, format="PNG")
-            image_cas = self.store.put_bytes(target.getvalue())
-            await self._render_cache_set(cache_key, image_cas)
-            ocr_jobs.append((page_idx, image))
-        pdf.close()
-
-        if ocr_jobs:
-            handle = await self._select_chandra_handle()
-            if handle is None:
-                raise RuntimeError("No Chandra handle available.")
-
-            semaphore = asyncio.Semaphore(max(1, int(concurrency)))
-
-            async def _run_page(page_index: int, image_obj: Any) -> None:
-                async with semaphore:
-                    outputs[page_index] = await handle.transcribe.remote(
-                        image=image_obj,
-                        profile=profile,
-                    )
-
-            await asyncio.gather(*[_run_page(idx, img) for idx, img in ocr_jobs])
-
+        outputs, meta = await self._process_pdf_with_chandra_pages(
+            data,
+            bytes_cas,
+            profile=profile,
+            dpi=dpi,
+            concurrency=concurrency,
+            page_text_overrides=page_text_overrides,
+        )
         full_text = "\n\n".join(outputs)
-        return full_text, {
-            "engine": "chandra",
-            "profile": profile,
-            "pages": page_count,
-            "ocr_pages": len(ocr_jobs),
-            "text_layer_pages": len(page_text_overrides),
-            "render_cache_hits": render_hits,
-            "render_cache_misses": render_misses,
-            "render_cache_size": len(self._render_cache),
-            "render_dpi": dpi,
-        }
+        return full_text, meta
 
     # ------------------
     # Access control

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -12,6 +13,10 @@ from typing import Dict, List, Tuple
 
 
 WORD_RE = re.compile(r"[A-Za-z0-9_]+")
+MARKDOWN_IMAGE_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
+HTML_IMG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+BLANK_LINES_RE = re.compile(r"\n{3,}")
+BULLET_RUN_RE = re.compile(r"^([\-*+]\s+){2,}", re.MULTILINE)
 
 
 @dataclass
@@ -42,6 +47,26 @@ class PageMetrics:
         }
 
 
+@dataclass
+class NormalizationStats:
+    markdown_images_removed: int
+    html_images_removed: int
+
+    def as_dict(self) -> Dict[str, int]:
+        return {
+            "markdown_images_removed": self.markdown_images_removed,
+            "html_images_removed": self.html_images_removed,
+        }
+
+
+@dataclass
+class ComparisonSurface:
+    name: str
+    results: List[PageMetrics]
+    aggregate: Dict[str, float]
+    recommendation: Dict[str, str]
+
+
 def _read_pages(directory: Path) -> Dict[str, str]:
     if not directory.exists() or not directory.is_dir():
         raise FileNotFoundError(f"Directory does not exist: {directory}")
@@ -66,7 +91,6 @@ def _word_jaccard(a: str, b: str) -> float:
 
 
 def _sequence_ratio(a: str, b: str) -> float:
-    # Using Python stdlib keeps this script dependency-light.
     import difflib
 
     return difflib.SequenceMatcher(a=a, b=b).ratio()
@@ -137,17 +161,59 @@ def _aggregate(results: List[PageMetrics]) -> Dict[str, float]:
     }
 
 
+def _failure_fingerprint(results: List[PageMetrics]) -> Dict[str, object]:
+    under_generated_pages = [m.page for m in results if m.char_ratio < 0.8]
+    over_generated_pages = [m.page for m in results if m.char_ratio > 1.2]
+    low_sequence_pages = [m.page for m in results if m.sequence_ratio < 0.75]
+    table_expansion_pages = [m.page for m in results if m.markdown_table_row_delta >= 3]
+    structural_pages = [
+        m.page
+        for m in results
+        if (m.code_fence_delta + m.html_table_delta + m.html_div_delta + m.markdown_table_row_delta) >= 4
+    ]
+    return {
+        "under_generated_pages": under_generated_pages,
+        "over_generated_pages": over_generated_pages,
+        "low_sequence_pages": low_sequence_pages,
+        "table_expansion_pages": table_expansion_pages,
+        "high_structural_drift_pages": structural_pages,
+        "counts": {
+            "under_generated_pages": len(under_generated_pages),
+            "over_generated_pages": len(over_generated_pages),
+            "low_sequence_pages": len(low_sequence_pages),
+            "table_expansion_pages": len(table_expansion_pages),
+            "high_structural_drift_pages": len(structural_pages),
+        },
+    }
+
+
 def _recommendation(agg: Dict[str, float]) -> Dict[str, str]:
-    # Conservative heuristic gates for quick triage.
     seq = agg["sequence_ratio_mean"]
     jac = agg["jaccard_words_mean"]
+    char_mean = agg["char_ratio_mean"]
     p10 = agg["char_ratio_p10"]
     p90 = agg["char_ratio_p90"]
+    structure_mean = agg["structure_penalty_mean"]
     structure = agg["structure_penalty_max"]
-    if seq >= 0.84 and jac >= 0.78 and p10 >= 0.65 and p90 <= 1.45 and structure <= 12:
+    if (
+        seq >= 0.84
+        and jac >= 0.78
+        and char_mean <= 1.12
+        and p10 >= 0.65
+        and p90 <= 1.45
+        and structure_mean <= 2.5
+        and structure <= 12
+    ):
         verdict = "pass"
         note = "Candidate is close enough to baseline for default traffic with manual spot-check."
-    elif seq >= 0.75 and jac >= 0.68 and p10 >= 0.55 and structure <= 24:
+    elif (
+        seq >= 0.75
+        and jac >= 0.68
+        and char_mean <= 1.35
+        and p10 >= 0.55
+        and structure_mean <= 6.0
+        and structure <= 24
+    ):
         verdict = "warn"
         note = "Candidate is likely usable for latency-priority mode but not as default."
     else:
@@ -156,15 +222,56 @@ def _recommendation(agg: Dict[str, float]) -> Dict[str, str]:
     return {"verdict": verdict, "note": note}
 
 
+def _normalize_text(text: str) -> Tuple[str, NormalizationStats]:
+    markdown_images_removed = len(MARKDOWN_IMAGE_RE.findall(text))
+    html_images_removed = len(HTML_IMG_RE.findall(text))
+    normalized = MARKDOWN_IMAGE_RE.sub("[IMAGE]", text)
+    normalized = HTML_IMG_RE.sub("[IMAGE]", normalized)
+    normalized = BULLET_RUN_RE.sub("- ", normalized)
+    normalized = normalized.replace("\r\n", "\n").replace("\r", "\n")
+    normalized = BLANK_LINES_RE.sub("\n\n", normalized)
+    normalized = "\n".join(line.rstrip() for line in normalized.splitlines()).strip()
+    return normalized, NormalizationStats(
+        markdown_images_removed=markdown_images_removed,
+        html_images_removed=html_images_removed,
+    )
+
+
+def _build_surface(name: str, baseline_pages: Dict[str, str], candidate_pages: Dict[str, str], shared_pages: List[str]) -> ComparisonSurface:
+    rows: List[PageMetrics] = []
+    for page in shared_pages:
+        rows.append(_page_metrics(page, baseline_pages[page], candidate_pages[page]))
+    aggregate = _aggregate(rows)
+    recommendation = _recommendation(aggregate)
+    return ComparisonSurface(name=name, results=rows, aggregate=aggregate, recommendation=recommendation)
+
+
+def _directory_sha256(directory: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(directory.glob("*.md")):
+        digest.update(path.name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare Chandra per-page markdown outputs.")
     parser.add_argument("--baseline-dir", required=True, help="Directory of baseline per-page markdown files.")
     parser.add_argument("--candidate-dir", required=True, help="Directory of candidate per-page markdown files.")
     parser.add_argument("--out-json", default=None, help="Optional JSON output path.")
+    parser.add_argument(
+        "--emit-normalized-pages",
+        action="store_true",
+        help="Include normalized per-page metrics in the JSON output.",
+    )
     args = parser.parse_args()
 
-    baseline_pages = _read_pages(Path(args.baseline_dir))
-    candidate_pages = _read_pages(Path(args.candidate_dir))
+    baseline_dir = Path(args.baseline_dir)
+    candidate_dir = Path(args.candidate_dir)
+    baseline_pages = _read_pages(baseline_dir)
+    candidate_pages = _read_pages(candidate_dir)
 
     shared_pages = sorted(set(baseline_pages).intersection(candidate_pages))
     if not shared_pages:
@@ -173,22 +280,56 @@ def main() -> None:
     missing_from_candidate = sorted(set(baseline_pages).difference(candidate_pages))
     missing_from_baseline = sorted(set(candidate_pages).difference(baseline_pages))
 
-    rows: List[PageMetrics] = []
-    for page in shared_pages:
-        rows.append(_page_metrics(page, baseline_pages[page], candidate_pages[page]))
+    raw_surface = _build_surface("raw", baseline_pages, candidate_pages, shared_pages)
 
-    aggregate = _aggregate(rows)
-    recommendation = _recommendation(aggregate)
+    normalized_baseline_pages: Dict[str, str] = {}
+    normalized_candidate_pages: Dict[str, str] = {}
+    normalization_stats: Dict[str, Dict[str, Dict[str, int]]] = {}
+    for page in shared_pages:
+        normalized_baseline, baseline_stats = _normalize_text(baseline_pages[page])
+        normalized_candidate, candidate_stats = _normalize_text(candidate_pages[page])
+        normalized_baseline_pages[page] = normalized_baseline
+        normalized_candidate_pages[page] = normalized_candidate
+        normalization_stats[page] = {
+            "baseline": baseline_stats.as_dict(),
+            "candidate": candidate_stats.as_dict(),
+        }
+
+    normalized_surface = _build_surface(
+        "normalized",
+        normalized_baseline_pages,
+        normalized_candidate_pages,
+        shared_pages,
+    )
+
     report = {
-        "baseline_dir": str(Path(args.baseline_dir)),
-        "candidate_dir": str(Path(args.candidate_dir)),
+        "baseline_dir": str(baseline_dir),
+        "candidate_dir": str(candidate_dir),
         "shared_pages": len(shared_pages),
         "missing_from_candidate": missing_from_candidate,
         "missing_from_baseline": missing_from_baseline,
-        "aggregate": aggregate,
-        "recommendation": recommendation,
-        "pages": [row.as_dict() for row in rows],
+        "baseline_dir_sha256": _directory_sha256(baseline_dir),
+        "candidate_dir_sha256": _directory_sha256(candidate_dir),
+        "aggregate": raw_surface.aggregate,
+        "recommendation": raw_surface.recommendation,
+        "failure_fingerprint": _failure_fingerprint(raw_surface.results),
+        "pages": [row.as_dict() for row in raw_surface.results],
+        "normalized_aggregate": normalized_surface.aggregate,
+        "normalized_recommendation": normalized_surface.recommendation,
+        "normalized_failure_fingerprint": _failure_fingerprint(normalized_surface.results),
+        "normalization": {
+            "strategy": {
+                "markdown_images": "replace with [IMAGE] placeholder",
+                "html_images": "replace with [IMAGE] placeholder",
+                "bullet_runs": "collapse repeated list markers to '- '",
+                "blank_lines": "collapse 3+ blank lines to 2",
+                "line_endings": "normalize to LF and trim trailing spaces",
+            },
+            "per_page_stats": normalization_stats,
+        },
     }
+    if args.emit_normalized_pages:
+        report["normalized_pages"] = [row.as_dict() for row in normalized_surface.results]
 
     if args.out_json:
         out_path = Path(args.out_json)

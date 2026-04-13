@@ -11,7 +11,28 @@ from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 import httpx
 
 from .errors import QueryLakeAPIError, QueryLakeHTTPStatusError, QueryLakeTransportError
-from .models import HybridSearchOptions, SearchResultChunk, UploadDirectoryOptions
+from .models import (
+    BackendConnectivitySummary,
+    CapabilitiesSummary,
+    HybridSearchOptions,
+    ProfileBringupSummary,
+    ReadyzSummary,
+    ProfileDiagnosticsSummary,
+    ProjectionDiagnosticsSummary,
+    ProjectionPlanExplainSummary,
+    ProjectionRefreshExecutionReportSummary,
+    RetrievalPlanExplainSummary,
+    SearchResultChunk,
+    UploadDirectoryOptions,
+    parse_capabilities_summary,
+    parse_profile_bringup_summary,
+    parse_profile_diagnostics_summary,
+    parse_readyz_summary,
+    parse_projection_diagnostics_summary,
+    parse_projection_plan_explain_summary,
+    parse_projection_refresh_execution_report_summary,
+    parse_retrieval_plan_explain_summary,
+)
 
 AuthOverride = Union[Dict[str, str], Literal[False], None]
 
@@ -176,6 +197,754 @@ class QueryLakeClient:
     def readyz(self) -> Dict[str, Any]:
         return self._request("GET", "/readyz").json()
 
+    def readyz_summary(self) -> ReadyzSummary:
+        return parse_readyz_summary(self.readyz())
+
+    def capabilities(self) -> Dict[str, Any]:
+        return self._request("GET", "/v1/capabilities").json()
+
+    def kernel_capabilities(self) -> Dict[str, Any]:
+        return self._request("GET", "/v2/kernel/capabilities").json()
+
+    def capabilities_summary(self) -> CapabilitiesSummary:
+        return parse_capabilities_summary(self.capabilities())
+
+    def support_state(self, capability_id: str) -> Optional[str]:
+        return self.capabilities_summary().support_state(capability_id)
+
+    def supports(self, capability_id: str, *, allow_degraded: bool = True) -> bool:
+        return self.capabilities_summary().is_available(capability_id, allow_degraded=allow_degraded)
+
+    def representation_scopes(self) -> Dict[str, Any]:
+        summary = self.capabilities_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    def route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = self.capabilities_summary()
+        payload: Dict[str, Any] = {}
+        for entry in summary.route_support_v2:
+            payload[entry.route_id] = {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+        return payload
+
+    def route_representation_scope_id_from_capabilities(self, route_id: str) -> Optional[str]:
+        return self.capabilities_summary().route_representation_scope_id(route_id)
+
+    def route_capability_dependencies_from_capabilities(self, route_id: str) -> List[str]:
+        return self.capabilities_summary().route_capability_dependencies(route_id)
+
+    def route_declared_executable_from_capabilities(self, route_id: str) -> bool:
+        entry = self.capabilities_summary().route_support_manifest_v2_entry(route_id)
+        return bool(entry is not None and entry.declared_executable)
+
+    def route_declared_optional_from_capabilities(self, route_id: str) -> bool:
+        entry = self.capabilities_summary().route_support_manifest_v2_entry(route_id)
+        return bool(entry is not None and entry.declared_optional)
+
+    def diagnostics_representation_scopes(self) -> Dict[str, Any]:
+        summary = self.profile_diagnostics_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    def diagnostics_route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = self.profile_diagnostics_summary()
+        return {
+            entry.route_id: {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope_id": entry.representation_scope_id(),
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+            for entry in summary.route_support_v2
+        }
+
+    def route_planning_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_diagnostics_summary().route_executor(route_id)
+        if entry is None:
+            return {}
+        return dict(entry.planning_v2)
+
+    def route_query_ir_v2_template(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_diagnostics_summary().route_executor(route_id)
+        if entry is None:
+            return {}
+        return entry.query_ir_v2_template()
+
+    def route_projection_ir_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_diagnostics_summary().route_executor(route_id)
+        if entry is None:
+            return {}
+        return entry.projection_ir_v2()
+
+    def profile_diagnostics(self) -> Dict[str, Any]:
+        return self._request("GET", "/v1/profile-diagnostics").json()
+
+    def kernel_profile_diagnostics(self) -> Dict[str, Any]:
+        return self._request("GET", "/v2/kernel/profile-diagnostics").json()
+
+    def projection_diagnostics(self) -> Dict[str, Any]:
+        return self._request("GET", "/v1/projection-diagnostics").json()
+
+    def kernel_projection_diagnostics(self) -> Dict[str, Any]:
+        return self._request("GET", "/v2/kernel/projection-diagnostics").json()
+
+    def profile_bringup(self) -> Dict[str, Any]:
+        return self._request("GET", "/v1/profile-bringup").json()
+
+    def kernel_profile_bringup(self) -> Dict[str, Any]:
+        return self._request("GET", "/v2/kernel/profile-bringup").json()
+
+    def projection_diagnostics_summary(self) -> ProjectionDiagnosticsSummary:
+        return parse_projection_diagnostics_summary(self.projection_diagnostics())
+
+    def profile_bringup_summary(self) -> ProfileBringupSummary:
+        return parse_profile_bringup_summary(self.profile_bringup())
+
+    def kernel_profile_bringup_summary(self) -> ProfileBringupSummary:
+        return parse_profile_bringup_summary(self.kernel_profile_bringup())
+
+    def bringup_representation_scopes(self) -> Dict[str, Any]:
+        summary = self.profile_bringup_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    def bringup_route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = self.profile_bringup_summary()
+        return {
+            entry.route_id: {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope_id": entry.representation_scope_id(),
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+            for entry in summary.route_support_v2
+        }
+
+    def bringup_bootstrap_command(self) -> Optional[str]:
+        return self.profile_bringup_summary().bootstrap_command()
+
+    def bringup_next_actions(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "kind": action.kind,
+                "priority": action.priority,
+                "summary": action.summary,
+                "details": action.details,
+                "command": action.command,
+                "docs_ref": action.docs_ref,
+                "plane": action.plane,
+                "route_id": action.route_id,
+                "backend": action.backend,
+                "blocker_kinds": list(action.blocker_kinds),
+                "projection_ids": list(action.projection_ids),
+            }
+            for action in self.profile_bringup_summary().highest_priority_actions()
+        ]
+
+    def bringup_backend_targets(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "plane": entry.plane,
+                "backend": entry.backend,
+                "status": entry.status,
+                "checked": entry.checked,
+                "checked_at": entry.checked_at,
+                "required": entry.required,
+                "database_url_env": entry.database_url_env,
+                "env_var": entry.env_var,
+                "endpoint": entry.endpoint,
+                "status_code": entry.status_code,
+                "detail": entry.detail,
+            }
+            for entry in self.profile_bringup_summary().backend_targets
+        ]
+
+    def bringup_lexical_degraded_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().lexical_degraded_route_ids)
+
+    def bringup_lexical_gold_recommended_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().lexical_gold_recommended_route_ids)
+
+    def bringup_declared_route_support(self) -> Dict[str, str]:
+        return dict(self.profile_bringup_summary().declared_route_support)
+
+    def bringup_route_declared_executable(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().route_declared_executable(route_id)
+
+    def bringup_route_declared_optional(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().route_declared_optional(route_id)
+
+    def bringup_route_required_projection_descriptor_ids(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().route_required_projection_descriptor_ids(route_id)
+
+    def bringup_declared_executable_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().declared_executable_route_ids)
+
+    def bringup_declared_optional_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().declared_optional_route_ids)
+
+    def bringup_declared_runtime_ready_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().declared_executable_runtime_ready_ids)
+
+    def bringup_declared_runtime_blocked_routes(self) -> List[str]:
+        return list(self.profile_bringup_summary().declared_executable_runtime_blocked_ids)
+
+    def bringup_declared_routes_runtime_ready(self) -> bool:
+        return self.profile_bringup_summary().declared_routes_runtime_ready()
+
+    def bringup_route_recovery(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "route_id": entry.route_id,
+                "implemented": entry.implemented,
+                "support_state": entry.support_state,
+                "runtime_ready": entry.runtime_ready,
+                "projection_ready": entry.projection_ready,
+                "planning_v2": dict(entry.planning_v2),
+                "query_ir_v2": entry.query_ir_v2_template(),
+                "projection_ir_v2": entry.projection_ir_v2(),
+                "blocker_kinds": list(entry.blocker_kinds),
+                "bootstrapable_blocking_projection_ids": list(entry.bootstrapable_blocking_projection_ids),
+                "nonbootstrapable_blocking_projection_ids": list(entry.nonbootstrapable_blocking_projection_ids),
+                "bootstrap_command": entry.bootstrap_command,
+                "lexical_support_class": entry.lexical_support_class,
+                "gold_recommended_for_exact_constraints": entry.gold_recommended_for_exact_constraints,
+                "exact_constraint_degraded_capabilities": list(entry.exact_constraint_degraded_capabilities),
+                "exact_constraint_unsupported_capabilities": list(entry.exact_constraint_unsupported_capabilities),
+            }
+            for entry in self.profile_bringup_summary().route_recovery
+        ]
+
+    def bringup_route_recovery_entry(self, route_id: str) -> Optional[Dict[str, Any]]:
+        entry = self.profile_bringup_summary().route_recovery_entry(route_id)
+        if entry is None:
+            return None
+        return {
+            "route_id": entry.route_id,
+            "implemented": entry.implemented,
+            "support_state": entry.support_state,
+            "runtime_ready": entry.runtime_ready,
+            "projection_ready": entry.projection_ready,
+            "planning_v2": dict(entry.planning_v2),
+            "query_ir_v2": entry.query_ir_v2_template(),
+            "projection_ir_v2": entry.projection_ir_v2(),
+            "blocker_kinds": list(entry.blocker_kinds),
+            "bootstrapable_blocking_projection_ids": list(entry.bootstrapable_blocking_projection_ids),
+            "nonbootstrapable_blocking_projection_ids": list(entry.nonbootstrapable_blocking_projection_ids),
+            "bootstrap_command": entry.bootstrap_command,
+            "lexical_support_class": entry.lexical_support_class,
+            "gold_recommended_for_exact_constraints": entry.gold_recommended_for_exact_constraints,
+            "exact_constraint_degraded_capabilities": list(entry.exact_constraint_degraded_capabilities),
+            "exact_constraint_unsupported_capabilities": list(entry.exact_constraint_unsupported_capabilities),
+        }
+
+    def bringup_route_planning_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_bringup_summary().route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return dict(entry.planning_v2)
+
+    def bringup_route_query_ir_v2_template(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_bringup_summary().route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return entry.query_ir_v2_template()
+
+    def bringup_route_projection_ir_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = self.profile_bringup_summary().route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return entry.projection_ir_v2()
+
+    def local_support_matrix(self) -> List[Dict[str, Any]]:
+        return self.profile_diagnostics_summary().local_support_matrix()
+
+    def local_profile_maturity(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_profile_maturity()
+
+    def local_promotion_status(self) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_promotion_status()
+
+    def local_scope_expansion_status(self) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_scope_expansion_status()
+
+    def local_scope_expansion_contract(self) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_scope_expansion_contract()
+
+    def local_route_support_entry(self, route_id: str) -> Dict[str, Any]:
+        return self.profile_diagnostics_summary().local_route_support_entry(route_id)
+
+    def local_route_representation_scope_id(self, route_id: str) -> Optional[str]:
+        return self.profile_diagnostics_summary().local_route_representation_scope_id(route_id)
+
+    def local_route_declared_executable(self, route_id: str) -> bool:
+        return self.profile_diagnostics_summary().local_route_declared_executable(route_id)
+
+    def local_dense_sidecar(self) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_dense_sidecar()
+
+    def local_dense_sidecar_contract(self) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_dense_sidecar_contract()
+
+    def local_dense_sidecar_contract_version(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_contract_version()
+
+    def local_dense_sidecar_lifecycle_contract_version(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_lifecycle_contract_version()
+
+    def local_dense_sidecar_ready(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_ready()
+
+    def local_dense_sidecar_ready_state_source(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_ready_state_source()
+
+    def local_dense_sidecar_stats_source(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_stats_source()
+
+    def local_dense_sidecar_cache_lifecycle_state(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_cache_lifecycle_state()
+
+    def local_dense_sidecar_rebuildable_from_projection_records(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_rebuildable_from_projection_records()
+
+    def local_dense_sidecar_requires_process_warmup(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_requires_process_warmup()
+
+    def local_dense_sidecar_warmup_recommended(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_warmup_recommended()
+
+    def local_dense_sidecar_warmup_required_for_peak_performance(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_warmup_required_for_peak_performance()
+
+    def local_dense_sidecar_cold_start_recoverable(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_cold_start_recoverable()
+
+    def local_dense_sidecar_cache_persistence_mode(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_cache_persistence_mode()
+
+    def local_dense_sidecar_lifecycle_recovery_mode(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_lifecycle_recovery_mode()
+
+    def local_dense_sidecar_lifecycle_recovery_hints(self) -> List[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_lifecycle_recovery_hints()
+
+    def local_dense_sidecar_warmup_target_route_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_warmup_target_route_ids()
+
+    def local_dense_sidecar_warmup_command_hint(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_dense_sidecar_warmup_command_hint()
+
+    def local_dense_sidecar_persisted_projection_state_available(self) -> bool:
+        return self.profile_bringup_summary().local_dense_sidecar_persisted_projection_state_available()
+
+    def local_projection_plan_v2_registry(self) -> List[Dict[str, Any]]:
+        return self.profile_bringup_summary().local_projection_plan_v2_registry()
+
+    def local_projection_plan_v2(self, projection_id: str) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_projection_plan_v2(projection_id)
+
+    def local_route_runtime_contract(self, route_id: str) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_route_runtime_contract(route_id)
+
+    def local_route_runtime_ready(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_runtime_ready(route_id)
+
+    def local_route_required_projection_ids(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().local_route_required_projection_ids(route_id)
+
+    def local_route_capability_dependencies(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().local_route_capability_dependencies(route_id)
+
+    def local_route_representation_scope(self, route_id: str) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_route_representation_scope(route_id)
+
+    def local_route_lexical_support_class(self, route_id: str) -> Optional[str]:
+        return self.profile_bringup_summary().local_route_lexical_support_class(route_id)
+
+    def local_route_requires_dense_sidecar(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_requires_dense_sidecar(route_id)
+
+    def local_route_dense_sidecar_ready(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_ready(route_id)
+
+    def local_route_dense_sidecar_cache_warmed(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_cache_warmed(route_id)
+
+    def local_route_dense_sidecar_indexed_record_count(self, route_id: str) -> int:
+        return self.profile_bringup_summary().local_route_dense_sidecar_indexed_record_count(route_id)
+
+    def local_route_dense_sidecar_contract(self, route_id: str) -> Dict[str, Any]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_contract(route_id)
+
+    def local_route_dense_sidecar_ready_state_source(self, route_id: str) -> Optional[str]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_ready_state_source(route_id)
+
+    def local_route_dense_sidecar_stats_source(self, route_id: str) -> Optional[str]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_stats_source(route_id)
+
+    def local_route_dense_sidecar_cache_lifecycle_state(self, route_id: str) -> Optional[str]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_cache_lifecycle_state(route_id)
+
+    def local_route_dense_sidecar_rebuildable_from_projection_records(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_rebuildable_from_projection_records(route_id)
+
+    def local_route_dense_sidecar_requires_process_warmup(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_requires_process_warmup(route_id)
+
+    def local_route_dense_sidecar_warmup_recommended(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_warmup_recommended(route_id)
+
+    def local_route_dense_sidecar_warmup_required_for_peak_performance(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_warmup_required_for_peak_performance(route_id)
+
+    def local_route_dense_sidecar_lifecycle_recovery_mode(self, route_id: str) -> Optional[str]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_lifecycle_recovery_mode(route_id)
+
+    def local_route_dense_sidecar_lifecycle_recovery_hints(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().local_route_dense_sidecar_lifecycle_recovery_hints(route_id)
+
+    def local_route_dense_sidecar_persisted_projection_state_available(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().local_route_dense_sidecar_persisted_projection_state_available(route_id)
+
+    def local_declared_executable_route_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_declared_executable_route_ids()
+
+    def local_declared_runtime_ready_route_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_declared_runtime_ready_route_ids()
+
+    def local_declared_runtime_blocked_route_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_declared_runtime_blocked_route_ids()
+
+    def local_required_projection_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_required_projection_ids()
+
+    def local_representation_scope_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_representation_scope_ids()
+
+    def local_current_supported_slice_frozen(self) -> bool:
+        return self.profile_bringup_summary().local_current_supported_slice_frozen()
+
+    def local_scope_expansion_pending_for_wider_scope(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_pending_for_wider_scope()
+
+    def local_scope_expansion_required_now(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_required_now()
+
+    def local_scope_expansion_satisfied_now(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_satisfied_now()
+
+    def local_scope_expansion_future_scope_candidates(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_future_scope_candidates()
+
+    def local_scope_expansion_docs_ref(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_docs_ref()
+
+    def local_scope_expansion_contract_docs_ref(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_contract_docs_ref()
+
+    def local_scope_expansion_contract_version(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_contract_version()
+
+    def local_scope_expansion_lifecycle_contract_version(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_lifecycle_contract_version()
+
+    def local_scope_expansion_lifecycle_state(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_lifecycle_state()
+
+    def local_scope_expansion_cache_lifecycle_state(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_cache_lifecycle_state()
+
+    def local_scope_expansion_dense_sidecar_promotion_contract_ready(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_dense_sidecar_promotion_contract_ready()
+
+    def local_scope_expansion_required_before_widening(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_required_before_widening()
+
+    def local_scope_expansion_rebuildable_from_projection_records(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_rebuildable_from_projection_records()
+
+    def local_scope_expansion_requires_process_warmup(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_requires_process_warmup()
+
+    def local_scope_expansion_warmup_recommended(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_warmup_recommended()
+
+    def local_scope_expansion_warmup_required_for_peak_performance(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_warmup_required_for_peak_performance()
+
+    def local_scope_expansion_cold_start_recoverable(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_cold_start_recoverable()
+
+    def local_scope_expansion_cache_persistence_mode(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_cache_persistence_mode()
+
+    def local_scope_expansion_lifecycle_recovery_mode(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_lifecycle_recovery_mode()
+
+    def local_scope_expansion_lifecycle_recovery_hints(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_lifecycle_recovery_hints()
+
+    def local_scope_expansion_warmup_target_route_ids(self) -> List[str]:
+        return self.profile_bringup_summary().local_scope_expansion_warmup_target_route_ids()
+
+    def local_scope_expansion_warmup_command_hint(self) -> Optional[str]:
+        return self.profile_bringup_summary().local_scope_expansion_warmup_command_hint()
+
+    def local_scope_expansion_persisted_projection_state_available(self) -> bool:
+        return self.profile_bringup_summary().local_scope_expansion_persisted_projection_state_available()
+
+    def route_prefers_gold_for_exact_constraints(self, route_id: str) -> bool:
+        return self.profile_bringup_summary().route_prefers_gold_for_exact_constraints(route_id)
+
+    def route_exact_constraint_degraded_capabilities(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().route_exact_constraint_degraded_capabilities(route_id)
+
+    def route_exact_constraint_unsupported_capabilities(self, route_id: str) -> List[str]:
+        return self.profile_bringup_summary().route_exact_constraint_unsupported_capabilities(route_id)
+
+    def bringup_projection_status_buckets(self) -> Dict[str, List[str]]:
+        summary = self.profile_bringup_summary()
+        return {
+            "ready": list(summary.ready_projection_ids),
+            "building": list(summary.projection_building_ids),
+            "failed": list(summary.projection_failed_ids),
+            "stale": list(summary.projection_stale_ids),
+            "absent": list(summary.projection_absent_ids),
+        }
+
+    def bringup_recommended_projection_status_buckets(self) -> Dict[str, List[str]]:
+        summary = self.profile_bringup_summary()
+        return {
+            "ready": list(summary.recommended_ready_projection_ids),
+            "needs_build": list(summary.recommended_projection_ids_needing_build),
+            "all": list(summary.recommended_projection_ids),
+        }
+
+    def projection_plan_explain(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self._request("POST", "/v1/projection-plan/explain", json=payload).json()
+
+    def kernel_projection_plan_explain(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self._request("POST", "/v2/kernel/projection-plan/explain", json=payload).json()
+
+    def projection_plan_explain_summary(self, payload: Dict[str, Any]) -> ProjectionPlanExplainSummary:
+        return parse_projection_plan_explain_summary(self.projection_plan_explain(payload))
+
+    def projection_refresh_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self._request("POST", "/v1/projection-refresh/run", json=payload).json()
+
+    def kernel_projection_refresh_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self._request("POST", "/v2/kernel/projection-refresh/run", json=payload).json()
+
+    def projection_refresh_run_summary(self, payload: Dict[str, Any]) -> ProjectionRefreshExecutionReportSummary:
+        return parse_projection_refresh_execution_report_summary(self.projection_refresh_run(payload))
+
+    def projection_ids_needing_build(self, *, allow_degraded: bool = True) -> List[str]:
+        return self.projection_diagnostics_summary().projection_ids_needing_build(allow_degraded=allow_degraded)
+
+    def profile_diagnostics_summary(self) -> ProfileDiagnosticsSummary:
+        return parse_profile_diagnostics_summary(self.profile_diagnostics())
+
+    def kernel_profile_diagnostics_summary(self) -> ProfileDiagnosticsSummary:
+        return parse_profile_diagnostics_summary(self.kernel_profile_diagnostics())
+
+    def route_support_state(self, route_id: str) -> Optional[str]:
+        return self.profile_diagnostics_summary().route_support_state(route_id)
+
+    def route_executable(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return self.profile_diagnostics_summary().route_executable(route_id, allow_degraded=allow_degraded)
+
+    def route_projection_ready(self, route_id: str) -> bool:
+        return self.profile_diagnostics_summary().route_projection_ready(route_id)
+
+    def route_projection_missing_descriptors(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_projection_missing_descriptors(route_id)
+
+    def route_runtime_ready(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return self.profile_diagnostics_summary().route_runtime_ready(route_id, allow_degraded=allow_degraded)
+
+    def route_state(self, route_id: str, *, allow_degraded: bool = True) -> str:
+        return self.profile_diagnostics_summary().route_state(route_id, allow_degraded=allow_degraded)
+
+    def route_is_degraded(self, route_id: str) -> bool:
+        return self.profile_diagnostics_summary().route_is_degraded(route_id)
+
+    def route_blocked_by_projection(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return self.profile_diagnostics_summary().route_blocked_by_projection(route_id, allow_degraded=allow_degraded)
+
+    def route_blocked_by_backend_connectivity(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return self.profile_diagnostics_summary().route_blocked_by_backend_connectivity(route_id, allow_degraded=allow_degraded)
+
+    def route_blocker_kinds(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_blocker_kinds(route_id)
+
+    def route_blocking_projection_ids(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_blocking_projection_ids(route_id)
+
+    def route_lane_backends(self, route_id: str) -> Dict[str, str]:
+        return self.profile_diagnostics_summary().route_lane_backends(route_id)
+
+    def route_adapter_ids(self, route_id: str) -> Dict[str, str]:
+        return self.profile_diagnostics_summary().route_adapter_ids(route_id)
+
+    def route_projection_targets(self, route_id: str) -> List[Dict[str, Any]]:
+        return self.profile_diagnostics_summary().route_projection_targets(route_id)
+
+    def route_projection_target_backend_names(self, route_id: str) -> Dict[str, str]:
+        return self.profile_diagnostics_summary().route_projection_target_backend_names(route_id)
+
+    def route_required_projection_descriptor_ids(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_required_projection_descriptor_ids(route_id)
+
+    def route_declared_executable(self, route_id: str) -> bool:
+        return self.profile_diagnostics_summary().route_declared_executable(route_id)
+
+    def route_declared_optional(self, route_id: str) -> bool:
+        return self.profile_diagnostics_summary().route_declared_optional(route_id)
+
+    def route_lexical_semantics(self, route_id: str) -> Dict[str, Any]:
+        return self.profile_diagnostics_summary().route_lexical_semantics(route_id)
+
+    def route_lexical_support_class(self, route_id: str) -> Optional[str]:
+        return self.profile_diagnostics_summary().route_lexical_support_class(route_id)
+
+    def route_lexical_capability_states(self, route_id: str) -> Dict[str, str]:
+        return self.profile_diagnostics_summary().route_lexical_capability_states(route_id)
+
+    def route_lexical_degraded_capabilities(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_lexical_degraded_capabilities(route_id)
+
+    def route_lexical_unsupported_capabilities(self, route_id: str) -> List[str]:
+        return self.profile_diagnostics_summary().route_lexical_unsupported_capabilities(route_id)
+
+    def route_gold_recommended_for_exact_constraints(self, route_id: str) -> bool:
+        route = self.profile_diagnostics_summary().route_executor(route_id)
+        if route is None:
+            return False
+        return route.gold_recommended_for_exact_constraints()
+
+    def route_lexical_exact_constraint_degraded_capabilities(self, route_id: str) -> List[str]:
+        route = self.profile_diagnostics_summary().route_executor(route_id)
+        if route is None:
+            return []
+        return route.exact_constraint_degraded_capabilities()
+
+    def route_lexical_exact_constraint_unsupported_capabilities(self, route_id: str) -> List[str]:
+        route = self.profile_diagnostics_summary().route_executor(route_id)
+        if route is None:
+            return []
+        return route.exact_constraint_unsupported_capabilities()
+
+    def route_summary(self) -> Dict[str, Any]:
+        summary = self.profile_diagnostics_summary().route_summary_payload()
+        return {
+            "inspected_route_count": summary.inspected_route_count,
+            "executable_route_count": summary.executable_route_count,
+            "runtime_ready_route_count": summary.runtime_ready_route_count,
+            "projection_blocked_route_count": summary.projection_blocked_route_count,
+            "runtime_blocked_route_count": summary.runtime_blocked_route_count,
+            "compatibility_projection_route_count": summary.compatibility_projection_route_count,
+            "canonical_projection_route_count": summary.canonical_projection_route_count,
+            "support_state_counts": dict(summary.support_state_counts),
+            "blocker_kind_counts": dict(summary.blocker_kind_counts),
+            "executable_route_ids": list(summary.executable_route_ids),
+            "runtime_ready_route_ids": list(summary.runtime_ready_route_ids),
+            "projection_blocked_route_ids": list(summary.projection_blocked_route_ids),
+            "runtime_blocked_route_ids": list(summary.runtime_blocked_route_ids),
+            "compatibility_projection_route_ids": list(summary.compatibility_projection_route_ids),
+            "canonical_projection_route_ids": list(summary.canonical_projection_route_ids),
+        }
+
+    def runtime_blocker_summary(self) -> Dict[str, int]:
+        return self.profile_diagnostics_summary().runtime_blocker_summary()
+
+    def projection_blocked_routes(self, *, allow_degraded: bool = True) -> List[str]:
+        return [
+            entry.route_id
+            for entry in self.profile_diagnostics_summary().projection_blocked_routes(allow_degraded=allow_degraded)
+        ]
+
+    def runtime_blocked_routes(self, *, allow_degraded: bool = True) -> List[str]:
+        return [
+            entry.route_id
+            for entry in self.profile_diagnostics_summary().runtime_blocked_routes(allow_degraded=allow_degraded)
+        ]
+
+    def backend_connectivity_status(self, plane: str) -> Optional[str]:
+        return self.profile_diagnostics_summary().backend_connectivity_status(plane)
+
+    def backend_connectivity_entry(self, plane: str) -> Optional[BackendConnectivitySummary]:
+        return self.profile_diagnostics_summary().backend_connectivity_entry(plane)
+
+    def backend_connectivity_entries(self) -> Dict[str, BackendConnectivitySummary]:
+        return self.profile_diagnostics_summary().backend_connectivity_entries()
+
     def ping(self) -> Any:
         return self.api("ping", method="GET", auth=False)
 
@@ -265,6 +1034,20 @@ class QueryLakeClient:
                 "collection_hash_id": str(collection_hash_id),
                 "limit": int(limit),
                 "offset": int(offset),
+            },
+        )
+
+    def fetch_document(
+        self,
+        *,
+        document_hash_id: Union[str, int],
+        get_chunk_count: bool = False,
+    ) -> Dict[str, Any]:
+        return self.api(
+            "fetch_document",
+            {
+                "document_id": str(document_hash_id),
+                "get_chunk_count": bool(get_chunk_count),
             },
         )
 
@@ -757,6 +1540,37 @@ class QueryLakeClient:
             **kwargs,
         )
 
+    def search_hybrid_plan_explain(
+        self,
+        *,
+        query: Union[str, Dict[str, Any]],
+        collection_ids: Iterable[Union[str, int]],
+        **kwargs: Any,
+    ) -> RetrievalPlanExplainSummary:
+        payload = self.search_hybrid_with_metrics(
+            query=query,
+            collection_ids=collection_ids,
+            explain_plan=True,
+            **kwargs,
+        )
+        return parse_retrieval_plan_explain_summary(payload.get("plan_explain"))
+
+    def search_hybrid_plan_explain_with_options(
+        self,
+        *,
+        query: Union[str, Dict[str, Any]],
+        collection_ids: Iterable[Union[str, int]],
+        options: HybridSearchOptions,
+        **kwargs: Any,
+    ) -> RetrievalPlanExplainSummary:
+        profile_kwargs = options.to_kwargs()
+        return self.search_hybrid_plan_explain(
+            query=query,
+            collection_ids=collection_ids,
+            **profile_kwargs,
+            **kwargs,
+        )
+
     def search_hybrid_chunks(self, **kwargs: Any) -> List[SearchResultChunk]:
         rows = self.search_hybrid(**kwargs)
         parsed: List[SearchResultChunk] = []
@@ -765,6 +1579,94 @@ class QueryLakeClient:
                 continue
             parsed.append(SearchResultChunk.from_api_dict(row))
         return parsed
+
+    def search_bm25_with_metrics(
+        self,
+        *,
+        query: str,
+        collection_ids: Iterable[Union[str, int]],
+        limit: int = 10,
+        offset: int = 0,
+        table: str = "document_chunk",
+        group_chunks: bool = True,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "query": str(query),
+            "collection_ids": [str(v) for v in collection_ids],
+            "limit": int(limit),
+            "offset": int(offset),
+            "table": str(table),
+            "group_chunks": bool(group_chunks),
+        }
+        payload.update(kwargs)
+        result = self.api("search_bm25", payload)
+        if isinstance(result, list):
+            return {"rows": result}
+        if isinstance(result, dict):
+            rows = result.get("rows")
+            if not isinstance(rows, list):
+                result = {"rows": []}
+            return result
+        return {"rows": []}
+
+    def search_bm25_plan_explain(
+        self,
+        *,
+        query: str,
+        collection_ids: Iterable[Union[str, int]],
+        **kwargs: Any,
+    ) -> RetrievalPlanExplainSummary:
+        payload = self.search_bm25_with_metrics(
+            query=query,
+            collection_ids=collection_ids,
+            explain_plan=True,
+            **kwargs,
+        )
+        return parse_retrieval_plan_explain_summary(payload.get("plan_explain"))
+
+    def search_file_chunks_with_metrics(
+        self,
+        *,
+        query: str,
+        limit: int = 20,
+        offset: int = 0,
+        sort_by: str = "score",
+        sort_dir: str = "DESC",
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        payload: Dict[str, Any] = {
+            "query": str(query),
+            "limit": int(limit),
+            "offset": int(offset),
+            "sort_by": str(sort_by),
+            "sort_dir": str(sort_dir),
+        }
+        payload.update(kwargs)
+        result = self.api("search_file_chunks", payload)
+        if isinstance(result, list):
+            return {"rows": result}
+        if isinstance(result, dict):
+            if isinstance(result.get("results"), list) and not isinstance(result.get("rows"), list):
+                return {"rows": list(result.get("results") or []), **result}
+            rows = result.get("rows")
+            if not isinstance(rows, list):
+                result = {"rows": []}
+            return result
+        return {"rows": []}
+
+    def search_file_chunks_plan_explain(
+        self,
+        *,
+        query: str,
+        **kwargs: Any,
+    ) -> RetrievalPlanExplainSummary:
+        payload = self.search_file_chunks_with_metrics(
+            query=query,
+            explain_plan=True,
+            **kwargs,
+        )
+        return parse_retrieval_plan_explain_summary(payload.get("plan_explain"))
 
     def count_chunks(self, *, collection_ids: Optional[Iterable[Union[str, int]]] = None) -> Dict[str, Any]:
         payload: Dict[str, Any] = {}
@@ -871,6 +1773,742 @@ class AsyncQueryLakeClient:
 
     async def readyz(self) -> Dict[str, Any]:
         return (await self._request("GET", "/readyz")).json()
+
+    async def readyz_summary(self) -> ReadyzSummary:
+        return parse_readyz_summary(await self.readyz())
+
+    async def capabilities(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v1/capabilities")).json()
+
+    async def kernel_capabilities(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v2/kernel/capabilities")).json()
+
+    async def capabilities_summary(self) -> CapabilitiesSummary:
+        return parse_capabilities_summary(await self.capabilities())
+
+    async def support_state(self, capability_id: str) -> Optional[str]:
+        return (await self.capabilities_summary()).support_state(capability_id)
+
+    async def supports(self, capability_id: str, *, allow_degraded: bool = True) -> bool:
+        return (await self.capabilities_summary()).is_available(capability_id, allow_degraded=allow_degraded)
+
+    async def representation_scopes(self) -> Dict[str, Any]:
+        summary = await self.capabilities_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    async def route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = await self.capabilities_summary()
+        payload: Dict[str, Any] = {}
+        for entry in summary.route_support_v2:
+            payload[entry.route_id] = {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+        return payload
+
+    async def route_representation_scope_id_from_capabilities(self, route_id: str) -> Optional[str]:
+        return (await self.capabilities_summary()).route_representation_scope_id(route_id)
+
+    async def route_capability_dependencies_from_capabilities(self, route_id: str) -> List[str]:
+        return (await self.capabilities_summary()).route_capability_dependencies(route_id)
+
+    async def route_declared_executable_from_capabilities(self, route_id: str) -> bool:
+        entry = (await self.capabilities_summary()).route_support_manifest_v2_entry(route_id)
+        return bool(entry is not None and entry.declared_executable)
+
+    async def route_declared_optional_from_capabilities(self, route_id: str) -> bool:
+        entry = (await self.capabilities_summary()).route_support_manifest_v2_entry(route_id)
+        return bool(entry is not None and entry.declared_optional)
+
+    async def profile_diagnostics(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v1/profile-diagnostics")).json()
+
+    async def kernel_profile_diagnostics(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v2/kernel/profile-diagnostics")).json()
+
+    async def projection_diagnostics(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v1/projection-diagnostics")).json()
+
+    async def kernel_projection_diagnostics(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v2/kernel/projection-diagnostics")).json()
+
+    async def profile_bringup(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v1/profile-bringup")).json()
+
+    async def kernel_profile_bringup(self) -> Dict[str, Any]:
+        return (await self._request("GET", "/v2/kernel/profile-bringup")).json()
+
+    async def projection_diagnostics_summary(self) -> ProjectionDiagnosticsSummary:
+        return parse_projection_diagnostics_summary(await self.projection_diagnostics())
+
+    async def profile_bringup_summary(self) -> ProfileBringupSummary:
+        return parse_profile_bringup_summary(await self.profile_bringup())
+
+    async def kernel_profile_bringup_summary(self) -> ProfileBringupSummary:
+        return parse_profile_bringup_summary(await self.kernel_profile_bringup())
+
+    async def diagnostics_representation_scopes(self) -> Dict[str, Any]:
+        summary = await self.profile_diagnostics_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    async def diagnostics_route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = await self.profile_diagnostics_summary()
+        return {
+            entry.route_id: {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope_id": entry.representation_scope_id(),
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+            for entry in summary.route_support_v2
+        }
+
+    async def route_planning_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if entry is None:
+            return {}
+        return dict(entry.planning_v2)
+
+    async def route_query_ir_v2_template(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if entry is None:
+            return {}
+        return entry.query_ir_v2_template()
+
+    async def route_projection_ir_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if entry is None:
+            return {}
+        return entry.projection_ir_v2()
+
+    async def bringup_representation_scopes(self) -> Dict[str, Any]:
+        summary = await self.profile_bringup_summary()
+        return {
+            scope_id: {
+                "scope_id": scope.scope_id,
+                "authority_model": scope.authority_model,
+                "compatibility_projection": scope.compatibility_projection,
+                "metadata": dict(scope.metadata),
+            }
+            for scope_id, scope in summary.representation_scopes.items()
+        }
+
+    async def bringup_route_support_manifest_v2(self) -> Dict[str, Any]:
+        summary = await self.profile_bringup_summary()
+        return {
+            entry.route_id: {
+                "route_id": entry.route_id,
+                "support_state": entry.support_state,
+                "implemented": entry.implemented,
+                "declared_executable": entry.declared_executable,
+                "declared_optional": entry.declared_optional,
+                "representation_scope_id": entry.representation_scope_id(),
+                "representation_scope": (
+                    {
+                        "scope_id": entry.representation_scope.scope_id,
+                        "authority_model": entry.representation_scope.authority_model,
+                        "compatibility_projection": entry.representation_scope.compatibility_projection,
+                        "metadata": dict(entry.representation_scope.metadata),
+                    }
+                    if entry.representation_scope is not None
+                    else None
+                ),
+                "capability_dependencies": list(entry.capability_dependencies),
+                "notes": entry.notes,
+            }
+            for entry in summary.route_support_v2
+        }
+
+    async def bringup_bootstrap_command(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).bootstrap_command()
+
+    async def bringup_next_actions(self) -> List[Dict[str, Any]]:
+        summary = await self.profile_bringup_summary()
+        return [
+            {
+                "kind": action.kind,
+                "priority": action.priority,
+                "summary": action.summary,
+                "details": action.details,
+                "command": action.command,
+                "docs_ref": action.docs_ref,
+                "plane": action.plane,
+                "route_id": action.route_id,
+                "backend": action.backend,
+                "blocker_kinds": list(action.blocker_kinds),
+                "projection_ids": list(action.projection_ids),
+            }
+            for action in summary.highest_priority_actions()
+        ]
+
+    async def bringup_backend_targets(self) -> List[Dict[str, Any]]:
+        summary = await self.profile_bringup_summary()
+        return [
+            {
+                "plane": entry.plane,
+                "backend": entry.backend,
+                "status": entry.status,
+                "checked": entry.checked,
+                "checked_at": entry.checked_at,
+                "required": entry.required,
+                "database_url_env": entry.database_url_env,
+                "env_var": entry.env_var,
+                "endpoint": entry.endpoint,
+                "status_code": entry.status_code,
+                "detail": entry.detail,
+            }
+            for entry in summary.backend_targets
+        ]
+
+    async def bringup_lexical_degraded_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).lexical_degraded_route_ids)
+
+    async def bringup_lexical_gold_recommended_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).lexical_gold_recommended_route_ids)
+
+    async def bringup_declared_route_support(self) -> Dict[str, str]:
+        return dict((await self.profile_bringup_summary()).declared_route_support)
+
+    async def bringup_route_declared_executable(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).route_declared_executable(route_id)
+
+    async def bringup_route_declared_optional(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).route_declared_optional(route_id)
+
+    async def bringup_route_required_projection_descriptor_ids(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).route_required_projection_descriptor_ids(route_id)
+
+    async def bringup_declared_executable_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).declared_executable_route_ids)
+
+    async def bringup_declared_optional_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).declared_optional_route_ids)
+
+    async def bringup_declared_runtime_ready_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).declared_executable_runtime_ready_ids)
+
+    async def bringup_declared_runtime_blocked_routes(self) -> List[str]:
+        return list((await self.profile_bringup_summary()).declared_executable_runtime_blocked_ids)
+
+    async def bringup_declared_routes_runtime_ready(self) -> bool:
+        return (await self.profile_bringup_summary()).declared_routes_runtime_ready()
+
+    async def bringup_route_recovery(self) -> List[Dict[str, Any]]:
+        summary = await self.profile_bringup_summary()
+        return [
+            {
+                "route_id": entry.route_id,
+                "implemented": entry.implemented,
+                "support_state": entry.support_state,
+                "runtime_ready": entry.runtime_ready,
+                "projection_ready": entry.projection_ready,
+                "planning_v2": dict(entry.planning_v2),
+                "query_ir_v2": entry.query_ir_v2_template(),
+                "projection_ir_v2": entry.projection_ir_v2(),
+                "blocker_kinds": list(entry.blocker_kinds),
+                "bootstrapable_blocking_projection_ids": list(entry.bootstrapable_blocking_projection_ids),
+                "nonbootstrapable_blocking_projection_ids": list(entry.nonbootstrapable_blocking_projection_ids),
+                "bootstrap_command": entry.bootstrap_command,
+                "lexical_support_class": entry.lexical_support_class,
+                "gold_recommended_for_exact_constraints": entry.gold_recommended_for_exact_constraints,
+                "exact_constraint_degraded_capabilities": list(entry.exact_constraint_degraded_capabilities),
+                "exact_constraint_unsupported_capabilities": list(entry.exact_constraint_unsupported_capabilities),
+            }
+            for entry in summary.route_recovery
+        ]
+
+    async def bringup_route_recovery_entry(self, route_id: str) -> Optional[Dict[str, Any]]:
+        entry = (await self.profile_bringup_summary()).route_recovery_entry(route_id)
+        if entry is None:
+            return None
+        return {
+            "route_id": entry.route_id,
+            "implemented": entry.implemented,
+            "support_state": entry.support_state,
+            "runtime_ready": entry.runtime_ready,
+            "projection_ready": entry.projection_ready,
+            "planning_v2": dict(entry.planning_v2),
+            "query_ir_v2": entry.query_ir_v2_template(),
+            "projection_ir_v2": entry.projection_ir_v2(),
+            "blocker_kinds": list(entry.blocker_kinds),
+            "bootstrapable_blocking_projection_ids": list(entry.bootstrapable_blocking_projection_ids),
+            "nonbootstrapable_blocking_projection_ids": list(entry.nonbootstrapable_blocking_projection_ids),
+            "bootstrap_command": entry.bootstrap_command,
+            "lexical_support_class": entry.lexical_support_class,
+            "gold_recommended_for_exact_constraints": entry.gold_recommended_for_exact_constraints,
+            "exact_constraint_degraded_capabilities": list(entry.exact_constraint_degraded_capabilities),
+            "exact_constraint_unsupported_capabilities": list(entry.exact_constraint_unsupported_capabilities),
+        }
+
+    async def bringup_route_planning_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_bringup_summary()).route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return dict(entry.planning_v2)
+
+    async def bringup_route_query_ir_v2_template(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_bringup_summary()).route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return entry.query_ir_v2_template()
+
+    async def bringup_route_projection_ir_v2(self, route_id: str) -> Dict[str, Any]:
+        entry = (await self.profile_bringup_summary()).route_recovery_entry(route_id)
+        if entry is None:
+            return {}
+        return entry.projection_ir_v2()
+
+    async def local_support_matrix(self) -> List[Dict[str, Any]]:
+        return (await self.profile_diagnostics_summary()).local_support_matrix()
+
+    async def local_profile_maturity(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_profile_maturity()
+
+    async def local_promotion_status(self) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_promotion_status()
+
+    async def local_scope_expansion_status(self) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_status()
+
+    async def local_scope_expansion_contract(self) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_contract()
+
+    async def local_route_support_entry(self, route_id: str) -> Dict[str, Any]:
+        return (await self.profile_diagnostics_summary()).local_route_support_entry(route_id)
+
+    async def local_route_representation_scope_id(self, route_id: str) -> Optional[str]:
+        return (await self.profile_diagnostics_summary()).local_route_representation_scope_id(route_id)
+
+    async def local_route_declared_executable(self, route_id: str) -> bool:
+        return (await self.profile_diagnostics_summary()).local_route_declared_executable(route_id)
+
+    async def local_dense_sidecar(self) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar()
+
+    async def local_dense_sidecar_contract(self) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_contract()
+
+    async def local_dense_sidecar_contract_version(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_contract_version()
+
+    async def local_dense_sidecar_lifecycle_contract_version(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_lifecycle_contract_version()
+
+    async def local_dense_sidecar_ready(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_ready()
+
+    async def local_dense_sidecar_ready_state_source(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_ready_state_source()
+
+    async def local_dense_sidecar_stats_source(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_stats_source()
+
+    async def local_dense_sidecar_cache_lifecycle_state(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_cache_lifecycle_state()
+
+    async def local_dense_sidecar_rebuildable_from_projection_records(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_rebuildable_from_projection_records()
+
+    async def local_dense_sidecar_requires_process_warmup(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_requires_process_warmup()
+
+    async def local_dense_sidecar_warmup_recommended(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_warmup_recommended()
+
+    async def local_dense_sidecar_warmup_required_for_peak_performance(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_warmup_required_for_peak_performance()
+
+    async def local_dense_sidecar_cold_start_recoverable(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_cold_start_recoverable()
+
+    async def local_dense_sidecar_cache_persistence_mode(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_cache_persistence_mode()
+
+    async def local_dense_sidecar_lifecycle_recovery_mode(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_lifecycle_recovery_mode()
+
+    async def local_dense_sidecar_lifecycle_recovery_hints(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_lifecycle_recovery_hints()
+
+    async def local_dense_sidecar_warmup_target_route_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_warmup_target_route_ids()
+
+    async def local_dense_sidecar_warmup_command_hint(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_warmup_command_hint()
+
+    async def local_dense_sidecar_persisted_projection_state_available(self) -> bool:
+        return (await self.profile_bringup_summary()).local_dense_sidecar_persisted_projection_state_available()
+
+    async def local_projection_plan_v2_registry(self) -> List[Dict[str, Any]]:
+        return (await self.profile_bringup_summary()).local_projection_plan_v2_registry()
+
+    async def local_projection_plan_v2(self, projection_id: str) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_projection_plan_v2(projection_id)
+
+    async def local_route_runtime_contract(self, route_id: str) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_route_runtime_contract(route_id)
+
+    async def local_route_runtime_ready(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_runtime_ready(route_id)
+
+    async def local_route_required_projection_ids(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).local_route_required_projection_ids(route_id)
+
+    async def local_route_capability_dependencies(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).local_route_capability_dependencies(route_id)
+
+    async def local_route_representation_scope(self, route_id: str) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_route_representation_scope(route_id)
+
+    async def local_route_lexical_support_class(self, route_id: str) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_route_lexical_support_class(route_id)
+
+    async def local_route_requires_dense_sidecar(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_requires_dense_sidecar(route_id)
+
+    async def local_route_dense_sidecar_ready(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_ready(route_id)
+
+    async def local_route_dense_sidecar_cache_warmed(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_cache_warmed(route_id)
+
+    async def local_route_dense_sidecar_indexed_record_count(self, route_id: str) -> int:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_indexed_record_count(route_id)
+
+    async def local_route_dense_sidecar_contract(self, route_id: str) -> Dict[str, Any]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_contract(route_id)
+
+    async def local_route_dense_sidecar_ready_state_source(self, route_id: str) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_ready_state_source(route_id)
+
+    async def local_route_dense_sidecar_stats_source(self, route_id: str) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_stats_source(route_id)
+
+    async def local_route_dense_sidecar_cache_lifecycle_state(self, route_id: str) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_cache_lifecycle_state(route_id)
+
+    async def local_route_dense_sidecar_rebuildable_from_projection_records(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_rebuildable_from_projection_records(route_id)
+
+    async def local_route_dense_sidecar_requires_process_warmup(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_requires_process_warmup(route_id)
+
+    async def local_route_dense_sidecar_warmup_recommended(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_warmup_recommended(route_id)
+
+    async def local_route_dense_sidecar_warmup_required_for_peak_performance(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_warmup_required_for_peak_performance(route_id)
+
+    async def local_route_dense_sidecar_lifecycle_recovery_mode(self, route_id: str) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_lifecycle_recovery_mode(route_id)
+
+    async def local_route_dense_sidecar_lifecycle_recovery_hints(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_lifecycle_recovery_hints(route_id)
+
+    async def local_route_dense_sidecar_persisted_projection_state_available(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).local_route_dense_sidecar_persisted_projection_state_available(route_id)
+
+    async def local_declared_executable_route_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_declared_executable_route_ids()
+
+    async def local_declared_runtime_ready_route_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_declared_runtime_ready_route_ids()
+
+    async def local_declared_runtime_blocked_route_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_declared_runtime_blocked_route_ids()
+
+    async def local_required_projection_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_required_projection_ids()
+
+    async def local_representation_scope_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_representation_scope_ids()
+
+    async def local_current_supported_slice_frozen(self) -> bool:
+        return (await self.profile_bringup_summary()).local_current_supported_slice_frozen()
+
+    async def local_scope_expansion_pending_for_wider_scope(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_pending_for_wider_scope()
+
+    async def local_scope_expansion_required_now(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_required_now()
+
+    async def local_scope_expansion_satisfied_now(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_satisfied_now()
+
+    async def local_scope_expansion_future_scope_candidates(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_future_scope_candidates()
+
+    async def local_scope_expansion_docs_ref(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_docs_ref()
+
+    async def local_scope_expansion_contract_docs_ref(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_contract_docs_ref()
+
+    async def local_scope_expansion_contract_version(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_contract_version()
+
+    async def local_scope_expansion_lifecycle_contract_version(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_lifecycle_contract_version()
+
+    async def local_scope_expansion_lifecycle_state(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_lifecycle_state()
+
+    async def local_scope_expansion_cache_lifecycle_state(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_cache_lifecycle_state()
+
+    async def local_scope_expansion_dense_sidecar_promotion_contract_ready(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_dense_sidecar_promotion_contract_ready()
+
+    async def local_scope_expansion_required_before_widening(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_required_before_widening()
+
+    async def local_scope_expansion_rebuildable_from_projection_records(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_rebuildable_from_projection_records()
+
+    async def local_scope_expansion_requires_process_warmup(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_requires_process_warmup()
+
+    async def local_scope_expansion_warmup_recommended(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_warmup_recommended()
+
+    async def local_scope_expansion_warmup_required_for_peak_performance(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_warmup_required_for_peak_performance()
+
+    async def local_scope_expansion_cold_start_recoverable(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_cold_start_recoverable()
+
+    async def local_scope_expansion_cache_persistence_mode(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_cache_persistence_mode()
+
+    async def local_scope_expansion_lifecycle_recovery_mode(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_lifecycle_recovery_mode()
+
+    async def local_scope_expansion_lifecycle_recovery_hints(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_lifecycle_recovery_hints()
+
+    async def local_scope_expansion_warmup_target_route_ids(self) -> List[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_warmup_target_route_ids()
+
+    async def local_scope_expansion_warmup_command_hint(self) -> Optional[str]:
+        return (await self.profile_bringup_summary()).local_scope_expansion_warmup_command_hint()
+
+    async def local_scope_expansion_persisted_projection_state_available(self) -> bool:
+        return (await self.profile_bringup_summary()).local_scope_expansion_persisted_projection_state_available()
+
+    async def route_prefers_gold_for_exact_constraints(self, route_id: str) -> bool:
+        return (await self.profile_bringup_summary()).route_prefers_gold_for_exact_constraints(route_id)
+
+    async def route_exact_constraint_degraded_capabilities(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).route_exact_constraint_degraded_capabilities(route_id)
+
+    async def route_exact_constraint_unsupported_capabilities(self, route_id: str) -> List[str]:
+        return (await self.profile_bringup_summary()).route_exact_constraint_unsupported_capabilities(route_id)
+
+    async def bringup_projection_status_buckets(self) -> Dict[str, List[str]]:
+        summary = await self.profile_bringup_summary()
+        return {
+            "ready": list(summary.ready_projection_ids),
+            "building": list(summary.projection_building_ids),
+            "failed": list(summary.projection_failed_ids),
+            "stale": list(summary.projection_stale_ids),
+            "absent": list(summary.projection_absent_ids),
+        }
+
+    async def bringup_recommended_projection_status_buckets(self) -> Dict[str, List[str]]:
+        summary = await self.profile_bringup_summary()
+        return {
+            "ready": list(summary.recommended_ready_projection_ids),
+            "needs_build": list(summary.recommended_projection_ids_needing_build),
+            "all": list(summary.recommended_projection_ids),
+        }
+
+    async def projection_plan_explain(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return (await self._request("POST", "/v1/projection-plan/explain", json=payload)).json()
+
+    async def kernel_projection_plan_explain(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return (await self._request("POST", "/v2/kernel/projection-plan/explain", json=payload)).json()
+
+    async def projection_plan_explain_summary(self, payload: Dict[str, Any]) -> ProjectionPlanExplainSummary:
+        return parse_projection_plan_explain_summary(await self.projection_plan_explain(payload))
+
+    async def projection_refresh_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return (await self._request("POST", "/v1/projection-refresh/run", json=payload)).json()
+
+    async def kernel_projection_refresh_run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return (await self._request("POST", "/v2/kernel/projection-refresh/run", json=payload)).json()
+
+    async def projection_refresh_run_summary(self, payload: Dict[str, Any]) -> ProjectionRefreshExecutionReportSummary:
+        return parse_projection_refresh_execution_report_summary(await self.projection_refresh_run(payload))
+
+    async def projection_ids_needing_build(self, *, allow_degraded: bool = True) -> List[str]:
+        return (await self.projection_diagnostics_summary()).projection_ids_needing_build(
+            allow_degraded=allow_degraded
+        )
+
+    async def profile_diagnostics_summary(self) -> ProfileDiagnosticsSummary:
+        return parse_profile_diagnostics_summary(await self.profile_diagnostics())
+
+    async def route_support_state(self, route_id: str) -> Optional[str]:
+        return (await self.profile_diagnostics_summary()).route_support_state(route_id)
+
+    async def route_executable(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return (await self.profile_diagnostics_summary()).route_executable(route_id, allow_degraded=allow_degraded)
+
+    async def route_projection_ready(self, route_id: str) -> bool:
+        return (await self.profile_diagnostics_summary()).route_projection_ready(route_id)
+
+    async def route_projection_missing_descriptors(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_projection_missing_descriptors(route_id)
+
+    async def route_runtime_ready(self, route_id: str, *, allow_degraded: bool = True) -> bool:
+        return (await self.profile_diagnostics_summary()).route_runtime_ready(route_id, allow_degraded=allow_degraded)
+
+    async def route_blocker_kinds(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_blocker_kinds(route_id)
+
+    async def route_blocking_projection_ids(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_blocking_projection_ids(route_id)
+
+    async def route_lane_backends(self, route_id: str) -> Dict[str, str]:
+        return (await self.profile_diagnostics_summary()).route_lane_backends(route_id)
+
+    async def route_adapter_ids(self, route_id: str) -> Dict[str, str]:
+        return (await self.profile_diagnostics_summary()).route_adapter_ids(route_id)
+
+    async def route_projection_targets(self, route_id: str) -> List[Dict[str, Any]]:
+        return (await self.profile_diagnostics_summary()).route_projection_targets(route_id)
+
+    async def route_projection_target_backend_names(self, route_id: str) -> Dict[str, str]:
+        return (await self.profile_diagnostics_summary()).route_projection_target_backend_names(route_id)
+
+    async def route_required_projection_descriptor_ids(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_required_projection_descriptor_ids(route_id)
+
+    async def route_declared_executable(self, route_id: str) -> bool:
+        return (await self.profile_diagnostics_summary()).route_declared_executable(route_id)
+
+    async def route_declared_optional(self, route_id: str) -> bool:
+        return (await self.profile_diagnostics_summary()).route_declared_optional(route_id)
+
+    async def route_lexical_semantics(self, route_id: str) -> Dict[str, Any]:
+        return (await self.profile_diagnostics_summary()).route_lexical_semantics(route_id)
+
+    async def route_lexical_support_class(self, route_id: str) -> Optional[str]:
+        return (await self.profile_diagnostics_summary()).route_lexical_support_class(route_id)
+
+    async def route_lexical_capability_states(self, route_id: str) -> Dict[str, str]:
+        return (await self.profile_diagnostics_summary()).route_lexical_capability_states(route_id)
+
+    async def route_lexical_degraded_capabilities(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_lexical_degraded_capabilities(route_id)
+
+    async def route_lexical_unsupported_capabilities(self, route_id: str) -> List[str]:
+        return (await self.profile_diagnostics_summary()).route_lexical_unsupported_capabilities(route_id)
+
+    async def route_gold_recommended_for_exact_constraints(self, route_id: str) -> bool:
+        route = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if route is None:
+            return False
+        return route.gold_recommended_for_exact_constraints()
+
+    async def route_lexical_exact_constraint_degraded_capabilities(self, route_id: str) -> List[str]:
+        route = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if route is None:
+            return []
+        return route.exact_constraint_degraded_capabilities()
+
+    async def route_lexical_exact_constraint_unsupported_capabilities(self, route_id: str) -> List[str]:
+        route = (await self.profile_diagnostics_summary()).route_executor(route_id)
+        if route is None:
+            return []
+        return route.exact_constraint_unsupported_capabilities()
+
+    async def route_summary(self) -> Dict[str, Any]:
+        summary = (await self.profile_diagnostics_summary()).route_summary_payload()
+        return {
+            "inspected_route_count": summary.inspected_route_count,
+            "executable_route_count": summary.executable_route_count,
+            "runtime_ready_route_count": summary.runtime_ready_route_count,
+            "projection_blocked_route_count": summary.projection_blocked_route_count,
+            "runtime_blocked_route_count": summary.runtime_blocked_route_count,
+            "compatibility_projection_route_count": summary.compatibility_projection_route_count,
+            "canonical_projection_route_count": summary.canonical_projection_route_count,
+            "support_state_counts": dict(summary.support_state_counts),
+            "blocker_kind_counts": dict(summary.blocker_kind_counts),
+            "executable_route_ids": list(summary.executable_route_ids),
+            "runtime_ready_route_ids": list(summary.runtime_ready_route_ids),
+            "projection_blocked_route_ids": list(summary.projection_blocked_route_ids),
+            "runtime_blocked_route_ids": list(summary.runtime_blocked_route_ids),
+            "compatibility_projection_route_ids": list(summary.compatibility_projection_route_ids),
+            "canonical_projection_route_ids": list(summary.canonical_projection_route_ids),
+        }
+
+    async def runtime_blocker_summary(self) -> Dict[str, int]:
+        return (await self.profile_diagnostics_summary()).runtime_blocker_summary()
+
+    async def projection_blocked_routes(self, *, allow_degraded: bool = True) -> List[str]:
+        return [
+            entry.route_id
+            for entry in (await self.profile_diagnostics_summary()).projection_blocked_routes(
+                allow_degraded=allow_degraded
+            )
+        ]
+
+    async def runtime_blocked_routes(self, *, allow_degraded: bool = True) -> List[str]:
+        return [
+            entry.route_id
+            for entry in (await self.profile_diagnostics_summary()).runtime_blocked_routes(
+                allow_degraded=allow_degraded
+            )
+        ]
+
+    async def backend_connectivity_status(self, plane: str) -> Optional[str]:
+        return (await self.profile_diagnostics_summary()).backend_connectivity_status(plane)
 
     async def ping(self) -> Any:
         return await self.api("ping", method="GET", auth=False)

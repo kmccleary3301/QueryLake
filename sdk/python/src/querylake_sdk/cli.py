@@ -15,6 +15,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from .client import QueryLakeClient
+from .models import parse_pdf_output_contract_summary
 from .errors import QueryLakeError
 
 CONFIG_DIR = Path.home() / ".querylake"
@@ -327,7 +328,131 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     checks: Dict[str, Any] = {"base_url": client.base_url}
     try:
         checks["healthz"] = client.healthz()
-        checks["readyz"] = client.readyz()
+        readyz_raw = client.readyz()
+        readyz_summary = client.readyz_summary()
+        diagnostics_summary = client.profile_diagnostics_summary()
+        bringup_summary = client.profile_bringup_summary()
+        checks["readyz"] = readyz_raw
+        checks["readyz_summary"] = {
+            "boot_ready": readyz_summary.boot_ready(),
+            "configuration_ready": readyz_summary.configuration_ready(),
+            "route_runtime_ready": readyz_summary.route_runtime_ready(),
+            "profile": (
+                {
+                    "id": readyz_summary.profile.id,
+                    "label": readyz_summary.profile.label,
+                    "maturity": readyz_summary.profile.maturity,
+                    "recommended": readyz_summary.profile.recommended,
+                }
+                if readyz_summary.profile is not None
+                else None
+            ),
+            "projection_ids_needing_build": (
+                list(readyz_summary.bringup.projection_ids_needing_build)
+                if readyz_summary.bringup is not None
+                else []
+            ),
+            "route_runtime_blocked_ids": (
+                list(readyz_summary.bringup.route_runtime_blocked_ids)
+                if readyz_summary.bringup is not None
+                else []
+            ),
+            "backend_unreachable_planes": (
+                list(readyz_summary.bringup.backend_unreachable_planes)
+                if readyz_summary.bringup is not None
+                else []
+            ),
+        }
+        checks["profile_diagnostics_summary"] = {
+            "validation_error_kind": diagnostics_summary.startup_validation.validation_error_kind,
+            "validation_error_details": dict(diagnostics_summary.startup_validation.validation_error_details),
+            "route_summary": diagnostics_summary.route_summary_payload().__dict__,
+            "runtime_blockers": diagnostics_summary.runtime_blocker_summary(),
+            "projection_blocked_routes": [
+                entry.route_id for entry in diagnostics_summary.projection_blocked_routes()
+            ],
+            "runtime_blocked_routes": [
+                entry.route_id for entry in diagnostics_summary.runtime_blocked_routes()
+            ],
+            "degraded_runtime_ready_routes": [
+                entry.route_id
+                for entry in diagnostics_summary.route_executors
+                if diagnostics_summary.route_state(entry.route_id) == "degraded_runtime_ready"
+            ],
+        }
+        checks["profile_bringup_summary"] = {
+            "boot_ready": bringup_summary.summary.boot_ready,
+            "configuration_ready": bringup_summary.summary.configuration_ready,
+            "route_execution_ready": bringup_summary.summary.route_execution_ready,
+            "route_runtime_ready": bringup_summary.summary.route_runtime_ready,
+            "backend_connectivity_ready": bringup_summary.summary.backend_connectivity_ready,
+            "projection_ids_needing_build": list(bringup_summary.projection_ids_needing_build),
+            "recommended_projection_ids": list(bringup_summary.recommended_projection_ids),
+            "recommended_projection_ids_needing_build": list(bringup_summary.recommended_projection_ids_needing_build),
+            "projection_building_ids": list(bringup_summary.projection_building_ids),
+            "projection_failed_ids": list(bringup_summary.projection_failed_ids),
+            "projection_stale_ids": list(bringup_summary.projection_stale_ids),
+            "projection_absent_ids": list(bringup_summary.projection_absent_ids),
+            "route_runtime_blocked_ids": list(bringup_summary.route_runtime_blocked_ids),
+            "lexical_degraded_route_ids": list(bringup_summary.lexical_degraded_route_ids),
+            "lexical_gold_recommended_route_ids": list(bringup_summary.lexical_gold_recommended_route_ids),
+            "backend_unreachable_planes": list(bringup_summary.backend_unreachable_planes),
+            "required_projection_status_counts": dict(bringup_summary.summary.required_projection_status_counts),
+            "recommended_projection_count": bringup_summary.summary.recommended_projection_count,
+            "recommended_ready_projection_count": bringup_summary.summary.recommended_ready_projection_count,
+            "recommended_projection_ids_needing_build_count": (
+                bringup_summary.summary.recommended_projection_ids_needing_build_count
+            ),
+            "route_lexical_support_class_counts": dict(bringup_summary.summary.route_lexical_support_class_counts),
+            "lexical_capability_blocker_counts": dict(bringup_summary.summary.lexical_capability_blocker_counts),
+            "bootstrap_command": bringup_summary.bootstrap_command(),
+            "backend_targets": [
+                {
+                    "plane": target.plane,
+                    "backend": target.backend,
+                    "status": target.status,
+                    "required": target.required,
+                    "checked": target.checked,
+                    "checked_at": target.checked_at,
+                    "target": dict(target.target),
+                    "detail": target.detail,
+                }
+                for target in bringup_summary.backend_targets
+            ],
+            "route_recovery": [
+                {
+                    "route_id": entry.route_id,
+                    "implemented": entry.implemented,
+                    "support_state": entry.support_state,
+                    "runtime_ready": entry.runtime_ready,
+                    "projection_ready": entry.projection_ready,
+                    "blocker_kinds": list(entry.blocker_kinds),
+                    "bootstrapable_blocking_projection_ids": list(entry.bootstrapable_blocking_projection_ids),
+                    "nonbootstrapable_blocking_projection_ids": list(entry.nonbootstrapable_blocking_projection_ids),
+                    "bootstrap_command": entry.bootstrap_command,
+                    "lexical_support_class": entry.lexical_support_class,
+                    "gold_recommended_for_exact_constraints": entry.gold_recommended_for_exact_constraints,
+                    "exact_constraint_degraded_capabilities": list(entry.exact_constraint_degraded_capabilities),
+                    "exact_constraint_unsupported_capabilities": list(entry.exact_constraint_unsupported_capabilities),
+                }
+                for entry in bringup_summary.route_recovery
+            ],
+            "next_actions": [
+                {
+                    "kind": action.kind,
+                    "priority": action.priority,
+                    "summary": action.summary,
+                    "route_id": action.route_id,
+                    "route_ids": list(action.route_ids),
+                    "capability_ids": list(action.capability_ids),
+                    "projection_ids": list(action.projection_ids),
+                    "command": action.command,
+                    "blocker_kinds": list(action.blocker_kinds),
+                    "docs_ref": action.docs_ref,
+                }
+                for action in bringup_summary.highest_priority_actions()
+            ],
+        }
         checks["ping"] = client.ping()
         checks["models"] = client.list_models()
         checks["ok"] = True
@@ -585,6 +710,37 @@ def cmd_rag_list_documents(args: argparse.Namespace) -> int:
     finally:
         client.close()
     _print_output({"documents": rows, "count": len(rows)}, as_json=True)
+    return 0
+
+
+def _maybe_attach_pdf_output_contract_summary(payload: Any) -> Any:
+    if not isinstance(payload, dict):
+        return payload
+    if not any(key in payload for key in ("metadata", "md", "output_contract", "page_source_by_page", "page_source_counts")):
+        return payload
+    summary = parse_pdf_output_contract_summary(payload)
+    if summary.output_contract == "ocr_markdown" and not summary.page_source_by_page and not summary.page_source_counts:
+        return payload
+    enriched = dict(payload)
+    enriched["pdf_output_contract_summary"] = {
+        "output_contract": summary.output_contract,
+        "page_source_by_page": dict(summary.page_source_by_page),
+        "page_source_counts": dict(summary.page_source_counts),
+        "uses_text_layer": summary.uses_text_layer(),
+    }
+    return enriched
+
+
+def cmd_rag_get_document(args: argparse.Namespace) -> int:
+    client = _build_client(args, require_auth=True)
+    try:
+        result = client.fetch_document(
+            document_hash_id=args.document_id,
+            get_chunk_count=bool(args.get_chunk_count),
+        )
+    finally:
+        client.close()
+    _print_output(_maybe_attach_pdf_output_contract_summary(result), as_json=True)
     return 0
 
 
@@ -1309,6 +1465,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_rag_list_documents.add_argument("--limit", type=int, default=100)
     p_rag_list_documents.add_argument("--offset", type=int, default=0)
     p_rag_list_documents.set_defaults(func=cmd_rag_list_documents)
+
+    p_rag_get_document = rag_sub.add_parser(
+        "get-document",
+        help="Fetch one document row by document ID.",
+    )
+    p_rag_get_document.add_argument("--document-id", required=True)
+    p_rag_get_document.add_argument("--get-chunk-count", action="store_true")
+    p_rag_get_document.set_defaults(func=cmd_rag_get_document)
 
     p_rag_get_collection = rag_sub.add_parser(
         "get-collection",

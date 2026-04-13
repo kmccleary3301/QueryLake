@@ -6,6 +6,11 @@ from pathlib import Path
 import pytest
 
 import querylake_sdk.cli as cli
+from querylake_sdk.models import (
+    parse_profile_bringup_summary,
+    parse_profile_diagnostics_summary,
+    parse_readyz_summary,
+)
 
 
 class _FakeClient:
@@ -31,7 +36,182 @@ class _FakeClient:
         return {"ok": True}
 
     def readyz(self):
-        return {"ok": True}
+        return {
+            "ok": True,
+            "db_profile": {
+                "id": "aws_aurora_pg_opensearch_v1",
+                "label": "Aurora PostgreSQL + OpenSearch",
+                "maturity": "split_stack_executable",
+                "recommended": False,
+            },
+            "db_profile_diagnostics": {
+                "boot_ready": False,
+                "configuration_ready": True,
+                "route_runtime_ready": False,
+            },
+            "db_profile_bringup": {
+                "summary": {
+                    "boot_ready": False,
+                    "configuration_ready": True,
+                    "route_runtime_ready": False,
+                    "ready_projection_count": 1,
+                    "required_projection_count": 3,
+                    "backend_connectivity_ready": True,
+                },
+                "projection_ids_needing_build": [
+                    "document_chunk_lexical_projection_v1",
+                    "document_chunk_dense_projection_v1",
+                ],
+                "route_runtime_blocked_ids": ["search_bm25.document_chunk"],
+                "backend_unreachable_planes": [],
+            },
+            "models": ["bge-m3"],
+        }
+
+    def readyz_summary(self):
+        return parse_readyz_summary(self.readyz())
+
+    def profile_diagnostics_summary(self):
+        return parse_profile_diagnostics_summary(
+            {
+                "profile": {
+                    "id": "aws_aurora_pg_opensearch_v1",
+                    "label": "Aurora PostgreSQL + OpenSearch",
+                    "maturity": "split_stack_executable",
+                    "recommended": False,
+                },
+                "capabilities": [
+                    {
+                        "id": "retrieval.lexical.advanced_operators",
+                        "support_state": "degraded",
+                        "description": "Advanced lexical operators.",
+                    },
+                    {
+                        "id": "retrieval.sparse.vector",
+                        "support_state": "unsupported",
+                        "description": "Sparse retrieval.",
+                    },
+                ],
+                "startup_validation": {
+                    "boot_ready": False,
+                    "configuration_ready": True,
+                    "route_execution_ready": True,
+                    "route_runtime_ready": False,
+                    "backend_connectivity_ready": True,
+                    "full_route_coverage_ready": True,
+                    "full_runtime_coverage_ready": False,
+                    "inspected_route_ids": ["search_bm25.document_chunk"],
+                    "required_route_ids": ["search_bm25.document_chunk"],
+                    "optional_route_ids": [],
+                    "non_executable_required_routes": [],
+                    "non_executable_optional_routes": [],
+                    "non_runtime_ready_required_routes": ["search_bm25.document_chunk"],
+                    "non_runtime_ready_optional_routes": [],
+                    "non_reachable_required_backends": [],
+                    "validation_error_kind": "projection_missing",
+                    "validation_error": "projection missing",
+                    "validation_error_details": {
+                        "projection_blocker_routes": {
+                            "projection_not_ready": ["search_bm25.document_chunk"]
+                        }
+                    },
+                },
+                "route_summary": {
+                    "implemented_route_count": 1,
+                    "executable_route_count": 1,
+                    "runtime_ready_route_count": 0,
+                    "supported_route_count": 0,
+                    "degraded_route_count": 1,
+                    "unsupported_or_planned_route_count": 0,
+                    "support_state_counts": {"degraded": 1},
+                    "runtime_ready_route_ids": [],
+                    "runtime_blocked_route_ids": ["search_bm25.document_chunk"],
+                },
+                "route_executors": [
+                    {
+                        "route_id": "search_bm25.document_chunk",
+                        "executor_id": "opensearch.search_bm25.document_chunk.v1",
+                        "profile_id": "aws_aurora_pg_opensearch_v1",
+                        "implemented": True,
+                        "support_state": "degraded",
+                        "backend_stack": {"lexical": "opensearch"},
+                        "lane_adapters": {
+                            "bm25": {
+                                "adapter_id": "opensearch_bm25_v1",
+                                "backend": "opensearch",
+                            }
+                        },
+                        "projection_dependency_mode": "required_external_projection",
+                        "projection_descriptors": ["document_chunk_lexical_projection_v1"],
+                        "runtime_ready": False,
+                        "runtime_blockers": [
+                            {
+                                "kind": "projection_not_ready",
+                                "projection_ids": ["document_chunk_lexical_projection_v1"],
+                            }
+                        ],
+                    }
+                ],
+                "lane_diagnostics": [],
+                "backend_connectivity": {},
+            }
+        )
+
+    def profile_bringup_summary(self):
+        return parse_profile_bringup_summary(
+            {
+                "profile": {
+                    "id": "aws_aurora_pg_opensearch_v1",
+                    "label": "Aurora PostgreSQL + OpenSearch",
+                    "maturity": "split_stack_executable",
+                    "recommended": False,
+                },
+                "summary": {
+                    "boot_ready": False,
+                    "configuration_ready": True,
+                    "route_execution_ready": True,
+                    "route_runtime_ready": False,
+                    "backend_connectivity_ready": True,
+                    "required_projection_count": 3,
+                    "ready_projection_count": 1,
+                },
+                "projection_ids_needing_build": [
+                    "document_chunk_lexical_projection_v1",
+                    "document_chunk_dense_projection_v1",
+                ],
+                "ready_projection_ids": ["file_chunk_lexical_projection_v1"],
+                "route_runtime_ready_ids": [],
+                "route_runtime_blocked_ids": ["search_bm25.document_chunk"],
+                "backend_unreachable_planes": [],
+                "backend_targets": [
+                    {
+                        "plane": "projection",
+                        "backend": "opensearch",
+                        "status": "configured",
+                        "required": True,
+                        "checked": False,
+                        "target": {
+                            "scheme": "https",
+                            "host": "search.example.com",
+                            "index_namespace": "ql",
+                        },
+                    }
+                ],
+                "next_actions": [
+                    {
+                        "kind": "bootstrap_projections",
+                        "priority": "high",
+                        "summary": "Build projections",
+                        "projection_ids": [
+                            "document_chunk_lexical_projection_v1",
+                            "document_chunk_dense_projection_v1",
+                        ],
+                        "command": "python scripts/db_compat_profile_bootstrap.py --profile aws_aurora_pg_opensearch_v1",
+                        "blocker_kinds": [],
+                    }
+                ],
+            }
+        )
 
     def ping(self):
         return {"pong": True}
@@ -60,6 +240,17 @@ class _FakeClient:
                 "offset_used": int(offset),
             }
         ]
+
+    def fetch_document(self, *, document_hash_id, get_chunk_count=False):
+        return {
+            "hash_id": str(document_hash_id),
+            "md": {
+                "output_contract": "mixed_text_layer_fastpath_markdown",
+                "page_source_by_page": {"0001": "text_layer", "0002": "ocr"},
+                "page_source_counts": {"text_layer": 1, "ocr": 1},
+            },
+            "chunk_count": 2 if get_chunk_count else None,
+        }
 
     def fetch_collection(self, *, collection_hash_id):
         return {"hash_id": str(collection_hash_id), "name": "demo collection"}
@@ -302,7 +493,35 @@ def test_cli_doctor(monkeypatch, capsys):
     code = cli.main(["--url", "http://127.0.0.1:8000", "doctor"])
     assert code == 0
     captured = capsys.readouterr()
-    assert "\"ok\": true" in captured.out.lower()
+    payload = json.loads(captured.out)
+    assert payload["ok"] is True
+    assert payload["profile_diagnostics_summary"]["validation_error_kind"] == "projection_missing"
+    assert payload["profile_bringup_summary"]["backend_targets"][0]["target"]["host"] == "search.example.com"
+    assert payload["profile_bringup_summary"]["next_actions"][0]["kind"] == "bootstrap_projections"
+    assert payload["profile_diagnostics_summary"]["degraded_runtime_ready_routes"] == []
+
+
+def test_cli_rag_get_document_attaches_output_contract_summary(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "QueryLakeClient", _FakeClient)
+    code = cli.main(
+        [
+            "--url",
+            "http://127.0.0.1:8000",
+            "--oauth2",
+            "tok_demo",
+            "rag",
+            "get-document",
+            "--document-id",
+            "doc_123",
+            "--get-chunk-count",
+        ]
+    )
+    assert code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["hash_id"] == "doc_123"
+    assert payload["pdf_output_contract_summary"]["output_contract"] == "mixed_text_layer_fastpath_markdown"
+    assert payload["pdf_output_contract_summary"]["uses_text_layer"] is True
+    assert payload["pdf_output_contract_summary"]["page_source_counts"]["text_layer"] == 1
 
 
 def test_cli_profile_default_url_resolution(monkeypatch, tmp_path, capsys):

@@ -20,6 +20,7 @@ Official lightweight Python SDK for QueryLake.
 - [Python usage](#python-usage)
 - [Offline examples](#offline-examples)
 - [Profile management](#profile-management)
+- [Profile-aware clients](#profile-aware-clients)
 - [Async client](#async-client)
 - [Compatibility and scope](#compatibility-and-scope)
 - [Documentation map](#documentation-map)
@@ -332,6 +333,53 @@ Practical behavior:
 - so most subsequent commands can omit `--profile`,
 - and you can keep separate profiles for local, staging, and hosted environments.
 
+## Profile-aware clients
+
+The SDK exposes parsed helpers for the QueryLake DB-compatibility contract, so client code does not have to hand-parse raw capability and diagnostics payloads.
+
+Minimal capability branch:
+
+```python
+from querylake_sdk import QueryLakeClient
+
+client = QueryLakeClient(base_url="http://127.0.0.1:8000")
+caps = client.capabilities_summary()
+
+allow_sparse = caps.is_available("retrieval.sparse.vector")
+allow_hard_constraints = caps.is_supported("retrieval.lexical.hard_constraints")
+```
+
+Route-level execution branch:
+
+```python
+from querylake_sdk import QueryLakeClient
+
+client = QueryLakeClient(base_url="http://127.0.0.1:8000")
+diag = client.profile_diagnostics_summary()
+
+if not diag.route_executable("search_hybrid.document_chunk"):
+    raise RuntimeError(f"Hybrid retrieval is not executable on profile {diag.profile.id}")
+```
+
+Thin client wrappers are also available:
+
+| Method | Meaning |
+|---|---|
+| `client.support_state(capability_id)` | support state for a capability |
+| `client.supports(capability_id, allow_degraded=True)` | whether a capability is usable |
+| `client.route_support_state(route_id)` | support state for a route executor |
+| `client.route_executable(route_id, allow_degraded=True)` | whether a route is executable |
+
+Use the parsed summaries when you need more detail:
+
+- `CapabilitiesSummary.degraded_capabilities()`
+- `ProfileDiagnosticsSummary.missing_route_executors()`
+- `ProfileConfigurationSummary.blocking_requirements()`
+
+Deeper guidance:
+
+- [`../../docs/database/SDK_PROFILE_AWARE_CLIENTS.md`](../../docs/database/SDK_PROFILE_AWARE_CLIENTS.md)
+
 ## Async client
 
 ```python
@@ -374,6 +422,7 @@ The SDK aims to be the **cleanest way to use QueryLake**, not the place where Qu
 | RAG research workflows | [`docs/sdk/RAG_RESEARCH_PLAYBOOK.md`](../../docs/sdk/RAG_RESEARCH_PLAYBOOK.md) | retrieval/eval-centric usage |
 | Bulk ingest reference | [`docs/sdk/BULK_INGEST_REFERENCE.md`](../../docs/sdk/BULK_INGEST_REFERENCE.md) | dry-run, checkpoint, resume, dedupe semantics |
 | API reference | [`docs/sdk/API_REFERENCE.md`](../../docs/sdk/API_REFERENCE.md) | method-level reference |
+| Profile-aware clients | [`docs/database/SDK_PROFILE_AWARE_CLIENTS.md`](../../docs/database/SDK_PROFILE_AWARE_CLIENTS.md) | capability-aware client branching and degraded-profile handling |
 | CI profiles | [`docs/sdk/CI_PROFILES.md`](../../docs/sdk/CI_PROFILES.md) | package validation and release expectations |
 | PyPI release runbook | [`docs/sdk/PYPI_RELEASE.md`](../../docs/sdk/PYPI_RELEASE.md) | publishing workflow |
 | TestPyPI dry-run | [`docs/sdk/TESTPYPI_DRYRUN.md`](../../docs/sdk/TESTPYPI_DRYRUN.md) | release rehearsal |
