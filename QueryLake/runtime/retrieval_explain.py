@@ -63,6 +63,7 @@ def build_retrieval_plan_explain(
     query_ir_v2: Optional[Dict[str, Any]] = None,
     projection_ir_v2: Optional[Dict[str, Any]] = None,
     compatibility_provenance: Optional[Dict[str, Any]] = None,
+    compatibility_materializations: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     opts = dict(options or {})
     flags = dict(pipeline.flags or {})
@@ -134,6 +135,11 @@ def build_retrieval_plan_explain(
             **(
                 {"compatibility_provenance": dict(compatibility_provenance)}
                 if compatibility_provenance is not None
+                else {}
+            ),
+            **(
+                {"compatibility_materializations": dict(compatibility_materializations)}
+                if compatibility_materializations is not None
                 else {}
             ),
         },

@@ -318,6 +318,8 @@ async def test_search_hybrid_split_stack_phrase_query_surfaces_degraded_lexical_
     monkeypatch.setenv("QUERYLAKE_DB_PROFILE", "aws_aurora_pg_opensearch_v1")
     monkeypatch.setattr("QueryLake.api.search.get_user", lambda *_args, **_kwargs: (None, DummyUserAuth()))
     monkeypatch.setattr("QueryLake.api.search.assert_collections_priviledge", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("QueryLake.api.search.fetch_document_chunk_materialization_provenance", lambda database, records: [])
+    monkeypatch.setattr("QueryLake.api.search.fetch_document_chunk_authority_materializations", lambda database, records: [])
 
     class _FakeLexicalHybridExecutor:
         def execute(self, *_args, **_kwargs):
@@ -371,10 +373,10 @@ async def test_search_hybrid_split_stack_phrase_query_surfaces_degraded_lexical_
         _skip_observability=True,
     )
 
-    lexical_plan = payload["plan_explain"]["lexical_capability_plan"]
-    assert payload["plan_explain"]["query_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
-    assert payload["plan_explain"]["query_ir_v2"]["representation_scope_id"] == "document_chunk"
-    assert payload["plan_explain"]["projection_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
+    lexical_plan = payload["plan_explain"]["effective"]["lexical_capability_plan"]
+    assert payload["plan_explain"]["effective"]["query_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
+    assert payload["plan_explain"]["effective"]["query_ir_v2"]["representation_scope_id"] == "document_chunk"
+    assert payload["plan_explain"]["effective"]["projection_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
     assert lexical_plan["degraded_capabilities"] == [
         "retrieval.lexical.advanced_operators",
         "retrieval.lexical.phrase_boost",
@@ -387,6 +389,8 @@ async def test_search_hybrid_split_stack_proximity_query_surfaces_degraded_lexic
     monkeypatch.setenv("QUERYLAKE_DB_PROFILE", "aws_aurora_pg_opensearch_v1")
     monkeypatch.setattr("QueryLake.api.search.get_user", lambda *_args, **_kwargs: (None, DummyUserAuth()))
     monkeypatch.setattr("QueryLake.api.search.assert_collections_priviledge", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("QueryLake.api.search.fetch_document_chunk_materialization_provenance", lambda database, records: [])
+    monkeypatch.setattr("QueryLake.api.search.fetch_document_chunk_authority_materializations", lambda database, records: [])
 
     class _FakeLexicalHybridExecutor:
         def execute(self, *_args, **_kwargs):
@@ -440,12 +444,177 @@ async def test_search_hybrid_split_stack_proximity_query_surfaces_degraded_lexic
         _skip_observability=True,
     )
 
-    lexical_plan = payload["plan_explain"]["lexical_capability_plan"]
-    assert payload["plan_explain"]["query_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
-    assert payload["plan_explain"]["projection_ir_v2"]["representation_scope_id"] == "document_chunk"
+    lexical_plan = payload["plan_explain"]["effective"]["lexical_capability_plan"]
+    assert payload["plan_explain"]["effective"]["query_ir_v2"]["route_id"] == "search_hybrid.document_chunk"
+    assert payload["plan_explain"]["effective"]["projection_ir_v2"]["representation_scope_id"] == "document_chunk"
     assert lexical_plan["degraded_capabilities"] == [
         "retrieval.lexical.advanced_operators",
         "retrieval.lexical.phrase_boost",
         "retrieval.lexical.proximity",
     ]
     assert lexical_plan["unsupported_capabilities"] == []
+
+
+@pytest.mark.asyncio
+async def test_search_hybrid_direct_plan_explain_surfaces_authority_materializations(monkeypatch):
+    monkeypatch.delenv("QUERYLAKE_DB_PROFILE", raising=False)
+    monkeypatch.setattr("QueryLake.api.search.get_user", lambda *_args, **_kwargs: (None, DummyUserAuth()))
+    monkeypatch.setattr("QueryLake.api.search.assert_collections_priviledge", lambda *_args, **_kwargs: None)
+
+    class _FakeHybridExecutor:
+        def execute(self, *_args, **_kwargs):
+            return [
+                (
+                    "row-direct", 0.88, 0.88, 0.0, 0.88,
+                    "row-direct", 1.0, None, "doc-direct", 0, None, "c1", "Direct Doc", None, False, {}, {}, "direct text"
+                )
+            ]
+
+    monkeypatch.setattr(
+        "QueryLake.api.search.resolve_search_hybrid_route_executor",
+        lambda **_kwargs: ResolvedRouteExecutor(
+            resolution=RouteExecutorResolution(
+                route_id="search_hybrid.document_chunk",
+                executor_id="gold.search_hybrid.document_chunk.v1",
+                profile_id="paradedb_postgres_gold_v1",
+                implemented=True,
+                support_state="supported",
+                backend_stack=BackendStack(
+                    authority="postgresql",
+                    lexical="paradedb",
+                    dense="pgvector_halfvec",
+                    sparse="pgvector_sparsevec",
+                    graph="postgresql_segment_relations",
+                ),
+                lane_adapters={},
+                projection_descriptors=["document_chunk_lexical_projection_v1"],
+            ),
+            executor=_FakeHybridExecutor(),
+        ),
+    )
+    monkeypatch.setattr(
+        "QueryLake.api.search.fetch_document_chunk_materialization_provenance",
+        lambda database, records: [
+            {
+                "chunk_id": "row-direct",
+                "canonical_authority_segment_id": "seg-direct",
+                "authority_segment_consistent": True,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "QueryLake.api.search.fetch_document_chunk_authority_materializations",
+        lambda database, records: [
+            {
+                "chunk_id": "row-direct",
+                "materialized_authority_segment_id": "seg-direct",
+                "authority_segment_resolved": True,
+                "segment_materialization": {
+                    "id": "seg-direct",
+                    "segment_index": 3,
+                    "document_id": "doc-direct",
+                },
+            }
+        ],
+    )
+
+    logged = {"kwargs": None}
+    monkeypatch.setattr("QueryLake.api.search.log_retrieval_run", lambda *args, **kwargs: logged.update({"kwargs": kwargs}))
+    monkeypatch.setattr("QueryLake.api.search.metrics.record_retrieval", lambda **kwargs: None)
+
+    payload = await search_hybrid(
+        database=DummyDB(),
+        toolchain_function_caller=_unused_toolchain_function_caller,
+        auth={"oauth2": "tok"},
+        query={"bm25": "boiler", "embedding": ""},
+        collection_ids=["c1"],
+        limit_bm25=10,
+        limit_similarity=0,
+        limit_sparse=0,
+        bm25_weight=1.0,
+        similarity_weight=0.0,
+        sparse_weight=0.0,
+        use_similarity=False,
+        use_sparse=False,
+        explain_plan=True,
+        group_chunks=False,
+        _direct_stage_call=True,
+        _skip_observability=False,
+    )
+
+    assert payload["plan_explain"]["effective"]["compatibility_provenance"]["records"][0]["chunk_id"] == "row-direct"
+    assert payload["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-direct"
+    assert logged["kwargs"]["md"]["compatibility_materialization_summary"]["resolved_record_count"] == 1
+    assert logged["kwargs"]["md"]["compatibility_materialization_summary"]["unique_authority_segment_count"] == 1
+
+
+def test_search_bm25_document_chunk_plan_explain_surfaces_authority_materializations(monkeypatch):
+    monkeypatch.delenv("QUERYLAKE_DB_PROFILE", raising=False)
+    monkeypatch.setattr("QueryLake.api.search.get_user", lambda *_args, **_kwargs: (None, DummyUserAuth()))
+    monkeypatch.setattr("QueryLake.api.search.assert_collections_priviledge", lambda *_args, **_kwargs: None)
+
+    class _FakeBm25Executor:
+        def execute(self, *_args, **_kwargs):
+            return BM25RouteExecution(
+                rows_or_statement=[
+                    (
+                        "row-a", 0.9,
+                        "row-a", 1.0, None, "doc-a", 0, None, "c1", "Doc A", None, False, {}, {}, "alpha"
+                    ),
+                ],
+                formatted_query="boiler",
+                quoted_phrases=(),
+                plan=None,
+            )
+
+    monkeypatch.setattr(
+        "QueryLake.api.search.resolve_search_bm25_route_executor",
+        lambda **_kwargs: ResolvedRouteExecutor(
+            resolution=RouteExecutorResolution(
+                route_id="search_bm25.document_chunk",
+                executor_id="gold.search_bm25.document_chunk.v1",
+                profile_id="paradedb_postgres_gold_v1",
+                implemented=True,
+                support_state="supported",
+                backend_stack=BackendStack(
+                    authority="postgresql",
+                    lexical="paradedb",
+                    dense="pgvector_halfvec",
+                    sparse="pgvector_sparsevec",
+                    graph="postgresql_segment_relations",
+                ),
+                lane_adapters={},
+                projection_descriptors=["document_chunk_lexical_projection_v1"],
+            ),
+            executor=_FakeBm25Executor(),
+        ),
+    )
+    monkeypatch.setattr(
+        "QueryLake.api.search.fetch_document_chunk_materialization_provenance",
+        lambda database, records: [{"chunk_id": "row-a", "canonical_authority_segment_id": "seg-a", "authority_segment_consistent": True}],
+    )
+    monkeypatch.setattr(
+        "QueryLake.api.search.fetch_document_chunk_authority_materializations",
+        lambda database, records: [{"chunk_id": "row-a", "materialized_authority_segment_id": "seg-a", "authority_segment_resolved": True, "segment_materialization": {"id": "seg-a", "segment_index": 1}}],
+    )
+
+    logged = {"kwargs": None}
+    monkeypatch.setattr("QueryLake.api.search.log_retrieval_run", lambda *args, **kwargs: logged.update({"kwargs": kwargs}))
+    monkeypatch.setattr("QueryLake.api.search.metrics.record_retrieval", lambda **kwargs: None)
+
+    payload = search_bm25(
+        database=DummyDB(),
+        auth={"oauth2": "tok"},
+        query="boiler",
+        collection_ids=["c1"],
+        table="document_chunk",
+        group_chunks=False,
+        explain_plan=True,
+        _direct_stage_call=True,
+        _skip_observability=False,
+    )
+
+    assert payload["plan_explain"]["effective"]["compatibility_provenance"]["records"][0]["chunk_id"] == "row-a"
+    assert payload["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-a"
+    assert logged["kwargs"]["md"]["compatibility_materialization_summary"]["resolved_record_count"] == 1
+    assert logged["kwargs"]["md"]["compatibility_materialization_summary"]["unique_authority_segment_count"] == 1

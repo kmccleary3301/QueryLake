@@ -51,7 +51,11 @@ from ..runtime.retrieval_pipeline_runtime import (
     resolve_runtime_pipeline,
 )
 from ..runtime.retrieval_explain import build_retrieval_plan_explain
-from ..runtime.authority_projection_access import fetch_document_chunk_materialization_provenance
+from ..runtime.authority_projection_access import (
+    fetch_document_chunk_authority_materializations,
+    fetch_document_chunk_materialization_provenance,
+)
+from ..runtime.document_decomposition import DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT
 from ..runtime.retrieval_primitive_factory import (
     build_retrievers_for_pipeline as factory_build_retrievers_for_pipeline,
     select_fusion_for_pipeline as factory_select_fusion_for_pipeline,
@@ -790,7 +794,7 @@ def _candidate_to_file_chunk_result(candidate: RetrievalCandidate) -> Dict[str, 
     return row
 
 
-def _build_document_chunk_compatibility_provenance(database: Session, rows: Sequence[Any]) -> Dict[str, Any]:
+def _collect_document_chunk_materialized_records(rows: Sequence[Any]) -> List[Dict[str, Any]]:
     materialized_records: List[Dict[str, Any]] = []
     for row in rows:
         if hasattr(row, 'model_dump'):
@@ -819,7 +823,48 @@ def _build_document_chunk_compatibility_provenance(database: Session, rows: Sequ
                 'md': dict(payload.get('md') or {}),
                 'document_md': dict(payload.get('document_md') or {}),
             })
+    return materialized_records
+
+
+def _build_document_chunk_compatibility_provenance(database: Session, rows: Sequence[Any]) -> Dict[str, Any]:
+    materialized_records = _collect_document_chunk_materialized_records(rows)
     records = fetch_document_chunk_materialization_provenance(database, records=materialized_records)
+    return {
+        'representation_scope': 'document_chunk',
+        'compatibility_contract': 'canonical_segment_compat_projection_v1',
+        'grouped_result_count': len(rows),
+        'record_count': len(records),
+        'records': records,
+    }
+
+
+def _build_document_chunk_compatibility_materialization_summary(database: Session, rows: Sequence[Any]) -> Dict[str, Any]:
+    payload = _build_document_chunk_compatibility_materializations(database, rows)
+    records = list(payload.get('records') or [])
+    resolved_records = [record for record in records if bool(record.get('authority_segment_resolved'))]
+    unique_segment_ids = []
+    seen_segment_ids = set()
+    for record in resolved_records:
+        segment_id = str(record.get('materialized_authority_segment_id') or '')
+        if not segment_id or segment_id in seen_segment_ids:
+            continue
+        seen_segment_ids.add(segment_id)
+        unique_segment_ids.append(segment_id)
+    return {
+        'representation_scope': 'document_chunk',
+        'compatibility_contract': DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT,
+        'grouped_result_count': len(rows),
+        'record_count': len(records),
+        'resolved_record_count': len(resolved_records),
+        'unresolved_record_count': int(len(records) - len(resolved_records)),
+        'unique_authority_segment_count': len(unique_segment_ids),
+        'authority_segment_ids': unique_segment_ids[:25],
+    }
+
+
+def _build_document_chunk_compatibility_materializations(database: Session, rows: Sequence[Any]) -> Dict[str, Any]:
+    materialized_records = _collect_document_chunk_materialized_records(rows)
+    records = fetch_document_chunk_authority_materializations(database, records=materialized_records)
     return {
         'representation_scope': 'document_chunk',
         'compatibility_contract': 'canonical_segment_compat_projection_v1',
@@ -1655,6 +1700,7 @@ async def search_hybrid(
             plan_explain_payload = None
             if explain_plan:
                 compatibility_provenance = _build_document_chunk_compatibility_provenance(database, rows_as_chunks)
+                compatibility_materializations = _build_document_chunk_compatibility_materializations(database, rows_as_chunks)
                 plan_explain_payload = build_retrieval_plan_explain(
                     route="search_hybrid",
                     pipeline=pipeline,
@@ -1671,6 +1717,7 @@ async def search_hybrid(
                         lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                     ),
                     compatibility_provenance=compatibility_provenance,
+                    compatibility_materializations=compatibility_materializations,
                     lane_state={
                         "use_bm25": bool(use_bm25),
                         "use_similarity": bool(use_similarity),
@@ -2080,6 +2127,57 @@ async def search_hybrid(
         }
         
         results = [r.model_dump() for r in results]
+        compatibility_materialization_summary = None
+        if not _skip_observability:
+            compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results)
+        plan_explain_payload = None
+        if explain_plan:
+            compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results)
+            compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results)
+            plan_explain_payload = build_retrieval_plan_explain(
+                route="search_hybrid",
+                pipeline=RetrievalPipelineSpec(
+                    pipeline_id="search_hybrid.direct",
+                    version="v2",
+                    stages=[
+                        RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB", enabled=bool(use_bm25)),
+                        RetrievalPipelineStage(stage_id="dense", primitive_id="DenseRetrieverPGVector", enabled=bool(use_similarity)),
+                        RetrievalPipelineStage(stage_id="sparse", primitive_id="SparseRetrieverPGVector", enabled=bool(use_sparse)),
+                    ],
+                ),
+                options={
+                    "limit": int(limit_bm25 + limit_similarity + limit_sparse),
+                    "limit_bm25": int(limit_bm25),
+                    "limit_similarity": int(limit_similarity),
+                    "limit_sparse": int(limit_sparse),
+                    "bm25_query_text": str(query.get("bm25", "")),
+                    "bm25_catch_all_fields": list(resolved_catch_all_fields),
+                    "fusion_primitive": "WeightedScoreFusion",
+                    "fusion_normalization": "rrf-weighted-sql",
+                    "fusion_weights": {"bm25": float(bm25_weight), "dense": float(similarity_weight), "sparse": float(sparse_weight)},
+                    "fusion_score_keys": {"bm25": "bm25_score", "dense": "similarity_score", "sparse": "sparse_score"},
+                    "rerank_enabled": bool("rerank" in query),
+                    "rerank_query_text": str(query.get("rerank", query.get("bm25", ""))),
+                },
+                route_executor=hybrid_route_executor.to_payload(),
+                query_ir_v2=lexical_query_ir_v2,
+                projection_ir_v2=hybrid_projection_ir_v2,
+                lexical_capability_plan=(
+                    lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                ),
+                compatibility_provenance=compatibility_provenance,
+                compatibility_materializations=compatibility_materializations,
+                lane_state={
+                    "use_bm25": bool(use_bm25),
+                    "use_similarity": bool(use_similarity),
+                    "use_sparse": bool(use_sparse),
+                    "adaptive_lane_routing": bool(adaptive_lane_routing),
+                    "adaptive_lane_applied": bool(adaptive_lane_applied),
+                    "adaptive_query_profile": str(adaptive_profile_selected),
+                    "strict_constraint_prefilter": bool(strict_constraint_prefilter),
+                    "bm25_catch_all_fields": list(resolved_catch_all_fields),
+                },
+            )
         if not _skip_observability:
             metrics.record_retrieval(
                 route="search_hybrid",
@@ -2132,58 +2230,18 @@ async def search_hybrid(
                 status="ok",
                 md={
                     "route_executor": hybrid_route_executor.to_payload(),
+                    "compatibility_materialization_summary": compatibility_materialization_summary,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
                         else {}
                     ),
+                    **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
                 },
             )
         response_payload = {"rows": results, **result_metrics}
-        if explain_plan:
-            response_payload["plan_explain"] = {
-                "route": "search_hybrid",
-                "route_executor": hybrid_route_executor.to_payload(),
-                **(
-                    {"query_ir_v2": dict(lexical_query_ir_v2)}
-                    if lexical_query_ir_v2 is not None
-                    else {}
-                ),
-                **(
-                    {
-                        "projection_ir_v2": dict(hybrid_projection_ir_v2)
-                    }
-                    if hybrid_projection_ir_v2
-                    else {}
-                ),
-                **(
-                    {"lexical_capability_plan": lexical_capability_plan.to_payload()}
-                    if lexical_capability_plan is not None
-                    else {}
-                ),
-                "pipeline": {
-                    "pipeline_id": "orchestrated.search_hybrid.sql",
-                    "pipeline_version": "v1",
-                    "source": "legacy_sql",
-                    "stages": [
-                        {"stage_id": "bm25", "enabled": bool(use_bm25)},
-                        {"stage_id": "dense", "enabled": bool(use_similarity)},
-                        {"stage_id": "sparse", "enabled": bool(use_sparse)},
-                    ],
-                },
-                "effective": {
-                    "fusion": {
-                        "enabled": True,
-                        "primitive": "WeightedScoreFusion",
-                        "normalization": "rrf-weighted-sql",
-                    },
-                    "limits": {
-                        "limit_bm25": int(limit_bm25),
-                        "limit_similarity": int(limit_similarity),
-                        "limit_sparse": int(limit_sparse),
-                    },
-                },
-            }
+        if plan_explain_payload is not None:
+            response_payload["plan_explain"] = plan_explain_payload
         database.rollback()
         return response_payload
         
@@ -2234,6 +2292,7 @@ def search_bm25(
     limit: int = 10,
     offset: int = 0,
     web_search : bool = False,
+    explain_plan: bool = False,
     return_statement : bool = False,
     group_chunks : bool = True,
     table : Literal["document_chunk", "document", "segment"] = "document_chunk",
@@ -2388,6 +2447,37 @@ def search_bm25(
             )
             results_made = [_candidate_to_document_chunk(candidate) for candidate in run_result.candidates]
             results_dump = [r.model_dump() for r in results_made]
+            compatibility_materialization_summary = None
+            plan_explain_payload = None
+            if table == "document_chunk":
+                if not _skip_observability:
+                    compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
+                if explain_plan:
+                    compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results_dump)
+                    compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results_dump)
+                    plan_explain_payload = build_retrieval_plan_explain(
+                        route=f"search_bm25.{table}",
+                        pipeline=pipeline,
+                        options=request_obj.options,
+                        pipeline_resolution=pipeline_resolution,
+                        route_executor=(
+                            bm25_route_resolution.to_payload()
+                            if bm25_route_resolution is not None
+                            else {}
+                        ),
+                        query_ir_v2=lexical_query_ir_v2,
+                        projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
+                        lexical_capability_plan=(
+                            lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                        ),
+                        compatibility_provenance=compatibility_provenance,
+                        compatibility_materializations=compatibility_materializations,
+                        lane_state={
+                            "table": str(table),
+                            "group_chunks": bool(group_chunks),
+                            "web_search": bool(web_search),
+                        },
+                    )
             if not _skip_observability:
                 metrics.record_retrieval(
                     route=f"search_bm25.{table}",
@@ -2420,14 +2510,18 @@ def search_bm25(
                     md={
                         "stage_trace": [trace.model_dump() for trace in run_result.traces],
                         "pipeline_resolution": pipeline_resolution,
+                        **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                         **(
                             {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                             if lexical_capability_plan is not None
                             else {}
                         ),
+                        **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
                     },
                 )
             database.rollback()
+            if plan_explain_payload is not None:
+                return {"results": results_dump, "plan_explain": plan_explain_payload}
             return results_made
         except Exception as e:
             if not _skip_observability:
@@ -2514,6 +2608,43 @@ def search_bm25(
             results_made = group_adjacent_chunks(results_made)
         results_made = sorted(results_made, key=lambda x: 0 if x.bm25_score is None else x.bm25_score, reverse=True)
         results_dump = [r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in results_made]
+        compatibility_materialization_summary = None
+        plan_explain_payload = None
+        if table == "document_chunk":
+            if not _skip_observability:
+                compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
+            if explain_plan:
+                compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results_dump)
+                compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results_dump)
+                plan_explain_payload = build_retrieval_plan_explain(
+                    route=f"search_bm25.{table}",
+                    pipeline=RetrievalPipelineSpec(
+                        pipeline_id=f"search_bm25.{table}.direct",
+                        version="v2",
+                        stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB", enabled=True)],
+                    ),
+                    options={
+                        "limit": int(limit),
+                        "offset": int(offset),
+                        "bm25_query_text": query,
+                        "table": table,
+                        "sort_by": sort_by,
+                        "sort_dir": sort_dir,
+                    },
+                    route_executor=bm25_route_executor.to_payload(),
+                    query_ir_v2=lexical_query_ir_v2,
+                    projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
+                    lexical_capability_plan=(
+                        lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                    ),
+                    compatibility_provenance=compatibility_provenance,
+                    compatibility_materializations=compatibility_materializations,
+                    lane_state={
+                        "table": str(table),
+                        "group_chunks": bool(group_chunks),
+                        "web_search": bool(web_search),
+                    },
+                )
         if not _skip_observability:
             metrics.record_retrieval(
                 route=f"search_bm25.{table}",
@@ -2546,14 +2677,18 @@ def search_bm25(
                 status="ok",
                 md={
                     "route_executor": bm25_route_executor.to_payload(),
+                    **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
                         else {}
                     ),
+                    **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
                 },
             )
         database.rollback()
+        if plan_explain_payload is not None:
+            return {"results": results_dump, "plan_explain": plan_explain_payload}
         return results_made
     except Exception as e:
         if not _skip_observability:

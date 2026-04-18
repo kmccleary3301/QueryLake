@@ -529,6 +529,49 @@ def fetch_document_chunk_materialization_provenance(
     return records_with_provenance
 
 
+def fetch_document_chunk_authority_materializations(
+    database: Session,
+    *,
+    records: Sequence[DocumentChunkMaterializationRecord | dict | tuple | DocumentChunk],
+) -> List[Dict[str, Any]]:
+    normalized_records = [_normalize_document_chunk_materialization_record(row) for row in records]
+    authority_segment_ids: List[str] = []
+    seen_segment_ids = set()
+    for record in normalized_records:
+        authority_segment_id = record.authority_segment_id
+        if not authority_segment_id:
+            continue
+        if authority_segment_id in seen_segment_ids:
+            continue
+        seen_segment_ids.add(authority_segment_id)
+        authority_segment_ids.append(authority_segment_id)
+
+    hydrated_segments = hydrate_projection_rows(
+        database,
+        projection_id=SEGMENT_DENSE_PROJECTION_ID,
+        record_ids=authority_segment_ids,
+    ) if authority_segment_ids else {}
+    normalized_segments = {
+        str(segment_id): _normalize_segment_materialization_record(row)
+        for segment_id, row in hydrated_segments.items()
+    }
+
+    payload: List[Dict[str, Any]] = []
+    for record in normalized_records:
+        segment = normalized_segments.get(str(record.authority_segment_id)) if record.authority_segment_id else None
+        payload.append({
+            "chunk_id": record.id,
+            "document_id": record.document_id,
+            "document_chunk_number": int(record.document_chunk_number or 0),
+            "compatibility_contract": record.compatibility_contract,
+            "materialized_authority_segment_id": record.authority_segment_id,
+            "authority_segment_resolved": segment is not None,
+            "segment_materialization": None if segment is None else segment.model_dump(),
+        })
+    return payload
+
+
+
 def hydrate_projection_target(
     database: Session,
     *,

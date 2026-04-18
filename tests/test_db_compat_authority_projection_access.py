@@ -15,6 +15,7 @@ from QueryLake.runtime.authority_projection_access import (  # noqa: E402
     build_projection_source_fetch_target,
     fetch_projection_materialization_records,
     fetch_document_chunk_materialization_provenance,
+    fetch_document_chunk_authority_materializations,
     fetch_projection_materialization_rows,
     fetch_projection_source_rows,
     fetch_projection_source_target,
@@ -428,3 +429,87 @@ def test_fetch_document_chunk_materialization_provenance_surfaces_missing_canoni
     assert payload[0]["canonical_authority_segment_id"] is None
     assert payload[0]["authority_segment_consistent"] is False
     assert payload[0]["member_count"] == 0
+
+
+def test_fetch_document_chunk_authority_materializations_preserves_order_and_dedupes_segment_hydration(monkeypatch):
+    calls = {}
+
+    def _stub_hydrate_projection_rows(database, *, projection_id, record_ids):
+        calls['projection_id'] = projection_id
+        calls['record_ids'] = tuple(record_ids)
+        return {
+            'seg-b': (
+                'seg-b', 'Beta segment', {}, 1.0, 'chunk', 2, 'ver-b', None, 'doc-b', 'Doc B', None, 'col-b', None, {}
+            ),
+            'seg-a': (
+                'seg-a', 'Alpha segment', {}, 2.0, 'chunk', 7, 'ver-a', None, 'doc-a', 'Doc A', None, 'col-a', None, {}
+            ),
+        }
+
+    monkeypatch.setattr(
+        'QueryLake.runtime.authority_projection_access.hydrate_projection_rows',
+        _stub_hydrate_projection_rows,
+    )
+
+    records = [
+        {
+            'id': 'chunk-b',
+            'document_id': 'doc-b',
+            'document_chunk_number': 2,
+            'authority_segment_id': 'seg-b',
+            'compatibility_contract': 'canonical_segment_compat_projection_v1',
+            'text': 'beta',
+        },
+        {
+            'id': 'chunk-a',
+            'document_id': 'doc-a',
+            'document_chunk_number': 7,
+            'authority_segment_id': 'seg-a',
+            'compatibility_contract': 'canonical_segment_compat_projection_v1',
+            'text': 'alpha',
+        },
+        {
+            'id': 'chunk-a-dup',
+            'document_id': 'doc-a',
+            'document_chunk_number': 8,
+            'authority_segment_id': 'seg-a',
+            'compatibility_contract': 'canonical_segment_compat_projection_v1',
+            'text': 'alpha-dup',
+        },
+    ]
+
+    payload = fetch_document_chunk_authority_materializations(object(), records=records)
+
+    assert calls['projection_id'] == SEGMENT_DENSE_PROJECTION_ID
+    assert calls['record_ids'] == ('seg-b', 'seg-a')
+    assert [row['chunk_id'] for row in payload] == ['chunk-b', 'chunk-a', 'chunk-a-dup']
+    assert payload[0]['authority_segment_resolved'] is True
+    assert payload[0]['segment_materialization']['id'] == 'seg-b'
+    assert payload[1]['segment_materialization']['segment_index'] == 7
+    assert payload[2]['segment_materialization']['id'] == 'seg-a'
+
+
+def test_fetch_document_chunk_authority_materializations_surfaces_missing_segment(monkeypatch):
+    monkeypatch.setattr(
+        'QueryLake.runtime.authority_projection_access.hydrate_projection_rows',
+        lambda database, *, projection_id, record_ids: {},
+    )
+
+    payload = fetch_document_chunk_authority_materializations(
+        object(),
+        records=[
+            {
+                'id': 'chunk-missing',
+                'document_id': 'doc-missing',
+                'document_chunk_number': 0,
+                'authority_segment_id': 'seg-missing',
+                'text': 'orphan',
+            }
+        ],
+    )
+
+    assert len(payload) == 1
+    assert payload[0]['chunk_id'] == 'chunk-missing'
+    assert payload[0]['materialized_authority_segment_id'] == 'seg-missing'
+    assert payload[0]['authority_segment_resolved'] is False
+    assert payload[0]['segment_materialization'] is None
