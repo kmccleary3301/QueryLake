@@ -62,6 +62,7 @@ def build_retrieval_plan_explain(
     lexical_capability_plan: Optional[Dict[str, Any]] = None,
     query_ir_v2: Optional[Dict[str, Any]] = None,
     projection_ir_v2: Optional[Dict[str, Any]] = None,
+    compatibility_provenance: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     opts = dict(options or {})
     flags = dict(pipeline.flags or {})
@@ -128,6 +129,11 @@ def build_retrieval_plan_explain(
             **(
                 {"lexical_capability_plan": dict(lexical_capability_plan)}
                 if lexical_capability_plan is not None
+                else {}
+            ),
+            **(
+                {"compatibility_provenance": dict(compatibility_provenance)}
+                if compatibility_provenance is not None
                 else {}
             ),
         },

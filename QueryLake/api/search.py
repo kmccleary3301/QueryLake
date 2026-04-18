@@ -6,7 +6,7 @@ import uuid
 import time
 import random
 import math
-from typing import Optional, Dict
+from typing import Optional, Dict, Sequence
 from sqlmodel import Field, Session, select, func
 from sqlalchemy import Column, DDL, event, text, Index, JSON, MetaData, Table
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
@@ -51,6 +51,7 @@ from ..runtime.retrieval_pipeline_runtime import (
     resolve_runtime_pipeline,
 )
 from ..runtime.retrieval_explain import build_retrieval_plan_explain
+from ..runtime.authority_projection_access import fetch_document_chunk_materialization_provenance
 from ..runtime.retrieval_primitive_factory import (
     build_retrievers_for_pipeline as factory_build_retrievers_for_pipeline,
     select_fusion_for_pipeline as factory_select_fusion_for_pipeline,
@@ -787,6 +788,45 @@ def _candidate_to_file_chunk_result(candidate: RetrievalCandidate) -> Dict[str, 
     if isinstance(score, (int, float)):
         row["bm25_score"] = float(score)
     return row
+
+
+def _build_document_chunk_compatibility_provenance(database: Session, rows: Sequence[Any]) -> Dict[str, Any]:
+    materialized_records: List[Dict[str, Any]] = []
+    for row in rows:
+        if hasattr(row, 'model_dump'):
+            payload = row.model_dump()
+        elif isinstance(row, dict):
+            payload = dict(row)
+        else:
+            continue
+        chunk_ids = payload.get('id')
+        if isinstance(chunk_ids, list):
+            normalized_chunk_ids = [str(value) for value in chunk_ids if str(value)]
+        elif chunk_ids is None:
+            normalized_chunk_ids = []
+        else:
+            normalized_chunk_ids = [str(chunk_ids)]
+        if not normalized_chunk_ids:
+            continue
+        for chunk_id in normalized_chunk_ids:
+            materialized_records.append({
+                'id': chunk_id,
+                'document_id': payload.get('document_id') or '',
+                'document_chunk_number': payload.get('document_chunk_number') if isinstance(payload.get('document_chunk_number'), int) else 0,
+                'collection_id': payload.get('collection_id') or '',
+                'document_name': payload.get('document_name') or '',
+                'text': payload.get('text') or '',
+                'md': dict(payload.get('md') or {}),
+                'document_md': dict(payload.get('document_md') or {}),
+            })
+    records = fetch_document_chunk_materialization_provenance(database, records=materialized_records)
+    return {
+        'representation_scope': 'document_chunk',
+        'compatibility_contract': 'canonical_segment_compat_projection_v1',
+        'grouped_result_count': len(rows),
+        'record_count': len(records),
+        'records': records,
+    }
 
 
 def _run_async_sync(coro: Awaitable[Any]) -> Any:
@@ -1614,6 +1654,7 @@ async def search_hybrid(
             result_metrics = {"duration": duration_map, "cache": {}}
             plan_explain_payload = None
             if explain_plan:
+                compatibility_provenance = _build_document_chunk_compatibility_provenance(database, rows_as_chunks)
                 plan_explain_payload = build_retrieval_plan_explain(
                     route="search_hybrid",
                     pipeline=pipeline,
@@ -1629,6 +1670,7 @@ async def search_hybrid(
                     lexical_capability_plan=(
                         lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                     ),
+                    compatibility_provenance=compatibility_provenance,
                     lane_state={
                         "use_bm25": bool(use_bm25),
                         "use_similarity": bool(use_similarity),

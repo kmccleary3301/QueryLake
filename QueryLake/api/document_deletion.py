@@ -38,6 +38,11 @@ def delete_document_dependents(database: Session, document_id: str) -> None:
                 )
             )
             database.exec(
+                delete(sql_db_tables.document_segment_member).where(
+                    sql_db_tables.document_segment_member.segment_id.in_(segment_ids)
+                )
+            )
+            database.exec(
                 delete(sql_db_tables.segment_edge).where(
                     sql_db_tables.segment_edge.from_segment_id.in_(segment_ids)
                 )
@@ -51,6 +56,29 @@ def delete_document_dependents(database: Session, document_id: str) -> None:
         database.exec(
             delete(sql_db_tables.document_segment).where(
                 sql_db_tables.document_segment.document_version_id.in_(version_ids)
+            )
+        )
+        unit_view_ids = _coerce_id_list(
+            database.exec(
+                select(sql_db_tables.document_unit_view.id).where(
+                    sql_db_tables.document_unit_view.document_version_id.in_(version_ids)
+                )
+            ).all()
+        )
+        if unit_view_ids:
+            database.exec(
+                delete(sql_db_tables.document_unit).where(
+                    sql_db_tables.document_unit.unit_view_id.in_(unit_view_ids)
+                )
+            )
+        database.exec(
+            delete(sql_db_tables.document_segment_view).where(
+                sql_db_tables.document_segment_view.document_version_id.in_(version_ids)
+            )
+        )
+        database.exec(
+            delete(sql_db_tables.document_unit_view).where(
+                sql_db_tables.document_unit_view.document_version_id.in_(version_ids)
             )
         )
         database.exec(

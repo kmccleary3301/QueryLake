@@ -143,7 +143,25 @@ def test_search_hybrid_orchestrated_path_can_return_plan_explain(monkeypatch):
         return RetrievalExecutionResult(
             pipeline_id="orchestrated.search_hybrid",
             pipeline_version="v1",
-            candidates=[],
+            candidates=[
+                RetrievalCandidate(
+                    content_id="c1",
+                    text="hybrid text",
+                    metadata={
+                        "document_id": "d1",
+                        "document_name": "doc",
+                        "document_chunk_number": 0,
+                        "collection_id": "col1",
+                        "creation_timestamp": 1.0,
+                        "collection_type": "user",
+                        "md": {},
+                        "document_md": {},
+                    },
+                    stage_scores={"bm25_score": 0.6, "similarity_score": 0.7, "weighted_fused": 0.65},
+                    stage_ranks={"bm25": 1, "dense": 1, "weighted_fused": 1},
+                    provenance=["bm25", "dense"],
+                )
+            ],
             traces=[RetrievalStageTrace(stage="fusion", duration_ms=1.0)],
             metadata={},
         )
@@ -151,6 +169,17 @@ def test_search_hybrid_orchestrated_path_can_return_plan_explain(monkeypatch):
     monkeypatch.setattr(search_api.PipelineOrchestrator, "run", _fake_run)
     monkeypatch.setattr(search_api.metrics, "record_retrieval", lambda **kwargs: None)
     monkeypatch.setattr(search_api, "log_retrieval_run", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        search_api,
+        "fetch_document_chunk_materialization_provenance",
+        lambda database, records: [
+            {
+                "chunk_id": "c1",
+                "canonical_authority_segment_id": "seg-1",
+                "authority_segment_consistent": False,
+            }
+        ],
+    )
 
     result = asyncio.run(
         search_api.search_hybrid(
@@ -171,6 +200,9 @@ def test_search_hybrid_orchestrated_path_can_return_plan_explain(monkeypatch):
     assert "plan_explain" in result
     assert result["plan_explain"]["pipeline"]["pipeline_id"] == "orchestrated.search_hybrid"
     assert result["plan_explain"]["effective"]["fusion"]["primitive"] == "WeightedScoreFusion"
+    assert result["plan_explain"]["effective"]["compatibility_provenance"]["representation_scope"] == "document_chunk"
+    assert result["plan_explain"]["effective"]["compatibility_provenance"]["record_count"] == 1
+    assert result["plan_explain"]["effective"]["compatibility_provenance"]["records"][0]["chunk_id"] == "c1"
 
 
 def test_search_hybrid_orchestrated_pre_resolves_dense_embedding(monkeypatch):

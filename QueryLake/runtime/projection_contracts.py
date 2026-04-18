@@ -66,6 +66,8 @@ class DocumentChunkMaterializationRecord(BaseModel):
     document_name: str = ""
     website_url: str = ""
     private: bool = False
+    authority_segment_id: Optional[str] = None
+    compatibility_contract: str = "canonical_segment_compat_projection_v1"
     md: Dict[str, Any] = Field(default_factory=dict)
     document_md: Dict[str, Any] = Field(default_factory=dict)
     text: str = ""

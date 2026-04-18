@@ -124,3 +124,39 @@ def test_retrieval_plan_explain_instantiates_v2_payloads_from_templates(monkeypa
     assert payload["effective"]["projection_ir_v2"]["route_id"] == "search_bm25.document_chunk"
     assert payload["effective"]["projection_ir_v2"]["representation_scope_id"] == "document_chunk"
     assert payload["effective"]["projection_ir_v2"]["buildability_class"] == "degraded_executable"
+
+
+def test_retrieval_plan_explain_can_surface_compatibility_provenance(monkeypatch):
+    monkeypatch.setenv("QUERYLAKE_DB_PROFILE", "paradedb_postgres_gold_v1")
+    pipeline = RetrievalPipelineSpec(
+        pipeline_id="p",
+        version="v1",
+        stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB")],
+    )
+
+    payload = build_retrieval_plan_explain(
+        route="search_hybrid",
+        pipeline=pipeline,
+        compatibility_provenance={
+            "representation_scope": "document_chunk",
+            "compatibility_contract": "canonical_segment_compat_projection_v1",
+            "record_count": 2,
+            "records": [
+                {
+                    "chunk_id": "chunk-1",
+                    "canonical_authority_segment_id": "seg-1",
+                    "authority_segment_consistent": True,
+                },
+                {
+                    "chunk_id": "chunk-2",
+                    "canonical_authority_segment_id": None,
+                    "authority_segment_consistent": False,
+                },
+            ],
+        },
+    )
+
+    assert payload["effective"]["compatibility_provenance"]["representation_scope"] == "document_chunk"
+    assert payload["effective"]["compatibility_provenance"]["compatibility_contract"] == "canonical_segment_compat_projection_v1"
+    assert payload["effective"]["compatibility_provenance"]["record_count"] == 2
+    assert payload["effective"]["compatibility_provenance"]["records"][1]["authority_segment_consistent"] is False

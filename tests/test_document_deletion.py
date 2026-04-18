@@ -20,6 +20,7 @@ class _DummySession:
     def __init__(self):
         self.version_ids = ["ver1"]
         self.segment_ids = ["seg1", "seg2"]
+        self.unit_view_ids = ["uv1"]
         self.calls = []
         self.deleted = []
 
@@ -30,6 +31,8 @@ class _DummySession:
             return _Result(self.version_ids)
         if "SELECT document_segment.id" in text:
             return _Result(self.segment_ids)
+        if "SELECT document_unit_view.id" in text:
+            return _Result(self.unit_view_ids)
         return _Result([])
 
     def delete(self, row):
@@ -49,8 +52,12 @@ def test_delete_document_dependents_runs_fk_safe_order():
     assert "SELECT document_version.id" in rendered
     assert "SELECT document_segment.id" in rendered
     assert "DELETE FROM embedding_record" in rendered
+    assert "DELETE FROM document_segment_member" in rendered
     assert "DELETE FROM segment_edge" in rendered
     assert "DELETE FROM document_segment" in rendered
+    assert "DELETE FROM document_segment_view" in rendered
+    assert "DELETE FROM document_unit" in rendered
+    assert "DELETE FROM document_unit_view" in rendered
     assert "DELETE FROM document_artifact" in rendered
     assert "DELETE FROM segmentation_run" in rendered
     assert "DELETE FROM document_version" in rendered

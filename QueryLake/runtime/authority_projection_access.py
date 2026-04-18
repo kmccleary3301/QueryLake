@@ -22,6 +22,10 @@ from QueryLake.runtime.projection_contracts import (
     SegmentMaterializationRecord,
 )
 from QueryLake.runtime.projection_registry import ProjectionDescriptor, get_projection_descriptor
+from QueryLake.runtime.document_decomposition import (
+    DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT,
+    fetch_document_chunk_authority_provenance,
+)
 
 
 FILE_CHUNK_COMPAT_LEXICAL_PROJECTION_ID = "file_chunk_lexical_projection_v1"
@@ -44,6 +48,7 @@ DOCUMENT_CHUNK_TUPLE_FIELDS = (
     "document_name",
     "website_url",
     "private",
+    "authority_segment_id",
     "md",
     "document_md",
     "text",
@@ -391,6 +396,8 @@ def _normalize_document_chunk_materialization_record(row: Any) -> DocumentChunkM
             document_name=str(row.document_name or ""),
             website_url=str(row.website_url or ""),
             private=bool(row.private),
+            authority_segment_id=None if getattr(row, "authority_segment_id", None) is None else str(getattr(row, "authority_segment_id")),
+            compatibility_contract=DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT,
             md=dict(row.md or {}),
             document_md=dict(row.document_md or {}),
             text=str(row.text or ""),
@@ -398,9 +405,12 @@ def _normalize_document_chunk_materialization_record(row: Any) -> DocumentChunkM
             embedding_sparse=dict(getattr(row, "embedding_sparse", None) or {}),
         )
     if isinstance(row, dict):
-        return DocumentChunkMaterializationRecord.model_validate(row)
+        raw = dict(row)
+        raw.setdefault("compatibility_contract", DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT)
+        return DocumentChunkMaterializationRecord.model_validate(raw)
     if isinstance(row, tuple):
         raw = dict(zip(DOCUMENT_CHUNK_TUPLE_FIELDS, row))
+        raw.setdefault("compatibility_contract", DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT)
         return DocumentChunkMaterializationRecord.model_validate(raw)
     raise TypeError(f"Unsupported document_chunk materialization row type: {type(row)!r}")
 
@@ -470,6 +480,53 @@ def fetch_projection_materialization_records(
     if target.source_scope == "segment":
         return [_normalize_segment_materialization_record(row) for row in rows]
     raise AssertionError(f"Unsupported projection materialization source_scope='{target.source_scope}'.")
+
+
+def fetch_document_chunk_materialization_provenance(
+    database: Session,
+    *,
+    records: Sequence[DocumentChunkMaterializationRecord | dict | tuple | DocumentChunk],
+) -> List[Dict[str, Any]]:
+    normalized_records = [_normalize_document_chunk_materialization_record(row) for row in records]
+    requested_chunk_ids = {record.id for record in normalized_records}
+    requested_document_ids = []
+    seen_document_ids = set()
+    for record in normalized_records:
+        if not record.document_id:
+            continue
+        if record.document_id in seen_document_ids:
+            continue
+        seen_document_ids.add(record.document_id)
+        requested_document_ids.append(record.document_id)
+
+    provenance_by_chunk_id: Dict[str, Dict[str, Any]] = {}
+    for document_id in requested_document_ids:
+        payload = fetch_document_chunk_authority_provenance(database, document_id=document_id)
+        for row in payload.get("records", []):
+            chunk_id = str(row.get("chunk_id") or "")
+            if chunk_id and chunk_id in requested_chunk_ids:
+                provenance_by_chunk_id[chunk_id] = dict(row)
+
+    records_with_provenance: List[Dict[str, Any]] = []
+    for record in normalized_records:
+        canonical_row = dict(provenance_by_chunk_id.get(record.id) or {})
+        canonical_authority_segment_id = canonical_row.get("authority_segment_id")
+        records_with_provenance.append({
+            "chunk_id": record.id,
+            "document_id": record.document_id,
+            "document_chunk_number": int(record.document_chunk_number or 0),
+            "compatibility_contract": record.compatibility_contract,
+            "materialized_authority_segment_id": record.authority_segment_id,
+            "canonical_authority_segment_id": canonical_authority_segment_id,
+            "authority_segment_consistent": canonical_authority_segment_id == record.authority_segment_id,
+            "segment_view_id": canonical_row.get("segment_view_id"),
+            "segment_view_alias": canonical_row.get("segment_view_alias"),
+            "segment_type": canonical_row.get("segment_type"),
+            "segment_index": canonical_row.get("segment_index"),
+            "member_count": canonical_row.get("member_count", 0),
+            "members": list(canonical_row.get("members", [])),
+        })
+    return records_with_provenance
 
 
 def hydrate_projection_target(

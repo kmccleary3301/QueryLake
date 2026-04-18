@@ -3,7 +3,7 @@ from sqlmodel import Field, SQLModel, ARRAY, String, Integer, Float, JSON, Large
 
 from sqlalchemy.sql.schema import Column
 from sqlalchemy.dialects.postgresql import TSVECTOR, JSONB
-from sqlalchemy import UniqueConstraint, event, text
+from sqlalchemy import UniqueConstraint, Index, event, text
 
 from sqlalchemy.sql import func
 
@@ -37,7 +37,11 @@ id_factories = {
     "document_raw": generator_1,
     "document_version": generator_1,
     "document_artifact": generator_1,
+    "document_unit_view": generator_1,
+    "document_unit": generator_1,
+    "document_segment_view": generator_1,
     "document_segment": generator_1,
+    "document_segment_member": generator_1,
     "segmentation_run": generator_1,
     "embedding_record": generator_1,
     "segment_edge": generator_1,
@@ -61,7 +65,11 @@ id_types = {
     "document_raw": id_type_1,
     "document_version": id_type_1,
     "document_artifact": id_type_1,
+    "document_unit_view": id_type_1,
+    "document_unit": id_type_1,
+    "document_segment_view": id_type_1,
     "document_segment": id_type_1,
+    "document_segment_member": id_type_1,
     "segmentation_run": id_type_1,
     "embedding_record": id_type_1,
     "segment_edge": id_type_1,
@@ -584,16 +592,92 @@ class document_artifact(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=id_factories["document_artifact"], primary_key=True, index=True, unique=True)
     document_version_id: str = Field(foreign_key=f"{document_version.__tablename__}.id", index=True)
     artifact_type: str = Field(index=True)  # raw_text | markdown | ocr_layout | normalized_text
+    modality: str = Field(default="text", index=True)
     storage_ref: Optional[str] = Field(default=None, index=True)
     text: Optional[str] = Field(default=None)
     md: dict = Field(sa_column=Column(JSONB), default={})
     created_at: float = Field(default_factory=time, index=True)
+
+    __table_args__ = (
+        Index("ix_document_artifact_version_type", "document_version_id", "artifact_type"),
+    )
+
+
+class document_unit_view(SQLModel, table=True):
+    id: Optional[str] = Field(default_factory=id_factories["document_unit_view"], primary_key=True, index=True, unique=True)
+    document_version_id: str = Field(foreign_key=f"{document_version.__tablename__}.id", index=True)
+    artifact_id: str = Field(foreign_key=f"{document_artifact.__tablename__}.id", index=True)
+    unit_kind: str = Field(index=True)
+    recipe_id: str = Field(index=True)
+    recipe_version: str = Field(default="v1", index=True)
+    config_hash: str = Field(index=True)
+    status: str = Field(default="ready", index=True)
+    config: dict = Field(sa_column=Column(JSONB), default={})
+    stats: dict = Field(sa_column=Column(JSONB), default={})
+    created_at: float = Field(default_factory=time, index=True)
+    completed_at: Optional[float] = Field(default=None, index=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "artifact_id",
+            "unit_kind",
+            "recipe_id",
+            "recipe_version",
+            "config_hash",
+            name="uq_document_unit_view_recipe",
+        ),
+    )
+
+
+class document_unit(SQLModel, table=True):
+    id: Optional[str] = Field(default_factory=id_factories["document_unit"], primary_key=True, index=True, unique=True)
+    unit_view_id: str = Field(foreign_key=f"{document_unit_view.__tablename__}.id", index=True)
+    unit_index: int = Field(index=True)
+    text: str = Field(default="")
+    md: dict = Field(sa_column=Column(JSONB), default={})
+    anchor_type: Optional[str] = Field(default=None, index=True)
+    anchor_payload: dict = Field(sa_column=Column(JSONB), default={})
+    created_at: float = Field(default_factory=time, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("unit_view_id", "unit_index", name="uq_document_unit_view_index"),
+        Index("ix_document_unit_view_idx", "unit_view_id", "unit_index"),
+    )
+
+
+class document_segment_view(SQLModel, table=True):
+    id: Optional[str] = Field(default_factory=id_factories["document_segment_view"], primary_key=True, index=True, unique=True)
+    document_version_id: str = Field(foreign_key=f"{document_version.__tablename__}.id", index=True)
+    source_unit_view_id: str = Field(foreign_key=f"{document_unit_view.__tablename__}.id", index=True)
+    view_alias: Optional[str] = Field(default=None, index=True)
+    recipe_id: str = Field(index=True)
+    recipe_version: str = Field(default="v1", index=True)
+    config_hash: str = Field(index=True)
+    segment_type_default: str = Field(default="chunk", index=True)
+    status: str = Field(default="ready", index=True)
+    is_current: bool = Field(default=True, index=True)
+    config: dict = Field(sa_column=Column(JSONB), default={})
+    stats: dict = Field(sa_column=Column(JSONB), default={})
+    created_at: float = Field(default_factory=time, index=True)
+    completed_at: Optional[float] = Field(default=None, index=True)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_unit_view_id",
+            "view_alias",
+            "recipe_id",
+            "recipe_version",
+            "config_hash",
+            name="uq_document_segment_view_recipe",
+        ),
+    )
 
 
 class document_segment(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=id_factories["document_segment"], primary_key=True, index=True, unique=True)
     document_version_id: str = Field(foreign_key=f"{document_version.__tablename__}.id", index=True)
     artifact_id: Optional[str] = Field(default=None, foreign_key=f"{document_artifact.__tablename__}.id", index=True)
+    segment_view_id: Optional[str] = Field(default=None, foreign_key=f"{document_segment_view.__tablename__}.id", index=True)
     segment_type: str = Field(default="chunk", index=True)  # chunk | sentence | section | table | figure
     segment_index: int = Field(default=0, index=True)
     parent_segment_id: Optional[str] = Field(default=None, foreign_key=f"{'document_segment'}.id", index=True)
@@ -604,7 +688,7 @@ class document_segment(SQLModel, table=True):
     created_at: float = Field(default_factory=time, index=True)
 
     __table_args__ = (
-        UniqueConstraint("document_version_id", "segment_type", "segment_index", name="uq_document_segment_version_type_index"),
+        UniqueConstraint("document_version_id", "segment_view_id", "segment_type", "segment_index", name="uq_document_segment_view_type_index"),
     )
 
 
@@ -617,6 +701,23 @@ class segmentation_run(SQLModel, table=True):
     stats: dict = Field(sa_column=Column(JSONB), default={})
     created_at: float = Field(default_factory=time, index=True)
     completed_at: Optional[float] = Field(default=None, index=True)
+
+
+class document_segment_member(SQLModel, table=True):
+    id: Optional[str] = Field(default_factory=id_factories["document_segment_member"], primary_key=True, index=True, unique=True)
+    segment_id: str = Field(foreign_key=f"{document_segment.__tablename__}.id", index=True)
+    unit_id: str = Field(foreign_key=f"{document_unit.__tablename__}.id", index=True)
+    member_index: int = Field(index=True)
+    role: str = Field(default="main", index=True)
+    unit_start_char: int = Field(default=0)
+    unit_end_char: int = Field(default=0)
+    md: dict = Field(sa_column=Column(JSONB), default={})
+    created_at: float = Field(default_factory=time, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("segment_id", "member_index", name="uq_document_segment_member_index"),
+        Index("ix_document_segment_member_segment_idx", "segment_id", "member_index"),
+    )
 
 
 class embedding_record(SQLModel, table=True):
@@ -662,6 +763,7 @@ class DocumentChunk(SQLModel, table=True):
     creation_timestamp: Optional[float] = Field(default_factory=time)
     collection_type: Optional[str] = Field(index=True, default=None)
     document_id: Optional[str] = Field(foreign_key=f"{document_raw.__tablename__}.id", default=None, index=True)
+    authority_segment_id: Optional[str] = Field(default=None, index=True)
     document_chunk_number: Optional[int] = Field(default=None, index=True)
     document_integrity: Optional[str] = Field(default=None, index=True)
     collection_id: Optional[str] = Field(index=True, default=None)

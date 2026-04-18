@@ -170,6 +170,21 @@ ALTER TABLE {embedding_record.__tablename__}
     ADD COLUMN IF NOT EXISTS embedding_sparse sparsevec;
 """
 
+ADD_DECOMPOSITION_COLUMNS_SQL = f"""
+ALTER TABLE {document_artifact.__tablename__}
+    ADD COLUMN IF NOT EXISTS modality text DEFAULT 'text';
+ALTER TABLE {document_segment.__tablename__}
+    ADD COLUMN IF NOT EXISTS segment_view_id text;
+ALTER TABLE {DocumentChunk.__tablename__}
+    ADD COLUMN IF NOT EXISTS authority_segment_id text;
+CREATE INDEX IF NOT EXISTS ix_{document_artifact.__tablename__}_modality
+    ON {document_artifact.__tablename__} (modality);
+CREATE INDEX IF NOT EXISTS ix_{document_segment.__tablename__}_segment_view_id
+    ON {document_segment.__tablename__} (segment_view_id);
+CREATE INDEX IF NOT EXISTS ix_{DocumentChunk.__tablename__}_authority_segment_id
+    ON {DocumentChunk.__tablename__} (authority_segment_id);
+"""
+
 def check_index_created(database: Session):
     result = database.exec(text(CHECK_INDEX_EXISTS_SQL))
     index_exists = list(result)[0][0]
@@ -185,7 +200,7 @@ def check_sparse_index_created(database: Session):
     index_exists = list(result)[0][0]
     return index_exists
 
-def initialize_database_engine() -> Session:
+def initialize_database_engine(*, ensure_sparse_bootstrap: bool = True, ensure_decomposition_bootstrap: bool = True) -> Session:
     from QueryLake.runtime.db_compat import (
         validate_current_db_profile,
         validate_profile_configuration_requirements,
@@ -222,12 +237,21 @@ def initialize_database_engine() -> Session:
         logger.error("Database session validation failed: %s", exc)
         raise
 
-    try:
-        database.exec(text(ADD_SPARSE_COLUMNS_SQL))
-        database.commit()
-    except Exception as exc:
-        logger.warning("Failed to ensure sparse columns exist; sparse lane may be unavailable: %s", exc)
-        database.rollback()
+    if ensure_sparse_bootstrap:
+        try:
+            database.exec(text(ADD_SPARSE_COLUMNS_SQL))
+            database.commit()
+        except Exception as exc:
+            logger.warning("Failed to ensure sparse columns exist; sparse lane may be unavailable: %s", exc)
+            database.rollback()
+    if ensure_decomposition_bootstrap:
+        try:
+            database.exec(text(ADD_DECOMPOSITION_COLUMNS_SQL))
+            database.commit()
+        except Exception as exc:
+            logger.warning("Failed to ensure decomposition columns exist; decomposition tooling may be unavailable: %s", exc)
+            database.rollback()
+
     
     if REBUILD_INDEX:
         logger.info("Dropping existing vector and BM25 indices per configuration")

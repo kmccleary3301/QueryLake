@@ -13,7 +13,11 @@ from ..database.sql_db_tables import (
     document_collection,
     document_version as DocumentVersion,
     document_artifact as DocumentArtifact,
+    document_unit_view as DocumentUnitView,
+    document_unit as DocumentUnit,
+    document_segment_view as DocumentSegmentView,
     document_segment as DocumentSegment,
+    document_segment_member as DocumentSegmentMember,
 )
 from ..api.hashing import random_hash, hash_function
 from ..api.single_user_auth import get_user
@@ -42,6 +46,7 @@ from ..typing.api_inputs import TextChunks
 import logging
 from ..observability import metrics
 from ..runtime.ingestion_dual_write import dual_write_segments_enabled
+from ..runtime.content_fingerprint import content_fingerprint
 from ..runtime.embedding_records import (
     embedding_record_enabled,
     embedding_record_model_id,
@@ -49,6 +54,10 @@ from ..runtime.embedding_records import (
 )
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_LOCAL_TEXT_VIEW_ALIAS = "default_local_text"
+LEGACY_LOCAL_TEXT_RECIPE_ID = "legacy_local_text_v1"
+LEGACY_UNIT_RECIPE_ID = "legacy_parser_units_v1"
 
 
 def binary_search(sorted_list, target):
@@ -208,6 +217,215 @@ def _extract_sparse_embedding(
         return None
 
     return None
+
+
+def _config_hash(payload: Dict[str, Any], *, salt: str) -> str:
+    return content_fingerprint(text="", md=payload, salt=salt)
+
+
+def _infer_unit_contract(metadata: Optional[Dict[str, Any]]) -> Tuple[str, Optional[str], Dict[str, Any]]:
+    md = metadata if isinstance(metadata, dict) else {}
+    if "page" in md:
+        payload = {"page": md.get("page")}
+        for key in ("location_link_firefox", "location_link_chrome"):
+            if key in md:
+                payload[key] = md.get(key)
+        return "pdf_text_fragment", "page_ref", payload
+    if "line" in md:
+        return "source_line", "line_ref", {"line": md.get("line")}
+    return "provided_text_chunk", None, {}
+
+
+def _infer_collection_unit_kind(text_segments: List[Tuple[str, dict]]) -> str:
+    kinds = {
+        _infer_unit_contract(metadata if isinstance(metadata, dict) else {})[0]
+        for _, metadata in text_segments
+    }
+    if len(kinds) == 1:
+        return list(kinds)[0]
+    return "provided_text_chunk"
+
+
+def _build_units_from_text_segments(
+    *,
+    document_version_id: str,
+    artifact_id: str,
+    text_segments: List[Tuple[str, dict]],
+) -> Tuple[DocumentUnitView, List[DocumentUnit], List[Tuple[int, int]]]:
+    unit_kind = _infer_collection_unit_kind(text_segments)
+    view_config = {"unit_kind": unit_kind, "unit_count": len(text_segments)}
+    unit_view = DocumentUnitView(
+        document_version_id=document_version_id,
+        artifact_id=artifact_id,
+        unit_kind=unit_kind,
+        recipe_id=LEGACY_UNIT_RECIPE_ID,
+        recipe_version="v1",
+        config_hash=_config_hash(view_config, salt="document_unit_view"),
+        status="ready",
+        config=view_config,
+        stats={"unit_count": len(text_segments)},
+    )
+
+    units: List[DocumentUnit] = []
+    spans: List[Tuple[int, int]] = []
+    cursor = 0
+    for idx, (text_value, metadata) in enumerate(text_segments):
+        md = metadata if isinstance(metadata, dict) else {}
+        _, anchor_type, anchor_payload = _infer_unit_contract(md)
+        unit_text = str(text_value or "")
+        units.append(
+            DocumentUnit(
+                unit_view_id=unit_view.id,
+                unit_index=idx,
+                text=unit_text,
+                md=dict(md),
+                anchor_type=anchor_type,
+                anchor_payload=anchor_payload,
+            )
+        )
+        start = cursor
+        end = start + len(unit_text)
+        spans.append((start, end))
+        cursor = end + 1  # synthetic newline join
+    return unit_view, units, spans
+
+
+def _derive_segment_member_records(
+    *,
+    split_text: str,
+    split_md: Dict[str, Any],
+    units: List[DocumentUnit],
+    unit_spans: List[Tuple[int, int]],
+    segment_id: str,
+) -> Tuple[List[DocumentSegmentMember], Dict[str, Any], Dict[str, Any]]:
+    start_index = int(split_md.get("start_index", 0) or 0)
+    end_index = start_index + len(split_text)
+    members: List[DocumentSegmentMember] = []
+    first_idx = None
+    last_idx = None
+    pages: List[int] = []
+    lines: List[int] = []
+
+    for unit, (unit_start, unit_end) in zip(units, unit_spans):
+        if unit_end <= start_index:
+            continue
+        if unit_start >= end_index:
+            break
+        overlap_start = max(start_index, unit_start)
+        overlap_end = min(end_index, unit_end)
+        if overlap_end <= overlap_start:
+            continue
+        members.append(
+            DocumentSegmentMember(
+                segment_id=segment_id,
+                unit_id=unit.id,
+                member_index=len(members),
+                role="main",
+                unit_start_char=overlap_start - unit_start,
+                unit_end_char=overlap_end - unit_start,
+            )
+        )
+        first_idx = unit.unit_index if first_idx is None else first_idx
+        last_idx = unit.unit_index
+        unit_md = unit.md if isinstance(unit.md, dict) else {}
+        if "page" in unit_md:
+            try:
+                pages.append(int(unit_md["page"]))
+            except Exception:
+                pass
+        if "line" in unit_md:
+            try:
+                lines.append(int(unit_md["line"]))
+            except Exception:
+                pass
+
+    derived_md: Dict[str, Any] = {
+        "source_unit_start_index": int(first_idx or 0),
+        "source_unit_end_index": int(last_idx or 0),
+        "source_unit_count": len(members),
+        "content_fingerprint": content_fingerprint(text=split_text, md={"member_count": len(members)}),
+    }
+    if pages:
+        derived_md["page"] = int(pages[0])
+        derived_md["page_start"] = int(min(pages))
+        derived_md["page_end"] = int(max(pages))
+    if lines:
+        derived_md["line"] = int(lines[0])
+        derived_md["line_start"] = int(min(lines))
+        derived_md["line_end"] = int(max(lines))
+
+    first_unit_md = dict(units[first_idx].md) if first_idx is not None and isinstance(units[first_idx].md, dict) else {}
+    chunk_md = {**first_unit_md, **derived_md}
+    return members, derived_md, chunk_md
+
+
+def build_legacy_local_text_segments_from_units(
+    *,
+    document_version_id: str,
+    artifact_id: str,
+    text_segments: List[Tuple[str, dict]],
+    text_splitter: MarkdownTextSplitter,
+) -> Tuple[DocumentUnitView, List[DocumentUnit], DocumentSegmentView, List[DocumentSegment], List[DocumentSegmentMember], List[Dict[str, Any]]]:
+    unit_view, units, unit_spans = _build_units_from_text_segments(
+        document_version_id=document_version_id,
+        artifact_id=artifact_id,
+        text_segments=text_segments,
+    )
+    created_document = "\n".join([unit.text for unit in units])
+    split_docs = text_splitter.split_documents([Document(page_content=created_document, metadata={})])
+    view_config = {
+        "chunk_size": int(text_splitter._chunk_size),
+        "chunk_overlap": int(text_splitter._chunk_overlap),
+        "unit_kind": unit_view.unit_kind,
+    }
+    segment_view = DocumentSegmentView(
+        document_version_id=document_version_id,
+        source_unit_view_id=unit_view.id,
+        view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+        recipe_id=LEGACY_LOCAL_TEXT_RECIPE_ID,
+        recipe_version="v1",
+        config_hash=_config_hash(view_config, salt="document_segment_view"),
+        segment_type_default="chunk",
+        status="ready",
+        is_current=True,
+        config=view_config,
+        stats={"unit_count": len(units), "segment_count": len(split_docs)},
+    )
+    segments: List[DocumentSegment] = []
+    members_all: List[DocumentSegmentMember] = []
+    chunk_payloads: List[Dict[str, Any]] = []
+
+    for idx, split_doc in enumerate(split_docs):
+        split_md = dict(split_doc.metadata if isinstance(split_doc.metadata, dict) else {})
+        segment_row = DocumentSegment(
+            document_version_id=document_version_id,
+            artifact_id=artifact_id,
+            segment_view_id=segment_view.id,
+            segment_type="chunk",
+            segment_index=idx,
+            text=split_doc.page_content,
+            md={},
+        )
+        members, segment_md, chunk_md = _derive_segment_member_records(
+            split_text=split_doc.page_content,
+            split_md=split_md,
+            units=units,
+            unit_spans=unit_spans,
+            segment_id=segment_row.id,
+        )
+        segment_row.md = segment_md
+        segments.append(segment_row)
+        members_all.extend(members)
+        chunk_payloads.append(
+            {
+                "segment_id": segment_row.id,
+                "segment_index": idx,
+                "text": split_doc.page_content,
+                "segment_md": segment_md,
+                "chunk_md": chunk_md,
+            }
+        )
+    return unit_view, units, segment_view, segments, members_all, chunk_payloads
 
 async def chunk_documents(toolchain_function_caller: Callable[[Any], Union[Callable, Awaitable[Callable]]],
                           database : Session,
@@ -477,6 +695,10 @@ async def create_text_chunks(database : Session,
     time_dict["embedding_sparse"] = time() - sparse_embedding_start_time
     
     db_additions, segment_additions, document_md_lookup = [], [], {}
+    unit_view_additions: List[DocumentUnitView] = []
+    unit_additions: List[DocumentUnit] = []
+    segment_view_additions: List[DocumentSegmentView] = []
+    segment_member_additions: List[DocumentSegmentMember] = []
     
     db_add_start_time = time()
     
@@ -538,8 +760,41 @@ async def create_text_chunks(database : Session,
         current_split_size = len(splits)
         document_metadata = document_md_lookup[document_sql_entry.id]
         version_id, artifact_id = (None, None)
+        canonical_chunk_payloads: Optional[List[Dict[str, Any]]] = None
+        canonical_segment_rows: Dict[str, DocumentSegment] = {}
         if use_dual_write_segments:
             version_id, artifact_id = _ensure_version_and_artifact(document_sql_entry)
+            (
+                unit_view_row,
+                unit_rows,
+                segment_view_row,
+                canonical_segment_rows_list,
+                segment_member_rows,
+                canonical_chunk_payloads,
+            ) = build_legacy_local_text_segments_from_units(
+                document_version_id=version_id,
+                artifact_id=artifact_id,
+                text_segments=text_segments,
+                text_splitter=text_splitter,
+            )
+            assert len(canonical_chunk_payloads) == current_split_size, (
+                "Canonical segment build diverged from legacy split count. "
+                f"expected={current_split_size}, actual={len(canonical_chunk_payloads)}"
+            )
+            canonical_segment_rows = {row.id: row for row in canonical_segment_rows_list}
+            if use_embedding_records:
+                database.add(unit_view_row)
+                database.add_all(unit_rows)
+                database.add(segment_view_row)
+                database.add_all(canonical_segment_rows_list)
+                database.add_all(segment_member_rows)
+                database.commit()
+            else:
+                unit_view_additions.append(unit_view_row)
+                unit_additions.extend(unit_rows)
+                segment_view_additions.append(segment_view_row)
+                segment_additions.extend(canonical_segment_rows_list)
+                segment_member_additions.extend(segment_member_rows)
         
         embeddings = None
         if create_embeddings and not use_embedding_records:
@@ -550,7 +805,7 @@ async def create_text_chunks(database : Session,
         
         had_embeddings = False
         for i, chunk in enumerate(splits):
-            chunk_md = chunk.metadata
+            chunk_md = dict(chunk.metadata if isinstance(chunk.metadata, dict) else {})
             assert isinstance(chunk_md, dict), "Metadata must be a dictionary."
             parent_doc_md = document_sql_entry.md
             assert isinstance(parent_doc_md, dict), "Parent document metadata must be a dictionary."
@@ -565,21 +820,16 @@ async def create_text_chunks(database : Session,
             }
             segment_id_for_chunk = DocumentSegment().id
             segment_row = None
-            if use_dual_write_segments:
-                segment_row = DocumentSegment(
-                    id=segment_id_for_chunk,
-                    document_version_id=version_id,
-                    artifact_id=artifact_id,
-                    segment_type="chunk",
-                    segment_index=i,
-                    text=chunk.page_content,
-                    md=segment_md,
-                )
-                if use_embedding_records:
-                    # Persist segment first so embedding_record FK is valid.
-                    database.add(segment_row)
-                    database.commit()
-                    database.refresh(segment_row)
+            if use_dual_write_segments and canonical_chunk_payloads is not None:
+                canonical_payload = canonical_chunk_payloads[i]
+                segment_id_for_chunk = str(canonical_payload["segment_id"])
+                segment_md = {
+                    "collection_id": parent_collection_id,
+                    "document_name": document_name,
+                    **dict(canonical_payload.get("segment_md") or {}),
+                }
+                chunk_md = dict(canonical_payload.get("chunk_md") or {})
+                segment_row = canonical_segment_rows.get(segment_id_for_chunk)
 
             embedding_value = None
             if create_embeddings:
@@ -617,6 +867,7 @@ async def create_text_chunks(database : Session,
             embedding_db_entry = DocumentChunk(
                 # collection_type=collection_type,
                 document_id=document_sql_entry.id,
+                authority_segment_id=segment_id_for_chunk if use_dual_write_segments else None,
                 document_chunk_number=i,
                 collection_id=parent_collection_id,
                 collection_type=collection_type,
@@ -635,7 +886,6 @@ async def create_text_chunks(database : Session,
                     segment_row.embedding = embedding_value
                 if sparse_embedding_value is not None:
                     segment_row.embedding_sparse = sparse_embedding_value
-                segment_additions.append(segment_row)
         
         if not had_embeddings:
             docs_to_finish_3.append(document_sql_entry.id)
@@ -646,10 +896,22 @@ async def create_text_chunks(database : Session,
         if create_sparse_embeddings:
             sparse_embeddings_iterable += current_split_size
     
-    if len(db_additions) > 0:
-        database.add_all(db_additions)
+    if len(unit_view_additions) > 0:
+        database.add_all(unit_view_additions)
+        database.commit()
+    if len(unit_additions) > 0:
+        database.add_all(unit_additions)
+        database.commit()
+    if len(segment_view_additions) > 0:
+        database.add_all(segment_view_additions)
+        database.commit()
     if len(segment_additions) > 0:
         database.add_all(segment_additions)
+        database.commit()
+    if len(segment_member_additions) > 0:
+        database.add_all(segment_member_additions)
+    if len(db_additions) > 0:
+        database.add_all(db_additions)
 
     if len(docs_to_finish_3) > 0:
         stmt = update(document_raw).where(document_raw.id.in_(docs_to_finish_3)).values(finished_processing=3)

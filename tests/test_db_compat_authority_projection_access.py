@@ -14,6 +14,7 @@ from QueryLake.runtime.authority_projection_access import (  # noqa: E402
     build_projection_materialization_target,
     build_projection_source_fetch_target,
     fetch_projection_materialization_records,
+    fetch_document_chunk_materialization_provenance,
     fetch_projection_materialization_rows,
     fetch_projection_source_rows,
     fetch_projection_source_target,
@@ -287,3 +288,143 @@ def test_fetch_projection_materialization_records_normalizes_document_chunk_rows
     assert fetched[0].id == "chunk-1"
     assert fetched[0].document_id == "doc-1"
     assert fetched[0].embedding == [0.1, 0.2]
+    assert fetched[0].compatibility_contract == "canonical_segment_compat_projection_v1"
+    assert fetched[0].authority_segment_id is None
+
+
+def test_fetch_projection_materialization_records_preserves_authority_segment_id(monkeypatch):
+    class _StubFetcher:
+        def fetch(self, database, target):
+            return [
+                {
+                    "id": "chunk-2",
+                    "text": "hello",
+                    "document_id": "doc-2",
+                    "collection_id": "col-2",
+                    "document_name": "paper.pdf",
+                    "document_chunk_number": 2,
+                    "authority_segment_id": "seg-2",
+                    "md": {},
+                    "document_md": {},
+                }
+            ]
+
+    monkeypatch.setattr(
+        "QueryLake.runtime.authority_projection_access.resolve_projection_source_fetcher",
+        lambda projection_id, descriptor=None: _StubFetcher(),
+    )
+
+    target = build_projection_materialization_target(
+        projection_id=DOCUMENT_CHUNK_COMPAT_LEXICAL_PROJECTION_ID,
+        authority_reference={"collection_ids": ["col-2"]},
+        target_backend_name="opensearch",
+    )
+    fetched = fetch_projection_materialization_records(object(), target=target)
+
+    assert len(fetched) == 1
+    assert fetched[0].authority_segment_id == "seg-2"
+    assert fetched[0].compatibility_contract == "canonical_segment_compat_projection_v1"
+
+
+def test_fetch_document_chunk_materialization_provenance_preserves_record_order_and_contract(monkeypatch):
+    calls = []
+
+    def _stub_fetch_document_chunk_authority_provenance(database, *, document_id):
+        calls.append(document_id)
+        payloads = {
+            "doc-a": {
+                "document_id": "doc-a",
+                "records": [
+                    {
+                        "chunk_id": "chunk-a",
+                        "document_chunk_number": 7,
+                        "authority_segment_id": "seg-a",
+                        "segment_view_id": "sv-a",
+                        "segment_view_alias": "default_local_text",
+                        "segment_type": "chunk",
+                        "segment_index": 7,
+                        "member_count": 1,
+                        "members": [{"member_index": 0, "unit_id": "u-a"}],
+                    }
+                ],
+            },
+            "doc-b": {
+                "document_id": "doc-b",
+                "records": [
+                    {
+                        "chunk_id": "chunk-b",
+                        "document_chunk_number": 2,
+                        "authority_segment_id": "seg-b",
+                        "segment_view_id": "sv-b",
+                        "segment_view_alias": "default_local_text",
+                        "segment_type": "chunk",
+                        "segment_index": 2,
+                        "member_count": 2,
+                        "members": [{"member_index": 0, "unit_id": "u-b1"}, {"member_index": 1, "unit_id": "u-b2"}],
+                    }
+                ],
+            },
+        }
+        return payloads[document_id]
+
+    monkeypatch.setattr(
+        'QueryLake.runtime.authority_projection_access.fetch_document_chunk_authority_provenance',
+        _stub_fetch_document_chunk_authority_provenance,
+    )
+
+    records = [
+        {
+            "id": "chunk-b",
+            "document_id": "doc-b",
+            "document_chunk_number": 2,
+            "authority_segment_id": "seg-b",
+            "compatibility_contract": "canonical_segment_compat_projection_v1",
+            "text": "beta",
+        },
+        {
+            "id": "chunk-a",
+            "document_id": "doc-a",
+            "document_chunk_number": 7,
+            "authority_segment_id": "seg-a",
+            "compatibility_contract": "canonical_segment_compat_projection_v1",
+            "text": "alpha",
+        },
+    ]
+
+    payload = fetch_document_chunk_materialization_provenance(object(), records=records)
+
+    assert calls == ["doc-b", "doc-a"]
+    assert [row["chunk_id"] for row in payload] == ["chunk-b", "chunk-a"]
+    assert payload[0]["compatibility_contract"] == "canonical_segment_compat_projection_v1"
+    assert payload[0]["canonical_authority_segment_id"] == "seg-b"
+    assert payload[0]["authority_segment_consistent"] is True
+    assert payload[0]["member_count"] == 2
+    assert payload[1]["canonical_authority_segment_id"] == "seg-a"
+    assert payload[1]["segment_view_alias"] == "default_local_text"
+
+
+def test_fetch_document_chunk_materialization_provenance_surfaces_missing_canonical_row(monkeypatch):
+    monkeypatch.setattr(
+        'QueryLake.runtime.authority_projection_access.fetch_document_chunk_authority_provenance',
+        lambda database, *, document_id: {"document_id": document_id, "records": []},
+    )
+
+    payload = fetch_document_chunk_materialization_provenance(
+        object(),
+        records=[
+            {
+                "id": "chunk-missing",
+                "document_id": "doc-missing",
+                "document_chunk_number": 0,
+                "authority_segment_id": "seg-missing",
+                "text": "orphan",
+            }
+        ],
+    )
+
+    assert len(payload) == 1
+    assert payload[0]["chunk_id"] == "chunk-missing"
+    assert payload[0]["materialized_authority_segment_id"] == "seg-missing"
+    assert payload[0]["canonical_authority_segment_id"] is None
+    assert payload[0]["authority_segment_consistent"] is False
+    assert payload[0]["member_count"] == 0

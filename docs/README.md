@@ -83,6 +83,8 @@ docs/
 │   ├── FIRST_SPLIT_STACK_DEPLOYMENT.md Bring-up guide for the first executable split-stack profile
 │   ├── BACKEND_PROFILE_RELEASE_GATE.md Merge/release gate for backend profile changes
 │   ├── AUTHORITY_PROJECTION_MODEL.md  Authority vs projection storage boundary
+│   ├── DOCUMENT_DECOMPOSITION_TRANCHE1.md Tranche-1 authority-layer migration and operator tooling
+│   ├── DOCUMENT_DECOMPOSITION_TRANCHE2_BOOTSTRAP.md Immediate post-tranche-1 runtime/query boundary
 │   ├── PROFILE_DIAGNOSTICS.md         Operator-facing profile readiness and config diagnostics
 │   ├── SUPPORTED_PROFILES.md          Authoritative supported-profile and route/capability manifest
 │   ├── DB_COMPAT_COMPLETION_GATE.md   Final completion gate for the current DB compatibility program
@@ -168,6 +170,8 @@ This area documents the ongoing DB/search compatibility extension work.
 | [`database/FIRST_SPLIT_STACK_DEPLOYMENT.md`](database/FIRST_SPLIT_STACK_DEPLOYMENT.md) | you are staging or validating the first Aurora/OpenSearch split-stack deployment |
 | [`database/BACKEND_PROFILE_RELEASE_GATE.md`](database/BACKEND_PROFILE_RELEASE_GATE.md) | you need the explicit merge/release gate for backend profile changes |
 | [`database/AUTHORITY_PROJECTION_MODEL.md`](database/AUTHORITY_PROJECTION_MODEL.md) | you need the current authority/projection boundary and why `DocumentChunk` is transitional |
+| [`database/DOCUMENT_DECOMPOSITION_TRANCHE1.md`](database/DOCUMENT_DECOMPOSITION_TRANCHE1.md) | you need the tranche-1 decomposition substrate, migration states, and repair tooling |
+| [`database/DOCUMENT_DECOMPOSITION_TRANCHE2_BOOTSTRAP.md`](database/DOCUMENT_DECOMPOSITION_TRANCHE2_BOOTSTRAP.md) | you need the immediate post-tranche-1 scope, the 80% boundary, and what is explicitly deferred |
 | [`database/PROFILE_DIAGNOSTICS.md`](database/PROFILE_DIAGNOSTICS.md) | you need profile readiness, config requirements, or route-executor visibility for operators and clients |
 | [`database/SUPPORTED_PROFILES.md`](database/SUPPORTED_PROFILES.md) | you need the authoritative supported-profile manifest and the tested route/capability scope for each profile |
 | [`database/DB_COMPAT_COMPLETION_GATE.md`](database/DB_COMPAT_COMPLETION_GATE.md) | you need the exact final closeout gate for the current DB compatibility program |
@@ -198,10 +202,12 @@ Suggested reading order for backend-compatibility work:
 17. [`database/SDK_PROFILE_AWARE_CLIENTS.md`](database/SDK_PROFILE_AWARE_CLIENTS.md)
 18. [`database/RETRIEVAL_EXECUTION_BOUNDARY.md`](database/RETRIEVAL_EXECUTION_BOUNDARY.md)
 19. [`database/AUTHORITY_PROJECTION_MODEL.md`](database/AUTHORITY_PROJECTION_MODEL.md)
-20. [`database/DB_COMPAT_COMPLETION_GATE.md`](database/DB_COMPAT_COMPLETION_GATE.md)
-21. [`database/DB_COMPAT_IMPLEMENTATION_REPORT.md`](database/DB_COMPAT_IMPLEMENTATION_REPORT.md)
-22. [`database/DB_COMPAT_PROGRAM_STATUS.md`](database/DB_COMPAT_PROGRAM_STATUS.md)
-23. [`database/DB_COMPAT_FUTURE_SCOPE.md`](database/DB_COMPAT_FUTURE_SCOPE.md)
+20. [`database/DOCUMENT_DECOMPOSITION_TRANCHE1.md`](database/DOCUMENT_DECOMPOSITION_TRANCHE1.md)
+21. [`database/DOCUMENT_DECOMPOSITION_TRANCHE2_BOOTSTRAP.md`](database/DOCUMENT_DECOMPOSITION_TRANCHE2_BOOTSTRAP.md)
+22. [`database/DB_COMPAT_COMPLETION_GATE.md`](database/DB_COMPAT_COMPLETION_GATE.md)
+23. [`database/DB_COMPAT_IMPLEMENTATION_REPORT.md`](database/DB_COMPAT_IMPLEMENTATION_REPORT.md)
+24. [`database/DB_COMPAT_PROGRAM_STATUS.md`](database/DB_COMPAT_PROGRAM_STATUS.md)
+25. [`database/DB_COMPAT_FUTURE_SCOPE.md`](database/DB_COMPAT_FUTURE_SCOPE.md)
 
 Practical recommendation:
 
