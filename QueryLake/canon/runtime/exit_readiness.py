@@ -56,6 +56,7 @@ def build_phase1a_exit_readiness_bundle(
         "shadow_artifacts_correlated": orphan_count == 0,
     }
     lowering_matrix = None
+    target_lowering_matrix = None
     if package_registry_path and pointer_registry_path:
         lowering_matrix = build_search_plane_a_lowering_matrix(
             routes=profile_bundle.get("routes") or [],
@@ -72,6 +73,14 @@ def build_phase1a_exit_readiness_bundle(
             str(row.get("execution_mode") or "") == "blocked"
             for row in rows
         )
+        if profile_id == "aws_aurora_pg_opensearch_v1":
+            target_lowering_matrix = build_search_plane_a_lowering_matrix(
+                routes=profile_bundle.get("routes") or [],
+                profile_ids=["planetscale_opensearch_v1"],
+                package_registry_path=package_registry_path,
+                pointer_registry_path=pointer_registry_path,
+                mode=package_selection_mode,
+            )
     ready_for_phase1b = all(gates.values())
 
     recommendations: list[str] = []
@@ -92,6 +101,21 @@ def build_phase1a_exit_readiness_bundle(
             recommendations.append("register_and_select_graph_packages_for_each_bounded_route_before_exit")
         if "no_blocked_search_plane_a_rows" in gates and not gates["no_blocked_search_plane_a_rows"]:
             recommendations.append("resolve_blocked_search_plane_a_rows_before_candidate_primary")
+    if target_lowering_matrix is not None:
+        target_rows = list(target_lowering_matrix.get("rows") or [])
+        target_shadow_executable_count = sum(1 for row in target_rows if bool(row.get("shadow_executable")))
+        payload_target_summary = {
+            "row_count": len(target_rows),
+            "shadow_executable_count": target_shadow_executable_count,
+            "canon_target_profile_shadow_executor_count": int(
+                target_lowering_matrix.get("summary", {}).get("execution_mode_counts", {}).get(
+                    "canon_target_profile_shadow_executor",
+                    0,
+                )
+            ),
+        }
+    else:
+        payload_target_summary = None
 
     payload = {
         "schema_version": "canon_phase1a_exit_readiness_bundle_v1",
@@ -109,11 +133,18 @@ def build_phase1a_exit_readiness_bundle(
             "analysis_incomplete_count": analysis_incomplete,
             "orphan_artifact_count": orphan_count,
             "ready_for_phase1b": ready_for_phase1b,
+            "target_profile_shadow_execution": payload_target_summary,
         },
         "recommendations": recommendations,
     }
     if lowering_matrix is not None:
         payload["search_plane_a_lowering_matrix"] = lowering_matrix
+    if target_lowering_matrix is not None:
+        payload["target_search_plane_a_lowering_matrix"] = target_lowering_matrix
+        if payload_target_summary and int(payload_target_summary["canon_target_profile_shadow_executor_count"]) > 0:
+            payload["recommendations"].append(
+                "bounded_target_profile_search_plane_shadow_execution_is_available"
+            )
     if include_search_plane_transition:
         payload["search_plane_a_transition"] = build_phase1a_search_plane_a_transition_bundle(
             source_profile_id=profile_id,

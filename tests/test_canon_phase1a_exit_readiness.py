@@ -270,3 +270,94 @@ def test_phase1a_exit_readiness_bundle_includes_package_selection_gates(monkeypa
     assert payload["summary"]["ready_for_phase1b"] is False
     assert payload["search_plane_a_lowering_matrix"]["summary"]["execution_mode_counts"]["blocked"] == 1
     assert "resolve_blocked_search_plane_a_rows_before_candidate_primary" in payload["recommendations"]
+
+
+def test_phase1a_exit_readiness_bundle_surfaces_target_profile_shadow_execution(monkeypatch, tmp_path):
+    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
+    metadata_path = tmp_path / "projection_store.json"
+
+    for projection_id, lane_family in [
+        ("document_chunk_lexical_projection_v1", "lexical"),
+        ("document_chunk_dense_projection_v1", "dense"),
+        ("file_chunk_lexical_projection_v1", "lexical"),
+    ]:
+        mark_projection_build_ready(
+            projection_id=projection_id,
+            projection_version="v1",
+            profile_id="aws_aurora_pg_opensearch_v1",
+            lane_family=lane_family,
+            target_backend="opensearch",
+            build_revision=f"{projection_id}:ready",
+            path=str(metadata_path),
+        )
+
+    routes = [
+        "search_bm25.document_chunk",
+        "search_file_chunks",
+        "search_hybrid.document_chunk",
+    ]
+    for route, report_id in [
+        ("search_bm25.document_chunk", "report-bm25"),
+        ("search_file_chunks", "report-file"),
+        ("search_hybrid.document_chunk", "report-hybrid"),
+    ]:
+        _persist_exact_match_report(tmp_path, route=route, report_id=report_id)
+
+    build_phase1a_package_set_bundle(
+        routes=routes,
+        package_revision="rev-target-shadow",
+        output_dir=tmp_path / "packages",
+        registry_path=tmp_path / "package_registry.json",
+        route_options={"search_hybrid.document_chunk": {"disable_sparse": True}},
+    )
+    package_registry = load_graph_package_registry(tmp_path / "package_registry.json")
+    bindings = {}
+    seed = None
+    for package in package_registry["packages"]:
+        bindings[package["route_id"]] = {
+            "package_id": package["package_id"],
+            "package_revision": package["package_revision"],
+            "graph_id": package["graph_id"],
+        }
+        if package["route_id"] == "search_bm25.document_chunk":
+            seed = package
+    assert seed is not None
+    save_pointer_registry(
+        {
+            "schema_version": "canon_pointer_registry_v1",
+            "generated_at": "2026-04-19T00:00:00+00:00",
+            "shadow_pointer": {
+                "pointer_id": "ptr-shadow",
+                "graph_id": seed["graph_id"],
+                "package_revision": seed["package_revision"],
+                "profile_id": "planetscale_opensearch_v1",
+                "route_ids": routes,
+                "mode": "shadow",
+                "metadata": {"package_bindings": bindings},
+            },
+            "candidate_primary_pointer": None,
+            "primary_pointer": None,
+            "history": [],
+        },
+        tmp_path / "pointer_registry.json",
+    )
+
+    payload = build_phase1a_exit_readiness_bundle(
+        profile_id="aws_aurora_pg_opensearch_v1",
+        shadow_artifact_dir=tmp_path,
+        metadata_store_path=str(metadata_path),
+        routes=routes,
+        package_registry_path=str(tmp_path / "package_registry.json"),
+        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
+    )
+
+    target_summary = payload["summary"]["target_profile_shadow_execution"]
+    assert target_summary["row_count"] == 3
+    assert target_summary["shadow_executable_count"] == 3
+    assert target_summary["canon_target_profile_shadow_executor_count"] == 3
+    assert payload["target_search_plane_a_lowering_matrix"]["summary"]["execution_mode_counts"][
+        "canon_target_profile_shadow_executor"
+    ] == 3
+    assert "bounded_target_profile_search_plane_shadow_execution_is_available" in payload["recommendations"]
