@@ -2,6 +2,7 @@ from QueryLake.canon.compiler import (
     RetrievalPipelineCompileError,
     compile_retrieval_pipeline_to_graph,
 )
+from QueryLake.canon.compiler.querylake_route_compiler import normalize_querylake_route_pipeline
 from QueryLake.runtime.retrieval_pipeline_runtime import default_pipeline_for_route
 from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec, RetrievalPipelineStage
 
@@ -52,6 +53,26 @@ def test_compile_pipeline_can_add_rerank_stage_from_options():
 
     assert graph.nodes[-1].node_id == "rerank"
     assert graph.requested_outputs[0].key == "rerank.candidates"
+
+
+def test_compile_hybrid_pipeline_can_disable_sparse_stage_from_options():
+    pipeline = default_pipeline_for_route("search_hybrid")
+    assert pipeline is not None
+
+    graph = compile_retrieval_pipeline_to_graph(
+        route="search_hybrid.document_chunk",
+        pipeline=normalize_querylake_route_pipeline(
+            route="search_hybrid.document_chunk",
+            pipeline=pipeline,
+            options={"disable_sparse": True},
+        ),
+    )
+
+    assert [node.node_id for node in graph.nodes] == [
+        "stage.bm25",
+        "stage.dense",
+        "fusion",
+    ]
 
 
 def test_compile_pipeline_rejects_empty_enabled_stage_set():

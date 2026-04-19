@@ -9,6 +9,7 @@ from QueryLake.runtime.retrieval_route_executors import (
     resolve_search_file_chunks_route_executor,
     resolve_search_hybrid_route_executor,
 )
+from QueryLake.canon.compiler.querylake_route_compiler import normalize_querylake_route_pipeline
 from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec
 
 
@@ -60,15 +61,22 @@ def build_profile_lowering_snapshot(
     route: str,
     pipeline: Optional[RetrievalPipelineSpec] = None,
     profile: Optional[DeploymentProfile] = None,
+    options: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     route_value = _normalize_route(route)
-    resolved = _resolve_route_executor(route_value, pipeline=pipeline, profile=profile)
+    normalized_pipeline = (
+        normalize_querylake_route_pipeline(route=route_value, pipeline=pipeline, options=options)
+        if pipeline is not None
+        else None
+    )
+    resolved = _resolve_route_executor(route_value, pipeline=normalized_pipeline, profile=profile)
     payload = resolved.to_payload()
     planning_v2 = dict(payload.get("planning_v2") or {})
     return {
         "profile_id": payload["profile_id"],
         "route_id": payload["route_id"],
         "route_alias": str(route),
+        "options": dict(options or {}),
         "executor_id": payload["executor_id"],
         "implemented": bool(payload.get("implemented", False)),
         "support_state": str(payload.get("support_state") or ""),

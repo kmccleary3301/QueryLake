@@ -15,6 +15,29 @@ _ROUTE_TO_DEFAULT_PIPELINE_ROUTE = {
 }
 
 
+def normalize_querylake_route_pipeline(
+    *,
+    route: str,
+    pipeline: RetrievalPipelineSpec,
+    options: dict | None = None,
+) -> RetrievalPipelineSpec:
+    effective_route = str(route or "").strip()
+    opts = dict(options or {})
+    if effective_route != "search_hybrid.document_chunk":
+        return pipeline
+    if not bool(opts.get("disable_sparse", False)):
+        return pipeline
+    cloned = pipeline.model_copy(deep=True)
+    cloned.stages = [
+        stage.model_copy(update={"enabled": False}) if str(stage.stage_id) == "sparse" else stage.model_copy(deep=True)
+        for stage in cloned.stages
+    ]
+    metadata = dict(cloned.flags or {})
+    metadata["disable_sparse"] = True
+    cloned.flags = metadata
+    return cloned
+
+
 class QueryLakeRouteCompileError(ValueError):
     def __init__(self, message: str, route: str):
         super().__init__(message)
@@ -41,11 +64,16 @@ def compile_querylake_route_to_graph(
             "no default retrieval pipeline is registered for this route",
             route=effective_route,
         )
+    normalized_pipeline = normalize_querylake_route_pipeline(
+        route=effective_route,
+        pipeline=effective_pipeline,
+        options=options,
+    )
 
     try:
         return compile_retrieval_pipeline_to_graph(
             route=effective_route,
-            pipeline=effective_pipeline,
+            pipeline=normalized_pipeline,
             options=options,
         )
     except RetrievalPipelineCompileError as exc:

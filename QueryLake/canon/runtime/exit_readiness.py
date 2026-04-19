@@ -8,6 +8,7 @@ from QueryLake.canon.runtime.profile_readiness import (
     build_phase1a_profile_readiness_bundle,
     build_phase1a_search_plane_a_transition_bundle,
 )
+from QueryLake.canon.runtime.search_plane_a_matrix import build_search_plane_a_lowering_matrix
 from QueryLake.canon.runtime.shadow_catalog import build_shadow_artifact_catalog, load_shadow_artifacts
 from QueryLake.canon.runtime.shadow_index import build_shadow_report_index, load_shadow_reports
 
@@ -23,6 +24,9 @@ def build_phase1a_exit_readiness_bundle(
     metadata_store_path: Optional[str] = None,
     routes: Iterable[str] | None = None,
     include_search_plane_transition: bool = True,
+    package_registry_path: str | None = None,
+    pointer_registry_path: str | None = None,
+    package_selection_mode: str = "shadow",
 ) -> dict[str, Any]:
     artifact_dir = Path(shadow_artifact_dir)
     profile_bundle = build_phase1a_profile_readiness_bundle(
@@ -51,6 +55,23 @@ def build_phase1a_exit_readiness_bundle(
         "no_analysis_incomplete_reports": analysis_incomplete == 0,
         "shadow_artifacts_correlated": orphan_count == 0,
     }
+    lowering_matrix = None
+    if package_registry_path and pointer_registry_path:
+        lowering_matrix = build_search_plane_a_lowering_matrix(
+            routes=profile_bundle.get("routes") or [],
+            profile_ids=[profile_id],
+            package_registry_path=package_registry_path,
+            pointer_registry_path=pointer_registry_path,
+            mode=package_selection_mode,
+        )
+        rows = list(lowering_matrix.get("rows") or [])
+        gates["selected_packages_resolved_for_bounded_routes"] = all(
+            bool(row.get("selected_package_resolved")) for row in rows
+        )
+        gates["no_blocked_search_plane_a_rows"] = not any(
+            str(row.get("execution_mode") or "") == "blocked"
+            for row in rows
+        )
     ready_for_phase1b = all(gates.values())
 
     recommendations: list[str] = []
@@ -67,6 +88,10 @@ def build_phase1a_exit_readiness_bundle(
             recommendations.append("repair_missing_shadow_artifacts_before_exit")
         if not gates["all_bounded_routes_compile"]:
             recommendations.append("finish_route_compile_coverage_before_exit")
+        if "selected_packages_resolved_for_bounded_routes" in gates and not gates["selected_packages_resolved_for_bounded_routes"]:
+            recommendations.append("register_and_select_graph_packages_for_each_bounded_route_before_exit")
+        if "no_blocked_search_plane_a_rows" in gates and not gates["no_blocked_search_plane_a_rows"]:
+            recommendations.append("resolve_blocked_search_plane_a_rows_before_candidate_primary")
 
     payload = {
         "schema_version": "canon_phase1a_exit_readiness_bundle_v1",
@@ -87,6 +112,8 @@ def build_phase1a_exit_readiness_bundle(
         },
         "recommendations": recommendations,
     }
+    if lowering_matrix is not None:
+        payload["search_plane_a_lowering_matrix"] = lowering_matrix
     if include_search_plane_transition:
         payload["search_plane_a_transition"] = build_phase1a_search_plane_a_transition_bundle(
             source_profile_id=profile_id,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from QueryLake.canon.control.pointer_registry import save_pointer_registry
+from QueryLake.canon.package import build_phase1a_package_set_bundle, load_graph_package_registry
 from QueryLake.canon.runtime import (
     build_phase1a_exit_readiness_bundle,
     build_shadow_replay_bundle,
@@ -181,3 +183,90 @@ def test_phase1a_exit_readiness_bundle_flags_shadow_gaps(monkeypatch, tmp_path):
     assert payload["gates"]["no_candidate_set_deltas"] is False
     assert "capture_shadow_evidence_for_each_bounded_route" in payload["recommendations"]
     assert "resolve_shadow_candidate_set_deltas_before_broadening_scope" in payload["recommendations"]
+
+
+def test_phase1a_exit_readiness_bundle_includes_package_selection_gates(monkeypatch, tmp_path):
+    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
+    metadata_path = tmp_path / "projection_store.json"
+
+    for projection_id, lane_family in [
+        ("document_chunk_lexical_projection_v1", "lexical"),
+        ("document_chunk_dense_projection_v1", "dense"),
+        ("file_chunk_lexical_projection_v1", "lexical"),
+    ]:
+        mark_projection_build_ready(
+            projection_id=projection_id,
+            projection_version="v1",
+            profile_id="aws_aurora_pg_opensearch_v1",
+            lane_family=lane_family,
+            target_backend="opensearch",
+            build_revision=f"{projection_id}:ready",
+            path=str(metadata_path),
+        )
+
+    routes = [
+        "search_bm25.document_chunk",
+        "search_file_chunks",
+        "search_hybrid.document_chunk",
+    ]
+    for route, report_id in [
+        ("search_bm25.document_chunk", "report-bm25"),
+        ("search_file_chunks", "report-file"),
+        ("search_hybrid.document_chunk", "report-hybrid"),
+    ]:
+        _persist_exact_match_report(tmp_path, route=route, report_id=report_id)
+
+    build_phase1a_package_set_bundle(
+        routes=routes,
+        package_revision="rev-exit",
+        output_dir=tmp_path / "packages",
+        registry_path=tmp_path / "package_registry.json",
+    )
+    package_registry = load_graph_package_registry(tmp_path / "package_registry.json")
+    bindings = {}
+    seed = None
+    for package in package_registry["packages"]:
+        bindings[package["route_id"]] = {
+            "package_id": package["package_id"],
+            "package_revision": package["package_revision"],
+            "graph_id": package["graph_id"],
+        }
+        if package["route_id"] == "search_bm25.document_chunk":
+            seed = package
+    assert seed is not None
+    save_pointer_registry(
+        {
+            "schema_version": "canon_pointer_registry_v1",
+            "generated_at": "2026-04-19T00:00:00+00:00",
+            "shadow_pointer": {
+                "pointer_id": "ptr-shadow",
+                "graph_id": seed["graph_id"],
+                "package_revision": seed["package_revision"],
+                "profile_id": "aws_aurora_pg_opensearch_v1",
+                "route_ids": routes,
+                "mode": "shadow",
+                "metadata": {"package_bindings": bindings},
+            },
+            "candidate_primary_pointer": None,
+            "primary_pointer": None,
+            "history": [],
+        },
+        tmp_path / "pointer_registry.json",
+    )
+
+    payload = build_phase1a_exit_readiness_bundle(
+        profile_id="aws_aurora_pg_opensearch_v1",
+        shadow_artifact_dir=tmp_path,
+        metadata_store_path=str(metadata_path),
+        routes=routes,
+        package_registry_path=str(tmp_path / "package_registry.json"),
+        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
+    )
+
+    assert payload["gates"]["selected_packages_resolved_for_bounded_routes"] is True
+    assert payload["gates"]["no_blocked_search_plane_a_rows"] is False
+    assert payload["summary"]["ready_for_phase1b"] is False
+    assert payload["search_plane_a_lowering_matrix"]["summary"]["execution_mode_counts"]["blocked"] == 1
+    assert "resolve_blocked_search_plane_a_rows_before_candidate_primary" in payload["recommendations"]

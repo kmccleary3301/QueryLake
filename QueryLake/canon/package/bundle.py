@@ -40,6 +40,7 @@ def build_graph_package_bundle(
     profile_targets: Iterable[str] | None = None,
     metadata: Optional[dict[str, Any]] = None,
     include_search_plane_transition: bool = True,
+    compile_options: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     profile_target_list = [str(value) for value in (profile_targets or ["aws_aurora_pg_opensearch_v1", "planetscale_opensearch_v1"])]
     payload = {
@@ -53,6 +54,8 @@ def build_graph_package_bundle(
             "version": pipeline.version,
             "stage_ids": [stage.stage_id for stage in pipeline.stages],
             "primitive_ids": [stage.primitive_id for stage in pipeline.stages],
+            "enabled_stage_ids": [stage.stage_id for stage in pipeline.stages if bool(stage.enabled)],
+            "compile_options": dict(compile_options or {}),
         },
         "graph": {
             "graph_id": graph.graph_id,
@@ -94,6 +97,7 @@ def build_route_graph_package_bundle(
         package_revision=package_revision,
         profile_targets=profile_targets,
         metadata=metadata,
+        compile_options=options,
     )
 
 

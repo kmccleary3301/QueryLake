@@ -14,6 +14,9 @@ def main() -> int:
     parser.add_argument("--shadow-artifact-dir", required=True)
     parser.add_argument("--metadata-store-path", default=None)
     parser.add_argument("--route", action="append", dest="routes", default=None)
+    parser.add_argument("--package-registry-path", default=None)
+    parser.add_argument("--pointer-registry-path", default=None)
+    parser.add_argument("--package-selection-mode", default="shadow")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
@@ -22,6 +25,9 @@ def main() -> int:
         shadow_artifact_dir=args.shadow_artifact_dir,
         metadata_store_path=args.metadata_store_path,
         routes=args.routes,
+        package_registry_path=args.package_registry_path,
+        pointer_registry_path=args.pointer_registry_path,
+        package_selection_mode=args.package_selection_mode,
     )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

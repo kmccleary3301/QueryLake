@@ -81,6 +81,40 @@ def test_publish_plan_blocks_candidate_primary_without_candidate_gate():
     assert "candidate_primary_gate_not_satisfied" in payload["blockers"]
 
 
+def test_publish_plan_blocks_candidate_primary_when_search_plane_a_rows_are_blocked():
+    payload = build_publish_plan(
+        CanonPublishRequest(
+            target=CanonPublishPointer(
+                pointer_id="ptr-candidate-2",
+                graph_id="graph-2",
+                package_revision="r2",
+                profile_id="aws_aurora_pg_opensearch_v1",
+                route_ids=["search_bm25.document_chunk", "search_hybrid.document_chunk"],
+                mode="candidate_primary",
+            ),
+            review=CanonPublishReview(
+                branch_name="canonpp-phase1a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness={
+                "gates": {
+                    "all_bounded_routes_compile": True,
+                    "shadow_reports_present": True,
+                    "no_candidate_set_deltas": True,
+                    "selected_packages_resolved_for_bounded_routes": True,
+                    "no_blocked_search_plane_a_rows": False,
+                },
+                "summary": {"ready_for_phase1b": False},
+            },
+        )
+    )
+
+    assert payload["allowed"] is False
+    assert "candidate_primary_gate_not_satisfied" in payload["blockers"]
+
+
 def test_publish_plan_blocks_primary_without_exit_gate():
     payload = build_publish_plan(
         CanonPublishRequest(

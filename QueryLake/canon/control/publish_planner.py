@@ -35,6 +35,8 @@ def _candidate_primary_ready(exit_readiness: dict[str, Any]) -> bool:
         gates.get("all_bounded_routes_compile")
         and gates.get("shadow_reports_present")
         and gates.get("no_candidate_set_deltas")
+        and gates.get("selected_packages_resolved_for_bounded_routes", True)
+        and gates.get("no_blocked_search_plane_a_rows", True)
     )
 
 
