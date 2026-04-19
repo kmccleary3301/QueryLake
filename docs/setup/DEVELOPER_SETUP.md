@@ -93,8 +93,12 @@ make ci-retrieval-smoke
 - `QUERYLAKE_OAUTH_SECRET_KEY=<secret>` for stable OAuth tokens.
 - `QUERYLAKE_REDIS_URL=redis://localhost:6379/0` to enable Redis-backed components.
 - `QUERYLAKE_DB_CONNECT_TIMEOUT=5` for DB connection timeout control.
+- `QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25_DOCUMENT_CHUNK=QL-L3` to enable the field-aware lexical default on the chunk BM25 route.
+- `QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_HYBRID_DOCUMENT_CHUNK=QL-L3` to keep the hybrid lexical leg aligned with the chunk BM25 route.
+- `QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25_DOCUMENT=QL-L4` to enable the exactness extension on the document/title lookup route.
 
 ## Notes
 
 - Local `config.json` is ignored by git (machine-specific).
 - Use `config.json.bak` as baseline when recreating local config.
+- `make run` and `make run-api-only` source local `.env` automatically before starting the runtime.

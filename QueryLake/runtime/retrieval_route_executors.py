@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence, Union, runtime
 from sqlmodel import Session
 
 from QueryLake.database.sql_db_tables import FILE_CHUNK_INDEXED_COLUMNS as FILE_FIELDS
-from QueryLake.misc_functions.paradedb_query_parser import parse_search
+from QueryLake.misc_functions.paradedb_query_builder import build_paradedb_lexical_query_plan
 from QueryLake.runtime.authority_projection_access import build_projection_materialization_target
 from QueryLake.runtime.db_compat import (
     BackendStack,
@@ -178,6 +178,7 @@ class GoldSearchBM25RouteExecutor:
             sort_by=kwargs["sort_by"],
             sort_dir=kwargs["sort_dir"],
             document_collection_attrs=kwargs["document_collection_attrs"],
+            lexical_variant_id=kwargs.get("lexical_variant_id"),
         )
         rows_or_statement = execute_gold_bm25_search(
             database,
@@ -215,8 +216,15 @@ class GoldSearchFileChunkRouteExecutor:
             limit=int(kwargs["limit"]),
             offset=int(kwargs["offset"]),
             return_statement=bool(kwargs.get("return_statement", False)),
+            lexical_variant_id=kwargs.get("lexical_variant_id"),
         )
-        formatted_query, _ = parse_search(str(kwargs["query"] or ""), FILE_FIELDS, catch_all_fields=["text"])
+        lexical_plan = build_paradedb_lexical_query_plan(
+            str(kwargs.get("query") or ""),
+            valid_fields=FILE_FIELDS,
+            catch_all_fields=["text"],
+            variant_id=kwargs.get("lexical_variant_id"),
+        )
+        formatted_query = lexical_plan.formatted_query
         query_is_empty = formatted_query == "()"
         return FileChunkRouteExecution(
             rows_or_statement=rows_or_statement,

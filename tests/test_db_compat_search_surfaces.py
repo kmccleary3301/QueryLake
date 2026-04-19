@@ -7,7 +7,13 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from QueryLake.api.search import search_bm25, search_file_chunks, search_hybrid
+from QueryLake.api.search import (
+    _normalize_route_variant_env_suffix,
+    _resolve_lexical_variant_id,
+    search_bm25,
+    search_file_chunks,
+    search_hybrid,
+)
 from QueryLake.runtime.db_compat import BackendStack, QueryLakeUnsupportedFeatureError
 from QueryLake.runtime.retrieval_route_executors import (
     BM25RouteExecution,
@@ -28,6 +34,26 @@ class DummyDB:
 
 async def _unused_toolchain_function_caller(_name):
     raise AssertionError("toolchain_function_caller should not be used in this test")
+
+
+def test_route_variant_suffix_normalization():
+    assert _normalize_route_variant_env_suffix("search_bm25", "document_chunk") == "SEARCH_BM25_DOCUMENT_CHUNK"
+    assert _normalize_route_variant_env_suffix("search_hybrid", None) == "SEARCH_HYBRID"
+
+
+def test_resolve_lexical_variant_id_prefers_explicit_then_route_then_global(monkeypatch):
+    monkeypatch.delenv("QUERYLAKE_LEXICAL_VARIANT_ID", raising=False)
+    monkeypatch.delenv("QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25", raising=False)
+    monkeypatch.delenv("QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25_DOCUMENT", raising=False)
+
+    monkeypatch.setenv("QUERYLAKE_LEXICAL_VARIANT_ID", "QL-L1")
+    monkeypatch.setenv("QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25", "QL-L3")
+    monkeypatch.setenv("QUERYLAKE_LEXICAL_VARIANT_ID_SEARCH_BM25_DOCUMENT", "QL-L4")
+
+    assert _resolve_lexical_variant_id(None, route="search_bm25", table="document") == "QL-L4"
+    assert _resolve_lexical_variant_id(None, route="search_bm25", table="segment") == "QL-L3"
+    assert _resolve_lexical_variant_id(None, route="search_hybrid", table="document_chunk") == "QL-L1"
+    assert _resolve_lexical_variant_id("QL-L0", route="search_bm25", table="document") == "QL-L0"
 
 
 def test_search_file_chunks_applies_capability_gate(monkeypatch):

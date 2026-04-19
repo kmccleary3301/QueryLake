@@ -17,7 +17,8 @@ from pydantic import BaseModel
 import random
 import time
 import re
-from ..misc_functions.paradedb_query_parser import parse_search
+from ..misc_functions.paradedb_query_builder import LexicalQueryPlan, build_paradedb_lexical_query_plan
+from ..runtime.lexical_variant_registry import DEFAULT_LEXICAL_VARIANT_ID, get_lexical_variant_spec
 from ..database.sql_db_tables import (
     DocumentChunk,
     document_raw,
@@ -691,6 +692,50 @@ def _env_flag(name: str, default: bool) -> bool:
     return raw in {"1", "true", "yes", "on"}
 
 
+def _normalize_route_variant_env_suffix(route: str, table: Optional[str] = None) -> str:
+    route_token = re.sub(r"[^A-Za-z0-9]+", "_", str(route or "")).strip("_").upper()
+    table_token = re.sub(r"[^A-Za-z0-9]+", "_", str(table or "")).strip("_").upper()
+    return f"{route_token}_{table_token}".strip("_") if table_token else route_token
+
+
+def _resolve_lexical_variant_id(
+    lexical_variant_id: Optional[str],
+    *,
+    route: Optional[str] = None,
+    table: Optional[str] = None,
+) -> str:
+    if lexical_variant_id is not None and str(lexical_variant_id).strip():
+        resolved = str(lexical_variant_id).strip()
+        return resolved or DEFAULT_LEXICAL_VARIANT_ID
+    route_suffix = _normalize_route_variant_env_suffix(str(route or ""), str(table or "") or None)
+    env_candidates: List[str] = []
+    if route_suffix:
+        env_candidates.append(f"QUERYLAKE_LEXICAL_VARIANT_ID_{route_suffix}")
+        if table:
+            env_candidates.append(
+                f"QUERYLAKE_LEXICAL_VARIANT_ID_{_normalize_route_variant_env_suffix(str(route or ''))}"
+            )
+    env_candidates.append("QUERYLAKE_LEXICAL_VARIANT_ID")
+    resolved = DEFAULT_LEXICAL_VARIANT_ID
+    for env_name in env_candidates:
+        raw = str(os.getenv(env_name, "") or "").strip()
+        if raw:
+            resolved = raw
+            break
+    return resolved or DEFAULT_LEXICAL_VARIANT_ID
+
+
+def _lexical_variant_payload(variant_id: Optional[str]) -> Dict[str, Any]:
+    spec = get_lexical_variant_spec(variant_id)
+    return spec.to_payload()
+
+
+def _lexical_plan_payload(plan: Optional[LexicalQueryPlan]) -> Dict[str, Any]:
+    if plan is None:
+        return {}
+    return plan.to_payload()
+
+
 def _build_route_planning_context_v2(
     route_resolution_payload: Dict[str, Any],
     *,
@@ -1069,14 +1114,21 @@ async def search_hybrid(
     sparse_prune_min_abs_weight: float = 0.0,
     sparse_calibration: str = "none",
     bm25_catch_all_fields: Optional[List[str]] = None,
+    lexical_variant_id: Optional[str] = None,
 ) -> List[DocumentChunkDictionary]:
     # TODO: Check permissions on specified collections.
     t_1 = time.time()
     profile = get_deployment_profile()
+    resolved_lexical_variant_id = _resolve_lexical_variant_id(
+        lexical_variant_id,
+        route="search_hybrid",
+        table="document_chunk",
+    )
     lexical_capability_plan = None
     lexical_query_ir_v2 = None
     hybrid_route_resolution = None
     hybrid_projection_ir_v2: Dict[str, Any] = {}
+    lexical_query_plan: Optional[LexicalQueryPlan] = None
     
     (_, user_auth) = get_user(database, auth)
     
@@ -1341,7 +1393,9 @@ async def search_hybrid(
                     "bm25_enabled": bool(use_bm25),
                     "dense_enabled": bool(use_similarity),
                     "sparse_enabled": bool(use_sparse),
+                    "lexical_variant_id": resolved_lexical_variant_id,
                 },
+                query_metadata={"lexical_variant_id": resolved_lexical_variant_id},
                 projection_metadata={
                     "planning_surface": "route_resolution",
                     "fallback_projection_ir_v2": True,
@@ -1602,6 +1656,7 @@ async def search_hybrid(
                     "limit_sparse": int(limit_sparse),
                     "bm25_query_text": str(query.get("bm25", "")),
                     "bm25_catch_all_fields": list(resolved_catch_all_fields),
+                    "lexical_variant_id": resolved_lexical_variant_id,
                     "dense_query_text": str(query.get("embedding", query.get("bm25", ""))),
                     "sparse_query_text": str(query.get("sparse", query.get("bm25", ""))),
                     "sparse_query_value": orchestrated_sparse_query_value,
@@ -1716,6 +1771,8 @@ async def search_hybrid(
                     lexical_capability_plan=(
                         lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                     ),
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                    lexical_query_debug=(dict(lexical_query_plan.debug) if lexical_query_plan is not None else None),
                     compatibility_provenance=compatibility_provenance,
                     compatibility_materializations=compatibility_materializations,
                     lane_state={
@@ -1808,6 +1865,8 @@ async def search_hybrid(
                     result_rows=results_dump,
                     candidate_details=[candidate.model_dump() for candidate in run_result.candidates],
                     status="ok",
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                    lexical_query_debug=(dict(lexical_query_plan.debug) if lexical_query_plan is not None else None),
                     md={
                         "stage_trace": [trace.model_dump() for trace in run_result.traces],
                         "pipeline_resolution": pipeline_resolution,
@@ -1961,24 +2020,28 @@ async def search_hybrid(
     t_4 = time.time()
 
     bm25_query_text = str(query.get("bm25", ""))
-    formatted_query, strong_where_clause = parse_search(
+    lexical_query_plan = build_paradedb_lexical_query_plan(
         bm25_query_text,
-        CHUNK_INDEXED_COLUMNS,
+        valid_fields=CHUNK_INDEXED_COLUMNS,
         catch_all_fields=resolved_catch_all_fields,
+        variant_id=resolved_lexical_variant_id,
     )
+    formatted_query = lexical_query_plan.formatted_query
+    strong_where_clause = lexical_query_plan.strong_where_clause
     if strict_constraint_prefilter:
         constraint_seed = (
             str(constraint_query_text)
             if isinstance(constraint_query_text, str) and len(str(constraint_query_text).strip()) > 0
             else bm25_query_text
         )
-        _, strict_clause = parse_search(
+        strict_plan = build_paradedb_lexical_query_plan(
             constraint_seed,
-            CHUNK_INDEXED_COLUMNS,
+            valid_fields=CHUNK_INDEXED_COLUMNS,
             catch_all_fields=resolved_catch_all_fields,
+            variant_id=resolved_lexical_variant_id,
         )
-        if isinstance(strict_clause, str) and len(strict_clause.strip()) > 0:
-            strong_where_clause = strict_clause
+        if isinstance(strict_plan.strong_where_clause, str) and len(strict_plan.strong_where_clause.strip()) > 0:
+            strong_where_clause = strict_plan.strong_where_clause
     if use_bm25 and str(formatted_query).strip() == "()":
         use_bm25 = False
         limit_bm25 = 0
@@ -2165,6 +2228,8 @@ async def search_hybrid(
                 lexical_capability_plan=(
                     lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                 ),
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                lexical_query_debug=(dict(lexical_query_plan.debug) if lexical_query_plan is not None else None),
                 compatibility_provenance=compatibility_provenance,
                 compatibility_materializations=compatibility_materializations,
                 lane_state={
@@ -2228,6 +2293,8 @@ async def search_hybrid(
                 },
                 result_rows=results,
                 status="ok",
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                lexical_query_debug=(dict(lexical_query_plan.debug) if lexical_query_plan is not None else None),
                 md={
                     "route_executor": hybrid_route_executor.to_payload(),
                     "compatibility_materialization_summary": compatibility_materialization_summary,
@@ -2271,6 +2338,8 @@ async def search_hybrid(
                 counters={},
                 result_rows=[],
                 status="error",
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                lexical_query_debug=(dict(lexical_query_plan.debug) if lexical_query_plan is not None else None),
                 error=str(e),
                 md={
                     "route_executor": hybrid_route_executor.to_payload(),
@@ -2301,9 +2370,15 @@ def search_bm25(
     _direct_stage_call: bool = False,
     _skip_observability: bool = False,
     _pipeline_override: Optional[Dict[str, str]] = None,
+    lexical_variant_id: Optional[str] = None,
 ) -> List[DocumentChunkDictionary]:
     t_1 = time.time()
     profile = get_deployment_profile()
+    resolved_lexical_variant_id = _resolve_lexical_variant_id(
+        lexical_variant_id,
+        route="search_bm25",
+        table=str(table),
+    )
     lexical_capability_plan = None
     require_capability(
         "retrieval.lexical.bm25",
@@ -2320,8 +2395,8 @@ def search_bm25(
             use_dense=False,
             use_sparse=False,
             collection_ids=list(collection_ids or []),
-            planner_hints={"table": str(table)},
-            query_metadata={"table": str(table)},
+            planner_hints={"table": str(table), "lexical_variant_id": resolved_lexical_variant_id},
+            query_metadata={"table": str(table), "lexical_variant_id": resolved_lexical_variant_id},
             projection_metadata={
                 "planning_surface": "route_resolution",
                 "fallback_projection_ir_v2": True,
@@ -2384,179 +2459,190 @@ def search_bm25(
         and not return_statement
         and table == "document_chunk"
     ):
-        resolved_pipeline_id = "orchestrated.search_bm25.document_chunk"
-        resolved_pipeline_version = "v1"
-        pipeline_resolution = {"source": "fallback", "notes": ["pre_resolution_default"]}
-        try:
-            fallback_pipeline = default_pipeline_for_route("search_bm25.document_chunk")
-            pipeline, pipeline_resolution = _resolve_route_pipeline(
-                database,
-                route="search_bm25.document_chunk",
-                user_name=user_auth.username,
-                auth=auth,
-                pipeline_override=_pipeline_override,
-                fallback_pipeline=fallback_pipeline,
-            )
-            resolved_pipeline_id = pipeline.pipeline_id
-            resolved_pipeline_version = pipeline.version
-
-            def _direct_bm25(**kwargs):
-                direct_kwargs = dict(kwargs)
-                direct_kwargs["_direct_stage_call"] = True
-                direct_kwargs["_skip_observability"] = True
-                return search_bm25(**direct_kwargs)
-
-            request_obj = RetrievalRequest(
-                route=f"search_bm25.{table}",
-                query_text=query,
-                collection_ids=collection_ids,
-                query_ir_v2=dict(lexical_query_ir_v2 or {}),
-                projection_ir_v2=dict(
-                    bm25_planning_v2.get("projection_ir_v2") or {}
-                ),
-                options={
-                    "limit": int(limit),
-                    "offset": int(offset),
-                    "bm25_query_text": query,
-                    "table": table,
-                    "sort_by": sort_by,
-                    "sort_dir": sort_dir,
-                    "web_search": bool(web_search),
-                    "_skip_observability": True,
-                },
-            )
-            run_result = _run_async_sync(
-                PipelineOrchestrator().run(
-                    request=request_obj,
-                    pipeline=pipeline,
-                    retrievers=_build_retrievers_for_pipeline(
-                        pipeline=pipeline,
-                        database=database,
-                        auth=auth,
-                        toolchain_function_caller=None,
-                        search_bm25_fn=_direct_bm25,
-                        search_hybrid_fn=None,
-                    ),
-                    fusion=_select_fusion_for_pipeline(pipeline=pipeline, options=request_obj.options),
-                    reranker=None,
-                    packer=_select_packer(
-                        group_chunks=group_chunks,
-                        options={**request_obj.options, **({"packing_mode": pipeline.flags.get("packing_mode")} if isinstance(pipeline.flags, dict) and pipeline.flags.get("packing_mode") is not None else {})},
-                    ),
+            resolved_pipeline_id = "orchestrated.search_bm25.document_chunk"
+            resolved_pipeline_version = "v1"
+            pipeline_resolution = {"source": "fallback", "notes": ["pre_resolution_default"]}
+            try:
+                orchestrated_lexical_query_plan = build_paradedb_lexical_query_plan(
+                    raw_query_text=str(query),
+                    valid_fields=valid_fields,
+                    catch_all_fields=chosen_catch_alls,
+                    variant_id=resolved_lexical_variant_id,
                 )
-            )
-            results_made = [_candidate_to_document_chunk(candidate) for candidate in run_result.candidates]
-            results_dump = [r.model_dump() for r in results_made]
-            compatibility_materialization_summary = None
-            plan_explain_payload = None
-            if table == "document_chunk":
-                if not _skip_observability:
-                    compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
-                if explain_plan:
-                    compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results_dump)
-                    compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results_dump)
-                    plan_explain_payload = build_retrieval_plan_explain(
-                        route=f"search_bm25.{table}",
-                        pipeline=pipeline,
-                        options=request_obj.options,
-                        pipeline_resolution=pipeline_resolution,
-                        route_executor=(
-                            bm25_route_resolution.to_payload()
-                            if bm25_route_resolution is not None
-                            else {}
-                        ),
-                        query_ir_v2=lexical_query_ir_v2,
-                        projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
-                        lexical_capability_plan=(
-                            lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
-                        ),
-                        compatibility_provenance=compatibility_provenance,
-                        compatibility_materializations=compatibility_materializations,
-                        lane_state={
-                            "table": str(table),
-                            "group_chunks": bool(group_chunks),
-                            "web_search": bool(web_search),
-                        },
-                    )
-            if not _skip_observability:
-                metrics.record_retrieval(
-                    route=f"search_bm25.{table}",
-                    status="ok",
-                    latency_seconds=time.time() - t_1,
-                    results_count=len(results_dump),
-                )
-                log_retrieval_run(
+                fallback_pipeline = default_pipeline_for_route("search_bm25.document_chunk")
+                pipeline, pipeline_resolution = _resolve_route_pipeline(
                     database,
+                    route="search_bm25.document_chunk",
+                    user_name=user_auth.username,
+                    auth=auth,
+                    pipeline_override=_pipeline_override,
+                    fallback_pipeline=fallback_pipeline,
+                )
+                resolved_pipeline_id = pipeline.pipeline_id
+                resolved_pipeline_version = pipeline.version
+
+                def _direct_bm25(**kwargs):
+                    direct_kwargs = dict(kwargs)
+                    direct_kwargs["_direct_stage_call"] = True
+                    direct_kwargs["_skip_observability"] = True
+                    return search_bm25(**direct_kwargs)
+
+                request_obj = RetrievalRequest(
                     route=f"search_bm25.{table}",
-                    actor_user=user_auth.username,
-                    query_payload=query,
+                    query_text=query,
                     collection_ids=collection_ids,
-                    pipeline_id=run_result.pipeline_id,
-                    pipeline_version=run_result.pipeline_version,
-                    filters={
-                        "collection_ids": collection_ids,
-                        "web_search": web_search,
+                    query_ir_v2=dict(lexical_query_ir_v2 or {}),
+                    projection_ir_v2=dict(
+                        bm25_planning_v2.get("projection_ir_v2") or {}
+                    ),
+                    options={
+                        "limit": int(limit),
+                        "offset": int(offset),
+                        "bm25_query_text": query,
+                        "lexical_variant_id": resolved_lexical_variant_id,
                         "table": table,
                         "sort_by": sort_by,
                         "sort_dir": sort_dir,
-                        "orchestrated": True,
+                        "web_search": bool(web_search),
+                        "_skip_observability": True,
                     },
-                    budgets={"limit": limit, "offset": offset},
-                    timings={"total": time.time() - t_1},
-                    counters={"rows_returned": len(results_dump), "group_chunks": bool(group_chunks)},
-                    result_rows=results_dump,
-                    candidate_details=[candidate.model_dump() for candidate in run_result.candidates],
-                    status="ok",
-                    md={
-                        "stage_trace": [trace.model_dump() for trace in run_result.traces],
-                        "pipeline_resolution": pipeline_resolution,
-                        **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
-                        **(
-                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
-                            if lexical_capability_plan is not None
-                            else {}
+                )
+                run_result = _run_async_sync(
+                    PipelineOrchestrator().run(
+                        request=request_obj,
+                        pipeline=pipeline,
+                        retrievers=_build_retrievers_for_pipeline(
+                            pipeline=pipeline,
+                            database=database,
+                            auth=auth,
+                            toolchain_function_caller=None,
+                            search_bm25_fn=_direct_bm25,
+                            search_hybrid_fn=None,
                         ),
-                        **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
-                    },
-                )
-            database.rollback()
-            if plan_explain_payload is not None:
-                return {"results": results_dump, "plan_explain": plan_explain_payload}
-            return results_made
-        except Exception as e:
-            if not _skip_observability:
-                metrics.record_retrieval(
-                    route=f"search_bm25.{table}",
-                    status="error",
-                    latency_seconds=time.time() - t_1,
-                    results_count=0,
-                )
-                log_retrieval_run(
-                    database,
-                    route=f"search_bm25.{table}",
-                    actor_user=user_auth.username,
-                    query_payload=query,
-                    collection_ids=collection_ids,
-                    pipeline_id=resolved_pipeline_id,
-                    pipeline_version=resolved_pipeline_version,
-                    filters={"collection_ids": collection_ids, "table": table, "orchestrated": True},
-                    budgets={"limit": limit, "offset": offset},
-                    timings={"total": time.time() - t_1},
-                    counters={},
-                    result_rows=[],
-                    status="error",
-                    error=str(e),
-                    md={
-                        "pipeline_resolution": pipeline_resolution,
-                        **(
-                            {"lexical_capability_plan": lexical_capability_plan.to_payload()}
-                            if lexical_capability_plan is not None
-                            else {}
+                        fusion=_select_fusion_for_pipeline(pipeline=pipeline, options=request_obj.options),
+                        reranker=None,
+                        packer=_select_packer(
+                            group_chunks=group_chunks,
+                            options={**request_obj.options, **({"packing_mode": pipeline.flags.get("packing_mode")} if isinstance(pipeline.flags, dict) and pipeline.flags.get("packing_mode") is not None else {})},
                         ),
-                    },
+                    )
                 )
-            database.rollback()
-            raise e
+                results_made = [_candidate_to_document_chunk(candidate) for candidate in run_result.candidates]
+                results_dump = [r.model_dump() for r in results_made]
+                compatibility_materialization_summary = None
+                plan_explain_payload = None
+                if table == "document_chunk":
+                    if not _skip_observability:
+                        compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
+                    if explain_plan:
+                        compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results_dump)
+                        compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results_dump)
+                        plan_explain_payload = build_retrieval_plan_explain(
+                            route=f"search_bm25.{table}",
+                            pipeline=pipeline,
+                            options=request_obj.options,
+                            pipeline_resolution=pipeline_resolution,
+                            route_executor=(
+                                bm25_route_resolution.to_payload()
+                                if bm25_route_resolution is not None
+                                else {}
+                            ),
+                            query_ir_v2=lexical_query_ir_v2,
+                            projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
+                            lexical_capability_plan=(
+                                lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                            ),
+                            lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                            lexical_query_debug=dict(orchestrated_lexical_query_plan.debug or {}),
+                            compatibility_provenance=compatibility_provenance,
+                            compatibility_materializations=compatibility_materializations,
+                            lane_state={
+                                "table": str(table),
+                                "group_chunks": bool(group_chunks),
+                                "web_search": bool(web_search),
+                            },
+                        )
+                if not _skip_observability:
+                    metrics.record_retrieval(
+                        route=f"search_bm25.{table}",
+                        status="ok",
+                        latency_seconds=time.time() - t_1,
+                        results_count=len(results_dump),
+                    )
+                    log_retrieval_run(
+                        database,
+                        route=f"search_bm25.{table}",
+                        actor_user=user_auth.username,
+                        query_payload=query,
+                        collection_ids=collection_ids,
+                        pipeline_id=run_result.pipeline_id,
+                        pipeline_version=run_result.pipeline_version,
+                        filters={
+                            "collection_ids": collection_ids,
+                            "web_search": web_search,
+                            "table": table,
+                            "sort_by": sort_by,
+                            "sort_dir": sort_dir,
+                            "orchestrated": True,
+                        },
+                        budgets={"limit": limit, "offset": offset},
+                        timings={"total": time.time() - t_1},
+                        counters={"rows_returned": len(results_dump), "group_chunks": bool(group_chunks)},
+                        result_rows=results_dump,
+                        candidate_details=[candidate.model_dump() for candidate in run_result.candidates],
+                        status="ok",
+                        lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                        md={
+                            "stage_trace": [trace.model_dump() for trace in run_result.traces],
+                            "pipeline_resolution": pipeline_resolution,
+                            **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
+                            **(
+                                {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                                if lexical_capability_plan is not None
+                                else {}
+                            ),
+                            **({"plan_explain": plan_explain_payload} if plan_explain_payload is not None else {}),
+                        },
+                    )
+                database.rollback()
+                if plan_explain_payload is not None:
+                    return {"results": results_dump, "plan_explain": plan_explain_payload}
+                return results_made
+            except Exception as e:
+                if not _skip_observability:
+                    metrics.record_retrieval(
+                        route=f"search_bm25.{table}",
+                        status="error",
+                        latency_seconds=time.time() - t_1,
+                        results_count=0,
+                    )
+                    log_retrieval_run(
+                        database,
+                        route=f"search_bm25.{table}",
+                        actor_user=user_auth.username,
+                        query_payload=query,
+                        collection_ids=collection_ids,
+                        pipeline_id=resolved_pipeline_id,
+                        pipeline_version=resolved_pipeline_version,
+                        filters={"collection_ids": collection_ids, "table": table, "orchestrated": True},
+                        budgets={"limit": limit, "offset": offset},
+                        timings={"total": time.time() - t_1},
+                        counters={},
+                        result_rows=[],
+                        status="error",
+                        error=str(e),
+                        lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                        md={
+                            "pipeline_resolution": pipeline_resolution,
+                            **(
+                                {"lexical_capability_plan": lexical_capability_plan.to_payload()}
+                                if lexical_capability_plan is not None
+                                else {}
+                            ),
+                        },
+                    )
+                database.rollback()
+                raise e
 
     if web_search:
         collection_ids.append(["WEB"])
@@ -2586,6 +2672,7 @@ def search_bm25(
         limit=int(limit),
         offset=int(offset),
         return_statement=return_statement,
+        lexical_variant_id=resolved_lexical_variant_id,
     )
     if return_statement:
         return bm25_execution.rows_or_statement
@@ -2634,12 +2721,14 @@ def search_bm25(
                     route_executor=bm25_route_executor.to_payload(),
                     query_ir_v2=lexical_query_ir_v2,
                     projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
-                    lexical_capability_plan=(
-                        lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
-                    ),
-                    compatibility_provenance=compatibility_provenance,
-                    compatibility_materializations=compatibility_materializations,
-                    lane_state={
+                        lexical_capability_plan=(
+                            lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                        ),
+                        lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                        lexical_query_debug=dict((getattr(bm25_execution.plan, "lexical_query_debug", None) or {})),
+                        compatibility_provenance=compatibility_provenance,
+                        compatibility_materializations=compatibility_materializations,
+                        lane_state={
                         "table": str(table),
                         "group_chunks": bool(group_chunks),
                         "web_search": bool(web_search),
@@ -2674,8 +2763,10 @@ def search_bm25(
                     "group_chunks": bool(group_chunks),
                 },
                 result_rows=results_dump,
-                status="ok",
-                md={
+                    status="ok",
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                    lexical_query_debug=dict((getattr(bm25_execution.plan, "lexical_query_debug", None) or {})),
+                    md={
                     "route_executor": bm25_route_executor.to_payload(),
                     **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                     **(
@@ -2717,6 +2808,7 @@ def search_bm25(
                 result_rows=[],
                 status="error",
                 error=str(e),
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                 md={
                     "route_executor": bm25_route_executor.to_payload(),
                     **(
@@ -2905,9 +2997,14 @@ def search_file_chunks(
     _direct_stage_call: bool = False,
     _skip_observability: bool = False,
     _pipeline_override: Optional[Dict[str, str]] = None,
+    lexical_variant_id: Optional[str] = None,
 ):
     t_1 = time.time()
     profile = get_deployment_profile()
+    resolved_lexical_variant_id = _resolve_lexical_variant_id(
+        lexical_variant_id,
+        route="search_file_chunks",
+    )
     lexical_capability_plan = None
     lexical_query_ir_v2: Dict[str, Any] = {}
     file_chunk_projection_ir_v2: Dict[str, Any] = {}
@@ -2926,6 +3023,8 @@ def search_file_chunks(
             lexical_query_text=str(query),
             use_dense=False,
             use_sparse=False,
+            planner_hints={"lexical_variant_id": resolved_lexical_variant_id},
+            query_metadata={"lexical_variant_id": resolved_lexical_variant_id},
             projection_metadata={
                 "planning_surface": "route_resolution",
                 "fallback_projection_ir_v2": True,
@@ -2977,6 +3076,7 @@ def search_file_chunks(
                     "sort_by": sort_by,
                     "sort_dir": sort_dir,
                     "bm25_query_text": query,
+                    "lexical_variant_id": resolved_lexical_variant_id,
                     "_skip_observability": True,
                 },
             )
@@ -3024,6 +3124,7 @@ def search_file_chunks(
                     lexical_capability_plan=(
                         lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                     ),
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                 )
             if not _skip_observability:
                 metrics.record_retrieval(
@@ -3052,6 +3153,7 @@ def search_file_chunks(
                     result_rows=results,
                     candidate_details=[candidate.model_dump() for candidate in run_result.candidates],
                     status="ok",
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                     md={
                         "stage_trace": [trace.model_dump() for trace in run_result.traces],
                         "pipeline_resolution": pipeline_resolution,
@@ -3091,6 +3193,7 @@ def search_file_chunks(
                     result_rows=[],
                     status="error",
                     error=str(e),
+                    lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                     md={
                         "pipeline_resolution": pipeline_resolution,
                         **(
@@ -3118,6 +3221,7 @@ def search_file_chunks(
             limit=limit,
             offset=offset,
             return_statement=return_statement,
+            lexical_variant_id=resolved_lexical_variant_id,
         )
         if return_statement:
             return file_chunk_execution.rows_or_statement
@@ -3160,6 +3264,7 @@ def search_file_chunks(
                 lexical_capability_plan=(
                     lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
                 ),
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
             )
         if not _skip_observability:
             metrics.record_retrieval(
@@ -3186,6 +3291,7 @@ def search_file_chunks(
                 counters={"rows_returned": len(results)},
                 result_rows=results,
                 status="ok",
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                 md={
                     "route_executor": file_chunk_route_executor.to_payload(),
                     **(
@@ -3224,6 +3330,7 @@ def search_file_chunks(
                 result_rows=[],
                 status="error",
                 error=str(e),
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                 md={
                     "route_executor": file_chunk_route_executor.to_payload(),
                     **(

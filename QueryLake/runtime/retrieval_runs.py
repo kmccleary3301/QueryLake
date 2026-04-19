@@ -164,6 +164,8 @@ def log_retrieval_run(
     status: str = "ok",
     error: Optional[str] = None,
     md: Optional[Dict[str, Any]] = None,
+    lexical_variant: Optional[Dict[str, Any]] = None,
+    lexical_query_debug: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     if not _flag_enabled("QUERYLAKE_RETRIEVAL_RUN_LOGGING", True):
         return None
@@ -173,6 +175,12 @@ def log_retrieval_run(
     pii_safe = _flag_enabled("QUERYLAKE_RETRIEVAL_PII_SAFE_LOGGING", False)
     query_text = _redact_string(query_text_raw) if pii_safe else query_text_raw
     run_id: str = T.retrieval_run().run_id  # reserve deterministic id format from table default
+
+    md_payload = dict(md or {})
+    if lexical_variant is not None:
+        md_payload["lexical_variant"] = dict(lexical_variant)
+    if lexical_query_debug is not None:
+        md_payload["lexical_query_debug"] = dict(lexical_query_debug)
 
     run_row = T.retrieval_run(
         run_id=run_id,
@@ -193,7 +201,7 @@ def log_retrieval_run(
         costs=costs or {},
         index_snapshots_used=index_snapshots_used or {},
         result_ids=[rid for rid in [_extract_primary_id((row or {}).get("id")) for row in (result_rows or [])] if rid is not None],
-        md=_sanitize_for_pii(md or {}) if pii_safe else (md or {}),
+        md=_sanitize_for_pii(md_payload) if pii_safe else md_payload,
         error=_redact_string(error) if (pii_safe and isinstance(error, str)) else error,
     )
 

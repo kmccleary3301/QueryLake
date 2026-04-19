@@ -1,13 +1,19 @@
 from pathlib import Path
 import sys
+import asyncio
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from QueryLake.runtime import retrieval_primitive_factory as factory
-from QueryLake.runtime.retrieval_primitives_legacy import RRFusion, WeightedScoreFusion
-from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec, RetrievalPipelineStage
+from QueryLake.runtime.retrieval_primitives_legacy import (
+    BM25RetrieverParadeDB,
+    FileChunkBM25RetrieverSQL,
+    RRFusion,
+    WeightedScoreFusion,
+)
+from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec, RetrievalPipelineStage, RetrievalRequest
 
 
 def test_default_retriever_builders_registered():
@@ -75,3 +81,66 @@ def test_select_fusion_for_pipeline_uses_pipeline_defaults_when_no_override():
     )
     assert isinstance(fusion, WeightedScoreFusion)
     assert fusion.default_normalization == "zscore"
+
+
+def test_bm25_primitive_forwards_lexical_variant_id():
+    captured = {}
+
+    def _fake_search_bm25(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    primitive = BM25RetrieverParadeDB(
+        database=object(),
+        auth={"username": "tester", "password_prehash": "x"},
+        search_bm25_fn=_fake_search_bm25,
+    )
+    request = RetrievalRequest(
+        query_text="basf_sample.md",
+        route="search_bm25.document_chunk",
+        collection_ids=["c1"],
+        options={
+            "table": "document_chunk",
+            "group_chunks": False,
+            "limit": 10,
+            "offset": 0,
+            "bm25_query_text": "basf_sample.md",
+            "lexical_variant_id": "QL-L4",
+            "_skip_observability": True,
+        },
+    )
+
+    asyncio.run(primitive.retrieve(request))
+
+    assert captured["lexical_variant_id"] == "QL-L4"
+    assert captured["_direct_stage_call"] is True
+
+
+def test_file_chunk_primitive_forwards_lexical_variant_id():
+    captured = {}
+
+    def _fake_search_file_chunks(**kwargs):
+        captured.update(kwargs)
+        return {"results": []}
+
+    primitive = FileChunkBM25RetrieverSQL(
+        database=object(),
+        auth={"username": "tester", "password_prehash": "x"},
+        search_file_chunks_fn=_fake_search_file_chunks,
+    )
+    request = RetrievalRequest(
+        query_text="doc1.md",
+        route="search_file_chunks",
+        options={
+            "limit": 10,
+            "offset": 0,
+            "bm25_query_text": "doc1.md",
+            "lexical_variant_id": "QL-L3",
+            "_skip_observability": True,
+        },
+    )
+
+    asyncio.run(primitive.retrieve(request))
+
+    assert captured["lexical_variant_id"] == "QL-L3"
+    assert captured["_direct_stage_call"] is True

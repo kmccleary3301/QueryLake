@@ -1,0 +1,30 @@
+{
+  "identifier_heavy": {
+    "primary_metric": "Success@1",
+    "description": "Hashes, filenames, and identifier-like queries."
+  },
+  "exact_title_navigational": {
+    "primary_metric": "Success@1",
+    "description": "Document-title and known-item navigational queries."
+  },
+  "phrase_sensitive": {
+    "primary_metric": "nDCG@10",
+    "description": "Queries where term dependence matters."
+  },
+  "operator_heavy": {
+    "primary_metric": "Success@1",
+    "description": "Field-constrained and scoped lexical queries."
+  },
+  "technical_doc": {
+    "primary_metric": "nDCG@10",
+    "description": "Technical documentation corpora."
+  },
+  "file_chunk": {
+    "primary_metric": "Success@1",
+    "description": "File-chunk lexical surfaces."
+  },
+  "short_document": {
+    "primary_metric": "MRR@10",
+    "description": "Short-document title-dominant corpora."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "document": {
+    "description": "Document-table lexical evaluation slice.",
+    "query_count": 24
+  },
+  "document_exact_file_name": {
+    "description": "Exact file-name and title-sensitive document queries.",
+    "query_count": 16
+  },
+  "document_exactness": {
+    "description": "Targeted document-table exactness tranche.",
+    "query_count": 24
+  },
+  "document_integrity_hash": {
+    "description": "Exact integrity hash queries on the document table.",
+    "query_count": 8
+  },
+  "identifier_exact": {
+    "description": "Identifier-heavy exactness queries.",
+    "query_count": 16
+  },
+  "navigational_exact": {
+    "description": "Quoted navigational document queries.",
+    "query_count": 8
+  }
+}

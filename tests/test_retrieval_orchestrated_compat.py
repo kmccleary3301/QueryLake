@@ -571,5 +571,63 @@ def test_search_bm25_orchestrated_path_can_return_plan_explain(monkeypatch):
     )
 
     assert result["plan_explain"]["pipeline"]["pipeline_id"] == "orchestrated.search_bm25.document_chunk"
+    assert result["plan_explain"]["effective"]["lexical_query_debug"]["positive_term_count"] >= 2
+    assert result["plan_explain"]["effective"]["lexical_query_debug"]["catch_all_fields"] == ["text"]
     assert result["plan_explain"]["effective"]["compatibility_provenance"]["record_count"] == 1
     assert result["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-1"
+
+
+def test_search_hybrid_orchestrated_request_carries_lexical_variant_id(monkeypatch):
+    db = _DummyDB()
+    monkeypatch.setattr(search_api, "get_user", lambda database, auth: (SimpleNamespace(), SimpleNamespace(username="tester")))
+    monkeypatch.setattr(search_api, "assert_collections_priviledge", lambda database, auth, collection_ids: None)
+    monkeypatch.setenv("QUERYLAKE_RETRIEVAL_ORCHESTRATOR_HYBRID", "1")
+
+    pipeline = RetrievalPipelineSpec(
+        pipeline_id="orchestrated.search_hybrid",
+        version="v1",
+        stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB")],
+    )
+    monkeypatch.setattr(
+        search_api,
+        "_resolve_route_pipeline",
+        lambda *args, **kwargs: (pipeline, {"source": "test"}),
+    )
+
+    captured = {"request": None}
+
+    async def _fake_run(self, **kwargs):
+        captured["request"] = kwargs.get("request")
+        return RetrievalExecutionResult(
+            pipeline_id="orchestrated.search_hybrid",
+            pipeline_version="v1",
+            candidates=[],
+            traces=[RetrievalStageTrace(stage="retrieve:bm25", duration_ms=1.0)],
+            metadata={},
+        )
+
+    monkeypatch.setattr(search_api.PipelineOrchestrator, "run", _fake_run)
+    monkeypatch.setattr(search_api.metrics, "record_retrieval", lambda **kwargs: None)
+    monkeypatch.setattr(search_api, "log_retrieval_run", lambda *args, **kwargs: None)
+
+    result = asyncio.run(
+        search_api.search_hybrid(
+            database=db,
+            toolchain_function_caller=lambda name: None,
+            auth={"username": "tester", "password_prehash": "x"},
+            query={"bm25": "doc1.md", "embedding": "doc1.md"},
+            embedding=[0.0] * 1024,
+            collection_ids=["col1"],
+            limit_bm25=10,
+            limit_similarity=0,
+            limit_sparse=0,
+            bm25_weight=1.0,
+            similarity_weight=0.0,
+            sparse_weight=0.0,
+            group_chunks=False,
+            lexical_variant_id="QL-L4",
+        )
+    )
+
+    assert result["rows"] == []
+    assert captured["request"].options["lexical_variant_id"] == "QL-L4"

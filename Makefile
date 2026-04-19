@@ -40,9 +40,15 @@ down-redis:
 	fi
 
 run:
+	@if [[ -f ".env" ]]; then \
+		set -a; source .env; set +a; \
+	fi; \
 	uv run start_querylake.py
 
 run-api-only:
+	@if [[ -f ".env" ]]; then \
+		set -a; source .env; set +a; \
+	fi; \
 	QUERYLAKE_API_ONLY=1 uv run start_querylake.py
 
 health:

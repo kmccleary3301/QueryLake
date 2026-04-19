@@ -1,0 +1,38 @@
+{
+  "code_search": {
+    "description": "Code-search and known-function retrieval queries.",
+    "primary_metric": "Success@1"
+  },
+  "document_chunk": {
+    "description": "Chunk-level lexical retrieval surfaces.",
+    "primary_metric": "nDCG@10"
+  },
+  "enterprise_doc": {
+    "description": "Enterprise documentation and policy-like corpora.",
+    "primary_metric": "nDCG@10"
+  },
+  "exploratory_nl": {
+    "description": "Open natural-language search prompts with lexical ambiguity.",
+    "primary_metric": "MRR@10"
+  },
+  "multi_hop": {
+    "description": "Queries whose gold set spans multiple supporting passages.",
+    "primary_metric": "Recall@10"
+  },
+  "phrase_sensitive": {
+    "description": "Queries where term dependence or ordered proximity matters.",
+    "primary_metric": "nDCG@10"
+  },
+  "short_query": {
+    "description": "Very short head queries where exactness and fielding matter.",
+    "primary_metric": "Success@1"
+  },
+  "technical_code_symbol": {
+    "description": "Identifier- or API-symbol-heavy code and implementation queries.",
+    "primary_metric": "Success@1"
+  },
+  "technical_doc": {
+    "description": "Technical documentation and operations-style lexical queries.",
+    "primary_metric": "nDCG@10"
+  }
+}

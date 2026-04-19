@@ -60,6 +60,8 @@ def build_retrieval_plan_explain(
     lane_state: Optional[Dict[str, Any]] = None,
     route_executor: Optional[Dict[str, Any]] = None,
     lexical_capability_plan: Optional[Dict[str, Any]] = None,
+    lexical_variant: Optional[Dict[str, Any]] = None,
+    lexical_query_debug: Optional[Dict[str, Any]] = None,
     query_ir_v2: Optional[Dict[str, Any]] = None,
     projection_ir_v2: Optional[Dict[str, Any]] = None,
     compatibility_provenance: Optional[Dict[str, Any]] = None,
@@ -130,6 +132,16 @@ def build_retrieval_plan_explain(
             **(
                 {"lexical_capability_plan": dict(lexical_capability_plan)}
                 if lexical_capability_plan is not None
+                else {}
+            ),
+            **(
+                {"lexical_variant": dict(lexical_variant)}
+                if lexical_variant is not None
+                else {}
+            ),
+            **(
+                {"lexical_query_debug": dict(lexical_query_debug)}
+                if lexical_query_debug is not None
                 else {}
             ),
             **(

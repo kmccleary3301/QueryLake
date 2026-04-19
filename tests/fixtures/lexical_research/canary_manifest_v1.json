@@ -1,0 +1,36 @@
+{
+  "broad_chunk_default": {
+    "description": "Canaries for the broad QL-L3 candidate on direct document_chunk lexical retrieval.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_targeted_v3.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_live_targeted_v3.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_live_targeted_v3.json",
+    "primary_variant": "QL-L3",
+    "baseline_variant": "QL-L1",
+    "routes": [
+      "search_bm25.document_chunk",
+      "search_hybrid.document_chunk"
+    ]
+  },
+  "document_exactness": {
+    "description": "Canaries for the route-specific QL-L4 exactness extension on document/title/id-sensitive lexical retrieval.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_document_exactness_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_live_document_exactness_v1.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_live_document_exactness_v1.json",
+    "primary_variant": "QL-L4",
+    "baseline_variant": "QL-L1",
+    "routes": [
+      "search_bm25.document"
+    ]
+  },
+  "exploratory_nl_guardrail": {
+    "description": "Compatibility guardrail slice to ensure BCAS-style exploratory natural-language retrieval does not regress materially.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_bcas_balanced_90_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_v2.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_v2.json",
+    "primary_variant": "QL-L3",
+    "baseline_variant": "QL-L1",
+    "routes": [
+      "search_bm25.document_chunk"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "document_chunk": {
+    "description": "Chunk-level lexical retrieval surfaces.",
+    "primary_metric": "nDCG@10"
+  },
+  "enterprise_doc": {
+    "description": "Enterprise/process document lexical queries.",
+    "primary_metric": "nDCG@10"
+  },
+  "identifier_exact": {
+    "description": "Exact token or filename seeking lexical queries.",
+    "primary_metric": "Success@1"
+  },
+  "navigational_exact": {
+    "description": "Quoted title-like lexical queries.",
+    "primary_metric": "Success@1"
+  },
+  "phrase_sensitive": {
+    "description": "Queries where ordered or tight lexical dependence matters.",
+    "primary_metric": "nDCG@10"
+  },
+  "short_query": {
+    "description": "Very short head queries where exactness and fielding matter.",
+    "primary_metric": "Success@1"
+  },
+  "technical_doc": {
+    "description": "Technical/process and system-document lexical queries.",
+    "primary_metric": "nDCG@10"
+  }
+}

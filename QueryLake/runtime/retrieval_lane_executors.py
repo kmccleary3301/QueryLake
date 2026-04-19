@@ -14,7 +14,7 @@ from QueryLake.database.sql_db_tables import (
     file_chunk as FileChunkTable,
     file_version as FileVersionTable,
 )
-from QueryLake.misc_functions.paradedb_query_parser import parse_search
+from QueryLake.misc_functions.paradedb_query_builder import build_paradedb_lexical_query_plan
 
 
 @dataclass(frozen=True)
@@ -24,6 +24,8 @@ class GoldBM25SearchPlan:
     order_by_field: str
     quoted_phrases: Tuple[str, ...]
     segment_collection_filter: str = ""
+    lexical_variant_id: str = "QL-L1"
+    lexical_query_debug: Dict[str, Any] | None = None
 
 
 def build_gold_bm25_search_plan(
@@ -36,8 +38,16 @@ def build_gold_bm25_search_plan(
     sort_by: str,
     sort_dir: str,
     document_collection_attrs: Sequence[str],
+    lexical_variant_id: Optional[str] = None,
 ) -> GoldBM25SearchPlan:
-    formatted_query, strong_where_clause = parse_search(query, list(valid_fields), catch_all_fields=list(catch_all_fields))
+    lexical_plan = build_paradedb_lexical_query_plan(
+        str(query or ""),
+        valid_fields=list(valid_fields),
+        catch_all_fields=list(catch_all_fields),
+        variant_id=lexical_variant_id,
+    )
+    formatted_query = lexical_plan.formatted_query
+    strong_where_clause = lexical_plan.strong_where_clause
 
     if table == "segment":
         assert sort_by != "md", "sort_by='md' is not supported for table='segment'"
@@ -78,6 +88,8 @@ def build_gold_bm25_search_plan(
         order_by_field=order_by_field,
         quoted_phrases=quoted_phrases,
         segment_collection_filter=segment_collection_filter,
+        lexical_variant_id=lexical_plan.variant_id,
+        lexical_query_debug=dict(lexical_plan.debug),
     )
 
 
@@ -316,8 +328,15 @@ def execute_gold_file_chunk_bm25_search(
     limit: int,
     offset: int,
     return_statement: bool = False,
+    lexical_variant_id: Optional[str] = None,
 ) -> Union[str, List[Any]]:
-    formatted_query, _ = parse_search(query, FILE_FIELDS, catch_all_fields=["text"])
+    lexical_plan = build_paradedb_lexical_query_plan(
+        str(query or ""),
+        valid_fields=FILE_FIELDS,
+        catch_all_fields=["text"],
+        variant_id=lexical_variant_id,
+    )
+    formatted_query = lexical_plan.formatted_query
     query_is_empty = formatted_query == "()"
 
     effective_sort_by = sort_by

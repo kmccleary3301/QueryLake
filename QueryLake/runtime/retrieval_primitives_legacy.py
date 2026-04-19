@@ -86,6 +86,11 @@ class BM25RetrieverParadeDB:
             sort_by=sort_by,
             sort_dir=sort_dir,
             group_chunks=bool(request.options.get("group_chunks", True)),
+            lexical_variant_id=(
+                str(request.options.get("lexical_variant_id"))
+                if request.options.get("lexical_variant_id") is not None
+                else None
+            ),
             # Primitive wrappers call direct stage execution to avoid recursive orchestration.
             _direct_stage_call=True,
             _skip_observability=bool(request.options.get("_skip_observability", False)),
@@ -256,6 +261,11 @@ class FileChunkBM25RetrieverSQL:
             offset=offset,
             sort_by=sort_by,
             sort_dir=sort_dir,
+            lexical_variant_id=(
+                str(request.options.get("lexical_variant_id"))
+                if request.options.get("lexical_variant_id") is not None
+                else None
+            ),
             _direct_stage_call=True,
             _skip_observability=bool(request.options.get("_skip_observability", False)),
         )
