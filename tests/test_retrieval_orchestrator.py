@@ -203,3 +203,48 @@ def test_pipeline_orchestrator_can_emit_canon_shadow_execution_metadata():
     assert result.metadata["canon_shadow"]["bridge"]["available"] is True
     assert result.metadata["canon_shadow"]["shadow_diff"]["divergence_class"] in {"exact_match", "ordering_delta_only", "candidate_set_delta"}
     assert any(trace.stage == "canon_shadow_execute" for trace in result.traces)
+
+
+def test_pipeline_orchestrator_can_emit_file_chunk_shadow_metadata_and_persist_report(tmp_path):
+    req = RetrievalRequest(
+        route="search_file_chunks",
+        query_text="q",
+        options={
+            "limit": 3,
+            "canon_shadow_execute": True,
+            "canon_shadow_report_dir": str(tmp_path),
+            "canon_shadow_report_id": "file-chunk-shadow",
+            "canon_shadow_bundle_dir": str(tmp_path),
+            "canon_shadow_bundle_id": "file-chunk-shadow-bundle",
+        },
+        query_ir_v2={"route_id": "search_file_chunks"},
+    )
+    pipeline = RetrievalPipelineSpec(
+        pipeline_id="orchestrated.search_file_chunks",
+        version="v1",
+        stages=[
+            RetrievalPipelineStage(stage_id="file_bm25", primitive_id="BM25RetrieverParadeDB"),
+        ],
+    )
+    rows = [RetrievalCandidate(content_id="chunk_d3", text="D3", provenance=["file_bm25"], stage_ranks={"file_bm25": 1})]
+
+    orchestrator = PipelineOrchestrator()
+    result = asyncio.run(
+        orchestrator.run(
+            request=req,
+            pipeline=pipeline,
+            retrievers={
+                "file_bm25": _DummyRetriever("BM25RetrieverParadeDB", rows),
+            },
+        )
+    )
+
+    assert result.metadata["canon_shadow"]["bridge"]["available"] is True
+    assert result.metadata["canon_shadow"]["shadow_diff"]["divergence_class"] == "exact_match"
+    persisted = result.metadata["canon_shadow"]["report"]
+    assert persisted["report_id"] == "file-chunk-shadow"
+    assert (tmp_path / "file-chunk-shadow.json").exists() is True
+    assert result.metadata["canon_shadow"]["replay_bundle"]["bundle_id"] == "file-chunk-shadow-bundle"
+    assert (tmp_path / "file-chunk-shadow-bundle.json").exists() is True
+    assert result.metadata["canon_shadow"]["trace_export"]["export_id"] == "file-chunk-shadow-bundle-traces"
+    assert (tmp_path / "file-chunk-shadow-bundle-traces.json").exists() is True

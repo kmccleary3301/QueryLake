@@ -5,8 +5,14 @@ from typing import Dict, List, Optional
 
 from QueryLake.canon.runtime import (
     build_canon_bridge_metadata,
+    build_shadow_replay_bundle,
+    build_shadow_trace_export,
+    build_shadow_execution_report,
     build_querylake_shadow_diff,
     execute_querylake_pipeline_in_canon_shadow,
+    persist_shadow_execution_report,
+    persist_shadow_replay_bundle,
+    persist_shadow_trace_export,
 )
 from QueryLake.runtime.db_compat import get_deployment_profile
 from QueryLake.runtime.retrieval_lanes import resolve_retrieval_adapter
@@ -326,11 +332,53 @@ class PipelineOrchestrator:
                 legacy_result=result,
                 canon_result=canon_shadow_result,
             )
-            result.metadata["canon_shadow"] = {
+            canon_shadow_payload = {
                 "graph_id": canon_shadow_result.metadata.get("canon_graph_id"),
                 "bridge": canon_shadow_result.metadata.get("canon_bridge"),
                 "shadow_diff": shadow_diff,
             }
+            report_dir = request.options.get("canon_shadow_report_dir")
+            if isinstance(report_dir, str) and len(report_dir.strip()) > 0:
+                report = build_shadow_execution_report(
+                    report_id=str(request.options.get("canon_shadow_report_id") or f"canon-shadow-{pipeline.pipeline_id}"),
+                    request=request,
+                    pipeline=pipeline,
+                    profile_id=get_deployment_profile().id,
+                    legacy_result=result,
+                    canon_result=canon_shadow_result,
+                    shadow_diff=shadow_diff,
+                    top_k_snapshot=int(request.options.get("limit", 10) or 10),
+                )
+                canon_shadow_payload["report"] = persist_shadow_execution_report(
+                    report=report,
+                    output_dir=report_dir,
+                )
+            bundle_dir = request.options.get("canon_shadow_bundle_dir")
+            if isinstance(bundle_dir, str) and len(bundle_dir.strip()) > 0:
+                bundle_id = str(request.options.get("canon_shadow_bundle_id") or f"canon-shadow-bundle-{pipeline.pipeline_id}")
+                replay_bundle = build_shadow_replay_bundle(
+                    bundle_id=bundle_id,
+                    request=request,
+                    pipeline=pipeline,
+                    legacy_result=result,
+                    canon_result=canon_shadow_result,
+                    shadow_diff=shadow_diff,
+                )
+                trace_export = build_shadow_trace_export(
+                    export_id=f"{bundle_id}-traces",
+                    request=request,
+                    pipeline=pipeline,
+                    canon_result=canon_shadow_result,
+                )
+                canon_shadow_payload["replay_bundle"] = persist_shadow_replay_bundle(
+                    bundle=replay_bundle,
+                    output_dir=bundle_dir,
+                )
+                canon_shadow_payload["trace_export"] = persist_shadow_trace_export(
+                    export=trace_export,
+                    output_dir=bundle_dir,
+                )
+            result.metadata["canon_shadow"] = canon_shadow_payload
             result.traces.extend(canon_shadow_result.traces)
 
         return result

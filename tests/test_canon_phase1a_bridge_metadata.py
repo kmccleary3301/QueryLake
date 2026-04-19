@@ -18,6 +18,8 @@ def test_canon_bridge_metadata_for_hybrid_route_contains_graph_and_trace_fields(
     assert payload["trace_summary"]["retention_class"] == "summary_plus_detail"
     assert payload["replay_summary"]["available"] is False
     assert payload["stage_nodes"][0]["primitive_id"] == "BM25RetrieverParadeDB"
+    assert payload["profile_lowering"]["route_id"] == "search_hybrid.document_chunk"
+    assert payload["profile_lowering"]["executor_id"]
 
 
 def test_canon_bridge_metadata_can_request_debug_replay_summary():
@@ -33,3 +35,4 @@ def test_canon_bridge_metadata_can_request_debug_replay_summary():
     assert payload["replay_summary"]["available"] is True
     assert payload["replay_summary"]["retention_class"] == "debug_replay"
     assert payload["replay_summary"]["replay_guarantee_class"] == "analysis_only"
+    assert payload["profile_lowering"]["representation_scope_id"] == "document_chunk"

@@ -56,6 +56,38 @@ def test_execute_querylake_pipeline_in_canon_shadow_runs_hybrid_graph():
     assert len(result.candidates) == 2
 
 
+def test_execute_querylake_pipeline_in_canon_shadow_runs_file_chunk_graph():
+    pipeline = RetrievalPipelineSpec(
+        pipeline_id="orchestrated.search_file_chunks",
+        version="v1",
+        stages=[
+            RetrievalPipelineStage(stage_id="file_bm25", primitive_id="BM25RetrieverParadeDB"),
+        ],
+    )
+    request = RetrievalRequest(
+        route="search_file_chunks",
+        query_text="q",
+        options={"limit": 10},
+        query_ir_v2={"route_id": "search_file_chunks"},
+    )
+    result = asyncio.run(
+        execute_querylake_pipeline_in_canon_shadow(
+            request=request,
+            pipeline=pipeline,
+            retrievers={
+                "file_bm25": _DummyRetriever("BM25RetrieverParadeDB", [RetrievalCandidate(content_id="chunk_d3")]),
+            },
+            fusion=None,
+            reranker=None,
+        )
+    )
+
+    assert result.pipeline_id == "orchestrated.search_file_chunks"
+    assert result.metadata["canon_bridge"]["available"] is True
+    assert result.metadata["canon_bridge"]["graph_name"].startswith("canon.retrieval.search_file_chunks")
+    assert [candidate.content_id for candidate in result.candidates] == ["chunk_d3"]
+
+
 def test_build_querylake_shadow_diff_detects_exact_match():
     request = RetrievalRequest(route="search_bm25.document_chunk", query_text="q", options={"limit": 2}, query_ir_v2={"route_id": "search_bm25.document_chunk"})
     pipeline = RetrievalPipelineSpec(

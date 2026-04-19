@@ -5,10 +5,12 @@ from typing import Any, Mapping
 from QueryLake.canon.compiler import (
     QueryLakeRouteCompileError,
     RetrievalPipelineCompileError,
+    build_profile_lowering_snapshot,
     compile_querylake_route_to_graph,
     compile_retrieval_pipeline_to_graph,
 )
 from QueryLake.canon.runtime.summaries import build_replay_summary, build_trace_summary
+from QueryLake.runtime.db_compat import get_deployment_profile
 from QueryLake.typing.retrieval_primitives import RetrievalPipelineSpec
 
 
@@ -47,6 +49,11 @@ def build_canon_bridge_metadata(
 
     stage_nodes = [node for node in graph.nodes if node.node_id.startswith("stage.")]
     retention_class = _retention_class(options=opts)
+    profile_lowering = build_profile_lowering_snapshot(
+        route=str(route),
+        pipeline=pipeline,
+        profile=get_deployment_profile(),
+    )
     return {
         "available": True,
         "route": str(route),
@@ -71,6 +78,7 @@ def build_canon_bridge_metadata(
             "mode": "querylake_route_compiler",
             "deterministic_graph_identity": True,
         },
+        "profile_lowering": profile_lowering,
         "trace_summary": build_trace_summary(
             retention_class=retention_class,
             execution_mode="canon_shadow",
