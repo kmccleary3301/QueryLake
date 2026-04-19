@@ -1,7 +1,11 @@
 import asyncio
 import json
 
-from QueryLake.canon.runtime import build_request_from_shadow_case, execute_shadow_case
+from QueryLake.canon.runtime import (
+    build_request_from_shadow_case,
+    execute_shadow_case,
+    persist_shadow_harness_catalog,
+)
 from QueryLake.runtime.retrieval_primitives_legacy import RRFusion
 from QueryLake.typing.retrieval_primitives import RetrievalCandidate, RetrievalExecutionResult
 
@@ -63,3 +67,8 @@ def test_execute_shadow_case_can_persist_file_chunk_report(tmp_path):
     assert report["pipeline"]["pipeline_id"] == "orchestrated.search_file_chunks"
     assert payload["replay_bundle"]["path"] == str(tmp_path / "canon-shadow-bundle-file_case.json")
     assert payload["trace_export"]["path"] == str(tmp_path / "canon-shadow-traces-file_case.json")
+
+    catalog = persist_shadow_harness_catalog(output_dir=str(tmp_path), keep_latest_per_route=5)
+    assert catalog["artifact_count"] == 3
+    assert catalog["catalog_path"].endswith("canon_phase1a_shadow_artifact_catalog.json")
+    assert catalog["retention_plan_path"].endswith("canon_phase1a_shadow_retention_plan.json")

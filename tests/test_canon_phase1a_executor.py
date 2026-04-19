@@ -67,6 +67,26 @@ def test_executor_returns_structured_summary_envelope():
     assert result.summary.executed_node_ids == ("a",)
     assert result.summary.node_results[0].status == "success"
     assert result.summary.node_results[0].effect_class == EffectClass.PURE_DETERMINISTIC
+    assert result.summary.node_results[0].duration_ms >= 0.0
+    assert result.summary.node_results[0].output_count == 1
+    assert result.summary.total_duration_ms >= 0.0
+    assert result.summary.memoized_reads == 0
+
+
+def test_executor_records_memoized_reads_for_repeat_requests():
+    def const_handler(node, _inputs, _context):
+        return {"result": node.config["value"]}
+
+    graph = GraphSpec(
+        nodes=(NodeSpec("a", "const", EffectClass.PURE_DETERMINISTIC, config={"value": 7}),),
+        requested_outputs=(OutputRef("a"), OutputRef("a")),
+    )
+
+    result = CanonExecutor().execute(graph, handlers={"const": const_handler})
+
+    assert result.outputs["a.result"] == 7
+    assert result.summary.executed_node_ids == ("a",)
+    assert result.summary.memoized_reads == 1
 
 
 def test_executor_fails_cleanly_when_handler_is_missing():
@@ -83,3 +103,34 @@ def test_executor_fails_cleanly_when_handler_is_missing():
     except CanonExecutionError as exc:
         assert exc.classification == "invariant_violation"
         assert exc.node_id == "a"
+
+
+def test_executor_translates_cancelled_context_to_structured_error():
+    graph = GraphSpec(
+        nodes=(NodeSpec("a", "const", EffectClass.PURE_DETERMINISTIC),),
+        requested_outputs=(OutputRef("a"),),
+    )
+    context = ExecutionContext()
+    context.cancellation.cancel("stop now")
+
+    try:
+        CanonExecutor().execute(graph, handlers={"const": lambda *_: {"result": 1}}, context=context)
+        assert False, "expected cancelled execution to fail"
+    except CanonExecutionError as exc:
+        assert exc.classification == "cancelled"
+        assert exc.node_id is None
+
+
+def test_executor_translates_expired_deadline_to_timeout_error():
+    graph = GraphSpec(
+        nodes=(NodeSpec("a", "const", EffectClass.PURE_DETERMINISTIC),),
+        requested_outputs=(OutputRef("a"),),
+    )
+    context = ExecutionContext(deadline_unix_ms=0)
+
+    try:
+        CanonExecutor().execute(graph, handlers={"const": lambda *_: {"result": 1}}, context=context)
+        assert False, "expected expired deadline to fail"
+    except CanonExecutionError as exc:
+        assert exc.classification == "timeout"
+        assert exc.node_id is None

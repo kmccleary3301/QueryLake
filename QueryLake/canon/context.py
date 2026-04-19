@@ -18,6 +18,10 @@ class TracePolicy(str, Enum):
     DETAIL = "detail"
 
 
+class ExecutionCancelledError(RuntimeError):
+    """Raised when Canon execution is cancelled before completion."""
+
+
 @dataclass(slots=True)
 class CancellationToken:
     cancelled: bool = False
@@ -39,6 +43,6 @@ class ExecutionContext:
 
     def check_open(self) -> None:
         if self.cancellation.cancelled:
-            raise RuntimeError(self.cancellation.reason or "Execution cancelled")
+            raise ExecutionCancelledError(self.cancellation.reason or "Execution cancelled")
         if self.deadline_unix_ms is not None and int(time.time() * 1000) > self.deadline_unix_ms:
             raise TimeoutError("Execution deadline exceeded")

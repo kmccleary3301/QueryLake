@@ -44,6 +44,8 @@ def test_shadow_mode_publishes_baseline_by_default():
     assert result["published"].pipeline_id == "baseline"
     assert result["baseline_metrics"]["results_count"] == 1.0
     assert result["candidate_metrics"]["results_count"] == 2.0
+    assert result["comparison_summary"]["divergence_class"] == "candidate_set_delta"
+    assert result["comparison_ref"] is None
 
 
 def test_shadow_mode_logs_experiment_when_database_and_id_provided(monkeypatch):
@@ -72,3 +74,21 @@ def test_shadow_mode_logs_experiment_when_database_and_id_provided(monkeypatch):
     assert captured["kwargs"]["experiment_id"] == "exp_1"
     assert captured["kwargs"]["publish_mode"] == "candidate"
     assert captured["kwargs"]["published_pipeline_id"] == "candidate"
+
+
+def test_shadow_mode_can_persist_comparison_summary(tmp_path):
+    result = asyncio.run(
+        retrieval_shadow.run_shadow_mode(
+            baseline_executor=_baseline_result,
+            candidate_executor=_candidate_result,
+            comparison_output_dir=str(tmp_path),
+            comparison_id="shadow-compare",
+            comparison_top_k=2,
+        )
+    )
+
+    assert result["comparison_ref"]["comparison_id"] == "shadow-compare"
+    path = tmp_path / "shadow-compare.json"
+    assert result["comparison_ref"]["path"] == str(path)
+    payload = path.read_text(encoding="utf-8")
+    assert "retrieval_shadow_comparison_summary_v1" in payload

@@ -13,8 +13,13 @@ class NodeExecutionResult:
     operation: str
     effect_class: EffectClass
     status: str
+    dependency_node_ids: tuple[str, ...] = field(default_factory=tuple)
+    input_keys: tuple[str, ...] = field(default_factory=tuple)
     output_names: tuple[str, ...] = field(default_factory=tuple)
+    output_count: int = 0
+    duration_ms: float = 0.0
     error: str | None = None
+    failure_classification: str | None = None
     memoized: bool = False
 
 
@@ -26,6 +31,10 @@ class ExecutionSummary:
     total_nodes_defined: int
     executed_node_ids: tuple[str, ...]
     node_results: tuple[NodeExecutionResult, ...]
+    total_duration_ms: float = 0.0
+    memoized_reads: int = 0
+    failed_node_id: str | None = None
+    failure_classification: str | None = None
 
 
 @dataclass(slots=True)

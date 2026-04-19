@@ -7,7 +7,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from QueryLake.canon.runtime import build_shadow_report_index, execute_shadow_case, load_shadow_reports, persist_shadow_report_index
+from QueryLake.canon.runtime import (
+    build_shadow_report_index,
+    execute_shadow_case,
+    load_shadow_reports,
+    persist_shadow_harness_catalog,
+    persist_shadow_report_index,
+)
 from QueryLake.runtime.retrieval_primitives_legacy import RRFusion
 from QueryLake.typing.retrieval_primitives import RetrievalCandidate, RetrievalExecutionResult
 
@@ -92,7 +98,23 @@ async def _run(args) -> int:
         index_payload=build_shadow_report_index(load_shadow_reports(output_dir)),
         output_path=output_dir / "canon_phase1a_shadow_report_index.json",
     )
-    print(json.dumps({"summary_path": str(summary_path), "index_path": index_path, "report_count": len(summary["report_paths"])}, indent=2))
+    catalog = persist_shadow_harness_catalog(
+        output_dir=str(output_dir),
+        keep_latest_per_route=args.keep_latest_per_route,
+    )
+    print(
+        json.dumps(
+            {
+                "summary_path": str(summary_path),
+                "index_path": index_path,
+                "catalog_path": catalog["catalog_path"],
+                "retention_plan_path": catalog["retention_plan_path"],
+                "report_count": len(summary["report_paths"]),
+                "artifact_count": catalog["artifact_count"],
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
@@ -124,6 +146,12 @@ def main() -> int:
         type=int,
         default=None,
         help="Optional cap on number of cases from the fixture.",
+    )
+    parser.add_argument(
+        "--keep-latest-per-route",
+        type=int,
+        default=10,
+        help="Retention-plan keep count per route when writing the artifact catalog.",
     )
     args = parser.parse_args()
     return asyncio.run(_run(args))

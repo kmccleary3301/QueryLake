@@ -4,6 +4,13 @@ from typing import Any, Mapping
 
 from QueryLake.canon.runtime.querylake_shadow import build_querylake_shadow_diff, execute_querylake_pipeline_in_canon_shadow
 from QueryLake.canon.runtime.replay_bundle import build_shadow_replay_bundle, persist_shadow_replay_bundle
+from QueryLake.canon.runtime.shadow_catalog import (
+    build_shadow_artifact_catalog,
+    build_shadow_retention_plan,
+    load_shadow_artifacts,
+    persist_shadow_artifact_catalog,
+    persist_shadow_retention_plan,
+)
 from QueryLake.canon.runtime.shadow_reports import build_shadow_execution_report, persist_shadow_execution_report
 from QueryLake.canon.runtime.trace_export import build_shadow_trace_export, persist_shadow_trace_export
 from QueryLake.runtime.retrieval_pipeline_runtime import default_pipeline_for_route
@@ -109,4 +116,29 @@ async def execute_shadow_case(
         "persisted": persisted,
         "replay_bundle": replay_bundle,
         "trace_export": trace_export,
+    }
+
+
+def persist_shadow_harness_catalog(
+    *,
+    output_dir: str,
+    keep_latest_per_route: int = 10,
+) -> dict[str, Any]:
+    artifacts = load_shadow_artifacts(output_dir)
+    catalog = build_shadow_artifact_catalog(artifacts)
+    plan = build_shadow_retention_plan(artifacts, keep_latest_per_route=keep_latest_per_route)
+    catalog_path = persist_shadow_artifact_catalog(
+        catalog=catalog,
+        output_path=f"{output_dir}/canon_phase1a_shadow_artifact_catalog.json",
+    )
+    retention_plan_path = persist_shadow_retention_plan(
+        plan=plan,
+        output_path=f"{output_dir}/canon_phase1a_shadow_retention_plan.json",
+    )
+    return {
+        "catalog_path": catalog_path,
+        "retention_plan_path": retention_plan_path,
+        "artifact_count": int(catalog.get("artifact_count", 0)),
+        "recommendations": list(catalog.get("recommendations") or []),
+        "prune_count": int(plan.get("prune_count", 0)),
     }

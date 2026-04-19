@@ -1,6 +1,6 @@
 """Canon++ Phase 1A minimal execution scaffold."""
 
-from .context import CancellationToken, ExecutionContext, ExecutionMode, TracePolicy
+from .context import CancellationToken, ExecutionCancelledError, ExecutionContext, ExecutionMode, TracePolicy
 from .effects import EffectClass
 from .executor import CanonExecutionError, CanonExecutor
 from .models import GraphSpec, NodeSpec, OutputRef
@@ -11,6 +11,7 @@ __all__ = [
     "CanonExecutionError",
     "CanonExecutor",
     "EffectClass",
+    "ExecutionCancelledError",
     "ExecutionContext",
     "ExecutionMode",
     "ExecutionResult",
