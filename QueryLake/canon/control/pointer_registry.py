@@ -34,11 +34,35 @@ def save_pointer_registry(payload: dict[str, Any], path: str | Path) -> str:
     return str(registry_path)
 
 
+def _validate_pointer_payload(pointer: dict[str, Any]) -> None:
+    required_scalar_fields = ("pointer_id", "graph_id", "package_revision", "profile_id", "mode")
+    for field_name in required_scalar_fields:
+        if not str(pointer.get(field_name) or ""):
+            raise ValueError(f"Pointer payload missing required field '{field_name}'.")
+    route_ids = [str(route_id) for route_id in list(pointer.get("route_ids") or []) if str(route_id or "")]
+    if not route_ids:
+        raise ValueError("Pointer payload must include at least one route id.")
+    package_bindings = dict(dict(pointer.get("metadata") or {}).get("package_bindings") or {})
+    if len(route_ids) > 1:
+        if not package_bindings:
+            raise ValueError("Multi-route pointer payload requires route-level package bindings.")
+        for route_id in route_ids:
+            binding = dict(package_bindings.get(route_id) or {})
+            if not binding:
+                raise ValueError(f"Multi-route pointer payload missing package binding for route '{route_id}'.")
+            for key in ("package_id", "package_revision", "graph_id"):
+                if not str(binding.get(key) or ""):
+                    raise ValueError(
+                        f"Multi-route pointer payload has incomplete package binding for route '{route_id}'."
+                    )
+
+
 def apply_publish_plan(*, plan: dict[str, Any], registry_path: str | Path) -> dict[str, Any]:
     if not bool(plan.get("allowed")):
         raise ValueError(f"Publish plan blocked: {', '.join(plan.get('blockers') or [])}")
     registry = load_pointer_registry(registry_path)
     target = dict(plan.get("target") or {})
+    _validate_pointer_payload(target)
     for step in list(plan.get("steps") or []):
         step_id = str(step.get("step_id") or "")
         if step_id == "update_shadow_pointer":

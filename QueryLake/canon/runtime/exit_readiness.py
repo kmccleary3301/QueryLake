@@ -24,6 +24,7 @@ def build_phase1a_exit_readiness_bundle(
     metadata_store_path: Optional[str] = None,
     routes: Iterable[str] | None = None,
     include_search_plane_transition: bool = True,
+    include_target_profile_promotion: bool = True,
     package_registry_path: str | None = None,
     pointer_registry_path: str | None = None,
     package_selection_mode: str = "shadow",
@@ -57,6 +58,7 @@ def build_phase1a_exit_readiness_bundle(
     }
     lowering_matrix = None
     target_lowering_matrix = None
+    target_profile_promotion = None
     if package_registry_path and pointer_registry_path:
         lowering_matrix = build_search_plane_a_lowering_matrix(
             routes=profile_bundle.get("routes") or [],
@@ -74,6 +76,8 @@ def build_phase1a_exit_readiness_bundle(
             for row in rows
         )
         if profile_id == "aws_aurora_pg_opensearch_v1":
+            from QueryLake.canon.control.target_profile_promotion import build_target_profile_promotion_bundle
+
             target_lowering_matrix = build_search_plane_a_lowering_matrix(
                 routes=profile_bundle.get("routes") or [],
                 profile_ids=["planetscale_opensearch_v1"],
@@ -81,6 +85,16 @@ def build_phase1a_exit_readiness_bundle(
                 pointer_registry_path=pointer_registry_path,
                 mode=package_selection_mode,
             )
+            if include_target_profile_promotion:
+                target_profile_promotion = build_target_profile_promotion_bundle(
+                    target_profile_id="planetscale_opensearch_v1",
+                    routes=profile_bundle.get("routes") or [],
+                    shadow_artifact_dir=str(artifact_dir),
+                    package_registry_path=package_registry_path,
+                    pointer_registry_path=pointer_registry_path,
+                    metadata_store_path=metadata_store_path,
+                    package_selection_mode=package_selection_mode,
+                )
     ready_for_phase1b = all(gates.values())
 
     recommendations: list[str] = []
@@ -134,6 +148,11 @@ def build_phase1a_exit_readiness_bundle(
             "orphan_artifact_count": orphan_count,
             "ready_for_phase1b": ready_for_phase1b,
             "target_profile_shadow_execution": payload_target_summary,
+            "target_profile_candidate_primary_ready": bool(
+                dict(target_profile_promotion.get("summary") or {}).get("candidate_primary_ready")
+            )
+            if target_profile_promotion is not None
+            else None,
         },
         "recommendations": recommendations,
     }
@@ -145,6 +164,8 @@ def build_phase1a_exit_readiness_bundle(
             payload["recommendations"].append(
                 "bounded_target_profile_search_plane_shadow_execution_is_available"
             )
+    if target_profile_promotion is not None:
+        payload["target_profile_promotion"] = target_profile_promotion
     if include_search_plane_transition:
         payload["search_plane_a_transition"] = build_phase1a_search_plane_a_transition_bundle(
             source_profile_id=profile_id,

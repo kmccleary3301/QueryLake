@@ -42,6 +42,20 @@ def test_pointer_registry_apply_and_revert(tmp_path):
                 profile_id="aws_aurora_pg_opensearch_v1",
                 route_ids=["search_bm25.document_chunk", "search_file_chunks"],
                 mode="primary",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-bm25",
+                            "package_revision": "rev-2",
+                            "graph_id": "graph-2",
+                        },
+                        "search_file_chunks": {
+                            "package_id": "pkg-file",
+                            "package_revision": "rev-2",
+                            "graph_id": "graph-2b",
+                        },
+                    }
+                },
             ),
             current=current_pointer,
             review=CanonPublishReview(
@@ -97,3 +111,31 @@ def test_pointer_registry_rejects_blocked_plan(tmp_path):
         assert "blocked" in str(exc).lower()
     else:  # pragma: no cover
         raise AssertionError("blocked publish plan should not be applied")
+
+
+def test_pointer_registry_rejects_multiroute_pointer_without_route_bindings(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    plan = {
+        "allowed": True,
+        "target": {
+            "pointer_id": "ptr-primary-4",
+            "graph_id": "graph-4",
+            "package_revision": "rev-4",
+            "profile_id": "aws_aurora_pg_opensearch_v1",
+            "route_ids": ["search_bm25.document_chunk", "search_file_chunks"],
+            "mode": "candidate_primary",
+            "metadata": {},
+        },
+        "steps": [
+            {"step_id": "update_shadow_pointer"},
+            {"step_id": "promote_candidate_pointer"},
+        ],
+        "blockers": [],
+    }
+
+    try:
+        apply_publish_plan(plan=plan, registry_path=registry_path)
+    except ValueError as exc:
+        assert "route-level package bindings" in str(exc).lower()
+    else:  # pragma: no cover
+        raise AssertionError("multi-route pointer without bindings should be rejected")

@@ -276,6 +276,8 @@ def test_phase1a_exit_readiness_bundle_surfaces_target_profile_shadow_execution(
     monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
     monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
     monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
+    monkeypatch.setenv("QUERYLAKE_SPARSE_INDEX_DIMENSIONS", "8192")
+    monkeypatch.setenv("QUERYLAKE_PLANETSCALE_DSN", "mysql://planetscale.example.com")
     metadata_path = tmp_path / "projection_store.json"
 
     for projection_id, lane_family in [
@@ -357,7 +359,10 @@ def test_phase1a_exit_readiness_bundle_surfaces_target_profile_shadow_execution(
     assert target_summary["row_count"] == 3
     assert target_summary["shadow_executable_count"] == 3
     assert target_summary["canon_target_profile_shadow_executor_count"] == 3
+    assert payload["summary"]["target_profile_candidate_primary_ready"] is True
     assert payload["target_search_plane_a_lowering_matrix"]["summary"]["execution_mode_counts"][
         "canon_target_profile_shadow_executor"
     ] == 3
+    assert payload["target_profile_promotion"]["summary"]["candidate_primary_ready"] is True
+    assert payload["target_profile_promotion"]["summary"]["primary_ready"] is False
     assert "bounded_target_profile_search_plane_shadow_execution_is_available" in payload["recommendations"]

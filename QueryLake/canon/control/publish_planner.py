@@ -31,17 +31,26 @@ def _readiness_gates(exit_readiness: dict[str, Any]) -> dict[str, bool]:
 
 def _candidate_primary_ready(exit_readiness: dict[str, Any]) -> bool:
     gates = _readiness_gates(exit_readiness)
+    target_profile_promotion = dict(exit_readiness.get("target_profile_promotion") or {})
+    target_candidate_ready = bool(
+        dict(target_profile_promotion.get("summary") or {}).get("candidate_primary_ready", True)
+    )
     return bool(
         gates.get("all_bounded_routes_compile")
         and gates.get("shadow_reports_present")
         and gates.get("no_candidate_set_deltas")
         and gates.get("selected_packages_resolved_for_bounded_routes", True)
         and gates.get("no_blocked_search_plane_a_rows", True)
+        and target_candidate_ready
     )
 
 
 def _primary_ready(exit_readiness: dict[str, Any]) -> bool:
-    return bool(dict(exit_readiness.get("summary") or {}).get("ready_for_phase1b"))
+    target_profile_promotion = dict(exit_readiness.get("target_profile_promotion") or {})
+    target_primary_ready = bool(
+        dict(target_profile_promotion.get("summary") or {}).get("primary_ready", True)
+    )
+    return bool(dict(exit_readiness.get("summary") or {}).get("ready_for_phase1b")) and target_primary_ready
 
 
 def _build_revert_plan(current: CanonPublishPointer | None) -> CanonPublishRevertPlan:
@@ -65,7 +74,21 @@ def _build_revert_plan(current: CanonPublishPointer | None) -> CanonPublishRever
             )
         ],
         notes=["Prefer pointer reversal before emergency code changes."],
-    )
+        )
+
+
+def _missing_route_bindings(target: CanonPublishPointer) -> list[str]:
+    package_bindings = dict(target.metadata.get("package_bindings") or {})
+    missing: list[str] = []
+    for route_id in list(target.route_ids):
+        binding = dict(package_bindings.get(route_id) or {})
+        if not binding:
+            missing.append(route_id)
+            continue
+        required_keys = ("package_id", "package_revision", "graph_id")
+        if any(not str(binding.get(key) or "") for key in required_keys):
+            missing.append(route_id)
+    return missing
 
 
 def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
@@ -91,6 +114,11 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
         blockers.append("candidate_primary_gate_not_satisfied")
     if target.mode == "primary" and not _primary_ready(request.exit_readiness):
         blockers.append("primary_gate_not_satisfied")
+    if len(target.route_ids) > 1:
+        missing_route_bindings = _missing_route_bindings(target)
+        if missing_route_bindings:
+            blockers.append("multiroute_package_bindings_incomplete")
+            recommendations.append("attach_route_level_package_bindings_before_promotion")
 
     if current is not None and current.pointer_id == target.pointer_id and current.mode == target.mode:
         recommendations.append("target_pointer_already_active")
