@@ -2697,43 +2697,45 @@ def search_bm25(
         results_dump = [r.model_dump() if hasattr(r, "model_dump") else r.dict() for r in results_made]
         compatibility_materialization_summary = None
         plan_explain_payload = None
-        if table == "document_chunk":
-            if not _skip_observability:
-                compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
-            if explain_plan:
+        compatibility_provenance = None
+        compatibility_materializations = None
+        if table == "document_chunk" and not _skip_observability:
+            compatibility_materialization_summary = _build_document_chunk_compatibility_materialization_summary(database, results_dump)
+        if explain_plan:
+            if table == "document_chunk":
                 compatibility_provenance = _build_document_chunk_compatibility_provenance(database, results_dump)
                 compatibility_materializations = _build_document_chunk_compatibility_materializations(database, results_dump)
-                plan_explain_payload = build_retrieval_plan_explain(
-                    route=f"search_bm25.{table}",
-                    pipeline=RetrievalPipelineSpec(
-                        pipeline_id=f"search_bm25.{table}.direct",
-                        version="v2",
-                        stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB", enabled=True)],
-                    ),
-                    options={
-                        "limit": int(limit),
-                        "offset": int(offset),
-                        "bm25_query_text": query,
-                        "table": table,
-                        "sort_by": sort_by,
-                        "sort_dir": sort_dir,
-                    },
-                    route_executor=bm25_route_executor.to_payload(),
-                    query_ir_v2=lexical_query_ir_v2,
-                    projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
-                        lexical_capability_plan=(
-                            lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
-                        ),
-                        lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
-                        lexical_query_debug=dict((getattr(bm25_execution.plan, "lexical_query_debug", None) or {})),
-                        compatibility_provenance=compatibility_provenance,
-                        compatibility_materializations=compatibility_materializations,
-                        lane_state={
-                        "table": str(table),
-                        "group_chunks": bool(group_chunks),
-                        "web_search": bool(web_search),
-                    },
-                )
+            plan_explain_payload = build_retrieval_plan_explain(
+                route=f"search_bm25.{table}",
+                pipeline=RetrievalPipelineSpec(
+                    pipeline_id=f"search_bm25.{table}.direct",
+                    version="v2",
+                    stages=[RetrievalPipelineStage(stage_id="bm25", primitive_id="BM25RetrieverParadeDB", enabled=True)],
+                ),
+                options={
+                    "limit": int(limit),
+                    "offset": int(offset),
+                    "bm25_query_text": query,
+                    "table": table,
+                    "sort_by": sort_by,
+                    "sort_dir": sort_dir,
+                },
+                route_executor=bm25_route_executor.to_payload(),
+                query_ir_v2=lexical_query_ir_v2,
+                projection_ir_v2=bm25_planning_v2.get("projection_ir_v2") or {},
+                lexical_capability_plan=(
+                    lexical_capability_plan.to_payload() if lexical_capability_plan is not None else None
+                ),
+                lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                lexical_query_debug=dict((getattr(bm25_execution.plan, "lexical_query_debug", None) or {})),
+                compatibility_provenance=compatibility_provenance,
+                compatibility_materializations=compatibility_materializations,
+                lane_state={
+                    "table": str(table),
+                    "group_chunks": bool(group_chunks),
+                    "web_search": bool(web_search),
+                },
+            )
         if not _skip_observability:
             metrics.record_retrieval(
                 route=f"search_bm25.{table}",
