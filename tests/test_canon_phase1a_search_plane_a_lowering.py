@@ -87,6 +87,7 @@ def test_search_plane_a_lowering_planned_profile_stays_shadow_only(tmp_path):
     )
 
     assert payload["selected_package"]["resolved"] is True
-    assert payload["execution_mode"] == "planned_profile_shadow_only"
-    assert "profile_not_implemented" in payload["blockers"]
+    assert payload["execution_mode"] == "canon_target_profile_shadow_executor"
+    assert payload["execution_contract"]["shadow_executable"] is True
+    assert "authority_plane_not_migrated" in payload["blockers"]
     assert payload["search_plane_a_transition"]["schema_version"] == "canon_phase1a_search_plane_a_transition_bundle_v1"

@@ -63,4 +63,4 @@ def test_search_plane_a_lowering_matrix_spans_source_and_target_profiles(tmp_pat
     assert payload["schema_version"] == "canon_phase1a_search_plane_a_lowering_matrix_v1"
     assert payload["summary"]["row_count"] == 6
     assert counts["legacy_route_executor_passthrough"] == 3
-    assert counts["planned_profile_shadow_only"] == 3
+    assert counts["canon_target_profile_shadow_executor"] == 3

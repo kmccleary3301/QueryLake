@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from QueryLake.canon.compiler.profile_lowering import build_profile_lowering_snapshot
+from QueryLake.canon.runtime.search_plane_a_execution import build_search_plane_a_execution_contract
 from QueryLake.canon.runtime.profile_readiness import build_phase1a_search_plane_a_transition_bundle
 from QueryLake.runtime.db_compat import (
     build_profile_execution_target_payload,
@@ -98,6 +99,20 @@ def build_search_plane_a_lowering_bundle(
         declared_route=declared_route,
         profile_implemented=bool(effective_profile.implemented),
     )
+    execution_contract = build_search_plane_a_execution_contract(
+        route_id=route_id,
+        profile_id=effective_profile.id,
+        package_registry_path=package_registry_path,
+        pointer_registry_path=pointer_registry_path,
+        mode=mode,
+    )
+    contract_mode = str(execution_contract.get("execution_mode") or "")
+    if contract_mode in {"canon_target_profile_shadow_executor", "canon_search_plane_shadow_executor"} and bool(
+        execution_contract.get("shadow_executable")
+    ):
+        execution_mode = contract_mode
+        blockers = list(execution_contract.get("authority_blockers") or [])
+        recommendations = list(recommendations) + list(execution_contract.get("recommendations") or [])
 
     payload = {
         "schema_version": "canon_phase1a_search_plane_a_lowering_bundle_v1",
@@ -114,6 +129,7 @@ def build_search_plane_a_lowering_bundle(
         "declared_route_support": declared_route,
         "selected_package": selected_package,
         "lowering": lowering,
+        "execution_contract": execution_contract,
         "execution_mode": execution_mode,
         "blockers": blockers,
         "recommendations": recommendations,

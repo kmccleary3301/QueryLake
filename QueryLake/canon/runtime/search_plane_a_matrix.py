@@ -40,6 +40,11 @@ def build_search_plane_a_lowering_matrix(
                     "selected_package_resolved": bool(lowering.get("selected_package", {}).get("resolved")),
                     "runtime_ready": bool(lowering.get("lowering", {}).get("runtime_ready")),
                     "implemented": bool(lowering.get("lowering", {}).get("implemented")),
+                    "shadow_executable": bool(lowering.get("execution_contract", {}).get("shadow_executable")),
+                    "primary_ready": bool(lowering.get("execution_contract", {}).get("primary_ready")),
+                    "execution_contract_executor_id": str(
+                        lowering.get("execution_contract", {}).get("executor_id") or ""
+                    ),
                     "blockers": list(lowering.get("blockers") or []),
                 }
             )
@@ -47,6 +52,8 @@ def build_search_plane_a_lowering_matrix(
     recommendations: list[str] = []
     if execution_counts.get("legacy_route_executor_passthrough", 0) > 0:
         recommendations.append("bounded_routes_have_selected_package_backed_execution_on_current_profiles")
+    if execution_counts.get("canon_target_profile_shadow_executor", 0) > 0:
+        recommendations.append("target_profiles_have_real_search_plane_shadow_executors_on_bounded_routes")
     if execution_counts.get("planned_profile_shadow_only", 0) > 0:
         recommendations.append("planned_profiles_remain_shadow_only_until_real_execution_targets_exist")
     if execution_counts.get("blocked", 0) > 0:
