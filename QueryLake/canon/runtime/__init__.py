@@ -10,7 +10,14 @@ from QueryLake.canon.context import (
 from QueryLake.canon.executor import CanonExecutionError, CanonExecutor
 from QueryLake.canon.results import ExecutionResult, ExecutionSummary, NodeExecutionResult
 from .bridge_metadata import build_canon_bridge_metadata
+from .bootstrap_bundle import build_phase1a_bootstrap_bundle
 from .replay_bundle import build_shadow_replay_bundle, persist_shadow_replay_bundle
+from .exit_readiness import build_phase1a_exit_readiness_bundle
+from .profile_readiness import (
+    build_phase1a_profile_readiness_bundle,
+    build_phase1a_projection_writer_matrix,
+    build_phase1a_search_plane_a_transition_bundle,
+)
 from .shadow_catalog import (
     apply_shadow_retention_plan,
     build_shadow_artifact_catalog,
@@ -31,6 +38,10 @@ from .shadow_diff import build_shadow_diff_summary
 __all__ = [
     "build_request_from_shadow_case",
     "build_phase1a_route_profile_matrix",
+    "build_phase1a_exit_readiness_bundle",
+    "build_phase1a_profile_readiness_bundle",
+    "build_phase1a_projection_writer_matrix",
+    "build_phase1a_search_plane_a_transition_bundle",
     "build_shadow_replay_bundle",
     "build_shadow_artifact_catalog",
     "build_shadow_trace_export",
@@ -45,6 +56,7 @@ __all__ = [
     "build_trace_summary",
     "CancellationToken",
     "build_canon_bridge_metadata",
+    "build_phase1a_bootstrap_bundle",
     "CanonExecutionError",
     "CanonReplaySummary",
     "CanonTraceSummary",
