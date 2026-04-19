@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from QueryLake.canon.runtime import execute_shadow_case
+from QueryLake.canon.runtime import build_shadow_report_index, execute_shadow_case, load_shadow_reports, persist_shadow_report_index
 from QueryLake.runtime.retrieval_primitives_legacy import RRFusion
 from QueryLake.typing.retrieval_primitives import RetrievalCandidate, RetrievalExecutionResult
 
@@ -88,7 +88,11 @@ async def _run(args) -> int:
 
     summary_path = output_dir / "canon_phase1a_shadow_harness_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"summary_path": str(summary_path), "report_count": len(summary["report_paths"])}, indent=2))
+    index_path = persist_shadow_report_index(
+        index_payload=build_shadow_report_index(load_shadow_reports(output_dir)),
+        output_path=output_dir / "canon_phase1a_shadow_report_index.json",
+    )
+    print(json.dumps({"summary_path": str(summary_path), "index_path": index_path, "report_count": len(summary["report_paths"])}, indent=2))
     return 0
 
 
