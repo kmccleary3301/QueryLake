@@ -220,6 +220,8 @@ def test_search_hybrid_orchestrated_path_can_return_plan_explain(monkeypatch):
     assert result["plan_explain"]["effective"]["compatibility_provenance"]["records"][0]["chunk_id"] == "c1"
     assert result["plan_explain"]["effective"]["compatibility_materializations"]["record_count"] == 1
     assert result["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-1"
+    assert result["plan_explain"]["effective"]["canon_bridge"]["available"] is True
+    assert result["plan_explain"]["effective"]["canon_bridge"]["graph_name"].startswith("canon.retrieval.search_hybrid.document_chunk")
 
 
 def test_search_hybrid_orchestrated_pre_resolves_dense_embedding(monkeypatch):
@@ -573,3 +575,5 @@ def test_search_bm25_orchestrated_path_can_return_plan_explain(monkeypatch):
     assert result["plan_explain"]["pipeline"]["pipeline_id"] == "orchestrated.search_bm25.document_chunk"
     assert result["plan_explain"]["effective"]["compatibility_provenance"]["record_count"] == 1
     assert result["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-1"
+    assert result["plan_explain"]["effective"]["canon_bridge"]["available"] is True
+    assert result["plan_explain"]["effective"]["canon_bridge"]["graph_name"].startswith("canon.retrieval.search_bm25.document_chunk")

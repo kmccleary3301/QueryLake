@@ -3,10 +3,22 @@
 from QueryLake.canon.context import CancellationToken, ExecutionContext, ExecutionMode, TracePolicy
 from QueryLake.canon.executor import CanonExecutionError, CanonExecutor
 from QueryLake.canon.results import ExecutionResult, ExecutionSummary, NodeExecutionResult
+from .bridge_metadata import build_canon_bridge_metadata
+from .querylake_shadow import build_querylake_shadow_diff, execute_querylake_pipeline_in_canon_shadow
+from .summaries import CanonReplaySummary, CanonTraceSummary, build_replay_summary, build_trace_summary
+from .shadow_diff import build_shadow_diff_summary
 
 __all__ = [
+    "build_querylake_shadow_diff",
+    "build_replay_summary",
+    "build_shadow_diff_summary",
+    "execute_querylake_pipeline_in_canon_shadow",
+    "build_trace_summary",
     "CancellationToken",
+    "build_canon_bridge_metadata",
     "CanonExecutionError",
+    "CanonReplaySummary",
+    "CanonTraceSummary",
     "CanonExecutor",
     "ExecutionContext",
     "ExecutionMode",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
+from QueryLake.canon.runtime import build_canon_bridge_metadata
 from QueryLake.runtime.db_compat import get_deployment_profile
 from QueryLake.runtime.route_planning_v2 import instantiate_route_planning_v2
 from QueryLake.runtime.retrieval_lanes import resolve_retrieval_adapter
@@ -64,10 +65,17 @@ def build_retrieval_plan_explain(
     projection_ir_v2: Optional[Dict[str, Any]] = None,
     compatibility_provenance: Optional[Dict[str, Any]] = None,
     compatibility_materializations: Optional[Dict[str, Any]] = None,
+    canon_bridge: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     opts = dict(options or {})
     flags = dict(pipeline.flags or {})
     profile = get_deployment_profile()
+    canon_route = str(
+        (query_ir_v2 or {}).get("route_id")
+        or (projection_ir_v2 or {}).get("route_id")
+        or route
+        or ""
+    )
     route_executor_payload = dict(route_executor or {})
     if query_ir_v2 is not None or projection_ir_v2 is not None:
         route_executor_payload = dict(route_executor_payload)
@@ -141,6 +149,11 @@ def build_retrieval_plan_explain(
                 {"compatibility_materializations": dict(compatibility_materializations)}
                 if compatibility_materializations is not None
                 else {}
+            ),
+            **(
+                {"canon_bridge": dict(canon_bridge)}
+                if canon_bridge is not None
+                else {"canon_bridge": build_canon_bridge_metadata(route=canon_route, pipeline=pipeline, options=opts)}
             ),
         },
     }

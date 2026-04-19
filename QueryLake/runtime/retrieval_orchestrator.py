@@ -3,6 +3,11 @@ from __future__ import annotations
 import time
 from typing import Dict, List, Optional
 
+from QueryLake.canon.runtime import (
+    build_canon_bridge_metadata,
+    build_querylake_shadow_diff,
+    execute_querylake_pipeline_in_canon_shadow,
+)
 from QueryLake.runtime.db_compat import get_deployment_profile
 from QueryLake.runtime.retrieval_lanes import resolve_retrieval_adapter
 from QueryLake.typing.retrieval_primitives import (
@@ -147,16 +152,50 @@ class PipelineOrchestrator:
         candidates_by_source = {}
         self._preflight_validate(request, pipeline, traces=traces)
 
+        canon_bridge = None
+        if bool(request.options.get("canon_shadow_compile", False) or request.options.get("explain_plan", False)):
+            t_bridge_1 = time.time()
+            route_value = str(request.query_ir_v2.get("route_id") or request.route or "")
+            canon_bridge = build_canon_bridge_metadata(
+                route=route_value,
+                pipeline=pipeline,
+                options=request.options,
+            )
+            t_bridge_2 = time.time()
+            traces.append(
+                RetrievalStageTrace(
+                    stage="canon_bridge_compile",
+                    duration_ms=(t_bridge_2 - t_bridge_1) * 1000.0,
+                    input_count=len(pipeline.stages),
+                    output_count=int(canon_bridge.get("node_count", 0)) if isinstance(canon_bridge, dict) else None,
+                    details={
+                        "available": bool((canon_bridge or {}).get("available", False)),
+                        "graph_id": (canon_bridge or {}).get("graph_id"),
+                        "node_count": (canon_bridge or {}).get("node_count"),
+                        "pipeline_id": pipeline.pipeline_id,
+                    },
+                )
+            )
+
         for stage in pipeline.stages:
             if not stage.enabled:
                 continue
             primitive = retrievers.get(stage.stage_id)
             if primitive is None:
                 continue
-            adapter_resolution = resolve_retrieval_adapter(
-                stage.primitive_id,
-                profile=get_deployment_profile(),
-            ).to_payload()
+            try:
+                adapter_resolution = resolve_retrieval_adapter(
+                    stage.primitive_id,
+                    profile=get_deployment_profile(),
+                ).to_payload()
+            except Exception:
+                adapter_resolution = {
+                    "adapter_id": None,
+                    "backend": None,
+                    "implemented": False,
+                    "lane_family": "unresolved",
+                    "primitive_id": str(stage.primitive_id),
+                }
             stage_request = request.model_copy(deep=True)
             stage_request.options = {**request.options, **stage.config}
             t_1 = time.time()
@@ -257,14 +296,41 @@ class PipelineOrchestrator:
         if limit > 0:
             fused = fused[:limit]
 
-        return RetrievalExecutionResult(
+        metadata = {
+            "candidate_sources": list(candidates_by_source.keys()),
+            "query_ir_v2": dict(request.query_ir_v2 or {}),
+            "projection_ir_v2": dict(request.projection_ir_v2 or {}),
+            **({"canon_bridge": dict(canon_bridge)} if isinstance(canon_bridge, dict) else {}),
+        }
+
+        result = RetrievalExecutionResult(
             pipeline_id=pipeline.pipeline_id,
             pipeline_version=pipeline.version,
             candidates=fused,
             traces=traces,
-            metadata={
-                "candidate_sources": list(candidates_by_source.keys()),
-                "query_ir_v2": dict(request.query_ir_v2 or {}),
-                "projection_ir_v2": dict(request.projection_ir_v2 or {}),
-            },
+            metadata=metadata,
         )
+
+        if bool(request.options.get("canon_shadow_execute", False)):
+            canon_shadow_result = await execute_querylake_pipeline_in_canon_shadow(
+                request=request,
+                pipeline=pipeline,
+                retrievers=retrievers,
+                fusion=fusion,
+                reranker=reranker,
+            )
+            shadow_diff = build_querylake_shadow_diff(
+                request=request,
+                pipeline=pipeline,
+                profile_id=get_deployment_profile().id,
+                legacy_result=result,
+                canon_result=canon_shadow_result,
+            )
+            result.metadata["canon_shadow"] = {
+                "graph_id": canon_shadow_result.metadata.get("canon_graph_id"),
+                "bridge": canon_shadow_result.metadata.get("canon_bridge"),
+                "shadow_diff": shadow_diff,
+            }
+            result.traces.extend(canon_shadow_result.traces)
+
+        return result
