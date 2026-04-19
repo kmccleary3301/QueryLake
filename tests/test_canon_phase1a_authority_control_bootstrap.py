@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from QueryLake.canon.control.authority_control_registry import (
+    apply_authority_control_bootstrap,
+    get_authority_control_bootstrap_entry,
+    load_authority_control_registry,
+)
 from QueryLake.canon.control.pointer_registry import save_pointer_registry
 from QueryLake.canon.package import build_phase1a_package_set_bundle, load_graph_package_registry
-from QueryLake.canon.control.authority_control_registry import apply_authority_control_bootstrap
 from QueryLake.canon.runtime.authority_control_bootstrap import build_authority_control_bootstrap_bundle
-from QueryLake.canon.runtime.authority_control_readiness import build_authority_control_readiness_bundle
 
 
 def _seed_pointer_registry(tmp_path, *, profile_id: str, routes: list[str], disable_sparse: bool = True):
     build_phase1a_package_set_bundle(
         routes=routes,
-        package_revision="rev-authority",
+        package_revision="rev-bootstrap",
         output_dir=tmp_path / "packages",
         registry_path=tmp_path / "package_registry.json",
         route_options=(
@@ -50,86 +53,55 @@ def _seed_pointer_registry(tmp_path, *, profile_id: str, routes: list[str], disa
     )
 
 
-def test_authority_control_readiness_surfaces_target_shadow_executable_routes(monkeypatch, tmp_path):
-    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
-    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
-    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
-    monkeypatch.setenv("QUERYLAKE_PLANETSCALE_DSN", "mysql://planetscale.example.com")
-    monkeypatch.setenv("QUERYLAKE_SPARSE_INDEX_DIMENSIONS", "8192")
-    routes = [
-        "search_bm25.document_chunk",
-        "search_file_chunks",
-        "search_hybrid.document_chunk",
-    ]
-    _seed_pointer_registry(tmp_path, profile_id="planetscale_opensearch_v1", routes=routes, disable_sparse=True)
-
-    payload = build_authority_control_readiness_bundle(
-        profile_id="planetscale_opensearch_v1",
-        routes=routes,
-        package_registry_path=str(tmp_path / "package_registry.json"),
-        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
-    )
-
-    assert payload["summary"]["route_count"] == 3
-    assert payload["summary"]["selected_package_resolved_count"] == 3
-    assert payload["summary"]["shadow_executable_count"] == 3
-    assert payload["summary"]["candidate_primary_ready"] is True
-    assert payload["summary"]["bootstrap_ready_to_apply"] is True
-    assert payload["summary"]["bootstrap_applied"] is False
-    assert payload["summary"]["primary_ready"] is False
-    assert payload["summary"]["authority_blocked_count"] == 3
-    assert payload["summary"]["control_blocked_count"] == 3
-    assert "target_profile_search_plane_shadow_execution_covers_bounded_routes" in payload["recommendations"]
-    assert "apply_authority_control_bootstrap_before_candidate_primary" in payload["recommendations"]
-
-
-def test_authority_control_readiness_requires_target_configuration(monkeypatch, tmp_path):
-    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
-    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
-    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
-    monkeypatch.delenv("QUERYLAKE_PLANETSCALE_HOST", raising=False)
-    routes = ["search_bm25.document_chunk"]
-    _seed_pointer_registry(tmp_path, profile_id="planetscale_opensearch_v1", routes=routes, disable_sparse=True)
-
-    payload = build_authority_control_readiness_bundle(
-        profile_id="planetscale_opensearch_v1",
-        routes=routes,
-        package_registry_path=str(tmp_path / "package_registry.json"),
-        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
-    )
-
-    assert payload["configuration"]["ready"] is False
-    assert payload["summary"]["candidate_primary_ready"] is False
-    assert "complete_required_target_profile_configuration" in payload["recommendations"]
-
-
-def test_authority_control_readiness_reports_bootstrap_applied(monkeypatch, tmp_path):
+def test_authority_control_bootstrap_bundle_is_ready_to_apply(monkeypatch, tmp_path):
     monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
     monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
     monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
     monkeypatch.setenv("QUERYLAKE_PLANETSCALE_DSN", "mysql://planetscale.example.com")
     monkeypatch.setenv("QUERYLAKE_SPARSE_INDEX_DIMENSIONS", "8192")
     routes = ["search_bm25.document_chunk", "search_file_chunks", "search_hybrid.document_chunk"]
-    _seed_pointer_registry(tmp_path, profile_id="planetscale_opensearch_v1", routes=routes, disable_sparse=True)
-    bootstrap_bundle = build_authority_control_bootstrap_bundle(
+    _seed_pointer_registry(tmp_path, profile_id="planetscale_opensearch_v1", routes=routes)
+
+    payload = build_authority_control_bootstrap_bundle(
         profile_id="planetscale_opensearch_v1",
         routes=routes,
         package_registry_path=str(tmp_path / "package_registry.json"),
         pointer_registry_path=str(tmp_path / "pointer_registry.json"),
         mode="shadow",
     )
-    apply_authority_control_bootstrap(
-        bundle=bootstrap_bundle,
-        registry_path=tmp_path / "authority_control_registry.json",
-    )
 
-    payload = build_authority_control_readiness_bundle(
+    assert payload["summary"]["candidate_primary_bootstrap_ready"] is True
+    assert payload["summary"]["primary_bootstrap_ready"] is False
+    assert "authority_control_bootstrap_ready_for_candidate_primary_apply" in payload["recommendations"]
+
+
+def test_authority_control_bootstrap_apply_persists_scope_entry(monkeypatch, tmp_path):
+    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
+    monkeypatch.setenv("QUERYLAKE_PLANETSCALE_DSN", "mysql://planetscale.example.com")
+    monkeypatch.setenv("QUERYLAKE_SPARSE_INDEX_DIMENSIONS", "8192")
+    routes = ["search_bm25.document_chunk", "search_file_chunks", "search_hybrid.document_chunk"]
+    _seed_pointer_registry(tmp_path, profile_id="planetscale_opensearch_v1", routes=routes)
+    bundle = build_authority_control_bootstrap_bundle(
         profile_id="planetscale_opensearch_v1",
         routes=routes,
         package_registry_path=str(tmp_path / "package_registry.json"),
         pointer_registry_path=str(tmp_path / "pointer_registry.json"),
-        authority_control_registry_path=str(tmp_path / "authority_control_registry.json"),
+        mode="shadow",
     )
 
-    assert payload["summary"]["bootstrap_ready_to_apply"] is True
-    assert payload["summary"]["bootstrap_applied"] is True
+    apply_authority_control_bootstrap(
+        bundle=bundle,
+        registry_path=tmp_path / "authority_control_registry.json",
+    )
+    registry = load_authority_control_registry(tmp_path / "authority_control_registry.json")
+    entry = get_authority_control_bootstrap_entry(
+        registry=registry,
+        profile_id="planetscale_opensearch_v1",
+        mode="shadow",
+        routes=routes,
+    )
+
+    assert entry is not None
+    assert entry["candidate_primary_bootstrap_ready"] is True

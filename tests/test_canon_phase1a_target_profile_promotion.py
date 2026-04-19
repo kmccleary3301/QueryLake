@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from QueryLake.canon.control.pointer_registry import save_pointer_registry
+from QueryLake.canon.control.authority_control_registry import apply_authority_control_bootstrap
 from QueryLake.canon.control.target_profile_promotion import build_target_profile_promotion_bundle
 from QueryLake.canon.package import build_phase1a_package_set_bundle, load_graph_package_registry
+from QueryLake.canon.runtime.authority_control_bootstrap import build_authority_control_bootstrap_bundle
 from QueryLake.canon.runtime import (
     build_shadow_execution_report,
     build_shadow_replay_bundle,
@@ -156,6 +158,8 @@ def test_target_profile_promotion_bundle_candidate_ready_but_not_primary(monkeyp
     )
 
     assert payload["summary"]["candidate_primary_ready"] is True
+    assert payload["summary"]["bootstrap_ready_to_apply"] is True
+    assert payload["summary"]["bootstrap_applied"] is False
     assert payload["summary"]["primary_ready"] is False
     assert "authority_plane_migration_incomplete" in payload["blockers"]
     assert "control_plane_migration_incomplete" in payload["blockers"]
@@ -192,3 +196,60 @@ def test_target_profile_promotion_bundle_blocks_without_target_configuration(mon
 
     assert payload["summary"]["candidate_primary_ready"] is False
     assert "target_profile_configuration_not_ready" in payload["blockers"]
+
+
+def test_target_profile_promotion_bundle_reports_bootstrap_applied(monkeypatch, tmp_path):
+    monkeypatch.setenv("QUERYLAKE_SEARCH_BACKEND_URL", "https://search.example.com")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_INDEX_NAMESPACE", "ql")
+    monkeypatch.setenv("QUERYLAKE_SEARCH_DENSE_VECTOR_DIMENSIONS", "1024")
+    monkeypatch.setenv("QUERYLAKE_SPARSE_INDEX_DIMENSIONS", "8192")
+    monkeypatch.setenv("QUERYLAKE_PLANETSCALE_DSN", "mysql://planetscale.example.com")
+    routes = [
+        "search_bm25.document_chunk",
+        "search_file_chunks",
+        "search_hybrid.document_chunk",
+    ]
+    for projection_id, lane_family in [
+        ("document_chunk_lexical_projection_v1", "lexical"),
+        ("document_chunk_dense_projection_v1", "dense"),
+        ("file_chunk_lexical_projection_v1", "lexical"),
+    ]:
+        mark_projection_build_ready(
+            projection_id=projection_id,
+            projection_version="v1",
+            profile_id="aws_aurora_pg_opensearch_v1",
+            lane_family=lane_family,
+            target_backend="opensearch",
+            build_revision=f"{projection_id}:ready",
+            path=str(tmp_path / "projection_store.json"),
+        )
+    for route, report_id in [
+        ("search_bm25.document_chunk", "report-bm25"),
+        ("search_file_chunks", "report-file"),
+        ("search_hybrid.document_chunk", "report-hybrid"),
+    ]:
+        _persist_exact_match_report(tmp_path, route=route, report_id=report_id)
+    _seed_target_packages_and_pointer(tmp_path, routes)
+    bootstrap_bundle = build_authority_control_bootstrap_bundle(
+        profile_id="planetscale_opensearch_v1",
+        routes=routes,
+        package_registry_path=str(tmp_path / "package_registry.json"),
+        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
+        metadata_store_path=str(tmp_path / "projection_store.json"),
+    )
+    apply_authority_control_bootstrap(
+        bundle=bootstrap_bundle,
+        registry_path=tmp_path / "authority_control_registry.json",
+    )
+
+    payload = build_target_profile_promotion_bundle(
+        target_profile_id="planetscale_opensearch_v1",
+        routes=routes,
+        shadow_artifact_dir=str(tmp_path),
+        package_registry_path=str(tmp_path / "package_registry.json"),
+        pointer_registry_path=str(tmp_path / "pointer_registry.json"),
+        authority_control_registry_path=str(tmp_path / "authority_control_registry.json"),
+        metadata_store_path=str(tmp_path / "projection_store.json"),
+    )
+
+    assert payload["summary"]["bootstrap_applied"] is True

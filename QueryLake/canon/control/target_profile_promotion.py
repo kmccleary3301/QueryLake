@@ -18,6 +18,7 @@ def build_target_profile_promotion_bundle(
     shadow_artifact_dir: str,
     package_registry_path: str,
     pointer_registry_path: str,
+    authority_control_registry_path: str | None = None,
     metadata_store_path: Optional[str] = None,
     package_selection_mode: str = "shadow",
 ) -> dict[str, Any]:
@@ -37,6 +38,8 @@ def build_target_profile_promotion_bundle(
         routes=route_list,
         package_registry_path=package_registry_path,
         pointer_registry_path=pointer_registry_path,
+        authority_control_registry_path=authority_control_registry_path,
+        metadata_store_path=metadata_store_path,
         mode=package_selection_mode,
     )
 
@@ -93,6 +96,8 @@ def build_target_profile_promotion_bundle(
         "source_exit_readiness": source_exit,
         "authority_control_readiness": authority_control,
         "summary": {
+            "bootstrap_ready_to_apply": bool(authority_summary.get("bootstrap_ready_to_apply")),
+            "bootstrap_applied": bool(authority_summary.get("bootstrap_applied")),
             "candidate_primary_ready": candidate_primary_ready,
             "primary_ready": primary_ready,
             "blocker_count": len(blockers),

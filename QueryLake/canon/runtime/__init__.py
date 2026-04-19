@@ -11,6 +11,7 @@ from QueryLake.canon.executor import CanonExecutionError, CanonExecutor
 from QueryLake.canon.results import ExecutionResult, ExecutionSummary, NodeExecutionResult
 from .bridge_metadata import build_canon_bridge_metadata
 from .bootstrap_bundle import build_phase1a_bootstrap_bundle
+from .authority_control_bootstrap import build_authority_control_bootstrap_bundle
 from .authority_control_readiness import build_authority_control_readiness_bundle
 from .replay_bundle import build_shadow_replay_bundle, persist_shadow_replay_bundle
 from .exit_readiness import build_phase1a_exit_readiness_bundle
@@ -63,6 +64,7 @@ __all__ = [
     "CancellationToken",
     "build_canon_bridge_metadata",
     "build_phase1a_bootstrap_bundle",
+    "build_authority_control_bootstrap_bundle",
     "build_authority_control_readiness_bundle",
     "CanonExecutionError",
     "CanonReplaySummary",

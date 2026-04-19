@@ -155,6 +155,76 @@ def test_publish_plan_blocks_candidate_primary_when_target_profile_promotion_gat
     assert "candidate_primary_gate_not_satisfied" in payload["blockers"]
 
 
+def test_publish_plan_includes_authority_control_bootstrap_step_for_target_candidate_primary():
+    payload = build_publish_plan(
+        CanonPublishRequest(
+            target=CanonPublishPointer(
+                pointer_id="ptr-candidate-target",
+                graph_id="graph-target",
+                package_revision="r-target",
+                profile_id="planetscale_opensearch_v1",
+                route_ids=["search_bm25.document_chunk", "search_hybrid.document_chunk"],
+                mode="candidate_primary",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-bm25",
+                            "package_revision": "r-target",
+                            "graph_id": "graph-target-a",
+                        },
+                        "search_hybrid.document_chunk": {
+                            "package_id": "pkg-hybrid",
+                            "package_revision": "r-target",
+                            "graph_id": "graph-target-b",
+                        },
+                    }
+                },
+            ),
+            review=CanonPublishReview(
+                branch_name="canonpp-phase1a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness={
+                "gates": {
+                    "all_bounded_routes_compile": True,
+                    "shadow_reports_present": True,
+                    "no_candidate_set_deltas": True,
+                    "selected_packages_resolved_for_bounded_routes": True,
+                    "no_blocked_search_plane_a_rows": True,
+                },
+                "target_profile_promotion": {
+                    "summary": {
+                        "candidate_primary_ready": True,
+                        "primary_ready": False,
+                    },
+                    "authority_control_readiness": {
+                        "summary": {
+                            "bootstrap_applied": False,
+                        },
+                        "authority_control_bootstrap": {
+                            "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                            "summary": {
+                                "candidate_primary_bootstrap_ready": True,
+                                "primary_bootstrap_ready": False,
+                            },
+                            "profile": {"id": "planetscale_opensearch_v1"},
+                            "mode": "shadow",
+                            "routes": ["search_bm25.document_chunk", "search_hybrid.document_chunk"],
+                        },
+                    },
+                },
+                "summary": {"ready_for_phase1b": False},
+            },
+        )
+    )
+
+    assert payload["allowed"] is True
+    assert any(step["step_id"] == "apply_authority_control_bootstrap" for step in payload["steps"])
+    assert "candidate_primary_promotion_will_apply_authority_control_bootstrap" in payload["recommendations"]
+
+
 def test_publish_plan_blocks_primary_without_exit_gate():
     payload = build_publish_plan(
         CanonPublishRequest(

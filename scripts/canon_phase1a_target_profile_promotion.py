@@ -12,6 +12,7 @@ def main() -> None:
     parser.add_argument("--shadow-artifact-dir", required=True)
     parser.add_argument("--package-registry", required=True)
     parser.add_argument("--pointer-registry", required=True)
+    parser.add_argument("--authority-control-registry")
     parser.add_argument("--metadata-store-path")
     parser.add_argument("--route", action="append", dest="routes", required=True)
     parser.add_argument("--mode", default="shadow")
@@ -24,6 +25,7 @@ def main() -> None:
         shadow_artifact_dir=args.shadow_artifact_dir,
         package_registry_path=args.package_registry,
         pointer_registry_path=args.pointer_registry,
+        authority_control_registry_path=args.authority_control_registry,
         metadata_store_path=args.metadata_store_path,
         package_selection_mode=args.mode,
     )

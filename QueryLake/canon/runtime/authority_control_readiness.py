@@ -4,7 +4,12 @@ from datetime import UTC, datetime
 from typing import Any, Iterable
 
 from QueryLake.canon.package.registry import load_graph_package_registry, resolve_selected_graph_package
+from QueryLake.canon.control.authority_control_registry import (
+    get_authority_control_bootstrap_entry,
+    load_authority_control_registry,
+)
 from QueryLake.canon.control.pointer_registry import load_pointer_registry
+from QueryLake.canon.runtime.authority_control_bootstrap import build_authority_control_bootstrap_bundle
 from QueryLake.canon.runtime.search_plane_a_execution import build_search_plane_a_execution_contract
 from QueryLake.runtime.db_compat import (
     build_profile_configuration_payload,
@@ -24,6 +29,8 @@ def build_authority_control_readiness_bundle(
     routes: Iterable[str],
     package_registry_path: str,
     pointer_registry_path: str,
+    authority_control_registry_path: str | None = None,
+    metadata_store_path: str | None = None,
     mode: str = "shadow",
 ) -> dict[str, Any]:
     effective_profile = get_deployment_profile(profile_id)
@@ -32,6 +39,11 @@ def build_authority_control_readiness_bundle(
     route_support = build_profile_route_support_matrix(effective_profile)
     package_registry = load_graph_package_registry(package_registry_path)
     pointer_registry = load_pointer_registry(pointer_registry_path)
+    authority_control_registry = (
+        load_authority_control_registry(authority_control_registry_path)
+        if authority_control_registry_path
+        else None
+    )
 
     route_rows: list[dict[str, Any]] = []
     unresolved_packages = 0
@@ -78,21 +90,48 @@ def build_authority_control_readiness_bundle(
             control_blocked += 1
 
     recommendations: list[str] = []
+    authority_control_bootstrap = build_authority_control_bootstrap_bundle(
+        profile_id=effective_profile.id,
+        routes=route_list,
+        package_registry_path=package_registry_path,
+        pointer_registry_path=pointer_registry_path,
+        metadata_store_path=metadata_store_path,
+        mode=mode,
+        execute_bootstrap=False,
+    )
+    bootstrap_summary = dict(authority_control_bootstrap.get("summary") or {})
+    bootstrap_applied = bool(
+        get_authority_control_bootstrap_entry(
+            registry=authority_control_registry or {},
+            profile_id=effective_profile.id,
+            mode=mode,
+            routes=route_list,
+        )
+    ) if authority_control_registry is not None else False
+
     if not bool(config.get("ready")):
         recommendations.append("complete_required_target_profile_configuration")
     if unresolved_packages > 0:
         recommendations.append("resolve_target_profile_package_bindings_for_all_bounded_routes")
     if shadow_executable == len(route_rows) and route_rows:
         recommendations.append("target_profile_search_plane_shadow_execution_covers_bounded_routes")
+    if bool(bootstrap_summary.get("candidate_primary_bootstrap_ready")) and not bootstrap_applied:
+        recommendations.append("apply_authority_control_bootstrap_before_candidate_primary")
     if authority_blocked > 0:
         recommendations.append("authority_plane_migration_remains_blocking")
     if control_blocked > 0:
         recommendations.append("control_plane_migration_remains_blocking")
 
-    candidate_primary_ready = bool(config.get("ready")) and unresolved_packages == 0 and shadow_executable == len(route_rows)
-    primary_ready = candidate_primary_ready and authority_blocked == 0 and control_blocked == 0 and bool(
+    candidate_primary_ready = bool(bootstrap_summary.get("candidate_primary_bootstrap_ready"))
+    primary_ready = (
+        candidate_primary_ready
+        and bootstrap_applied
+        and authority_blocked == 0
+        and control_blocked == 0
+        and bool(bootstrap_summary.get("primary_bootstrap_ready"))
+        and bool(
         effective_profile.implemented
-    )
+    ))
 
     return {
         "schema_version": "canon_authority_control_readiness_bundle_v1",
@@ -106,6 +145,7 @@ def build_authority_control_readiness_bundle(
         "configuration": config,
         "mode": str(mode),
         "routes": route_list,
+        "authority_control_bootstrap": authority_control_bootstrap,
         "route_rows": route_rows,
         "summary": {
             "route_count": len(route_rows),
@@ -113,6 +153,8 @@ def build_authority_control_readiness_bundle(
             "shadow_executable_count": shadow_executable,
             "authority_blocked_count": authority_blocked,
             "control_blocked_count": control_blocked,
+            "bootstrap_ready_to_apply": bool(bootstrap_summary.get("candidate_primary_bootstrap_ready")),
+            "bootstrap_applied": bootstrap_applied,
             "candidate_primary_ready": candidate_primary_ready,
             "primary_ready": primary_ready,
         },

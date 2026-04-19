@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .authority_control_registry import apply_authority_control_bootstrap
+
 
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
@@ -57,7 +59,12 @@ def _validate_pointer_payload(pointer: dict[str, Any]) -> None:
                     )
 
 
-def apply_publish_plan(*, plan: dict[str, Any], registry_path: str | Path) -> dict[str, Any]:
+def apply_publish_plan(
+    *,
+    plan: dict[str, Any],
+    registry_path: str | Path,
+    authority_control_registry_path: str | Path | None = None,
+) -> dict[str, Any]:
     if not bool(plan.get("allowed")):
         raise ValueError(f"Publish plan blocked: {', '.join(plan.get('blockers') or [])}")
     registry = load_pointer_registry(registry_path)
@@ -65,7 +72,15 @@ def apply_publish_plan(*, plan: dict[str, Any], registry_path: str | Path) -> di
     _validate_pointer_payload(target)
     for step in list(plan.get("steps") or []):
         step_id = str(step.get("step_id") or "")
-        if step_id == "update_shadow_pointer":
+        if step_id == "apply_authority_control_bootstrap":
+            if authority_control_registry_path is None:
+                raise ValueError("Authority/control registry path is required to apply authority/control bootstrap.")
+            bundle = dict(dict(step.get("metadata") or {}).get("bootstrap_bundle") or {})
+            apply_authority_control_bootstrap(
+                bundle=bundle,
+                registry_path=authority_control_registry_path,
+            )
+        elif step_id == "update_shadow_pointer":
             registry["shadow_pointer"] = dict(target)
         elif step_id == "promote_candidate_pointer":
             registry["candidate_primary_pointer"] = dict(target)

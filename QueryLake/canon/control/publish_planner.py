@@ -146,6 +146,21 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
             )
         )
     elif target.mode == "candidate_primary":
+        target_profile_promotion = dict(request.exit_readiness.get("target_profile_promotion") or {})
+        authority_control_readiness = dict(target_profile_promotion.get("authority_control_readiness") or {})
+        authority_control_bootstrap = dict(authority_control_readiness.get("authority_control_bootstrap") or {})
+        if str(target.profile_id) == "planetscale_opensearch_v1" and authority_control_bootstrap:
+            steps.append(
+                CanonPublishStep(
+                    step_id="apply_authority_control_bootstrap",
+                    action="apply_authority_control_bootstrap",
+                    metadata={
+                        "bootstrap_bundle": authority_control_bootstrap,
+                    },
+                )
+            )
+            if not bool(dict(authority_control_readiness.get("summary") or {}).get("bootstrap_applied")):
+                recommendations.append("candidate_primary_promotion_will_apply_authority_control_bootstrap")
         steps.extend(
             [
                 CanonPublishStep(
@@ -161,6 +176,19 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
             ]
         )
     else:
+        target_profile_promotion = dict(request.exit_readiness.get("target_profile_promotion") or {})
+        authority_control_readiness = dict(target_profile_promotion.get("authority_control_readiness") or {})
+        authority_control_bootstrap = dict(authority_control_readiness.get("authority_control_bootstrap") or {})
+        if str(target.profile_id) == "planetscale_opensearch_v1" and authority_control_bootstrap:
+            steps.append(
+                CanonPublishStep(
+                    step_id="apply_authority_control_bootstrap",
+                    action="apply_authority_control_bootstrap",
+                    metadata={
+                        "bootstrap_bundle": authority_control_bootstrap,
+                    },
+                )
+            )
         steps.extend(
             [
                 CanonPublishStep(

@@ -12,10 +12,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Apply a Canon++ publish plan to a local pointer registry.")
     parser.add_argument("--publish-plan", required=True)
     parser.add_argument("--registry-path", required=True)
+    parser.add_argument("--authority-control-registry")
     args = parser.parse_args()
 
     plan = json.loads(Path(args.publish_plan).read_text(encoding="utf-8"))
-    registry = apply_publish_plan(plan=plan, registry_path=args.registry_path)
+    registry = apply_publish_plan(
+        plan=plan,
+        registry_path=args.registry_path,
+        authority_control_registry_path=args.authority_control_registry,
+    )
     print(
         json.dumps(
             {

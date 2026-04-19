@@ -16,6 +16,7 @@ def main() -> int:
     parser.add_argument("--route", action="append", dest="routes", default=None)
     parser.add_argument("--package-registry-path", default=None)
     parser.add_argument("--pointer-registry-path", default=None)
+    parser.add_argument("--authority-control-registry-path", default=None)
     parser.add_argument("--package-selection-mode", default="shadow")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
@@ -27,6 +28,7 @@ def main() -> int:
         routes=args.routes,
         package_registry_path=args.package_registry_path,
         pointer_registry_path=args.pointer_registry_path,
+        authority_control_registry_path=args.authority_control_registry_path,
         package_selection_mode=args.package_selection_mode,
     )
     output = Path(args.output)

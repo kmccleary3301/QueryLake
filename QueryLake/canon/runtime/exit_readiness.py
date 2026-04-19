@@ -27,6 +27,7 @@ def build_phase1a_exit_readiness_bundle(
     include_target_profile_promotion: bool = True,
     package_registry_path: str | None = None,
     pointer_registry_path: str | None = None,
+    authority_control_registry_path: str | None = None,
     package_selection_mode: str = "shadow",
 ) -> dict[str, Any]:
     artifact_dir = Path(shadow_artifact_dir)
@@ -92,6 +93,7 @@ def build_phase1a_exit_readiness_bundle(
                     shadow_artifact_dir=str(artifact_dir),
                     package_registry_path=package_registry_path,
                     pointer_registry_path=pointer_registry_path,
+                    authority_control_registry_path=authority_control_registry_path,
                     metadata_store_path=metadata_store_path,
                     package_selection_mode=package_selection_mode,
                 )

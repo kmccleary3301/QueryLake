@@ -9,6 +9,7 @@ from QueryLake.canon.control import (
     build_publish_plan,
     load_pointer_registry,
 )
+from QueryLake.canon.control.authority_control_registry import load_authority_control_registry
 
 
 def _ready_exit() -> dict:
@@ -139,3 +140,73 @@ def test_pointer_registry_rejects_multiroute_pointer_without_route_bindings(tmp_
         assert "route-level package bindings" in str(exc).lower()
     else:  # pragma: no cover
         raise AssertionError("multi-route pointer without bindings should be rejected")
+
+
+def test_pointer_registry_applies_authority_control_bootstrap_step(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    authority_control_registry_path = tmp_path / "authority_control_registry.json"
+    plan = {
+        "allowed": True,
+        "target": {
+            "pointer_id": "ptr-target-candidate",
+            "graph_id": "graph-target",
+            "package_revision": "rev-target",
+            "profile_id": "planetscale_opensearch_v1",
+            "route_ids": ["search_bm25.document_chunk"],
+            "mode": "candidate_primary",
+            "metadata": {
+                "package_bindings": {
+                    "search_bm25.document_chunk": {
+                        "package_id": "pkg-bm25",
+                        "package_revision": "rev-target",
+                        "graph_id": "graph-target",
+                    }
+                }
+            },
+        },
+        "steps": [
+            {
+                "step_id": "apply_authority_control_bootstrap",
+                "metadata": {
+                    "bootstrap_bundle": {
+                        "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                        "profile": {"id": "planetscale_opensearch_v1"},
+                        "mode": "shadow",
+                        "routes": ["search_bm25.document_chunk"],
+                        "route_bindings": {
+                            "search_bm25.document_chunk": {
+                                "package_id": "pkg-bm25",
+                                "package_revision": "rev-target",
+                                "graph_id": "graph-target",
+                            }
+                        },
+                        "phase1a_bootstrap_bundle": {
+                            "execute": False,
+                            "summary": {"declared_executable_routes_runtime_ready_after": True},
+                        },
+                        "summary": {
+                            "candidate_primary_bootstrap_ready": True,
+                            "primary_bootstrap_ready": False,
+                            "configuration_ready": True,
+                            "selected_package_resolved_count": 1,
+                            "shadow_executable_count": 1,
+                        },
+                        "recommendations": [],
+                    }
+                },
+            },
+            {"step_id": "update_shadow_pointer"},
+            {"step_id": "promote_candidate_pointer"},
+        ],
+        "blockers": [],
+    }
+
+    registry = apply_publish_plan(
+        plan=plan,
+        registry_path=registry_path,
+        authority_control_registry_path=authority_control_registry_path,
+    )
+
+    assert registry["candidate_primary_pointer"]["pointer_id"] == "ptr-target-candidate"
+    authority_control_registry = load_authority_control_registry(authority_control_registry_path)
+    assert len(dict(authority_control_registry.get("entries") or {})) == 1
