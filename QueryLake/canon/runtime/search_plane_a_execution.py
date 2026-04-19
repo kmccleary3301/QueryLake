@@ -4,11 +4,16 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Optional
 
 from QueryLake.canon.compiler.querylake_route_compiler import normalize_querylake_route_pipeline
+from QueryLake.canon.control.route_serving_registry import (
+    load_route_serving_registry,
+    resolve_route_serving_state,
+)
 from QueryLake.canon.package.registry import load_graph_package_registry, resolve_selected_graph_package
 from QueryLake.canon.control.pointer_registry import load_pointer_registry
 from QueryLake.runtime.db_compat import build_profile_execution_target_payload, get_deployment_profile
 from QueryLake.runtime.retrieval_pipeline_runtime import default_pipeline_for_route
 from QueryLake.runtime.retrieval_route_executors import (
+    OpenSearchDocumentChunkBM25RouteExecutor,
     ResolvedRouteExecutor,
     resolve_search_bm25_route_executor,
     resolve_search_file_chunks_route_executor,
@@ -82,6 +87,8 @@ class SearchPlaneAExecutionResolution:
     shadow_executable: bool
     primary_ready: bool
     executor_id: str
+    authoritative: bool = False
+    migration_consulted: bool = False
     compile_options: dict[str, Any] = field(default_factory=dict)
     projection_descriptors: list[str] = field(default_factory=list)
     search_plane_blockers: list[str] = field(default_factory=list)
@@ -90,6 +97,7 @@ class SearchPlaneAExecutionResolution:
     profile_execution_target: dict[str, Any] = field(default_factory=dict)
     selected_package: dict[str, Any] = field(default_factory=dict)
     source_resolution: dict[str, Any] = field(default_factory=dict)
+    route_serving_state: dict[str, Any] = field(default_factory=dict)
 
     def to_payload(self) -> dict[str, Any]:
         return asdict(self)
@@ -118,6 +126,7 @@ def resolve_search_plane_a_execution_contract(
     profile_id: str,
     package_registry_path: str,
     pointer_registry_path: str,
+    route_serving_registry_path: str | None = None,
     mode: str = "shadow",
 ) -> ResolvedSearchPlaneAExecutionContract:
     effective_profile = get_deployment_profile(profile_id)
@@ -140,6 +149,9 @@ def resolve_search_plane_a_execution_contract(
     projection_descriptors: list[str] = []
     shadow_executable = False
     primary_ready = False
+    authoritative = False
+    migration_consulted = False
+    route_serving_state: dict[str, Any] = {}
 
     if not bool(selected_package.get("resolved")):
         search_plane_blockers.append("selected_package_missing")
@@ -171,14 +183,43 @@ def resolve_search_plane_a_execution_contract(
         if effective_profile.id == _SOURCE_SEARCH_PLANE_PROFILE_ID:
             execution_mode = "legacy_route_executor_passthrough"
         elif effective_profile.id == "planetscale_opensearch_v1":
-            execution_mode = "canon_target_profile_shadow_executor"
-            authority_blockers.extend(
-                [
-                    "authority_plane_not_migrated",
-                    "control_plane_not_migrated",
-                ]
-            )
-            recommendations.append("target_profile_search_plane_is_shadow_executable_but_not_primary_ready")
+            if route_serving_registry_path and mode in {"candidate_primary", "primary"} and str(route_id) == "search_bm25.document_chunk":
+                route_serving_registry = load_route_serving_registry(route_serving_registry_path)
+                route_serving_state = resolve_route_serving_state(
+                    registry=route_serving_registry,
+                    profile_id=effective_profile.id,
+                    route_id=str(route_id),
+                    mode=str(mode),
+                )
+                migration_consulted = True
+                if bool(route_serving_state.get("resolved")):
+                    apply_state = dict(route_serving_state.get("apply_state") or {})
+                    projections = [str(value) for value in list(apply_state.get("projection_descriptors") or []) if str(value or "")]
+                    if len(projections) == 0:
+                        authority_blockers.append("route_apply_state_projection_missing")
+                    else:
+                        executor = OpenSearchDocumentChunkBM25RouteExecutor(projection_id=projections[0])
+                        executor_id = executor.executor_id
+                        projection_descriptors = projections
+                        source_resolution_payload = {}
+                        search_plane_blockers = []
+                        authority_blockers = []
+                        execution_mode = "canon_target_profile_authoritative_executor"
+                        authoritative = True
+                        primary_ready = str(mode) == "primary"
+                        recommendations.append("authoritative_target_execution_uses_route_scoped_serving_truth")
+                else:
+                    authority_blockers.extend(str(value) for value in list(route_serving_state.get("blockers") or []))
+                    recommendations.append("complete_route_scoped_migrated_truth_before_authoritative_target_serving")
+            if execution_mode == "blocked":
+                execution_mode = "canon_target_profile_shadow_executor"
+                authority_blockers.extend(
+                    [
+                        "authority_plane_not_migrated",
+                        "control_plane_not_migrated",
+                    ]
+                )
+                recommendations.append("target_profile_search_plane_is_shadow_executable_but_not_primary_ready")
         else:
             execution_mode = "canon_search_plane_shadow_executor"
 
@@ -190,6 +231,8 @@ def resolve_search_plane_a_execution_contract(
         selected_package_resolved=bool(selected_package.get("resolved")),
         shadow_executable=shadow_executable,
         primary_ready=primary_ready,
+        authoritative=authoritative,
+        migration_consulted=migration_consulted,
         executor_id=executor_id,
         compile_options=compile_options,
         projection_descriptors=projection_descriptors,
@@ -199,6 +242,7 @@ def resolve_search_plane_a_execution_contract(
         profile_execution_target=build_profile_execution_target_payload(effective_profile),
         selected_package=selected_package,
         source_resolution=source_resolution_payload,
+        route_serving_state=route_serving_state,
     )
     return ResolvedSearchPlaneAExecutionContract(resolution=resolution, executor=executor)
 
@@ -209,6 +253,7 @@ def build_search_plane_a_execution_contract(
     profile_id: str,
     package_registry_path: str,
     pointer_registry_path: str,
+    route_serving_registry_path: str | None = None,
     mode: str = "shadow",
 ) -> dict[str, Any]:
     return resolve_search_plane_a_execution_contract(
@@ -216,5 +261,6 @@ def build_search_plane_a_execution_contract(
         profile_id=profile_id,
         package_registry_path=package_registry_path,
         pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
         mode=mode,
     ).to_payload()
