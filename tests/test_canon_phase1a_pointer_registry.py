@@ -10,7 +10,7 @@ from QueryLake.canon.control import (
     load_pointer_registry,
 )
 from QueryLake.canon.control.authority_control_registry import load_authority_control_registry
-from QueryLake.canon.control.route_serving_registry import load_route_serving_registry
+from QueryLake.canon.control.route_serving_registry import build_route_slice_state, load_route_serving_registry
 
 
 def _ready_exit() -> dict:
@@ -263,3 +263,114 @@ def test_pointer_registry_applies_route_serving_state_for_tranche2a_target_slice
         "planetscale_opensearch_v1:search_bm25.document_chunk:cert:pkg-bm25@rev-target"
     ]
     assert certification["package_revision"] == "rev-target"
+
+
+def test_pointer_registry_revert_updates_route_serving_state_for_tranche2a_target_slice(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    authority_control_registry_path = tmp_path / "authority_control_registry.json"
+    current_pointer = CanonPublishPointer(
+        pointer_id="ptr-target-shadow",
+        graph_id="graph-shadow",
+        package_revision="rev-shadow",
+        profile_id="planetscale_opensearch_v1",
+        route_ids=["search_bm25.document_chunk"],
+        mode="shadow",
+        metadata={
+            "package_bindings": {
+                "search_bm25.document_chunk": {
+                    "package_id": "pkg-shadow",
+                    "package_revision": "rev-shadow",
+                    "graph_id": "graph-shadow",
+                }
+            }
+        },
+    )
+    plan = build_publish_plan(
+        CanonPublishRequest(
+            target=CanonPublishPointer(
+                pointer_id="ptr-target-candidate",
+                graph_id="graph-target",
+                package_revision="rev-target",
+                profile_id="planetscale_opensearch_v1",
+                route_ids=["search_bm25.document_chunk"],
+                mode="candidate_primary",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-target",
+                            "package_revision": "rev-target",
+                            "graph_id": "graph-target",
+                        }
+                    }
+                },
+            ),
+            current=current_pointer,
+            review=CanonPublishReview(
+                branch_name="canonpp-tranche2a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness={
+                "gates": {
+                    "all_bounded_routes_compile": True,
+                    "shadow_reports_present": True,
+                    "no_candidate_set_deltas": True,
+                    "selected_packages_resolved_for_bounded_routes": True,
+                    "no_blocked_search_plane_a_rows": True,
+                },
+                "target_profile_promotion": {
+                    "summary": {
+                        "candidate_primary_ready": True,
+                        "primary_ready": False,
+                    },
+                    "authority_control_readiness": {
+                        "summary": {
+                            "bootstrap_applied": True,
+                        },
+                        "authority_control_bootstrap": {
+                            "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                            "summary": {
+                                "candidate_primary_bootstrap_ready": True,
+                                "primary_bootstrap_ready": False,
+                            },
+                            "profile": {"id": "planetscale_opensearch_v1"},
+                            "mode": "shadow",
+                            "routes": ["search_bm25.document_chunk"],
+                        },
+                    },
+                },
+                "summary": {"ready_for_phase1b": False},
+            },
+        )
+    )
+
+    apply_publish_plan(
+        plan=plan,
+        registry_path=registry_path,
+        authority_control_registry_path=authority_control_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+    candidate_state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+    )
+    assert candidate_state["state"] == "candidate_primary_active"
+    assert candidate_state["rollback_ready"] is True
+
+    reverted = apply_revert_plan(
+        revert_plan=plan["revert_plan"],
+        pointer=current_pointer.model_dump(),
+        registry_path=registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+    assert reverted["shadow_pointer"]["pointer_id"] == "ptr-target-shadow"
+
+    reverted_state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+    )
+    assert reverted_state["state"] == "shadow"

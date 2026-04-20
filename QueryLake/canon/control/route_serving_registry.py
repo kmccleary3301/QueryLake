@@ -196,6 +196,7 @@ def record_route_activation(
         "profile_id": profile_id,
         "route_id": route_id,
         "mode": mode,
+        "active": True,
         "pointer_id": pointer_id,
         "package_ref": package_ref,
         "apply_state_ref": apply_state_ref,
@@ -204,6 +205,8 @@ def record_route_activation(
         "rollback_target_pointer_id": rollback_target_pointer_id,
         "candidate_scope": dict(candidate_scope or {}),
         "activated_at": _utc_now(),
+        "deactivated_at": None,
+        "deactivation_reason": None,
     }
     registry["activations"][key] = entry
     registry["generated_at"] = _utc_now()
@@ -216,6 +219,38 @@ def record_route_activation(
             "mode": mode,
             "pointer_id": pointer_id,
             "package_ref": package_ref,
+        }
+    )
+    save_route_serving_registry(registry, registry_path)
+    return entry
+
+
+def deactivate_route_activation(
+    *,
+    registry_path: str | Path,
+    profile_id: str,
+    route_id: str,
+    mode: str,
+    reason: str,
+) -> dict[str, Any] | None:
+    registry = load_route_serving_registry(registry_path)
+    key = _activation_key(profile_id=profile_id, route_id=route_id, mode=mode)
+    entry = dict(dict(registry.get("activations") or {}).get(key) or {}) or None
+    if entry is None:
+        return None
+    entry["active"] = False
+    entry["deactivated_at"] = _utc_now()
+    entry["deactivation_reason"] = str(reason)
+    registry["activations"][key] = entry
+    registry["generated_at"] = _utc_now()
+    registry["history"].append(
+        {
+            "recorded_at": _utc_now(),
+            "kind": "route_activation_deactivated",
+            "profile_id": profile_id,
+            "route_id": route_id,
+            "mode": mode,
+            "reason": str(reason),
         }
     )
     save_route_serving_registry(registry, registry_path)
@@ -252,6 +287,180 @@ def get_route_activation(
     return dict(dict(registry.get("activations") or {}).get(_activation_key(profile_id=profile_id, route_id=route_id, mode=mode)) or {}) or None
 
 
+def _best_certification_for_route(
+    *,
+    registry: dict[str, Any],
+    profile_id: str,
+    route_id: str,
+) -> dict[str, Any] | None:
+    candidates = [
+        dict(entry)
+        for entry in list(dict(registry.get("certifications") or {}).values())
+        if str(entry.get("profile_id") or "") == str(profile_id)
+        and str(entry.get("route_id") or "") == str(route_id)
+        and str(entry.get("certification_state") or "") != "revoked"
+    ]
+    if not candidates:
+        return None
+    candidates.sort(
+        key=lambda entry: (
+            _CERT_STATE_RANK.get(str(entry.get("certification_state") or ""), -1),
+            str(entry.get("certified_at") or ""),
+        ),
+        reverse=True,
+    )
+    return candidates[0]
+
+
+def build_route_slice_state(
+    *,
+    registry: dict[str, Any],
+    profile_id: str,
+    route_id: str,
+) -> dict[str, Any]:
+    primary_state = resolve_route_serving_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+        mode="primary",
+    )
+    if bool(primary_state.get("resolved")):
+        activation = dict(primary_state.get("activation") or {})
+        return {
+            "schema_version": "canon_route_slice_state_v1",
+            "profile_id": profile_id,
+            "route_id": route_id,
+            "state": "primary_active",
+            "rollback_ready": bool(activation.get("rollback_target_pointer_id")),
+            "activation": activation,
+            "certification": dict(primary_state.get("certification") or {}),
+            "apply_state": dict(primary_state.get("apply_state") or {}),
+            "blockers": [],
+        }
+
+    candidate_state = resolve_route_serving_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+        mode="candidate_primary",
+    )
+    if bool(candidate_state.get("resolved")):
+        activation = dict(candidate_state.get("activation") or {})
+        return {
+            "schema_version": "canon_route_slice_state_v1",
+            "profile_id": profile_id,
+            "route_id": route_id,
+            "state": "candidate_primary_active",
+            "rollback_ready": bool(activation.get("rollback_target_pointer_id")),
+            "activation": activation,
+            "certification": dict(candidate_state.get("certification") or {}),
+            "apply_state": dict(candidate_state.get("apply_state") or {}),
+            "blockers": [],
+        }
+
+    shadow_state = resolve_route_serving_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+        mode="shadow",
+    )
+    if bool(shadow_state.get("resolved")):
+        return {
+            "schema_version": "canon_route_slice_state_v1",
+            "profile_id": profile_id,
+            "route_id": route_id,
+            "state": "shadow",
+            "rollback_ready": False,
+            "activation": dict(shadow_state.get("activation") or {}),
+            "certification": dict(shadow_state.get("certification") or {}),
+            "apply_state": dict(shadow_state.get("apply_state") or {}),
+            "blockers": [],
+        }
+
+    certification = _best_certification_for_route(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+    )
+    if certification is None:
+        return {
+            "schema_version": "canon_route_slice_state_v1",
+            "profile_id": profile_id,
+            "route_id": route_id,
+            "state": "shadow",
+            "rollback_ready": False,
+            "activation": None,
+            "certification": None,
+            "apply_state": None,
+            "blockers": [],
+        }
+
+    package_ref = str(certification.get("package_ref") or "")
+    apply_state = get_route_apply_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+        package_ref=package_ref,
+    )
+    blockers: list[str] = []
+    if apply_state is None:
+        blockers.append("route_apply_state_missing")
+    elif not bool(apply_state.get("healthy")):
+        blockers.append("route_apply_state_unhealthy")
+
+    cert_state = str(certification.get("certification_state") or "")
+    derived_state = "shadow"
+    if _CERT_STATE_RANK.get(cert_state, -1) >= _CERT_STATE_RANK["candidate_eligible"]:
+        derived_state = "candidate_primary_eligible"
+    if _CERT_STATE_RANK.get(cert_state, -1) >= _CERT_STATE_RANK["primary_eligible"]:
+        derived_state = "primary_eligible"
+
+    return {
+        "schema_version": "canon_route_slice_state_v1",
+        "profile_id": profile_id,
+        "route_id": route_id,
+        "state": derived_state,
+        "rollback_ready": False,
+        "activation": None,
+        "certification": certification,
+        "apply_state": apply_state,
+        "blockers": blockers,
+    }
+
+
+def build_candidate_canary_evidence_packet(
+    *,
+    registry: dict[str, Any],
+    profile_id: str,
+    route_id: str,
+) -> dict[str, Any]:
+    route_state = build_route_slice_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+    )
+    activation = dict(route_state.get("activation") or {})
+    candidate_scope = dict(activation.get("candidate_scope") or {})
+    return {
+        "schema_version": "canon_candidate_canary_evidence_packet_v1",
+        "profile_id": profile_id,
+        "route_id": route_id,
+        "state": str(route_state.get("state") or "shadow"),
+        "candidate_primary_active": str(route_state.get("state") or "") == "candidate_primary_active",
+        "rollback_ready": bool(route_state.get("rollback_ready")),
+        "candidate_scope": candidate_scope,
+        "activation": activation or None,
+        "certification": route_state.get("certification"),
+        "apply_state": route_state.get("apply_state"),
+        "blockers": list(route_state.get("blockers") or []),
+        "summary": {
+            "pointer_id": activation.get("pointer_id"),
+            "rollback_target_pointer_id": activation.get("rollback_target_pointer_id"),
+            "package_ref": activation.get("package_ref") or dict(route_state.get("certification") or {}).get("package_ref"),
+        },
+    }
+
+
 def resolve_route_serving_state(
     *,
     registry: dict[str, Any],
@@ -272,6 +481,15 @@ def resolve_route_serving_state(
             "resolved": False,
             "blockers": blockers,
             "activation": None,
+            "certification": None,
+            "apply_state": None,
+        }
+    if not bool(activation.get("active", True)):
+        blockers.append("route_activation_inactive")
+        return {
+            "resolved": False,
+            "blockers": blockers,
+            "activation": activation,
             "certification": None,
             "apply_state": None,
         }

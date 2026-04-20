@@ -7,6 +7,7 @@ from typing import Any
 
 from .authority_control_registry import apply_authority_control_bootstrap
 from .route_serving_registry import (
+    deactivate_route_activation,
     record_route_activation,
     record_route_apply_state,
     record_route_package_certification,
@@ -92,6 +93,8 @@ def _record_tranche2a_route_serving_state(
     target: dict[str, Any],
     route_serving_registry_path: str | Path,
     mode: str,
+    predecessor_pointer_id: str | None = None,
+    rollback_target_pointer_id: str | None = None,
 ) -> None:
     if str(target.get("profile_id") or "") != "planetscale_opensearch_v1":
         return
@@ -119,7 +122,12 @@ def _record_tranche2a_route_serving_state(
     if len(projection_descriptors) == 0:
         raise ValueError("Route-scoped serving state requires projection descriptors for the Tranche 2A route.")
 
-    certification_state = "candidate_eligible" if str(mode) == "candidate_primary" else "primary_eligible"
+    if str(mode) == "candidate_primary":
+        certification_state = "candidate_eligible"
+    elif str(mode) == "primary":
+        certification_state = "primary_eligible"
+    else:
+        certification_state = "shadow_certified"
     record_route_package_certification(
         registry_path=route_serving_registry_path,
         profile_id=str(target.get("profile_id") or ""),
@@ -155,9 +163,13 @@ def _record_tranche2a_route_serving_state(
         package_revision=package_ref["package_revision"],
         apply_state_ref=str(apply_entry.get("apply_state_ref") or ""),
         approval_ref=f"publish-plan:{target.get('pointer_id')}",
-        predecessor_pointer_id=None,
-        rollback_target_pointer_id=None,
-        candidate_scope={"route_ids": route_ids},
+        predecessor_pointer_id=predecessor_pointer_id,
+        rollback_target_pointer_id=rollback_target_pointer_id,
+        candidate_scope={
+            "route_ids": route_ids,
+            "activation_mode": str(mode),
+            "bounded_scope": "single_route",
+        },
     )
 
 
@@ -171,6 +183,18 @@ def apply_publish_plan(
     if not bool(plan.get("allowed")):
         raise ValueError(f"Publish plan blocked: {', '.join(plan.get('blockers') or [])}")
     registry = load_pointer_registry(registry_path)
+    plan_current_pointer = dict(plan.get("current") or {}) or None
+    previous_shadow_pointer = dict(registry.get("shadow_pointer") or {}) or None
+    previous_candidate_pointer = dict(registry.get("candidate_primary_pointer") or {}) or None
+    previous_primary_pointer = dict(registry.get("primary_pointer") or {}) or None
+    if plan_current_pointer is not None:
+        current_mode = str(plan_current_pointer.get("mode") or "")
+        if current_mode == "shadow" and previous_shadow_pointer is None:
+            previous_shadow_pointer = dict(plan_current_pointer)
+        elif current_mode == "candidate_primary" and previous_candidate_pointer is None:
+            previous_candidate_pointer = dict(plan_current_pointer)
+        elif current_mode == "primary" and previous_primary_pointer is None:
+            previous_primary_pointer = dict(plan_current_pointer)
     target = dict(plan.get("target") or {})
     _validate_pointer_payload(target)
     for step in list(plan.get("steps") or []):
@@ -192,10 +216,44 @@ def apply_publish_plan(
         elif step_id == "apply_route_serving_state":
             if route_serving_registry_path is None:
                 raise ValueError("Route serving registry path is required to apply route-scoped serving state.")
+            predecessor_pointer_id = None
+            rollback_target_pointer_id = None
+            step_mode = str(dict(step.get("metadata") or {}).get("mode") or target.get("mode") or "")
+            if step_mode == "primary":
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(target.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="candidate_primary",
+                    reason="superseded_by_primary_activation",
+                )
+            elif step_mode == "shadow":
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(target.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="candidate_primary",
+                    reason="superseded_by_shadow_reversion",
+                )
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(target.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="primary",
+                    reason="superseded_by_shadow_reversion",
+                )
+            if step_mode == "candidate_primary":
+                predecessor_pointer_id = str((previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
+                rollback_target_pointer_id = str((previous_shadow_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or "") or None
+            elif step_mode == "primary":
+                predecessor_pointer_id = str((previous_primary_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
+                rollback_target_pointer_id = str((previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
             _record_tranche2a_route_serving_state(
                 target=target,
                 route_serving_registry_path=route_serving_registry_path,
-                mode=str(dict(step.get("metadata") or {}).get("mode") or target.get("mode") or ""),
+                mode=step_mode,
+                predecessor_pointer_id=predecessor_pointer_id,
+                rollback_target_pointer_id=rollback_target_pointer_id,
             )
 
     registry["generated_at"] = _utc_now()
@@ -210,10 +268,19 @@ def apply_publish_plan(
     return registry
 
 
-def apply_revert_plan(*, revert_plan: dict[str, Any], pointer: dict[str, Any], registry_path: str | Path) -> dict[str, Any]:
+def apply_revert_plan(
+    *,
+    revert_plan: dict[str, Any],
+    pointer: dict[str, Any],
+    registry_path: str | Path,
+    route_serving_registry_path: str | Path | None = None,
+) -> dict[str, Any]:
     if not bool(revert_plan.get("available")):
         raise ValueError("Revert plan is not available.")
     registry = load_pointer_registry(registry_path)
+    previous_shadow_pointer = dict(registry.get("shadow_pointer") or {}) or None
+    previous_candidate_pointer = dict(registry.get("candidate_primary_pointer") or {}) or None
+    previous_primary_pointer = dict(registry.get("primary_pointer") or {}) or None
     revert_mode = str(revert_plan.get("revert_mode") or "")
     if revert_mode == "shadow":
         registry["shadow_pointer"] = dict(pointer)
@@ -232,4 +299,40 @@ def apply_revert_plan(*, revert_plan: dict[str, Any], pointer: dict[str, Any], r
         }
     )
     save_pointer_registry(registry, registry_path)
+    if route_serving_registry_path is not None:
+        for step in list(revert_plan.get("steps") or []):
+            if str(step.get("step_id") or "") != "revert_route_serving_state":
+                continue
+            if revert_mode == "shadow":
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(pointer.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="candidate_primary",
+                    reason="pointer_revert_to_shadow",
+                )
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(pointer.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="primary",
+                    reason="pointer_revert_to_shadow",
+                )
+            elif revert_mode == "candidate_primary":
+                deactivate_route_activation(
+                    registry_path=route_serving_registry_path,
+                    profile_id=str(pointer.get("profile_id") or ""),
+                    route_id="search_bm25.document_chunk",
+                    mode="primary",
+                    reason="pointer_revert_to_candidate",
+                )
+            predecessor_pointer_id = str((previous_primary_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
+            rollback_target_pointer_id = str(pointer.get("pointer_id") or "") or None
+            _record_tranche2a_route_serving_state(
+                target=pointer,
+                route_serving_registry_path=route_serving_registry_path,
+                mode=revert_mode,
+                predecessor_pointer_id=predecessor_pointer_id,
+                rollback_target_pointer_id=rollback_target_pointer_id,
+            )
     return registry

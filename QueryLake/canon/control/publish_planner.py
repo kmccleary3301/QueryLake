@@ -53,26 +53,44 @@ def _primary_ready(exit_readiness: dict[str, Any]) -> bool:
     return bool(dict(exit_readiness.get("summary") or {}).get("ready_for_phase1b")) and target_primary_ready
 
 
-def _build_revert_plan(current: CanonPublishPointer | None) -> CanonPublishRevertPlan:
+def _build_revert_plan(current: CanonPublishPointer | None, target: CanonPublishPointer | None = None) -> CanonPublishRevertPlan:
     if current is None:
         return CanonPublishRevertPlan(
             available=False,
             notes=["No existing pointer to revert to."],
         )
+    steps = [
+        CanonPublishStep(
+            step_id="repoint_active_pointer",
+            action="update_active_pointer",
+            metadata={
+                "pointer_id": current.pointer_id,
+                "mode": current.mode,
+            },
+        )
+    ]
+    if (
+        target is not None
+        and _is_tranche2a_target_slice(target)
+        and str(current.profile_id) == "planetscale_opensearch_v1"
+        and list(current.route_ids) == ["search_bm25.document_chunk"]
+    ):
+        steps.append(
+            CanonPublishStep(
+                step_id="revert_route_serving_state",
+                action="revert_route_serving_state",
+                metadata={
+                    "profile_id": current.profile_id,
+                    "route_ids": list(current.route_ids),
+                    "mode": current.mode,
+                },
+            )
+        )
     return CanonPublishRevertPlan(
         available=True,
         revert_to_pointer_id=current.pointer_id,
         revert_mode=current.mode,
-        steps=[
-            CanonPublishStep(
-                step_id="repoint_active_pointer",
-                action="update_active_pointer",
-                metadata={
-                    "pointer_id": current.pointer_id,
-                    "mode": current.mode,
-                },
-            )
-        ],
+        steps=steps,
         notes=["Prefer pointer reversal before emergency code changes."],
         )
 
@@ -257,5 +275,5 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
         "blockers": blockers,
         "recommendations": recommendations,
         "steps": [step.model_dump() for step in steps],
-        "revert_plan": _build_revert_plan(current).model_dump(),
+        "revert_plan": _build_revert_plan(current, target).model_dump(),
     }

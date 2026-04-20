@@ -290,6 +290,87 @@ def test_publish_plan_includes_route_serving_state_step_for_target_primary_slice
     assert "forward_mode_transition" in payload["recommendations"]
 
 
+def test_publish_plan_includes_route_serving_revert_step_for_tranche2a_target_slice():
+    payload = build_publish_plan(
+        CanonPublishRequest(
+            target=CanonPublishPointer(
+                pointer_id="ptr-target-candidate",
+                graph_id="graph-target",
+                package_revision="r-target",
+                profile_id="planetscale_opensearch_v1",
+                route_ids=["search_bm25.document_chunk"],
+                mode="candidate_primary",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-bm25",
+                            "package_revision": "r-target",
+                            "graph_id": "graph-target",
+                        }
+                    }
+                },
+            ),
+            current=CanonPublishPointer(
+                pointer_id="ptr-target-shadow",
+                graph_id="graph-shadow",
+                package_revision="r-shadow",
+                profile_id="planetscale_opensearch_v1",
+                route_ids=["search_bm25.document_chunk"],
+                mode="shadow",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-shadow",
+                            "package_revision": "r-shadow",
+                            "graph_id": "graph-shadow",
+                        }
+                    }
+                },
+            ),
+            review=CanonPublishReview(
+                branch_name="canonpp-tranche2a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness={
+                "gates": {
+                    "all_bounded_routes_compile": True,
+                    "shadow_reports_present": True,
+                    "no_candidate_set_deltas": True,
+                    "selected_packages_resolved_for_bounded_routes": True,
+                    "no_blocked_search_plane_a_rows": True,
+                },
+                "target_profile_promotion": {
+                    "summary": {
+                        "candidate_primary_ready": True,
+                        "primary_ready": False,
+                    },
+                    "authority_control_readiness": {
+                        "summary": {
+                            "bootstrap_applied": True,
+                        },
+                        "authority_control_bootstrap": {
+                            "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                            "summary": {
+                                "candidate_primary_bootstrap_ready": True,
+                                "primary_bootstrap_ready": False,
+                            },
+                            "profile": {"id": "planetscale_opensearch_v1"},
+                            "mode": "shadow",
+                            "routes": ["search_bm25.document_chunk"],
+                        },
+                    },
+                },
+                "summary": {"ready_for_phase1b": False},
+            },
+        )
+    )
+
+    assert payload["revert_plan"]["available"] is True
+    assert any(step["step_id"] == "revert_route_serving_state" for step in payload["revert_plan"]["steps"])
+
+
 def test_publish_plan_blocks_primary_without_exit_gate():
     payload = build_publish_plan(
         CanonPublishRequest(
