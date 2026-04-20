@@ -91,6 +91,13 @@ def _missing_route_bindings(target: CanonPublishPointer) -> list[str]:
     return missing
 
 
+def _is_tranche2a_target_slice(target: CanonPublishPointer) -> bool:
+    return (
+        str(target.profile_id) == "planetscale_opensearch_v1"
+        and list(target.route_ids) == ["search_bm25.document_chunk"]
+    )
+
+
 def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
     target = request.target
     current = request.current
@@ -175,6 +182,18 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
                 ),
             ]
         )
+        if _is_tranche2a_target_slice(target):
+            steps.append(
+                CanonPublishStep(
+                    step_id="apply_route_serving_state",
+                    action="apply_route_serving_state",
+                    metadata={
+                        "profile_id": target.profile_id,
+                        "route_ids": list(target.route_ids),
+                        "mode": target.mode,
+                    },
+                )
+            )
     else:
         target_profile_promotion = dict(request.exit_readiness.get("target_profile_promotion") or {})
         authority_control_readiness = dict(target_profile_promotion.get("authority_control_readiness") or {})
@@ -208,6 +227,18 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
                 ),
             ]
         )
+        if _is_tranche2a_target_slice(target):
+            steps.append(
+                CanonPublishStep(
+                    step_id="apply_route_serving_state",
+                    action="apply_route_serving_state",
+                    metadata={
+                        "profile_id": target.profile_id,
+                        "route_ids": list(target.route_ids),
+                        "mode": target.mode,
+                    },
+                )
+            )
 
     if target_rank > current_rank:
         recommendations.append("forward_mode_transition")

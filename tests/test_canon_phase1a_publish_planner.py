@@ -222,7 +222,72 @@ def test_publish_plan_includes_authority_control_bootstrap_step_for_target_candi
 
     assert payload["allowed"] is True
     assert any(step["step_id"] == "apply_authority_control_bootstrap" for step in payload["steps"])
-    assert "candidate_primary_promotion_will_apply_authority_control_bootstrap" in payload["recommendations"]
+    assert not any(step["step_id"] == "apply_route_serving_state" for step in payload["steps"])
+
+
+def test_publish_plan_includes_route_serving_state_step_for_target_primary_slice():
+    payload = build_publish_plan(
+        CanonPublishRequest(
+            target=CanonPublishPointer(
+                pointer_id="ptr-primary-target",
+                graph_id="graph-target",
+                package_revision="r-target",
+                profile_id="planetscale_opensearch_v1",
+                route_ids=["search_bm25.document_chunk"],
+                mode="primary",
+                metadata={
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": "pkg-bm25",
+                            "package_revision": "r-target",
+                            "graph_id": "graph-target",
+                        }
+                    }
+                },
+            ),
+            review=CanonPublishReview(
+                branch_name="canonpp-tranche2a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness={
+                "gates": {
+                    "all_bounded_routes_compile": True,
+                    "shadow_reports_present": True,
+                    "no_candidate_set_deltas": True,
+                    "selected_packages_resolved_for_bounded_routes": True,
+                    "no_blocked_search_plane_a_rows": True,
+                },
+                "target_profile_promotion": {
+                    "summary": {
+                        "candidate_primary_ready": True,
+                        "primary_ready": True,
+                    },
+                    "authority_control_readiness": {
+                        "summary": {
+                            "bootstrap_applied": True,
+                        },
+                        "authority_control_bootstrap": {
+                            "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                            "summary": {
+                                "candidate_primary_bootstrap_ready": True,
+                                "primary_bootstrap_ready": False,
+                            },
+                            "profile": {"id": "planetscale_opensearch_v1"},
+                            "mode": "shadow",
+                            "routes": ["search_bm25.document_chunk"],
+                        },
+                    },
+                },
+                "summary": {"ready_for_phase1b": True},
+            },
+        )
+    )
+
+    assert payload["allowed"] is True
+    assert any(step["step_id"] == "apply_route_serving_state" for step in payload["steps"])
+    assert "forward_mode_transition" in payload["recommendations"]
 
 
 def test_publish_plan_blocks_primary_without_exit_gate():

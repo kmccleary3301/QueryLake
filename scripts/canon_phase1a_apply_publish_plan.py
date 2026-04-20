@@ -13,6 +13,7 @@ def main() -> int:
     parser.add_argument("--publish-plan", required=True)
     parser.add_argument("--registry-path", required=True)
     parser.add_argument("--authority-control-registry")
+    parser.add_argument("--route-serving-registry")
     args = parser.parse_args()
 
     plan = json.loads(Path(args.publish_plan).read_text(encoding="utf-8"))
@@ -20,6 +21,7 @@ def main() -> int:
         plan=plan,
         registry_path=args.registry_path,
         authority_control_registry_path=args.authority_control_registry,
+        route_serving_registry_path=args.route_serving_registry,
     )
     print(
         json.dumps(

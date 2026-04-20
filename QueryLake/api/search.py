@@ -75,6 +75,7 @@ from ..runtime.retrieval_route_executors import (
     resolve_search_hybrid_route_executor,
 )
 from ..runtime.route_planning_v2 import instantiate_route_planning_v2
+from ..canon.runtime.search_plane_a_execution import resolve_search_plane_a_execution_contract
 from ..typing.retrieval_primitives import (
     RetrievalCandidate,
     RetrievalPipelineStage,
@@ -749,6 +750,40 @@ def _env_float(name: str, default: float, *, minimum: Optional[float] = None, ma
     if maximum is not None:
         value = min(float(maximum), value)
     return float(value)
+
+
+def _resolve_direct_bm25_execution_seam(
+    *,
+    table: str,
+    profile: Any,
+    return_statement: bool,
+) -> tuple[Any, Any | None]:
+    legacy_resolution = resolve_search_bm25_route_executor(table=table, profile=profile)
+    if return_statement:
+        return legacy_resolution, None
+    if str(table) != "document_chunk":
+        return legacy_resolution, None
+    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
+        return legacy_resolution, None
+
+    package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
+    pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
+    route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
+    if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
+        return legacy_resolution, None
+
+    route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
+    contract = resolve_search_plane_a_execution_contract(
+        route_id="search_bm25.document_chunk",
+        profile_id=str(getattr(profile, "id", "")),
+        package_registry_path=package_registry_path,
+        pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+        mode=route_serving_mode,
+    )
+    if bool(contract.resolution.authoritative):
+        return legacy_resolution, contract
+    return legacy_resolution, None
 
 
 def _candidate_to_document_chunk(candidate: RetrievalCandidate) -> DocumentChunkDictionary:
@@ -2569,24 +2604,46 @@ def search_bm25(
     assert sort_dir in ["DESC", "ASC"], \
         "sort_dir must be either 'DESC' or 'ASC'"
 
-    bm25_route_executor = locals().get("bm25_route_resolution") or resolve_search_bm25_route_executor(table=table, profile=profile)
-    bm25_route_executor.require_executable(allow_plan_only=bool(return_statement))
-    bm25_execution = bm25_route_executor.executor.execute(
-        database,
-        query=query,
-        valid_fields=valid_fields,
-        catch_all_fields=chosen_catch_alls,
+    bm25_route_executor, canon_target_execution = _resolve_direct_bm25_execution_seam(
         table=table,
-        collection_ids=collection_ids,
-        sort_by=sort_by,
-        sort_dir=sort_dir,
-        document_collection_attrs=document_collection_attrs,
-        chosen_table_name=chosen_table.__tablename__,
-        chosen_attributes=chosen_attributes,
-        limit=int(limit),
-        offset=int(offset),
-        return_statement=return_statement,
-    )
+        profile=profile,
+        return_statement=bool(return_statement),
+    ) if "bm25_route_resolution" not in locals() else (locals()["bm25_route_resolution"], None)
+    if canon_target_execution is None:
+        bm25_route_executor.require_executable(allow_plan_only=bool(return_statement))
+        bm25_execution = bm25_route_executor.executor.execute(
+            database,
+            query=query,
+            valid_fields=valid_fields,
+            catch_all_fields=chosen_catch_alls,
+            table=table,
+            collection_ids=collection_ids,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            document_collection_attrs=document_collection_attrs,
+            chosen_table_name=chosen_table.__tablename__,
+            chosen_attributes=chosen_attributes,
+            limit=int(limit),
+            offset=int(offset),
+            return_statement=return_statement,
+        )
+    else:
+        bm25_execution = canon_target_execution.execute(
+            database,
+            query=query,
+            valid_fields=valid_fields,
+            catch_all_fields=chosen_catch_alls,
+            table=table,
+            collection_ids=collection_ids,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+            document_collection_attrs=document_collection_attrs,
+            chosen_table_name=chosen_table.__tablename__,
+            chosen_attributes=chosen_attributes,
+            limit=int(limit),
+            offset=int(offset),
+            return_statement=return_statement,
+        )
     if return_statement:
         return bm25_execution.rows_or_statement
     

@@ -10,6 +10,7 @@ from QueryLake.canon.control import (
     load_pointer_registry,
 )
 from QueryLake.canon.control.authority_control_registry import load_authority_control_registry
+from QueryLake.canon.control.route_serving_registry import load_route_serving_registry
 
 
 def _ready_exit() -> dict:
@@ -210,3 +211,55 @@ def test_pointer_registry_applies_authority_control_bootstrap_step(tmp_path):
     assert registry["candidate_primary_pointer"]["pointer_id"] == "ptr-target-candidate"
     authority_control_registry = load_authority_control_registry(authority_control_registry_path)
     assert len(dict(authority_control_registry.get("entries") or {})) == 1
+
+
+def test_pointer_registry_applies_route_serving_state_for_tranche2a_target_slice(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    plan = {
+        "allowed": True,
+        "target": {
+            "pointer_id": "ptr-target-primary",
+            "graph_id": "graph-target",
+            "package_revision": "rev-target",
+            "profile_id": "planetscale_opensearch_v1",
+            "route_ids": ["search_bm25.document_chunk"],
+            "mode": "primary",
+            "metadata": {
+                "package_bindings": {
+                    "search_bm25.document_chunk": {
+                        "package_id": "pkg-bm25",
+                        "package_revision": "rev-target",
+                        "graph_id": "graph-target",
+                    }
+                }
+            },
+        },
+        "steps": [
+            {"step_id": "update_shadow_pointer"},
+            {"step_id": "promote_candidate_pointer"},
+            {"step_id": "cutover_primary_pointer"},
+            {"step_id": "apply_route_serving_state", "metadata": {"mode": "primary"}},
+        ],
+        "blockers": [],
+    }
+
+    apply_publish_plan(
+        plan=plan,
+        registry_path=registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+
+    route_serving_registry = load_route_serving_registry(route_serving_registry_path)
+    activation = route_serving_registry["activations"][
+        "planetscale_opensearch_v1:search_bm25.document_chunk:activation:primary"
+    ]
+    assert activation["package_ref"] == "pkg-bm25@rev-target"
+    apply_state = route_serving_registry["apply_states"][
+        "planetscale_opensearch_v1:search_bm25.document_chunk:apply:pkg-bm25@rev-target"
+    ]
+    assert apply_state["projection_descriptors"] == ["document_chunk_lexical_projection_v1"]
+    certification = route_serving_registry["certifications"][
+        "planetscale_opensearch_v1:search_bm25.document_chunk:cert:pkg-bm25@rev-target"
+    ]
+    assert certification["package_revision"] == "rev-target"
