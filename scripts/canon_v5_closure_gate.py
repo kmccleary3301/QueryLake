@@ -272,6 +272,20 @@ def _run_broad_canon_tests(repo_root: Path) -> dict[str, Any]:
     }
 
 
+def _implementation_checkpoints(repo_root: Path) -> list[str]:
+    completed = subprocess.run(
+        ["git", "log", "-8", "--oneline"],
+        cwd=repo_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return []
+    return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+
+
 def _build_evidence_packet(*, repo_root: Path, shared_root: Path, run_tests: bool) -> dict[str, Any]:
     docs = _assert_required_docs(shared_root)
     with tempfile.TemporaryDirectory(prefix="canon_v5_closure_") as temp_dir:
@@ -335,14 +349,7 @@ def _build_evidence_packet(*, repo_root: Path, shared_root: Path, run_tests: boo
             "canonpp_completion_score": "100.00 / 100",
             "score_confidence": "high",
         },
-        "implementation_checkpoints": [
-            "4fb5457 Add Canon++ V5 route support matrix",
-            "3579ee6 Extend Canon++ V5 support alignment edge coverage",
-            "a7ae568 Add Canon++ V5 seam transparency metadata",
-            "f22054a Classify Canon++ V5 scaffold compatibility cleanup",
-            "4440f53 Add Canon++ V5 closure gate",
-            "87837e3 Require Canon++ V5 closure report in gate",
-        ],
+        "implementation_checkpoints": _implementation_checkpoints(repo_root),
     }
 
 
