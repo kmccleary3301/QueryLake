@@ -266,6 +266,8 @@ def build_paradedb_lexical_query_plan(
             "body_exactness_mode": variant.body_exactness_mode,
             "proximity_mode": variant.proximity_mode,
             "priors_mode": variant.priors_mode,
+            "exactness_clauses": list(exactness_clauses),
+            "body_exactness_clauses": list(body_exactness_clauses),
             "exactness_clause_count": len(exactness_clauses),
             "body_exactness_clause_count": len(body_exactness_clauses),
             "quoted_phrase_count": len(_extract_raw_quoted_phrases(raw_query_text)),

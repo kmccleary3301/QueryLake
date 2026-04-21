@@ -140,6 +140,11 @@ def build_retrieval_plan_explain(
                 else {}
             ),
             **(
+                {"lexical_variant_resolution": dict(opts["lexical_variant_resolution"])}
+                if isinstance(opts.get("lexical_variant_resolution"), dict)
+                else {}
+            ),
+            **(
                 {"lexical_query_debug": dict(lexical_query_debug)}
                 if lexical_query_debug is not None
                 else {}

@@ -725,6 +725,51 @@ def _resolve_lexical_variant_id(
     return resolved or DEFAULT_LEXICAL_VARIANT_ID
 
 
+QUOTE_SNIPPET_CANARY_MODE_ID = "quote_snippet_q1_request_level_v1"
+QUOTE_SNIPPET_CANARY_VARIANT_ID = "QL-Q1"
+_EXPLICIT_QUOTED_SPAN_RE = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+
+
+def _quoted_span_count(raw_query_text: str) -> int:
+    return sum(
+        1
+        for match in _EXPLICIT_QUOTED_SPAN_RE.finditer(str(raw_query_text or ""))
+        if any(str(group or "").strip() for group in match.groups())
+    )
+
+
+def _resolve_lexical_variant_request(
+    lexical_variant_id: Optional[str],
+    *,
+    route: str,
+    table: Optional[str] = None,
+    query_text: str = "",
+    quoted_query_canary: bool = False,
+) -> Tuple[str, Dict[str, Any]]:
+    requested_variant_id = str(lexical_variant_id).strip() if lexical_variant_id is not None and str(lexical_variant_id).strip() else None
+    route_default_variant_id = _resolve_lexical_variant_id(None, route=route, table=table)
+    effective_variant_id = requested_variant_id or route_default_variant_id
+    quoted_count = _quoted_span_count(query_text)
+    canary_supported = str(route) == "search_bm25" and str(table or "") == "document_chunk"
+    canary_eligible = bool(quoted_query_canary and canary_supported and requested_variant_id is None)
+    canary_activated = bool(canary_eligible and quoted_count > 0)
+    if canary_activated:
+        effective_variant_id = QUOTE_SNIPPET_CANARY_VARIANT_ID
+
+    return effective_variant_id, {
+        "requested_lexical_variant_id": requested_variant_id,
+        "route_default_lexical_variant_id": route_default_variant_id,
+        "base_route_policy_variant_id": route_default_variant_id,
+        "effective_lexical_variant_id": effective_variant_id,
+        "quoted_query_canary_requested": bool(quoted_query_canary),
+        "quoted_query_canary_supported": bool(canary_supported),
+        "quoted_query_canary_eligible": bool(canary_eligible),
+        "quoted_query_canary_activated": bool(canary_activated),
+        "canary_mode_id": QUOTE_SNIPPET_CANARY_MODE_ID if quoted_query_canary else None,
+        "quoted_phrase_count": int(quoted_count),
+    }
+
+
 def _lexical_variant_payload(variant_id: Optional[str]) -> Dict[str, Any]:
     spec = get_lexical_variant_spec(variant_id)
     return spec.to_payload()
@@ -2371,13 +2416,16 @@ def search_bm25(
     _skip_observability: bool = False,
     _pipeline_override: Optional[Dict[str, str]] = None,
     lexical_variant_id: Optional[str] = None,
+    quoted_query_canary: bool = False,
 ) -> List[DocumentChunkDictionary]:
     t_1 = time.time()
     profile = get_deployment_profile()
-    resolved_lexical_variant_id = _resolve_lexical_variant_id(
+    resolved_lexical_variant_id, lexical_variant_resolution = _resolve_lexical_variant_request(
         lexical_variant_id,
         route="search_bm25",
         table=str(table),
+        query_text=str(query or ""),
+        quoted_query_canary=bool(quoted_query_canary),
     )
     lexical_capability_plan = None
     require_capability(
@@ -2395,8 +2443,16 @@ def search_bm25(
             use_dense=False,
             use_sparse=False,
             collection_ids=list(collection_ids or []),
-            planner_hints={"table": str(table), "lexical_variant_id": resolved_lexical_variant_id},
-            query_metadata={"table": str(table), "lexical_variant_id": resolved_lexical_variant_id},
+            planner_hints={
+                "table": str(table),
+                "lexical_variant_id": resolved_lexical_variant_id,
+                "lexical_variant_resolution": dict(lexical_variant_resolution),
+            },
+            query_metadata={
+                "table": str(table),
+                "lexical_variant_id": resolved_lexical_variant_id,
+                "lexical_variant_resolution": dict(lexical_variant_resolution),
+            },
             projection_metadata={
                 "planning_surface": "route_resolution",
                 "fallback_projection_ir_v2": True,
@@ -2500,6 +2556,8 @@ def search_bm25(
                         "offset": int(offset),
                         "bm25_query_text": query,
                         "lexical_variant_id": resolved_lexical_variant_id,
+                        "lexical_variant_resolution": dict(lexical_variant_resolution),
+                        "quoted_query_canary": bool(quoted_query_canary),
                         "table": table,
                         "sort_by": sort_by,
                         "sort_dir": sort_dir,
@@ -2592,9 +2650,11 @@ def search_bm25(
                         candidate_details=[candidate.model_dump() for candidate in run_result.candidates],
                         status="ok",
                         lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
+                        lexical_query_debug=dict(orchestrated_lexical_query_plan.debug or {}),
                         md={
                             "stage_trace": [trace.model_dump() for trace in run_result.traces],
                             "pipeline_resolution": pipeline_resolution,
+                            "lexical_variant_resolution": dict(lexical_variant_resolution),
                             **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                             **(
                                 {"lexical_capability_plan": lexical_capability_plan.to_payload()}
@@ -2634,6 +2694,7 @@ def search_bm25(
                         lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                         md={
                             "pipeline_resolution": pipeline_resolution,
+                            "lexical_variant_resolution": dict(lexical_variant_resolution),
                             **(
                                 {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                                 if lexical_capability_plan is not None
@@ -2716,6 +2777,9 @@ def search_bm25(
                     "limit": int(limit),
                     "offset": int(offset),
                     "bm25_query_text": query,
+                    "lexical_variant_id": resolved_lexical_variant_id,
+                    "lexical_variant_resolution": dict(lexical_variant_resolution),
+                    "quoted_query_canary": bool(quoted_query_canary),
                     "table": table,
                     "sort_by": sort_by,
                     "sort_dir": sort_dir,
@@ -2770,6 +2834,7 @@ def search_bm25(
                     lexical_query_debug=dict((getattr(bm25_execution.plan, "lexical_query_debug", None) or {})),
                     md={
                     "route_executor": bm25_route_executor.to_payload(),
+                    "lexical_variant_resolution": dict(lexical_variant_resolution),
                     **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
@@ -2813,6 +2878,7 @@ def search_bm25(
                 lexical_variant=_lexical_variant_payload(resolved_lexical_variant_id),
                 md={
                     "route_executor": bm25_route_executor.to_payload(),
+                    "lexical_variant_resolution": dict(lexical_variant_resolution),
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None

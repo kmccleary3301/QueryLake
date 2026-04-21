@@ -85,6 +85,7 @@ def test_q1_adds_strict_body_exact_clause_for_quoted_text() -> None:
         variant_id="QL-Q1",
     )
     assert plan.debug["body_exactness_clause_count"] == 1
+    assert plan.debug["body_exactness_clauses"] == ['(text:"Regeneration with acid/base")^24']
     assert plan.body_exactness_clauses == ['(text:"Regeneration with acid/base")^24']
     assert '(text:"Regeneration with acid/base")^24' in plan.formatted_query
 
