@@ -333,6 +333,95 @@ def test_target_profile_file_chunks_authoritative_execution_uses_route_scoped_se
     assert execution.rows_or_statement == [{"id": certification["package_ref"]}]
 
 
+def test_target_profile_hybrid_sparse_disabled_authoritative_execution_uses_route_scoped_serving_truth(monkeypatch, tmp_path):
+    registry_path = tmp_path / "package_registry.json"
+    pointer_registry_path = tmp_path / "pointer_registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    bundle = _build_bundle("search_hybrid.document_chunk", "rev-hybrid-target", options={"disable_sparse": True})
+    register_graph_package_bundle(bundle=bundle, registry_path=registry_path)
+    _write_shadow_pointer(
+        pointer_registry_path,
+        bundle=bundle,
+        route_id="search_hybrid.document_chunk",
+        profile_id="planetscale_opensearch_v1",
+    )
+    certification = record_route_package_certification(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_hybrid.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        certification_state="primary_eligible",
+        evidence_ref="evidence://hybrid-primary",
+        target_executor_id="opensearch.search_hybrid.document_chunk.v1",
+        compile_options=bundle["pipeline"]["compile_options"],
+    )
+    apply_state = record_route_apply_state(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_hybrid.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        projection_descriptors=["document_chunk_lexical_projection_v1", "document_chunk_dense_projection_v1"],
+        config_payload={"namespace": "ql"},
+        dependency_payload={"executor_id": "opensearch.search_hybrid.document_chunk.v1"},
+    )
+    record_route_activation(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_hybrid.document_chunk",
+        mode="primary",
+        pointer_id="ptr-hybrid-primary",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        apply_state_ref=apply_state["apply_state_ref"],
+        approval_ref="approval://hybrid-primary",
+        predecessor_pointer_id="ptr-hybrid-candidate",
+        rollback_target_pointer_id="ptr-hybrid-candidate",
+    )
+
+    def _fake_execute(database, **kwargs):
+        return [[None, 0.5, 0.7, 0.0, 0.9, certification["package_ref"]]]
+
+    monkeypatch.setattr(
+        "QueryLake.runtime.retrieval_route_executors.execute_opensearch_document_chunk_hybrid_search",
+        _fake_execute,
+    )
+
+    resolved = resolve_search_plane_a_execution_contract(
+        route_id="search_hybrid.document_chunk",
+        profile_id="planetscale_opensearch_v1",
+        package_registry_path=registry_path,
+        pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+        mode="primary",
+    )
+
+    assert resolved.to_payload()["authoritative"] is True
+    assert resolved.to_payload()["execution_mode"] == "canon_target_profile_authoritative_executor"
+    assert resolved.to_payload()["executor_id"] == "opensearch.search_hybrid.document_chunk.v1"
+    assert resolved.to_payload()["compile_options"]["disable_sparse"] is True
+    execution = resolved.execute(
+        None,
+        raw_query_text="q",
+        collection_ids=["collection"],
+        use_bm25=True,
+        use_similarity=True,
+        use_sparse=False,
+        limit_bm25=10,
+        limit_similarity=10,
+        limit_sparse=0,
+        similarity_weight=0.1,
+        bm25_weight=0.9,
+        sparse_weight=0.0,
+        embedding=[],
+        return_statement=False,
+    )
+    assert execution == [[None, 0.5, 0.7, 0.0, 0.9, certification["package_ref"]]]
+
+
 def test_target_profile_hybrid_execution_contract_blocks_sparse_enabled_package(tmp_path):
     registry_path = tmp_path / "package_registry.json"
     pointer_registry_path = tmp_path / "pointer_registry.json"

@@ -14,6 +14,7 @@ from QueryLake.runtime.db_compat import build_profile_execution_target_payload, 
 from QueryLake.runtime.retrieval_pipeline_runtime import default_pipeline_for_route
 from QueryLake.runtime.retrieval_route_executors import (
     OpenSearchDocumentChunkBM25RouteExecutor,
+    OpenSearchDocumentChunkHybridRouteExecutor,
     OpenSearchFileChunkRouteExecutor,
     ResolvedRouteExecutor,
     resolve_search_bm25_route_executor,
@@ -29,7 +30,11 @@ _ROUTE_TO_DEFAULT_PIPELINE_ROUTE = {
     "search_file_chunks": "search_file_chunks",
 }
 _SOURCE_SEARCH_PLANE_PROFILE_ID = "aws_aurora_pg_opensearch_v1"
-_AUTHORITATIVE_TARGET_ROUTES = {"search_bm25.document_chunk", "search_file_chunks"}
+_AUTHORITATIVE_TARGET_ROUTES = {
+    "search_bm25.document_chunk",
+    "search_file_chunks",
+    "search_hybrid.document_chunk",
+}
 
 
 def _normalize_route(route_id: str) -> str:
@@ -200,19 +205,31 @@ def resolve_search_plane_a_execution_contract(
                     if len(projections) == 0:
                         authority_blockers.append("route_apply_state_projection_missing")
                     else:
-                        if str(route_id) == "search_file_chunks":
+                        if str(route_id) == "search_hybrid.document_chunk":
+                            if not bool(compile_options.get("disable_sparse")):
+                                authority_blockers.append("hybrid_authoritative_target_requires_sparse_disabled_package")
+                                recommendations.append("recompile_hybrid_package_with_disable_sparse_true")
+                            elif "document_chunk_sparse_projection_v1" in set(projections):
+                                authority_blockers.append("hybrid_authoritative_target_sparse_projection_not_allowed")
+                                recommendations.append("remove_sparse_projection_from_hybrid_target_apply_state")
+                            else:
+                                executor = OpenSearchDocumentChunkHybridRouteExecutor(
+                                    projection_descriptors=tuple(projections),
+                                )
+                        elif str(route_id) == "search_file_chunks":
                             executor = OpenSearchFileChunkRouteExecutor(projection_id=projections[0])
                         else:
                             executor = OpenSearchDocumentChunkBM25RouteExecutor(projection_id=projections[0])
-                        executor_id = executor.executor_id
-                        projection_descriptors = projections
-                        source_resolution_payload = {}
-                        search_plane_blockers = []
-                        authority_blockers = []
-                        execution_mode = "canon_target_profile_authoritative_executor"
-                        authoritative = True
-                        primary_ready = str(mode) == "primary"
-                        recommendations.append("authoritative_target_execution_uses_route_scoped_serving_truth")
+                        if executor is not None and len(authority_blockers) == 0:
+                            executor_id = executor.executor_id
+                            projection_descriptors = projections
+                            source_resolution_payload = {}
+                            search_plane_blockers = []
+                            authority_blockers = []
+                            execution_mode = "canon_target_profile_authoritative_executor"
+                            authoritative = True
+                            primary_ready = str(mode) == "primary"
+                            recommendations.append("authoritative_target_execution_uses_route_scoped_serving_truth")
                 else:
                     authority_blockers.extend(str(value) for value in list(route_serving_state.get("blockers") or []))
                     recommendations.append("complete_route_scoped_migrated_truth_before_authoritative_target_serving")

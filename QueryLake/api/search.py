@@ -817,6 +817,47 @@ def _resolve_direct_file_chunks_execution_seam(
     return legacy_resolution, None
 
 
+def _resolve_direct_hybrid_execution_seam(
+    *,
+    profile: Any,
+    return_statement: bool,
+    use_bm25: bool,
+    use_similarity: bool,
+    use_sparse: bool,
+) -> tuple[Any, Any | None]:
+    legacy_resolution = resolve_search_hybrid_route_executor(
+        use_bm25=bool(use_bm25),
+        use_similarity=bool(use_similarity),
+        use_sparse=bool(use_sparse),
+        profile=profile,
+    )
+    if return_statement:
+        return legacy_resolution, None
+    if bool(use_sparse):
+        return legacy_resolution, None
+    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
+        return legacy_resolution, None
+
+    package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
+    pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
+    route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
+    if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
+        return legacy_resolution, None
+
+    route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
+    contract = resolve_search_plane_a_execution_contract(
+        route_id="search_hybrid.document_chunk",
+        profile_id=str(getattr(profile, "id", "")),
+        package_registry_path=package_registry_path,
+        pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+        mode=route_serving_mode,
+    )
+    if bool(contract.resolution.authoritative):
+        return legacy_resolution, contract
+    return legacy_resolution, None
+
+
 def _candidate_to_document_chunk(candidate: RetrievalCandidate) -> DocumentChunkDictionary:
     md = candidate.metadata or {}
     row_id: Union[str, List[str]] = candidate.content_id
@@ -2059,12 +2100,15 @@ async def search_hybrid(
         if strong_where_clause is not None
         else f"WHERE {collection_spec_new}"
     )
-    hybrid_route_executor = locals().get("hybrid_route_resolution") or resolve_search_hybrid_route_executor(
+    hybrid_route_executor, canon_hybrid_execution = _resolve_direct_hybrid_execution_seam(
+        profile=profile,
+        return_statement=return_statement,
         use_bm25=bool(use_bm25),
         use_similarity=bool(use_similarity),
         use_sparse=bool(use_sparse),
-        profile=profile,
     )
+    if locals().get("hybrid_route_resolution") is not None and canon_hybrid_execution is None:
+        hybrid_route_executor = locals()["hybrid_route_resolution"]
     hybrid_route_executor.require_executable(allow_plan_only=bool(return_statement))
     t_5 = time.time()
 
@@ -2094,27 +2138,52 @@ async def search_hybrid(
         )
 
     try:
-        results = hybrid_route_executor.executor.execute(
-            database,
-            raw_query_text=bm25_query_text,
-            collection_ids=collection_ids,
-            collection_spec=collection_spec,
-            formatted_query=formatted_query,
-            strong_where_clause=strong_where_clause if strict_constraint_prefilter else None,
-            similarity_constraint=similarity_constraint,
-            retrieved_fields_string=retrieved_fields_string,
-            use_bm25=bool(use_bm25),
-            use_similarity=bool(use_similarity),
-            use_sparse=bool(use_sparse),
-            limit_bm25=int(limit_bm25),
-            limit_similarity=int(limit_similarity),
-            limit_sparse=int(limit_sparse),
-            similarity_weight=float(similarity_weight),
-            bm25_weight=float(bm25_weight),
-            sparse_weight=float(sparse_weight),
-            embedding=embedding,
-            embedding_sparse=embedding_sparse,
-            sparse_dimensions=int(sparse_dimensions),
+        results = (
+            canon_hybrid_execution.execute(
+                database,
+                raw_query_text=bm25_query_text,
+                collection_ids=collection_ids,
+                collection_spec=collection_spec,
+                formatted_query=formatted_query,
+                strong_where_clause=strong_where_clause if strict_constraint_prefilter else None,
+                similarity_constraint=similarity_constraint,
+                retrieved_fields_string=retrieved_fields_string,
+                use_bm25=bool(use_bm25),
+                use_similarity=bool(use_similarity),
+                use_sparse=bool(use_sparse),
+                limit_bm25=int(limit_bm25),
+                limit_similarity=int(limit_similarity),
+                limit_sparse=int(limit_sparse),
+                similarity_weight=float(similarity_weight),
+                bm25_weight=float(bm25_weight),
+                sparse_weight=float(sparse_weight),
+                embedding=embedding,
+                embedding_sparse=embedding_sparse,
+                sparse_dimensions=int(sparse_dimensions),
+            )
+            if canon_hybrid_execution is not None
+            else hybrid_route_executor.executor.execute(
+                database,
+                raw_query_text=bm25_query_text,
+                collection_ids=collection_ids,
+                collection_spec=collection_spec,
+                formatted_query=formatted_query,
+                strong_where_clause=strong_where_clause if strict_constraint_prefilter else None,
+                similarity_constraint=similarity_constraint,
+                retrieved_fields_string=retrieved_fields_string,
+                use_bm25=bool(use_bm25),
+                use_similarity=bool(use_similarity),
+                use_sparse=bool(use_sparse),
+                limit_bm25=int(limit_bm25),
+                limit_similarity=int(limit_similarity),
+                limit_sparse=int(limit_sparse),
+                similarity_weight=float(similarity_weight),
+                bm25_weight=float(bm25_weight),
+                sparse_weight=float(sparse_weight),
+                embedding=embedding,
+                embedding_sparse=embedding_sparse,
+                sparse_dimensions=int(sparse_dimensions),
+            )
         )
         results = list(filter(lambda x: not x[0] is None, results))
         t_6 = time.time()

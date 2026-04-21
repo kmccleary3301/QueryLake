@@ -13,13 +13,17 @@ from .route_serving_registry import (
     record_route_package_certification,
 )
 from QueryLake.runtime.db_compat import get_deployment_profile
-from QueryLake.runtime.retrieval_route_executors import resolve_search_bm25_route_executor
-from QueryLake.runtime.retrieval_route_executors import resolve_search_file_chunks_route_executor
+from QueryLake.runtime.retrieval_route_executors import (
+    resolve_search_bm25_route_executor,
+    resolve_search_file_chunks_route_executor,
+    resolve_search_hybrid_route_executor,
+)
 
 
 _TARGET_SERVING_ROUTE_EXECUTOR_IDS = {
     "search_bm25.document_chunk": "opensearch.search_bm25.document_chunk.v1",
     "search_file_chunks": "opensearch.search_file_chunks.v1",
+    "search_hybrid.document_chunk": "opensearch.search_hybrid.document_chunk.v1",
 }
 
 
@@ -96,6 +100,15 @@ def _projection_descriptors_for_route(*, route_id: str) -> list[str]:
         source_profile = get_deployment_profile("aws_aurora_pg_opensearch_v1")
         resolution = resolve_search_file_chunks_route_executor(profile=source_profile)
         return [str(value) for value in list(resolution.to_payload().get("projection_descriptors") or []) if str(value or "")]
+    if str(route_id) == "search_hybrid.document_chunk":
+        source_profile = get_deployment_profile("aws_aurora_pg_opensearch_v1")
+        resolution = resolve_search_hybrid_route_executor(
+            use_bm25=True,
+            use_similarity=True,
+            use_sparse=False,
+            profile=source_profile,
+        )
+        return [str(value) for value in list(resolution.to_payload().get("projection_descriptors") or []) if str(value or "")]
     return []
 
 
@@ -125,6 +138,9 @@ def _record_tranche2a_route_serving_state(
 
     metadata = dict(target.get("metadata") or {})
     route_metadata = dict(dict(metadata.get("route_metadata") or {}).get(route_id) or {})
+    route_compile_options = dict(route_metadata.get("compile_options") or {})
+    if route_id == "search_hybrid.document_chunk" and not bool(route_compile_options.get("disable_sparse")):
+        raise ValueError("Hybrid target serving requires route_metadata compile_options.disable_sparse=true.")
     projection_descriptors = [
         str(value)
         for value in list(route_metadata.get("projection_descriptors") or _projection_descriptors_for_route(route_id=route_id))
@@ -149,7 +165,7 @@ def _record_tranche2a_route_serving_state(
         certification_state=certification_state,
         evidence_ref=f"publish-plan:{target.get('pointer_id')}",
         target_executor_id=_TARGET_SERVING_ROUTE_EXECUTOR_IDS[route_id],
-        compile_options=route_metadata.get("compile_options"),
+        compile_options=route_compile_options,
         source_shadow_baseline_ref=f"shadow:{route_id}",
     )
     apply_entry = record_route_apply_state(

@@ -573,3 +573,59 @@ def test_pointer_registry_applies_route_serving_state_for_file_chunks_target_sli
     assert state["state"] == "primary_active"
     assert state["apply_state"]["projection_descriptors"] == ["file_chunk_lexical_projection_v1"]
     assert state["certification"]["target_executor_id"] == "opensearch.search_file_chunks.v1"
+
+
+def test_pointer_registry_applies_route_serving_state_for_sparse_disabled_hybrid_target_slice(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    plan = {
+        "allowed": True,
+        "target": {
+            "pointer_id": "ptr-hybrid-primary",
+            "graph_id": "graph-hybrid",
+            "package_revision": "rev-hybrid",
+            "profile_id": "planetscale_opensearch_v1",
+            "route_ids": ["search_hybrid.document_chunk"],
+            "mode": "primary",
+            "metadata": {
+                "package_bindings": {
+                    "search_hybrid.document_chunk": {
+                        "package_id": "pkg-hybrid",
+                        "package_revision": "rev-hybrid",
+                        "graph_id": "graph-hybrid",
+                    }
+                },
+                "route_metadata": {
+                    "search_hybrid.document_chunk": {
+                        "compile_options": {"disable_sparse": True},
+                    }
+                },
+            },
+        },
+        "steps": [
+            {"step_id": "update_shadow_pointer"},
+            {"step_id": "promote_candidate_pointer"},
+            {"step_id": "cutover_primary_pointer"},
+            {"step_id": "apply_route_serving_state", "metadata": {"mode": "primary"}},
+        ],
+        "blockers": [],
+    }
+
+    apply_publish_plan(
+        plan=plan,
+        registry_path=registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+
+    state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_hybrid.document_chunk",
+    )
+    assert state["state"] == "primary_active"
+    assert state["apply_state"]["projection_descriptors"] == [
+        "document_chunk_lexical_projection_v1",
+        "document_chunk_dense_projection_v1",
+    ]
+    assert state["certification"]["compile_options"]["disable_sparse"] is True
+    assert state["certification"]["target_executor_id"] == "opensearch.search_hybrid.document_chunk.v1"
