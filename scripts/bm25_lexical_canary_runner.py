@@ -95,6 +95,12 @@ def main() -> int:
     parser.add_argument("--oauth2-token", default="")
     parser.add_argument("--auth-json", default="")
     parser.add_argument("--top-k", type=int, default=10)
+    parser.add_argument(
+        "--bm25-execution-mode",
+        choices=["direct", "orchestrated"],
+        default="orchestrated",
+        help="Execution mode passed to the BM25 eval harness for document_chunk live runs.",
+    )
     parser.add_argument("--query-offset", type=int, default=0)
     parser.add_argument("--query-limit", type=int, default=0)
     parser.add_argument("--progress-every", type=int, default=10)
@@ -157,7 +163,7 @@ def main() -> int:
                     variant_ids=[baseline_variant, primary_variant],
                     auth=auth,
                     top_k=int(args.top_k),
-                    bm25_execution_mode="orchestrated",
+                    bm25_execution_mode=str(args.bm25_execution_mode),
                     progress_every=int(args.progress_every),
                 )
             route_payloads[str(route)] = {

@@ -179,13 +179,17 @@ def run_probe(
     base_url: str,
     username: str,
     password: str,
+    auth_json: str = "",
     query_files: Sequence[str],
     variants: Sequence[str],
     per_route_limit: int,
     top_k: int,
 ) -> JsonDict:
-    api_key = _bootstrap_api_key(base_url, username=username, password=password)
-    auth = {"api_key": api_key}
+    if str(auth_json or "").strip():
+        auth = dict(json.loads(Path(auth_json).read_text(encoding="utf-8")))
+    else:
+        api_key = _bootstrap_api_key(base_url, username=username, password=password)
+        auth = {"api_key": api_key}
     all_cases: List[JsonDict] = []
     for query_file in query_files:
         all_cases.extend(_load_jsonl(Path(query_file)))
@@ -227,6 +231,7 @@ def main() -> int:
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--username", default=f"bm25probe_{secrets.token_hex(4)}")
     parser.add_argument("--password", default=secrets.token_hex(16))
+    parser.add_argument("--auth-json", default="", help="Optional existing auth JSON; skips add_user/api-key bootstrap.")
     parser.add_argument("--query-file", action="append", required=True)
     parser.add_argument("--variant", action="append", required=True)
     parser.add_argument("--per-route-limit", type=int, default=2)
@@ -237,6 +242,7 @@ def main() -> int:
         base_url=str(args.base_url),
         username=str(args.username),
         password=str(args.password),
+        auth_json=str(args.auth_json),
         query_files=list(args.query_file),
         variants=list(args.variant),
         per_route_limit=int(args.per_route_limit),

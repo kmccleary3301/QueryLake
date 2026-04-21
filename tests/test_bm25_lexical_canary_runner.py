@@ -1,12 +1,13 @@
 from pathlib import Path
 import sys
 import json
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.bm25_lexical_canary_runner import _clone_query_set_for_route, _filter_qrels_for_query_set, _report_summary
+from scripts.bm25_lexical_canary_runner import _clone_query_set_for_route, _filter_qrels_for_query_set, _report_summary, main
 from scripts.bm25_lexical_canary_runner import _apply_query_filter, _explicit_quoted_span_count
 
 
@@ -72,3 +73,75 @@ def test_filter_qrels_for_query_set_removes_filtered_out_queries():
         {"query_id": "q3", "query_text": '"gamma delta"'},
     ]
     assert [row["query_id"] for row in _filter_qrels_for_query_set(qrels, query_set)] == ["q1", "q3"]
+
+
+def test_main_passes_requested_bm25_execution_mode(tmp_path, monkeypatch):
+    query_set = tmp_path / "queries.jsonl"
+    qrels = tmp_path / "qrels.jsonl"
+    slices = tmp_path / "slices.json"
+    manifest = tmp_path / "manifest.json"
+    output = tmp_path / "out.json"
+    auth = tmp_path / "auth.json"
+
+    query_set.write_text(
+        json.dumps(
+            {
+                "query_id": "q1",
+                "route": "search_bm25.document_chunk",
+                "profile_id": "paradedb_postgres_gold_v1",
+                "query_text": '"alpha beta"',
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    qrels.write_text(json.dumps({"query_id": "q1", "result_id": "r1", "relevance": 2}) + "\n", encoding="utf-8")
+    slices.write_text("{}", encoding="utf-8")
+    auth.write_text(json.dumps({"api_key": "token"}), encoding="utf-8")
+    manifest.write_text(
+        json.dumps(
+            {
+                "c1": {
+                    "query_set": str(query_set),
+                    "qrels": str(qrels),
+                    "slice_manifest": str(slices),
+                    "primary_variant": "QL-Q1",
+                    "baseline_variant": "QL-L3",
+                    "routes": ["search_bm25.document_chunk"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    def _fake_payload(**kwargs):
+        captured["bm25_execution_mode"] = kwargs["bm25_execution_mode"]
+        return {
+            "metrics_by_variant": {
+                "QL-L3": {"overall": {}},
+                "QL-Q1": {"overall": {}},
+            }
+        }
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "bm25_lexical_canary_runner.py",
+            "--manifest",
+            str(manifest),
+            "--mode",
+            "live",
+            "--auth-json",
+            str(auth),
+            "--bm25-execution-mode",
+            "direct",
+            "--output",
+            str(output),
+        ],
+    )
+    with patch("scripts.bm25_lexical_canary_runner.build_live_or_fixture_payload", _fake_payload):
+        assert main() == 0
+    assert captured["bm25_execution_mode"] == "direct"
