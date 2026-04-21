@@ -112,7 +112,7 @@ def _projection_descriptors_for_route(*, route_id: str) -> list[str]:
     return []
 
 
-def _record_tranche2a_route_serving_state(
+def _record_route_scoped_target_serving_state(
     *,
     target: dict[str, Any],
     route_serving_registry_path: str | Path,
@@ -134,7 +134,7 @@ def _record_tranche2a_route_serving_state(
         "graph_id": str(binding.get("graph_id") or ""),
     }
     if not all(package_ref.values()):
-        raise ValueError("Route-scoped serving state requires complete package binding metadata for the Tranche 2A route.")
+        raise ValueError("Route-scoped serving state requires complete package binding metadata for the bounded target route.")
 
     metadata = dict(target.get("metadata") or {})
     route_metadata = dict(dict(metadata.get("route_metadata") or {}).get(route_id) or {})
@@ -147,7 +147,7 @@ def _record_tranche2a_route_serving_state(
         if str(value or "")
     ]
     if len(projection_descriptors) == 0:
-        raise ValueError("Route-scoped serving state requires projection descriptors for the Tranche 2A route.")
+        raise ValueError("Route-scoped serving state requires projection descriptors for the bounded target route.")
 
     if str(mode) == "candidate_primary":
         certification_state = "candidate_eligible"
@@ -197,6 +197,24 @@ def _record_tranche2a_route_serving_state(
             "activation_mode": str(mode),
             "bounded_scope": "single_route",
         },
+    )
+
+
+# Compatibility alias for older Phase 1A / Tranche 2A tests and operator notes.
+def _record_tranche2a_route_serving_state(
+    *,
+    target: dict[str, Any],
+    route_serving_registry_path: str | Path,
+    mode: str,
+    predecessor_pointer_id: str | None = None,
+    rollback_target_pointer_id: str | None = None,
+) -> None:
+    _record_route_scoped_target_serving_state(
+        target=target,
+        route_serving_registry_path=route_serving_registry_path,
+        mode=mode,
+        predecessor_pointer_id=predecessor_pointer_id,
+        rollback_target_pointer_id=rollback_target_pointer_id,
     )
 
 
@@ -278,7 +296,7 @@ def apply_publish_plan(
             elif step_mode == "primary":
                 predecessor_pointer_id = str((previous_primary_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
                 rollback_target_pointer_id = str((previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
-            _record_tranche2a_route_serving_state(
+            _record_route_scoped_target_serving_state(
                 target=target,
                 route_serving_registry_path=route_serving_registry_path,
                 mode=step_mode,
@@ -360,7 +378,7 @@ def apply_revert_plan(
                     )
             predecessor_pointer_id = str((previous_primary_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
             rollback_target_pointer_id = str(pointer.get("pointer_id") or "") or None
-            _record_tranche2a_route_serving_state(
+            _record_route_scoped_target_serving_state(
                 target=pointer,
                 route_serving_registry_path=route_serving_registry_path,
                 mode=revert_mode,

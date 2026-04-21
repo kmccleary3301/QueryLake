@@ -39,6 +39,7 @@ def _route_slice_support_state(*, route_state: str, authoritative: bool, primary
     if route_state == "primary_active" and authoritative and primary_ready:
         return "route_slice_supported"
     if route_state == "candidate_primary_active" and authoritative:
+        # Keep the historical value stable; V5 docs treat this as candidate-active, not final support.
         return "route_slice_candidate"
     if route_state == "primary_eligible":
         return "route_slice_primary_eligible"

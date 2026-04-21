@@ -71,7 +71,7 @@ def _build_revert_plan(current: CanonPublishPointer | None, target: CanonPublish
     ]
     if (
         target is not None
-        and _is_tranche2a_target_slice(target)
+        and _is_v5_bounded_target_slice(target)
         and str(current.profile_id) == "planetscale_opensearch_v1"
         and list(current.route_ids) == ["search_bm25.document_chunk"]
     ):
@@ -109,12 +109,17 @@ def _missing_route_bindings(target: CanonPublishPointer) -> list[str]:
     return missing
 
 
-def _is_tranche2a_target_slice(target: CanonPublishPointer) -> bool:
+def _is_v5_bounded_target_slice(target: CanonPublishPointer) -> bool:
     return (
         str(target.profile_id) == "planetscale_opensearch_v1"
         and list(target.route_ids)
         in (["search_bm25.document_chunk"], ["search_file_chunks"], ["search_hybrid.document_chunk"])
     )
+
+
+# Compatibility alias for older Phase 1A / Tranche 2A tests and operator notes.
+def _is_tranche2a_target_slice(target: CanonPublishPointer) -> bool:
+    return _is_v5_bounded_target_slice(target)
 
 
 def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
@@ -201,7 +206,7 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
                 ),
             ]
         )
-        if _is_tranche2a_target_slice(target):
+        if _is_v5_bounded_target_slice(target):
             steps.append(
                 CanonPublishStep(
                     step_id="apply_route_serving_state",
@@ -246,7 +251,7 @@ def build_publish_plan(request: CanonPublishRequest) -> dict[str, Any]:
                 ),
             ]
         )
-        if _is_tranche2a_target_slice(target):
+        if _is_v5_bounded_target_slice(target):
             steps.append(
                 CanonPublishStep(
                     step_id="apply_route_serving_state",
