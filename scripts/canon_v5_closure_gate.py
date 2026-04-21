@@ -340,6 +340,8 @@ def _build_evidence_packet(*, repo_root: Path, shared_root: Path, run_tests: boo
             "3579ee6 Extend Canon++ V5 support alignment edge coverage",
             "a7ae568 Add Canon++ V5 seam transparency metadata",
             "f22054a Classify Canon++ V5 scaffold compatibility cleanup",
+            "4440f53 Add Canon++ V5 closure gate",
+            "87837e3 Require Canon++ V5 closure report in gate",
         ],
     }
 
