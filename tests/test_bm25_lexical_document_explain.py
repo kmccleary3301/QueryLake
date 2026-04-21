@@ -197,6 +197,18 @@ def test_search_bm25_quoted_query_canary_resolves_q1_only_for_quoted_chunk_queri
     assert search_bm25(
         database=DummyDB(),
         auth={"oauth2": "tok"},
+        query='"acid"',
+        collection_ids=["c1"],
+        table="document_chunk",
+        return_statement=True,
+        _direct_stage_call=True,
+        quoted_query_canary=True,
+    ) == "SQL"
+    assert captured["variant_ids"][-1] == "QL-L3"
+
+    assert search_bm25(
+        database=DummyDB(),
+        auth={"oauth2": "tok"},
         query='"Regeneration with acid/base"',
         collection_ids=["c1"],
         table="document_chunk",

@@ -66,6 +66,17 @@ def test_quoted_query_canary_resolution_only_activates_for_quoted_chunk_bm25(mon
     assert resolution["quoted_phrase_count"] == 0
 
     effective, resolution = _resolve_lexical_variant_request(
+        None,
+        route="search_bm25",
+        table="document_chunk",
+        query_text='"acid"',
+        quoted_query_canary=True,
+    )
+    assert effective == "QL-L3"
+    assert resolution["quoted_query_canary_activated"] is False
+    assert resolution["quoted_phrase_count"] == 0
+
+    effective, resolution = _resolve_lexical_variant_request(
         "QL-L4",
         route="search_bm25",
         table="document_chunk",

@@ -728,14 +728,16 @@ def _resolve_lexical_variant_id(
 QUOTE_SNIPPET_CANARY_MODE_ID = "quote_snippet_q1_request_level_v1"
 QUOTE_SNIPPET_CANARY_VARIANT_ID = "QL-Q1"
 _EXPLICIT_QUOTED_SPAN_RE = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+_QUOTE_LEXICAL_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 
-def _quoted_span_count(raw_query_text: str) -> int:
-    return sum(
-        1
-        for match in _EXPLICIT_QUOTED_SPAN_RE.finditer(str(raw_query_text or ""))
-        if any(str(group or "").strip() for group in match.groups())
-    )
+def _quoted_span_count(raw_query_text: str, *, min_tokens: int = 2) -> int:
+    count = 0
+    for match in _EXPLICIT_QUOTED_SPAN_RE.finditer(str(raw_query_text or "")):
+        phrase = next((group for group in match.groups() if group), "")
+        if len(_QUOTE_LEXICAL_TOKEN_RE.findall(str(phrase or ""))) >= int(min_tokens):
+            count += 1
+    return count
 
 
 def _resolve_lexical_variant_request(
