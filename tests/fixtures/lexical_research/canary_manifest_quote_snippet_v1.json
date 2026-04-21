@@ -1,0 +1,49 @@
+{
+  "quote_snippet_quoted_only_challenge": {
+    "description": "Quoted-query-only challenge canary for QL-Q1 on direct document_chunk lexical retrieval.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_quote_snippet_challenge_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_live_quote_snippet_challenge_v1.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_live_quote_snippet_challenge_v1.json",
+    "query_filter": "explicit_quoted_span",
+    "primary_variant": "QL-Q1",
+    "baseline_variant": "QL-L3",
+    "routes": [
+      "search_bm25.document_chunk"
+    ]
+  },
+  "quote_snippet_quoted_only_sanity": {
+    "description": "Broader quote/snippet sanity canary for QL-Q1 on direct document_chunk lexical retrieval.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_quote_snippet_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_live_quote_snippet_v1.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_live_quote_snippet_v1.json",
+    "query_filter": "explicit_quoted_span",
+    "primary_variant": "QL-Q1",
+    "baseline_variant": "QL-L3",
+    "routes": [
+      "search_bm25.document_chunk"
+    ]
+  },
+  "quote_snippet_quoted_only_exploratory_guardrail": {
+    "description": "Exploratory guardrail canary for quoted-query-only QL-Q1 versus QL-L3.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_bcas_balanced_90_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_v2.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_v2.json",
+    "primary_variant": "QL-Q1",
+    "baseline_variant": "QL-L3",
+    "routes": [
+      "search_bm25.document_chunk"
+    ]
+  },
+  "quote_snippet_quoted_only_negative_review": {
+    "description": "Current negative/fallback informational surface for QL-Q1 versus QL-L3; informational only until redesigned.",
+    "query_set": "tests/fixtures/lexical_research/query_set_live_quote_snippet_negative_v1.jsonl",
+    "qrels": "tests/fixtures/lexical_research/qrels_live_quote_snippet_negative_v1.jsonl",
+    "slice_manifest": "tests/fixtures/lexical_research/slice_manifest_live_quote_snippet_negative_v1.json",
+    "query_filter": "explicit_quoted_span",
+    "primary_variant": "QL-Q1",
+    "baseline_variant": "QL-L3",
+    "routes": [
+      "search_bm25.document_chunk"
+    ]
+  }
+}

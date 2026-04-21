@@ -13,6 +13,7 @@ class LexicalVariantSpec(BaseModel):
     max_trigram_windows: Optional[int] = None
     catch_all_field_weights: Dict[str, float] = Field(default_factory=lambda: {"text": 1.0})
     exactness_mode: str = "off"  # off | title_id | title_id_phrase
+    body_exactness_mode: str = "off"  # off | quoted_text_exact | quoted_text_exact_normalized
     proximity_mode: str = "off"  # off | current | constrained | sdm_lite_proxy
     priors_mode: str = "off"
     rescore_window: Optional[int] = None
@@ -86,6 +87,34 @@ _REGISTRY: Dict[str, LexicalVariantSpec] = {
         catch_all_field_weights={"text": 1.0, "document_name": 3.0, "website_url": 1.5},
         rescore_window=100,
         notes=["secondary", "rescore"],
+    ),
+    "QL-Q1": LexicalVariantSpec(
+        variant_id="QL-Q1",
+        description="Field-aware branch variant with quoted body-text exact clauses only.",
+        enable_sequence_expansion=False,
+        body_exactness_mode="quoted_text_exact",
+        proximity_mode="off",
+        catch_all_field_weights={"text": 1.0, "document_name": 3.0, "website_url": 1.5},
+        notes=["branch", "quote_snippet", "quoted_body_exact"],
+    ),
+    "QL-Q2": LexicalVariantSpec(
+        variant_id="QL-Q2",
+        description="Field-aware branch variant with quoted body-text exact clauses and punctuation-normalized fallback.",
+        enable_sequence_expansion=False,
+        body_exactness_mode="quoted_text_exact_normalized",
+        proximity_mode="off",
+        catch_all_field_weights={"text": 1.0, "document_name": 3.0, "website_url": 1.5},
+        notes=["branch", "quote_snippet", "quoted_body_exact", "normalized_fallback"],
+    ),
+    "QL-Q4": LexicalVariantSpec(
+        variant_id="QL-Q4",
+        description="Field-aware exactness branch variant combining title/id exactness with quoted body-text normalized fallback.",
+        enable_sequence_expansion=False,
+        exactness_mode="title_id",
+        body_exactness_mode="quoted_text_exact_normalized",
+        proximity_mode="off",
+        catch_all_field_weights={"text": 1.0, "document_name": 3.0, "website_url": 1.5},
+        notes=["branch", "quote_snippet", "field_aware", "exactness", "quoted_body_exact", "normalized_fallback"],
     ),
 }
 

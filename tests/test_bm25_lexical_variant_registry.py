@@ -22,3 +22,7 @@ def test_registry_contains_core_week_one_variants():
     ids = {spec.variant_id for spec in list_lexical_variant_specs()}
     assert {"QL-L0", "QL-L1", "QL-L3", "QL-L4", "QL-L5"}.issubset(ids)
 
+
+def test_registry_contains_quote_snippet_branch_variants():
+    ids = {spec.variant_id for spec in list_lexical_variant_specs()}
+    assert {"QL-Q1", "QL-Q2", "QL-Q4"}.issubset(ids)

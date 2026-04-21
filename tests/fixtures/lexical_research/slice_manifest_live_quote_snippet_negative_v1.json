@@ -1,0 +1,26 @@
+{
+  "document_chunk": {
+    "description": "Chunk-level lexical negative quote/snippet fallback surface.",
+    "primary_metric": "nDCG@10"
+  },
+  "enterprise_doc": {
+    "description": "Enterprise/process document negative fallback queries.",
+    "primary_metric": "nDCG@10"
+  },
+  "negative_phrase_absent": {
+    "description": "Quoted phrases that do not occur verbatim in the corpus and require lexical fallback rather than exact hit recovery.",
+    "primary_metric": "nDCG@10"
+  },
+  "quote_snippet_negative": {
+    "description": "Quoted phrase-absent fallback cases where lexical retrieval should still find the intended chunk.",
+    "primary_metric": "nDCG@10"
+  },
+  "quoted_absent_fallback": {
+    "description": "Quoted queries with wording or punctuation drift that should still retrieve the intended chunk via fallback behavior.",
+    "primary_metric": "MRR@10"
+  },
+  "technical_doc": {
+    "description": "Technical/procedural negative fallback queries.",
+    "primary_metric": "nDCG@10"
+  }
+}

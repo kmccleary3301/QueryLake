@@ -75,3 +75,64 @@ def test_l4_exactness_adds_document_name_clause_for_identifier_exact_chunk_queri
     assert plan.query_class == "identifier_exact"
     assert plan.debug["exactness_clause_count"] >= 1
     assert any("document_name:" in clause for clause in plan.exactness_clauses)
+
+
+def test_q1_adds_strict_body_exact_clause_for_quoted_text() -> None:
+    plan = build_paradedb_lexical_query_plan(
+        '"Regeneration with acid/base"',
+        valid_fields=CHUNK_INDEXED_COLUMNS,
+        catch_all_fields=["text"],
+        variant_id="QL-Q1",
+    )
+    assert plan.debug["body_exactness_clause_count"] == 1
+    assert plan.body_exactness_clauses == ['(text:"Regeneration with acid/base")^24']
+    assert '(text:"Regeneration with acid/base")^24' in plan.formatted_query
+
+
+def test_q2_adds_normalized_body_exact_fallback_for_quoted_text() -> None:
+    plan = build_paradedb_lexical_query_plan(
+        '"Regeneration with acid/base"',
+        valid_fields=CHUNK_INDEXED_COLUMNS,
+        catch_all_fields=["text"],
+        variant_id="QL-Q2",
+    )
+    assert plan.debug["body_exactness_clause_count"] == 2
+    assert '(text:"Regeneration with acid/base")^24' in plan.body_exactness_clauses
+    assert '(text:"Regeneration with acid base")^12' in plan.body_exactness_clauses
+    assert '(text:"Regeneration with acid base")^12' in plan.formatted_query
+
+
+def test_q4_combines_title_exactness_and_body_exactness_for_quoted_text() -> None:
+    plan = build_paradedb_lexical_query_plan(
+        '"basf_sample.md"',
+        valid_fields=CHUNK_INDEXED_COLUMNS,
+        catch_all_fields=["text", "document_name", "website_url"],
+        variant_id="QL-Q4",
+    )
+    assert plan.debug["exactness_clause_count"] >= 1
+    assert plan.debug["body_exactness_clause_count"] >= 1
+    assert any("document_name:" in clause for clause in plan.exactness_clauses)
+    assert any('text:"basf_sample.md"' in clause for clause in plan.body_exactness_clauses)
+
+
+def test_q1_sanitizes_apostrophes_in_quoted_body_exact_clauses() -> None:
+    plan = build_paradedb_lexical_query_plan(
+        "\"Simpson's Theme\"",
+        valid_fields=CHUNK_INDEXED_COLUMNS,
+        catch_all_fields=["text"],
+        variant_id="QL-Q1",
+    )
+    assert plan.debug["body_exactness_clause_count"] == 1
+    assert plan.body_exactness_clauses == ['(text:"Simpson s Theme")^24']
+    assert "Simpson's Theme" not in plan.formatted_query
+
+
+def test_q1_supports_smart_double_quotes_for_body_exactness() -> None:
+    plan = build_paradedb_lexical_query_plan(
+        "\u201cHigh O2 suggests excess air\u201d",
+        valid_fields=CHUNK_INDEXED_COLUMNS,
+        catch_all_fields=["text"],
+        variant_id="QL-Q1",
+    )
+    assert plan.debug["quoted_phrase_count"] == 1
+    assert plan.body_exactness_clauses == ['(text:"High O2 suggests excess air")^24']

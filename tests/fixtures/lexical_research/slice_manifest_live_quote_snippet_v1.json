@@ -1,0 +1,42 @@
+{
+  "document_chunk": {
+    "description": "Chunk-level lexical quote/snippet retrieval surface.",
+    "primary_metric": "nDCG@10"
+  },
+  "enterprise_doc": {
+    "description": "Enterprise or process-document quote/snippet queries.",
+    "primary_metric": "nDCG@10"
+  },
+  "multi_target_phrase": {
+    "description": "Phrase queries where the phrase exists in multiple relevant locations.",
+    "primary_metric": "Recall@10"
+  },
+  "partial_phrase_recovery": {
+    "description": "Snippet recovery with punctuation, casing, or formatting drift.",
+    "primary_metric": "nDCG@10"
+  },
+  "phrase_sensitive_unquoted": {
+    "description": "Unquoted phrase-like queries where exact or tight in-text dependence likely matters.",
+    "primary_metric": "nDCG@10"
+  },
+  "quote_snippet": {
+    "description": "Remembered phrase and exact quote retrieval slice.",
+    "primary_metric": "nDCG@10"
+  },
+  "quoted_exact": {
+    "description": "Explicitly quoted phrase queries that should prefer exact in-text hits.",
+    "primary_metric": "Success@1"
+  },
+  "snippet_memory": {
+    "description": "Remembered sentence-fragment queries without explicit quotes.",
+    "primary_metric": "MRR@10"
+  },
+  "technical_doc": {
+    "description": "Technical/procedural quote/snippet queries.",
+    "primary_metric": "nDCG@10"
+  },
+  "tweet_like_short_phrase": {
+    "description": "Very short phrase lookups where exact phrase presence should dominate.",
+    "primary_metric": "Success@1"
+  }
+}

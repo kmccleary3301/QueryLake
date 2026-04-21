@@ -17,6 +17,8 @@ from QueryLake.runtime.lexical_variant_registry import LexicalVariantSpec, get_l
 _IDENTIFIER_TOKEN_RE = re.compile(r"^[A-Za-z0-9_.:/#-]{6,}$")
 _HASHISH_RE = re.compile(r"^[0-9a-f]{8,}$", re.IGNORECASE)
 _QUESTION_WORD_RE = re.compile(r"\b(how|what|why|when|where|which|should|can|could|prevent|reduce)\b", re.IGNORECASE)
+_RAW_QUOTE_RE = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+_PUNCT_TO_SPACE_RE = re.compile(r"[^0-9A-Za-z]+")
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,7 @@ class LexicalQueryPlan:
     catch_all_fields: List[str]
     catch_all_field_weights: Dict[str, float]
     exactness_clauses: List[str] = field(default_factory=list)
+    body_exactness_clauses: List[str] = field(default_factory=list)
     debug: Dict[str, object] = field(default_factory=dict)
 
     def to_payload(self) -> Dict[str, object]:
@@ -41,6 +44,7 @@ class LexicalQueryPlan:
             "catch_all_fields": list(self.catch_all_fields),
             "catch_all_field_weights": dict(self.catch_all_field_weights),
             "exactness_clauses": list(self.exactness_clauses),
+            "body_exactness_clauses": list(self.body_exactness_clauses),
             "formatted_query": self.formatted_query,
             "strong_where_clause": self.strong_where_clause,
             "debug": dict(self.debug),
@@ -134,6 +138,67 @@ def _build_exactness_clauses(
     return clauses
 
 
+def _extract_raw_quoted_phrases(raw_query_text: str) -> List[str]:
+    phrases: List[str] = []
+    seen = set()
+    for match in _RAW_QUOTE_RE.finditer(str(raw_query_text or "")):
+        raw_phrase = next((group for group in match.groups() if group), "")
+        phrase = re.sub(r"\s+", " ", str(raw_phrase or "").strip())
+        if not phrase or phrase in seen:
+            continue
+        seen.add(phrase)
+        phrases.append(phrase)
+    return phrases
+
+
+def _sanitize_phrase_for_clause(phrase: str) -> str:
+    sanitized = str(phrase or "").replace('"', " ").replace("'", " ")
+    sanitized = re.sub(r"\s+", " ", sanitized)
+    return sanitized.strip()
+
+
+def _normalize_phrase_for_body_fallback(phrase: str) -> str:
+    normalized = _PUNCT_TO_SPACE_RE.sub(" ", _sanitize_phrase_for_clause(phrase) or " ")
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
+
+def _build_body_exactness_clauses(
+    *,
+    raw_query_text: str,
+    query_class: str,
+    valid_fields: Sequence[str],
+    body_exactness_mode: str,
+) -> List[str]:
+    if body_exactness_mode == "off" or "text" not in valid_fields:
+        return []
+    if query_class in {"empty", "operator_constrained"}:
+        return []
+
+    raw_phrases = _extract_raw_quoted_phrases(raw_query_text)
+    if not raw_phrases:
+        return []
+
+    clauses: List[str] = []
+    seen = set()
+    for phrase in raw_phrases:
+        strict_phrase = _sanitize_phrase_for_clause(phrase)
+        if not strict_phrase:
+            continue
+        strict_clause = f'(text:"{strict_phrase}")^24'
+        if strict_clause not in seen:
+            seen.add(strict_clause)
+            clauses.append(strict_clause)
+        if body_exactness_mode == "quoted_text_exact_normalized":
+            normalized = _normalize_phrase_for_body_fallback(strict_phrase)
+            if normalized and normalized != strict_phrase:
+                normalized_clause = f'(text:"{normalized}")^12'
+                if normalized_clause not in seen:
+                    seen.add(normalized_clause)
+                    clauses.append(normalized_clause)
+    return clauses
+
+
 def build_paradedb_lexical_query_plan(
     raw_query_text: str,
     *,
@@ -172,9 +237,16 @@ def build_paradedb_lexical_query_plan(
         valid_fields=valid_fields,
         exactness_mode=variant.exactness_mode,
     )
+    body_exactness_clauses = _build_body_exactness_clauses(
+        raw_query_text=raw_query_text,
+        query_class=query_class,
+        valid_fields=valid_fields,
+        body_exactness_mode=variant.body_exactness_mode,
+    )
     formatted_query = compiled.final_query
-    if exactness_clauses:
-        exactness_block = " OR ".join(exactness_clauses)
+    supplemental_clauses = list(exactness_clauses) + list(body_exactness_clauses)
+    if supplemental_clauses:
+        exactness_block = " OR ".join(supplemental_clauses)
         formatted_query = (
             f"({formatted_query}) OR ({exactness_block})"
             if formatted_query not in {"()", ""}
@@ -191,9 +263,12 @@ def build_paradedb_lexical_query_plan(
             "variant_id": variant.variant_id,
             "query_class": query_class,
             "exactness_mode": variant.exactness_mode,
+            "body_exactness_mode": variant.body_exactness_mode,
             "proximity_mode": variant.proximity_mode,
             "priors_mode": variant.priors_mode,
             "exactness_clause_count": len(exactness_clauses),
+            "body_exactness_clause_count": len(body_exactness_clauses),
+            "quoted_phrase_count": len(_extract_raw_quoted_phrases(raw_query_text)),
         }
     )
     return LexicalQueryPlan(
@@ -207,5 +282,6 @@ def build_paradedb_lexical_query_plan(
         catch_all_fields=effective_fields,
         catch_all_field_weights=dict(variant.catch_all_field_weights),
         exactness_clauses=exactness_clauses,
+        body_exactness_clauses=body_exactness_clauses,
         debug=debug,
     )
