@@ -5,7 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
-from QueryLake.canon.runtime.route_support_alignment import build_route_slice_support_alignment
+from QueryLake.canon.runtime.route_support_alignment import (
+    build_route_scoped_support_matrix,
+    build_route_slice_support_alignment,
+)
 
 
 def main() -> int:
@@ -16,17 +19,27 @@ def main() -> int:
     parser.add_argument("--pointer-registry", required=True)
     parser.add_argument("--route-serving-registry", required=True)
     parser.add_argument("--mode", choices=["shadow", "candidate_primary", "primary"], default="primary")
+    parser.add_argument("--matrix", action="store_true", help="Build the V5 route-scoped support matrix.")
     parser.add_argument("--output")
     args = parser.parse_args()
 
-    payload = build_route_slice_support_alignment(
-        route_id=args.route,
-        profile_id=args.profile,
-        package_registry_path=args.package_registry,
-        pointer_registry_path=args.pointer_registry,
-        route_serving_registry_path=args.route_serving_registry,
-        mode=args.mode,
-    )
+    if args.matrix:
+        payload = build_route_scoped_support_matrix(
+            profile_id=args.profile,
+            package_registry_path=args.package_registry,
+            pointer_registry_path=args.pointer_registry,
+            route_serving_registry_path=args.route_serving_registry,
+            mode=args.mode,
+        )
+    else:
+        payload = build_route_slice_support_alignment(
+            route_id=args.route,
+            profile_id=args.profile,
+            package_registry_path=args.package_registry,
+            pointer_registry_path=args.pointer_registry,
+            route_serving_registry_path=args.route_serving_registry,
+            mode=args.mode,
+        )
     text = json.dumps(payload, indent=2, sort_keys=True)
     if args.output:
         output_path = Path(args.output)
