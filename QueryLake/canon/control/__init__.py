@@ -13,6 +13,7 @@ from .authority_control_registry import (
 )
 from .route_serving_registry import (
     build_candidate_canary_evidence_packet,
+    build_primary_cutover_evidence_packet,
     build_route_slice_state,
     deactivate_route_activation,
     get_route_activation,
@@ -39,6 +40,7 @@ __all__ = [
     "load_authority_control_registry",
     "save_authority_control_registry",
     "build_candidate_canary_evidence_packet",
+    "build_primary_cutover_evidence_packet",
     "build_route_slice_state",
     "deactivate_route_activation",
     "get_route_activation",

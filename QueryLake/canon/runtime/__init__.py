@@ -34,6 +34,7 @@ from .search_plane_a_execution import (
     build_search_plane_a_execution_contract,
     resolve_search_plane_a_execution_contract,
 )
+from .route_support_alignment import build_route_slice_support_alignment
 from .shadow_matrix import build_phase1a_route_profile_matrix
 from .shadow_reports import build_shadow_execution_report, persist_shadow_execution_report
 from .trace_export import build_shadow_trace_export, persist_shadow_trace_export
@@ -49,6 +50,7 @@ __all__ = [
     "build_phase1a_projection_writer_matrix",
     "build_phase1a_search_plane_a_transition_bundle",
     "build_search_plane_a_execution_contract",
+    "build_route_slice_support_alignment",
     "build_shadow_replay_bundle",
     "build_shadow_artifact_catalog",
     "build_shadow_trace_export",

@@ -461,6 +461,40 @@ def build_candidate_canary_evidence_packet(
     }
 
 
+def build_primary_cutover_evidence_packet(
+    *,
+    registry: dict[str, Any],
+    profile_id: str,
+    route_id: str,
+) -> dict[str, Any]:
+    route_state = build_route_slice_state(
+        registry=registry,
+        profile_id=profile_id,
+        route_id=route_id,
+    )
+    activation = dict(route_state.get("activation") or {})
+    rollback_target_pointer_id = activation.get("rollback_target_pointer_id")
+    return {
+        "schema_version": "canon_primary_cutover_evidence_packet_v1",
+        "profile_id": profile_id,
+        "route_id": route_id,
+        "state": str(route_state.get("state") or "shadow"),
+        "primary_active": str(route_state.get("state") or "") == "primary_active",
+        "rollback_ready": bool(route_state.get("rollback_ready")),
+        "rollback_target_pointer_id": rollback_target_pointer_id,
+        "activation": activation or None,
+        "certification": route_state.get("certification"),
+        "apply_state": route_state.get("apply_state"),
+        "blockers": list(route_state.get("blockers") or []),
+        "summary": {
+            "pointer_id": activation.get("pointer_id"),
+            "predecessor_pointer_id": activation.get("predecessor_pointer_id"),
+            "rollback_target_pointer_id": rollback_target_pointer_id,
+            "package_ref": activation.get("package_ref") or dict(route_state.get("certification") or {}).get("package_ref"),
+        },
+    }
+
+
 def resolve_route_serving_state(
     *,
     registry: dict[str, Any],

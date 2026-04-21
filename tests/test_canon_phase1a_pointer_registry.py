@@ -374,3 +374,155 @@ def test_pointer_registry_revert_updates_route_serving_state_for_tranche2a_targe
         route_id="search_bm25.document_chunk",
     )
     assert reverted_state["state"] == "shadow"
+
+
+def test_pointer_registry_primary_cutover_reverts_route_serving_state_to_candidate(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    authority_control_registry_path = tmp_path / "authority_control_registry.json"
+    shadow_pointer = CanonPublishPointer(
+        pointer_id="ptr-target-shadow",
+        graph_id="graph-shadow",
+        package_revision="rev-shadow",
+        profile_id="planetscale_opensearch_v1",
+        route_ids=["search_bm25.document_chunk"],
+        mode="shadow",
+        metadata={
+            "package_bindings": {
+                "search_bm25.document_chunk": {
+                    "package_id": "pkg-shadow",
+                    "package_revision": "rev-shadow",
+                    "graph_id": "graph-shadow",
+                }
+            }
+        },
+    )
+    candidate_pointer = CanonPublishPointer(
+        pointer_id="ptr-target-candidate",
+        graph_id="graph-target",
+        package_revision="rev-target",
+        profile_id="planetscale_opensearch_v1",
+        route_ids=["search_bm25.document_chunk"],
+        mode="candidate_primary",
+        metadata={
+            "package_bindings": {
+                "search_bm25.document_chunk": {
+                    "package_id": "pkg-target",
+                    "package_revision": "rev-target",
+                    "graph_id": "graph-target",
+                }
+            }
+        },
+    )
+    primary_pointer = CanonPublishPointer(
+        pointer_id="ptr-target-primary",
+        graph_id="graph-target",
+        package_revision="rev-target",
+        profile_id="planetscale_opensearch_v1",
+        route_ids=["search_bm25.document_chunk"],
+        mode="primary",
+        metadata={
+            "package_bindings": {
+                "search_bm25.document_chunk": {
+                    "package_id": "pkg-target",
+                    "package_revision": "rev-target",
+                    "graph_id": "graph-target",
+                }
+            }
+        },
+    )
+    exit_readiness = {
+        "gates": {
+            "all_bounded_routes_compile": True,
+            "shadow_reports_present": True,
+            "no_candidate_set_deltas": True,
+            "selected_packages_resolved_for_bounded_routes": True,
+            "no_blocked_search_plane_a_rows": True,
+        },
+        "target_profile_promotion": {
+            "summary": {
+                "candidate_primary_ready": True,
+                "primary_ready": True,
+            },
+            "authority_control_readiness": {
+                "summary": {
+                    "bootstrap_applied": True,
+                },
+                "authority_control_bootstrap": {
+                    "schema_version": "canon_authority_control_bootstrap_bundle_v1",
+                    "summary": {
+                        "candidate_primary_bootstrap_ready": True,
+                        "primary_bootstrap_ready": True,
+                    },
+                    "profile": {"id": "planetscale_opensearch_v1"},
+                    "mode": "shadow",
+                    "routes": ["search_bm25.document_chunk"],
+                },
+            },
+        },
+        "summary": {"ready_for_phase1b": True},
+    }
+
+    candidate_plan = build_publish_plan(
+        CanonPublishRequest(
+            target=candidate_pointer,
+            current=shadow_pointer,
+            review=CanonPublishReview(
+                branch_name="canonpp-tranche2a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness=exit_readiness,
+        )
+    )
+    apply_publish_plan(
+        plan=candidate_plan,
+        registry_path=registry_path,
+        authority_control_registry_path=authority_control_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+
+    primary_plan = build_publish_plan(
+        CanonPublishRequest(
+            target=primary_pointer,
+            current=candidate_pointer,
+            review=CanonPublishReview(
+                branch_name="canonpp-tranche2a",
+                reviewed=True,
+                ci_green=True,
+                shadow_evidence_present=True,
+            ),
+            exit_readiness=exit_readiness,
+        )
+    )
+    apply_publish_plan(
+        plan=primary_plan,
+        registry_path=registry_path,
+        authority_control_registry_path=authority_control_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+    primary_state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+    )
+    assert primary_state["state"] == "primary_active"
+    assert primary_state["rollback_ready"] is True
+    assert primary_state["activation"]["rollback_target_pointer_id"] == "ptr-target-candidate"
+
+    reverted = apply_revert_plan(
+        revert_plan=primary_plan["revert_plan"],
+        pointer=candidate_pointer.model_dump(),
+        registry_path=registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+    assert reverted["candidate_primary_pointer"]["pointer_id"] == "ptr-target-candidate"
+
+    reverted_state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+    )
+    assert reverted_state["state"] == "candidate_primary_active"
+    assert reverted_state["activation"]["predecessor_pointer_id"] == "ptr-target-primary"
