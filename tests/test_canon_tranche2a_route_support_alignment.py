@@ -72,6 +72,36 @@ def _write_primary_pointer(path, *, bundle: dict) -> None:
     )
 
 
+def _write_candidate_pointer(path, *, bundle: dict) -> None:
+    save_pointer_registry(
+        {
+            "schema_version": "canon_pointer_registry_v1",
+            "generated_at": "2026-04-21T00:00:00+00:00",
+            "shadow_pointer": None,
+            "candidate_primary_pointer": {
+                "pointer_id": "ptr-target-candidate",
+                "graph_id": bundle["graph"]["graph_id"],
+                "package_revision": bundle["package_revision"],
+                "profile_id": "planetscale_opensearch_v1",
+                "route_ids": ["search_bm25.document_chunk"],
+                "mode": "candidate_primary",
+                "metadata": {
+                    "package_bindings": {
+                        "search_bm25.document_chunk": {
+                            "package_id": bundle["package_id"],
+                            "package_revision": bundle["package_revision"],
+                            "graph_id": bundle["graph"]["graph_id"],
+                        }
+                    }
+                },
+            },
+            "primary_pointer": None,
+            "history": [],
+        },
+        path,
+    )
+
+
 def _write_primary_pointer_for_bundles(path, *, bundles: dict[str, dict]) -> None:
     package_bindings = {
         route_id: {
@@ -158,6 +188,73 @@ def _write_primary_serving_truth(path, *, bundle: dict, route_id: str = "search_
     )
 
 
+def _write_candidate_serving_truth(path, *, bundle: dict) -> None:
+    record_route_package_certification(
+        registry_path=path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        certification_state="candidate_eligible",
+        evidence_ref="evidence://candidate",
+        target_executor_id="opensearch.search_bm25.document_chunk.v1",
+        compile_options=bundle["pipeline"]["compile_options"],
+    )
+    apply_state = record_route_apply_state(
+        registry_path=path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        projection_descriptors=["document_chunk_lexical_projection_v1"],
+        config_payload={"namespace": "ql"},
+        dependency_payload={"executor_id": "opensearch.search_bm25.document_chunk.v1"},
+    )
+    record_route_activation(
+        registry_path=path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+        mode="candidate_primary",
+        pointer_id="ptr-target-candidate",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        apply_state_ref=apply_state["apply_state_ref"],
+        approval_ref="approval://candidate",
+        predecessor_pointer_id="ptr-target-shadow",
+        rollback_target_pointer_id="ptr-target-shadow",
+        candidate_scope={"audience": "bounded"},
+    )
+
+
+def _write_unhealthy_primary_eligible_truth(path, *, bundle: dict) -> None:
+    record_route_package_certification(
+        registry_path=path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        certification_state="primary_eligible",
+        evidence_ref="evidence://primary-unhealthy",
+        target_executor_id="opensearch.search_bm25.document_chunk.v1",
+        compile_options=bundle["pipeline"]["compile_options"],
+    )
+    record_route_apply_state(
+        registry_path=path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_bm25.document_chunk",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        projection_descriptors=["document_chunk_lexical_projection_v1"],
+        config_payload={"namespace": "ql"},
+        dependency_payload={"executor_id": "opensearch.search_bm25.document_chunk.v1"},
+        healthy=False,
+    )
+
+
 def test_route_slice_support_alignment_reports_route_scope_without_profile_support(tmp_path):
     package_registry_path = tmp_path / "package_registry.json"
     pointer_registry_path = tmp_path / "pointer_registry.json"
@@ -182,6 +279,54 @@ def test_route_slice_support_alignment_reports_route_scope_without_profile_suppo
     assert payload["support_claim_scope"] == "route_slice_only"
     assert "profile_global_support_state_remains_planned" in payload["blockers"]
     assert payload["execution_contract"]["authoritative"] is True
+
+
+def test_route_slice_support_alignment_reports_candidate_active_without_profile_support(tmp_path):
+    package_registry_path = tmp_path / "package_registry.json"
+    pointer_registry_path = tmp_path / "pointer_registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    bundle = _build_bm25_bundle()
+    register_graph_package_bundle(bundle=bundle, registry_path=package_registry_path)
+    _write_candidate_pointer(pointer_registry_path, bundle=bundle)
+    _write_candidate_serving_truth(route_serving_registry_path, bundle=bundle)
+
+    payload = build_route_slice_support_alignment(
+        route_id="search_bm25.document_chunk",
+        profile_id="planetscale_opensearch_v1",
+        package_registry_path=str(package_registry_path),
+        pointer_registry_path=str(pointer_registry_path),
+        route_serving_registry_path=str(route_serving_registry_path),
+        mode="candidate_primary",
+    )
+
+    assert payload["runtime_support_state"] == "route_slice_candidate"
+    assert payload["route_slice_supported"] is False
+    assert payload["global_profile_supported"] is False
+    assert payload["execution_contract"]["authoritative"] is True
+
+
+def test_route_slice_support_alignment_reports_unhealthy_apply_state_blocker(tmp_path):
+    package_registry_path = tmp_path / "package_registry.json"
+    pointer_registry_path = tmp_path / "pointer_registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    bundle = _build_bm25_bundle()
+    register_graph_package_bundle(bundle=bundle, registry_path=package_registry_path)
+    _write_primary_pointer(pointer_registry_path, bundle=bundle)
+    _write_unhealthy_primary_eligible_truth(route_serving_registry_path, bundle=bundle)
+
+    payload = build_route_slice_support_alignment(
+        route_id="search_bm25.document_chunk",
+        profile_id="planetscale_opensearch_v1",
+        package_registry_path=str(package_registry_path),
+        pointer_registry_path=str(pointer_registry_path),
+        route_serving_registry_path=str(route_serving_registry_path),
+        mode="primary",
+    )
+
+    assert payload["runtime_support_state"] == "route_slice_primary_eligible"
+    assert payload["route_slice_supported"] is False
+    assert "route_slice_not_primary_supported" in payload["blockers"]
+    assert "route_apply_state_unhealthy" in payload["route_state"]["blockers"]
 
 
 def test_route_slice_support_alignment_reports_file_chunks_route_scope(tmp_path):
