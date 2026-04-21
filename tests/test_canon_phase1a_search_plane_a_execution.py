@@ -251,6 +251,88 @@ def test_target_profile_authoritative_execution_contract_uses_route_scoped_servi
     assert execution.rows_or_statement == [{"id": certification["package_ref"]}]
 
 
+def test_target_profile_file_chunks_authoritative_execution_uses_route_scoped_serving_truth(monkeypatch, tmp_path):
+    registry_path = tmp_path / "package_registry.json"
+    pointer_registry_path = tmp_path / "pointer_registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    bundle = _build_bundle("search_file_chunks", "rev-file-target")
+    register_graph_package_bundle(bundle=bundle, registry_path=registry_path)
+    _write_shadow_pointer(
+        pointer_registry_path,
+        bundle=bundle,
+        route_id="search_file_chunks",
+        profile_id="planetscale_opensearch_v1",
+    )
+    certification = record_route_package_certification(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_file_chunks",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        certification_state="primary_eligible",
+        evidence_ref="evidence://file-primary",
+        target_executor_id="opensearch.search_file_chunks.v1",
+        compile_options=bundle["pipeline"]["compile_options"],
+    )
+    apply_state = record_route_apply_state(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_file_chunks",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        graph_id=bundle["graph"]["graph_id"],
+        projection_descriptors=["file_chunk_lexical_projection_v1"],
+        config_payload={"namespace": "ql"},
+        dependency_payload={"executor_id": "opensearch.search_file_chunks.v1"},
+    )
+    record_route_activation(
+        registry_path=route_serving_registry_path,
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_file_chunks",
+        mode="primary",
+        pointer_id="ptr-file-primary",
+        package_id=bundle["package_id"],
+        package_revision=bundle["package_revision"],
+        apply_state_ref=apply_state["apply_state_ref"],
+        approval_ref="approval://file-primary",
+        predecessor_pointer_id="ptr-file-candidate",
+        rollback_target_pointer_id="ptr-file-candidate",
+    )
+
+    def _fake_execute(database, **kwargs):
+        return False, [{"id": certification["package_ref"]}]
+
+    monkeypatch.setattr(
+        "QueryLake.runtime.retrieval_route_executors.execute_opensearch_file_chunk_bm25_search",
+        _fake_execute,
+    )
+
+    resolved = resolve_search_plane_a_execution_contract(
+        route_id="search_file_chunks",
+        profile_id="planetscale_opensearch_v1",
+        package_registry_path=registry_path,
+        pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+        mode="primary",
+    )
+
+    assert resolved.to_payload()["authoritative"] is True
+    assert resolved.to_payload()["execution_mode"] == "canon_target_profile_authoritative_executor"
+    assert resolved.to_payload()["executor_id"] == "opensearch.search_file_chunks.v1"
+    execution = resolved.execute(
+        None,
+        username="user",
+        query="q",
+        sort_by="score",
+        sort_dir="DESC",
+        limit=10,
+        offset=0,
+        return_statement=False,
+    )
+    assert execution.rows_or_statement == [{"id": certification["package_ref"]}]
+
+
 def test_target_profile_hybrid_execution_contract_blocks_sparse_enabled_package(tmp_path):
     registry_path = tmp_path / "package_registry.json"
     pointer_registry_path = tmp_path / "pointer_registry.json"

@@ -14,6 +14,7 @@ from QueryLake.runtime.db_compat import build_profile_execution_target_payload, 
 from QueryLake.runtime.retrieval_pipeline_runtime import default_pipeline_for_route
 from QueryLake.runtime.retrieval_route_executors import (
     OpenSearchDocumentChunkBM25RouteExecutor,
+    OpenSearchFileChunkRouteExecutor,
     ResolvedRouteExecutor,
     resolve_search_bm25_route_executor,
     resolve_search_file_chunks_route_executor,
@@ -28,6 +29,7 @@ _ROUTE_TO_DEFAULT_PIPELINE_ROUTE = {
     "search_file_chunks": "search_file_chunks",
 }
 _SOURCE_SEARCH_PLANE_PROFILE_ID = "aws_aurora_pg_opensearch_v1"
+_AUTHORITATIVE_TARGET_ROUTES = {"search_bm25.document_chunk", "search_file_chunks"}
 
 
 def _normalize_route(route_id: str) -> str:
@@ -183,7 +185,7 @@ def resolve_search_plane_a_execution_contract(
         if effective_profile.id == _SOURCE_SEARCH_PLANE_PROFILE_ID:
             execution_mode = "legacy_route_executor_passthrough"
         elif effective_profile.id == "planetscale_opensearch_v1":
-            if route_serving_registry_path and mode in {"candidate_primary", "primary"} and str(route_id) == "search_bm25.document_chunk":
+            if route_serving_registry_path and mode in {"candidate_primary", "primary"} and str(route_id) in _AUTHORITATIVE_TARGET_ROUTES:
                 route_serving_registry = load_route_serving_registry(route_serving_registry_path)
                 route_serving_state = resolve_route_serving_state(
                     registry=route_serving_registry,
@@ -198,7 +200,10 @@ def resolve_search_plane_a_execution_contract(
                     if len(projections) == 0:
                         authority_blockers.append("route_apply_state_projection_missing")
                     else:
-                        executor = OpenSearchDocumentChunkBM25RouteExecutor(projection_id=projections[0])
+                        if str(route_id) == "search_file_chunks":
+                            executor = OpenSearchFileChunkRouteExecutor(projection_id=projections[0])
+                        else:
+                            executor = OpenSearchDocumentChunkBM25RouteExecutor(projection_id=projections[0])
                         executor_id = executor.executor_id
                         projection_descriptors = projections
                         source_resolution_payload = {}

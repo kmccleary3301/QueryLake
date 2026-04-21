@@ -526,3 +526,50 @@ def test_pointer_registry_primary_cutover_reverts_route_serving_state_to_candida
     )
     assert reverted_state["state"] == "candidate_primary_active"
     assert reverted_state["activation"]["predecessor_pointer_id"] == "ptr-target-primary"
+
+
+def test_pointer_registry_applies_route_serving_state_for_file_chunks_target_slice(tmp_path):
+    registry_path = tmp_path / "registry.json"
+    route_serving_registry_path = tmp_path / "route_serving_registry.json"
+    plan = {
+        "allowed": True,
+        "target": {
+            "pointer_id": "ptr-file-primary",
+            "graph_id": "graph-file",
+            "package_revision": "rev-file",
+            "profile_id": "planetscale_opensearch_v1",
+            "route_ids": ["search_file_chunks"],
+            "mode": "primary",
+            "metadata": {
+                "package_bindings": {
+                    "search_file_chunks": {
+                        "package_id": "pkg-file",
+                        "package_revision": "rev-file",
+                        "graph_id": "graph-file",
+                    }
+                }
+            },
+        },
+        "steps": [
+            {"step_id": "update_shadow_pointer"},
+            {"step_id": "promote_candidate_pointer"},
+            {"step_id": "cutover_primary_pointer"},
+            {"step_id": "apply_route_serving_state", "metadata": {"mode": "primary"}},
+        ],
+        "blockers": [],
+    }
+
+    apply_publish_plan(
+        plan=plan,
+        registry_path=registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+    )
+
+    state = build_route_slice_state(
+        registry=load_route_serving_registry(route_serving_registry_path),
+        profile_id="planetscale_opensearch_v1",
+        route_id="search_file_chunks",
+    )
+    assert state["state"] == "primary_active"
+    assert state["apply_state"]["projection_descriptors"] == ["file_chunk_lexical_projection_v1"]
+    assert state["certification"]["target_executor_id"] == "opensearch.search_file_chunks.v1"

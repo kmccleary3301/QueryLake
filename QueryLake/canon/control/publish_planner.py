@@ -112,7 +112,7 @@ def _missing_route_bindings(target: CanonPublishPointer) -> list[str]:
 def _is_tranche2a_target_slice(target: CanonPublishPointer) -> bool:
     return (
         str(target.profile_id) == "planetscale_opensearch_v1"
-        and list(target.route_ids) == ["search_bm25.document_chunk"]
+        and list(target.route_ids) in (["search_bm25.document_chunk"], ["search_file_chunks"])
     )
 
 

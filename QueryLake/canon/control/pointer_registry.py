@@ -14,6 +14,13 @@ from .route_serving_registry import (
 )
 from QueryLake.runtime.db_compat import get_deployment_profile
 from QueryLake.runtime.retrieval_route_executors import resolve_search_bm25_route_executor
+from QueryLake.runtime.retrieval_route_executors import resolve_search_file_chunks_route_executor
+
+
+_TARGET_SERVING_ROUTE_EXECUTOR_IDS = {
+    "search_bm25.document_chunk": "opensearch.search_bm25.document_chunk.v1",
+    "search_file_chunks": "opensearch.search_file_chunks.v1",
+}
 
 
 def _utc_now() -> str:
@@ -85,6 +92,10 @@ def _projection_descriptors_for_route(*, route_id: str) -> list[str]:
         source_profile = get_deployment_profile("aws_aurora_pg_opensearch_v1")
         resolution = resolve_search_bm25_route_executor(table="document_chunk", profile=source_profile)
         return [str(value) for value in list(resolution.to_payload().get("projection_descriptors") or []) if str(value or "")]
+    if str(route_id) == "search_file_chunks":
+        source_profile = get_deployment_profile("aws_aurora_pg_opensearch_v1")
+        resolution = resolve_search_file_chunks_route_executor(profile=source_profile)
+        return [str(value) for value in list(resolution.to_payload().get("projection_descriptors") or []) if str(value or "")]
     return []
 
 
@@ -99,7 +110,7 @@ def _record_tranche2a_route_serving_state(
     if str(target.get("profile_id") or "") != "planetscale_opensearch_v1":
         return
     route_ids = [str(route_id) for route_id in list(target.get("route_ids") or []) if str(route_id or "")]
-    if route_ids != ["search_bm25.document_chunk"]:
+    if len(route_ids) != 1 or route_ids[0] not in _TARGET_SERVING_ROUTE_EXECUTOR_IDS:
         return
 
     route_id = route_ids[0]
@@ -137,7 +148,7 @@ def _record_tranche2a_route_serving_state(
         graph_id=package_ref["graph_id"],
         certification_state=certification_state,
         evidence_ref=f"publish-plan:{target.get('pointer_id')}",
-        target_executor_id="opensearch.search_bm25.document_chunk.v1",
+        target_executor_id=_TARGET_SERVING_ROUTE_EXECUTOR_IDS[route_id],
         compile_options=route_metadata.get("compile_options"),
         source_shadow_baseline_ref=f"shadow:{route_id}",
     )
@@ -216,32 +227,35 @@ def apply_publish_plan(
         elif step_id == "apply_route_serving_state":
             if route_serving_registry_path is None:
                 raise ValueError("Route serving registry path is required to apply route-scoped serving state.")
+            route_ids = [str(route_id) for route_id in list(target.get("route_ids") or []) if str(route_id or "")]
             predecessor_pointer_id = None
             rollback_target_pointer_id = None
             step_mode = str(dict(step.get("metadata") or {}).get("mode") or target.get("mode") or "")
             if step_mode == "primary":
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(target.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="candidate_primary",
-                    reason="superseded_by_primary_activation",
-                )
+                for route_id in route_ids:
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(target.get("profile_id") or ""),
+                        route_id=route_id,
+                        mode="candidate_primary",
+                        reason="superseded_by_primary_activation",
+                    )
             elif step_mode == "shadow":
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(target.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="candidate_primary",
-                    reason="superseded_by_shadow_reversion",
-                )
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(target.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="primary",
-                    reason="superseded_by_shadow_reversion",
-                )
+                for route_id in route_ids:
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(target.get("profile_id") or ""),
+                        route_id=route_id,
+                        mode="candidate_primary",
+                        reason="superseded_by_shadow_reversion",
+                    )
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(target.get("profile_id") or ""),
+                        route_id=route_id,
+                        mode="primary",
+                        reason="superseded_by_shadow_reversion",
+                    )
             if step_mode == "candidate_primary":
                 predecessor_pointer_id = str((previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
                 rollback_target_pointer_id = str((previous_shadow_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or "") or None
@@ -304,28 +318,30 @@ def apply_revert_plan(
             if str(step.get("step_id") or "") != "revert_route_serving_state":
                 continue
             if revert_mode == "shadow":
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(pointer.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="candidate_primary",
-                    reason="pointer_revert_to_shadow",
-                )
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(pointer.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="primary",
-                    reason="pointer_revert_to_shadow",
-                )
+                for route_id in list(pointer.get("route_ids") or []):
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(pointer.get("profile_id") or ""),
+                        route_id=str(route_id),
+                        mode="candidate_primary",
+                        reason="pointer_revert_to_shadow",
+                    )
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(pointer.get("profile_id") or ""),
+                        route_id=str(route_id),
+                        mode="primary",
+                        reason="pointer_revert_to_shadow",
+                    )
             elif revert_mode == "candidate_primary":
-                deactivate_route_activation(
-                    registry_path=route_serving_registry_path,
-                    profile_id=str(pointer.get("profile_id") or ""),
-                    route_id="search_bm25.document_chunk",
-                    mode="primary",
-                    reason="pointer_revert_to_candidate",
-                )
+                for route_id in list(pointer.get("route_ids") or []):
+                    deactivate_route_activation(
+                        registry_path=route_serving_registry_path,
+                        profile_id=str(pointer.get("profile_id") or ""),
+                        route_id=str(route_id),
+                        mode="primary",
+                        reason="pointer_revert_to_candidate",
+                    )
             predecessor_pointer_id = str((previous_primary_pointer or {}).get("pointer_id") or (previous_candidate_pointer or {}).get("pointer_id") or (previous_shadow_pointer or {}).get("pointer_id") or "") or None
             rollback_target_pointer_id = str(pointer.get("pointer_id") or "") or None
             _record_tranche2a_route_serving_state(

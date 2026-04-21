@@ -786,6 +786,37 @@ def _resolve_direct_bm25_execution_seam(
     return legacy_resolution, None
 
 
+def _resolve_direct_file_chunks_execution_seam(
+    *,
+    profile: Any,
+    return_statement: bool,
+) -> tuple[Any, Any | None]:
+    legacy_resolution = resolve_search_file_chunks_route_executor(profile=profile)
+    if return_statement:
+        return legacy_resolution, None
+    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
+        return legacy_resolution, None
+
+    package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
+    pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
+    route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
+    if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
+        return legacy_resolution, None
+
+    route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
+    contract = resolve_search_plane_a_execution_contract(
+        route_id="search_file_chunks",
+        profile_id=str(getattr(profile, "id", "")),
+        package_registry_path=package_registry_path,
+        pointer_registry_path=pointer_registry_path,
+        route_serving_registry_path=route_serving_registry_path,
+        mode=route_serving_mode,
+    )
+    if bool(contract.resolution.authoritative):
+        return legacy_resolution, contract
+    return legacy_resolution, None
+
+
 def _candidate_to_document_chunk(candidate: RetrievalCandidate) -> DocumentChunkDictionary:
     md = candidate.metadata or {}
     row_id: Union[str, List[str]] = candidate.content_id
@@ -3163,18 +3194,36 @@ def search_file_chunks(
     assert sort_by in FILE_FIELDS or sort_by == "score", f"sort_by must be one of {FILE_FIELDS} or 'score'"
     assert sort_dir in ["DESC", "ASC"], "sort_dir must be 'DESC' or 'ASC'"
 
-    file_chunk_route_executor = file_chunk_route_resolution or resolve_search_file_chunks_route_executor(profile=profile)
+    file_chunk_route_executor, canon_file_chunk_execution = _resolve_direct_file_chunks_execution_seam(
+        profile=profile,
+        return_statement=return_statement,
+    )
+    if file_chunk_route_resolution is not None and canon_file_chunk_execution is None:
+        file_chunk_route_executor = file_chunk_route_resolution
     file_chunk_route_executor.require_executable(allow_plan_only=bool(return_statement))
     try:
-        file_chunk_execution = file_chunk_route_executor.executor.execute(
-            database,
-            username=username,
-            query=query,
-            sort_by=sort_by,
-            sort_dir=sort_dir,
-            limit=limit,
-            offset=offset,
-            return_statement=return_statement,
+        file_chunk_execution = (
+            canon_file_chunk_execution.execute(
+                database,
+                username=username,
+                query=query,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+                limit=limit,
+                offset=offset,
+                return_statement=return_statement,
+            )
+            if canon_file_chunk_execution is not None
+            else file_chunk_route_executor.executor.execute(
+                database,
+                username=username,
+                query=query,
+                sort_by=sort_by,
+                sort_dir=sort_dir,
+                limit=limit,
+                offset=offset,
+                return_statement=return_statement,
+            )
         )
         if return_statement:
             return file_chunk_execution.rows_or_statement

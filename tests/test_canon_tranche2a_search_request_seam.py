@@ -61,3 +61,30 @@ def test_direct_bm25_execution_seam_uses_authoritative_canon_contract(monkeypatc
     assert captured["route_id"] == "search_bm25.document_chunk"
     assert captured["profile_id"] == "planetscale_opensearch_v1"
     assert captured["mode"] == "primary"
+
+
+def test_direct_file_chunks_execution_seam_uses_authoritative_canon_contract(monkeypatch, tmp_path):
+    legacy = _LegacyResolution()
+    monkeypatch.setattr(search_api, "resolve_search_file_chunks_route_executor", lambda **kwargs: legacy)
+    captured = {}
+
+    def _fake_contract(**kwargs):
+        captured.update(kwargs)
+        return _CanonContract(authoritative=True)
+
+    monkeypatch.setattr(search_api, "resolve_search_plane_a_execution_contract", _fake_contract)
+    monkeypatch.setenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", str(tmp_path / "package_registry.json"))
+    monkeypatch.setenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", str(tmp_path / "pointer_registry.json"))
+    monkeypatch.setenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", str(tmp_path / "route_serving_registry.json"))
+    monkeypatch.setenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")
+
+    resolved, canon_contract = search_api._resolve_direct_file_chunks_execution_seam(
+        profile=SimpleNamespace(id="planetscale_opensearch_v1"),
+        return_statement=False,
+    )
+
+    assert resolved is legacy
+    assert canon_contract is not None
+    assert captured["route_id"] == "search_file_chunks"
+    assert captured["profile_id"] == "planetscale_opensearch_v1"
+    assert captured["mode"] == "primary"
