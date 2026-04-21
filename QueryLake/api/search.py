@@ -752,69 +752,195 @@ def _env_float(name: str, default: float, *, minimum: Optional[float] = None, ma
     return float(value)
 
 
+def _canon_resolution_value(resolution: Any, key: str, default: Any = None) -> Any:
+    if resolution is None:
+        return default
+    if isinstance(resolution, dict):
+        return resolution.get(key, default)
+    return getattr(resolution, key, default)
+
+
+def _canon_selected_package_ref(selected_package: Any) -> Optional[str]:
+    if not isinstance(selected_package, dict):
+        return None
+    package = selected_package.get("package")
+    if isinstance(package, dict):
+        value = package.get("package_ref") or package.get("id")
+        if value:
+            return str(value)
+    value = selected_package.get("package_ref") or selected_package.get("id")
+    return str(value) if value else None
+
+
+def _canon_direct_execution_seam_metadata(
+    *,
+    route_id: str,
+    profile_id: str,
+    route_serving_mode: Optional[str] = None,
+    variant_label: Optional[str] = None,
+    contract: Any = None,
+    execution_seam: str,
+    fallback_reason: Optional[str] = None,
+) -> Dict[str, Any]:
+    resolution = getattr(contract, "resolution", None) if contract is not None else None
+    selected_package = _canon_resolution_value(resolution, "selected_package", {})
+    return {
+        "schema": "canon_direct_execution_seam_v1",
+        "execution_seam": str(execution_seam),
+        "route_id": str(_canon_resolution_value(resolution, "route_id", route_id) or route_id),
+        "profile_id": str(_canon_resolution_value(resolution, "profile_id", profile_id) or profile_id),
+        "route_support_scope": "bounded_target_profile_v1",
+        "variant_label": variant_label,
+        "route_serving_mode": route_serving_mode,
+        "canon_execution_mode": str(
+            _canon_resolution_value(
+                resolution,
+                "execution_mode",
+                "legacy_route_executor" if execution_seam != "canon_authoritative" else "unknown",
+            )
+        ),
+        "canon_package_ref": _canon_selected_package_ref(selected_package),
+        "fallback_reason": fallback_reason,
+        "authoritative": bool(_canon_resolution_value(resolution, "authoritative", False)),
+        "primary_ready": bool(_canon_resolution_value(resolution, "primary_ready", False)),
+        "executor_id": str(_canon_resolution_value(resolution, "executor_id", "") or ""),
+        "search_plane_blockers": [
+            str(value) for value in list(_canon_resolution_value(resolution, "search_plane_blockers", []) or [])
+        ],
+        "authority_blockers": [
+            str(value) for value in list(_canon_resolution_value(resolution, "authority_blockers", []) or [])
+        ],
+    }
+
+
 def _resolve_direct_bm25_execution_seam(
     *,
     table: str,
     profile: Any,
     return_statement: bool,
-) -> tuple[Any, Any | None]:
+) -> tuple[Any, Any | None, Dict[str, Any]]:
+    route_id = f"search_bm25.{table}"
+    profile_id = str(getattr(profile, "id", ""))
     legacy_resolution = resolve_search_bm25_route_executor(table=table, profile=profile)
     if return_statement:
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="plan_only",
+            fallback_reason="plan_only_request",
+        )
     if str(table) != "document_chunk":
-        return legacy_resolution, None
-    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="legacy_fallback",
+            fallback_reason="route_not_document_chunk",
+        )
+    if profile_id != "planetscale_opensearch_v1":
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="legacy_fallback",
+            fallback_reason="non_target_profile",
+        )
 
     package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
     pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
     route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
     if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="legacy_fallback",
+            fallback_reason="canon_registry_env_missing",
+        )
 
     route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
     contract = resolve_search_plane_a_execution_contract(
-        route_id="search_bm25.document_chunk",
-        profile_id=str(getattr(profile, "id", "")),
+        route_id=route_id,
+        profile_id=profile_id,
         package_registry_path=package_registry_path,
         pointer_registry_path=pointer_registry_path,
         route_serving_registry_path=route_serving_registry_path,
         mode=route_serving_mode,
     )
     if bool(contract.resolution.authoritative):
-        return legacy_resolution, contract
-    return legacy_resolution, None
+        return legacy_resolution, contract, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            route_serving_mode=route_serving_mode,
+            contract=contract,
+            execution_seam="canon_authoritative",
+        )
+    return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+        route_id=route_id,
+        profile_id=profile_id,
+        route_serving_mode=route_serving_mode,
+        contract=contract,
+        execution_seam="legacy_fallback",
+        fallback_reason="canon_contract_not_authoritative",
+    )
 
 
 def _resolve_direct_file_chunks_execution_seam(
     *,
     profile: Any,
     return_statement: bool,
-) -> tuple[Any, Any | None]:
+) -> tuple[Any, Any | None, Dict[str, Any]]:
+    route_id = "search_file_chunks"
+    profile_id = str(getattr(profile, "id", ""))
     legacy_resolution = resolve_search_file_chunks_route_executor(profile=profile)
     if return_statement:
-        return legacy_resolution, None
-    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="plan_only",
+            fallback_reason="plan_only_request",
+        )
+    if profile_id != "planetscale_opensearch_v1":
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="legacy_fallback",
+            fallback_reason="non_target_profile",
+        )
 
     package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
     pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
     route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
     if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            execution_seam="legacy_fallback",
+            fallback_reason="canon_registry_env_missing",
+        )
 
     route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
     contract = resolve_search_plane_a_execution_contract(
-        route_id="search_file_chunks",
-        profile_id=str(getattr(profile, "id", "")),
+        route_id=route_id,
+        profile_id=profile_id,
         package_registry_path=package_registry_path,
         pointer_registry_path=pointer_registry_path,
         route_serving_registry_path=route_serving_registry_path,
         mode=route_serving_mode,
     )
     if bool(contract.resolution.authoritative):
-        return legacy_resolution, contract
-    return legacy_resolution, None
+        return legacy_resolution, contract, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            route_serving_mode=route_serving_mode,
+            contract=contract,
+            execution_seam="canon_authoritative",
+        )
+    return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+        route_id=route_id,
+        profile_id=profile_id,
+        route_serving_mode=route_serving_mode,
+        contract=contract,
+        execution_seam="legacy_fallback",
+        fallback_reason="canon_contract_not_authoritative",
+    )
 
 
 def _resolve_direct_hybrid_execution_seam(
@@ -824,7 +950,10 @@ def _resolve_direct_hybrid_execution_seam(
     use_bm25: bool,
     use_similarity: bool,
     use_sparse: bool,
-) -> tuple[Any, Any | None]:
+) -> tuple[Any, Any | None, Dict[str, Any]]:
+    route_id = "search_hybrid.document_chunk"
+    profile_id = str(getattr(profile, "id", ""))
+    variant_label = "hybrid_sparse_enabled" if bool(use_sparse) else "hybrid_sparse_disabled"
     legacy_resolution = resolve_search_hybrid_route_executor(
         use_bm25=bool(use_bm25),
         use_similarity=bool(use_similarity),
@@ -832,30 +961,69 @@ def _resolve_direct_hybrid_execution_seam(
         profile=profile,
     )
     if return_statement:
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            variant_label=variant_label,
+            execution_seam="plan_only",
+            fallback_reason="plan_only_request",
+        )
     if bool(use_sparse):
-        return legacy_resolution, None
-    if str(getattr(profile, "id", "")) != "planetscale_opensearch_v1":
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            variant_label=variant_label,
+            execution_seam="legacy_fallback",
+            fallback_reason="sparse_enabled_variant_deferred",
+        )
+    if profile_id != "planetscale_opensearch_v1":
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            variant_label=variant_label,
+            execution_seam="legacy_fallback",
+            fallback_reason="non_target_profile",
+        )
 
     package_registry_path = str(os.getenv("QUERYLAKE_CANON_PACKAGE_REGISTRY_PATH", "")).strip()
     pointer_registry_path = str(os.getenv("QUERYLAKE_CANON_POINTER_REGISTRY_PATH", "")).strip()
     route_serving_registry_path = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_REGISTRY_PATH", "")).strip()
     if not (package_registry_path and pointer_registry_path and route_serving_registry_path):
-        return legacy_resolution, None
+        return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            variant_label=variant_label,
+            execution_seam="legacy_fallback",
+            fallback_reason="canon_registry_env_missing",
+        )
 
     route_serving_mode = str(os.getenv("QUERYLAKE_CANON_ROUTE_SERVING_MODE", "primary")).strip() or "primary"
     contract = resolve_search_plane_a_execution_contract(
-        route_id="search_hybrid.document_chunk",
-        profile_id=str(getattr(profile, "id", "")),
+        route_id=route_id,
+        profile_id=profile_id,
         package_registry_path=package_registry_path,
         pointer_registry_path=pointer_registry_path,
         route_serving_registry_path=route_serving_registry_path,
         mode=route_serving_mode,
     )
     if bool(contract.resolution.authoritative):
-        return legacy_resolution, contract
-    return legacy_resolution, None
+        return legacy_resolution, contract, _canon_direct_execution_seam_metadata(
+            route_id=route_id,
+            profile_id=profile_id,
+            route_serving_mode=route_serving_mode,
+            variant_label=variant_label,
+            contract=contract,
+            execution_seam="canon_authoritative",
+        )
+    return legacy_resolution, None, _canon_direct_execution_seam_metadata(
+        route_id=route_id,
+        profile_id=profile_id,
+        route_serving_mode=route_serving_mode,
+        variant_label=variant_label,
+        contract=contract,
+        execution_seam="legacy_fallback",
+        fallback_reason="canon_contract_not_authoritative",
+    )
 
 
 def _candidate_to_document_chunk(candidate: RetrievalCandidate) -> DocumentChunkDictionary:
@@ -2100,7 +2268,7 @@ async def search_hybrid(
         if strong_where_clause is not None
         else f"WHERE {collection_spec_new}"
     )
-    hybrid_route_executor, canon_hybrid_execution = _resolve_direct_hybrid_execution_seam(
+    hybrid_route_executor, canon_hybrid_execution, canon_hybrid_execution_seam = _resolve_direct_hybrid_execution_seam(
         profile=profile,
         return_statement=return_statement,
         use_bm25=bool(use_bm25),
@@ -2109,6 +2277,11 @@ async def search_hybrid(
     )
     if locals().get("hybrid_route_resolution") is not None and canon_hybrid_execution is None:
         hybrid_route_executor = locals()["hybrid_route_resolution"]
+        canon_hybrid_execution_seam = {
+            **canon_hybrid_execution_seam,
+            "execution_seam": "legacy_fallback",
+            "fallback_reason": "pre_resolved_legacy_route_resolution",
+        }
     hybrid_route_executor.require_executable(allow_plan_only=bool(return_statement))
     t_5 = time.time()
 
@@ -2365,6 +2538,7 @@ async def search_hybrid(
                 status="ok",
                 md={
                     "route_executor": hybrid_route_executor.to_payload(),
+                    "canon_execution_seam": canon_hybrid_execution_seam,
                     "compatibility_materialization_summary": compatibility_materialization_summary,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
@@ -2409,6 +2583,7 @@ async def search_hybrid(
                 error=str(e),
                 md={
                     "route_executor": hybrid_route_executor.to_payload(),
+                    "canon_execution_seam": canon_hybrid_execution_seam,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
@@ -2704,11 +2879,21 @@ def search_bm25(
     assert sort_dir in ["DESC", "ASC"], \
         "sort_dir must be either 'DESC' or 'ASC'"
 
-    bm25_route_executor, canon_target_execution = _resolve_direct_bm25_execution_seam(
-        table=table,
-        profile=profile,
-        return_statement=bool(return_statement),
-    ) if "bm25_route_resolution" not in locals() else (locals()["bm25_route_resolution"], None)
+    if "bm25_route_resolution" not in locals():
+        bm25_route_executor, canon_target_execution, canon_bm25_execution_seam = _resolve_direct_bm25_execution_seam(
+            table=table,
+            profile=profile,
+            return_statement=bool(return_statement),
+        )
+    else:
+        bm25_route_executor = locals()["bm25_route_resolution"]
+        canon_target_execution = None
+        canon_bm25_execution_seam = _canon_direct_execution_seam_metadata(
+            route_id=f"search_bm25.{table}",
+            profile_id=str(getattr(profile, "id", "")),
+            execution_seam="legacy_fallback",
+            fallback_reason="pre_resolved_legacy_route_resolution",
+        )
     if canon_target_execution is None:
         bm25_route_executor.require_executable(allow_plan_only=bool(return_statement))
         bm25_execution = bm25_route_executor.executor.execute(
@@ -2834,6 +3019,7 @@ def search_bm25(
                 status="ok",
                 md={
                     "route_executor": bm25_route_executor.to_payload(),
+                    "canon_execution_seam": canon_bm25_execution_seam,
                     **({"compatibility_materialization_summary": compatibility_materialization_summary} if compatibility_materialization_summary is not None else {}),
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
@@ -2876,6 +3062,7 @@ def search_bm25(
                 error=str(e),
                 md={
                     "route_executor": bm25_route_executor.to_payload(),
+                    "canon_execution_seam": canon_bm25_execution_seam,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
@@ -3263,12 +3450,17 @@ def search_file_chunks(
     assert sort_by in FILE_FIELDS or sort_by == "score", f"sort_by must be one of {FILE_FIELDS} or 'score'"
     assert sort_dir in ["DESC", "ASC"], "sort_dir must be 'DESC' or 'ASC'"
 
-    file_chunk_route_executor, canon_file_chunk_execution = _resolve_direct_file_chunks_execution_seam(
+    file_chunk_route_executor, canon_file_chunk_execution, canon_file_chunk_execution_seam = _resolve_direct_file_chunks_execution_seam(
         profile=profile,
         return_statement=return_statement,
     )
     if file_chunk_route_resolution is not None and canon_file_chunk_execution is None:
         file_chunk_route_executor = file_chunk_route_resolution
+        canon_file_chunk_execution_seam = {
+            **canon_file_chunk_execution_seam,
+            "execution_seam": "legacy_fallback",
+            "fallback_reason": "pre_resolved_legacy_route_resolution",
+        }
     file_chunk_route_executor.require_executable(allow_plan_only=bool(return_statement))
     try:
         file_chunk_execution = (
@@ -3363,6 +3555,7 @@ def search_file_chunks(
                 status="ok",
                 md={
                     "route_executor": file_chunk_route_executor.to_payload(),
+                    "canon_execution_seam": canon_file_chunk_execution_seam,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
@@ -3401,6 +3594,7 @@ def search_file_chunks(
                 error=str(e),
                 md={
                     "route_executor": file_chunk_route_executor.to_payload(),
+                    "canon_execution_seam": canon_file_chunk_execution_seam,
                     **(
                         {"lexical_capability_plan": lexical_capability_plan.to_payload()}
                         if lexical_capability_plan is not None
