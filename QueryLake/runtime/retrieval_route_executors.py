@@ -179,6 +179,7 @@ class GoldSearchBM25RouteExecutor:
             sort_dir=kwargs["sort_dir"],
             document_collection_attrs=kwargs["document_collection_attrs"],
             lexical_variant_id=kwargs.get("lexical_variant_id"),
+            segment_view_alias=kwargs.get("segment_view_alias"),
         )
         rows_or_statement = execute_gold_bm25_search(
             database,
@@ -192,6 +193,7 @@ class GoldSearchBM25RouteExecutor:
             formatted_query=plan.formatted_query,
             quoted_phrases=plan.quoted_phrases,
             segment_collection_filter=plan.segment_collection_filter,
+            segment_view_alias=plan.segment_view_alias,
             return_statement=bool(kwargs.get("return_statement", False)),
         )
         return BM25RouteExecution(

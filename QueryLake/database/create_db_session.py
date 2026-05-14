@@ -147,6 +147,12 @@ USING bm25 (id, text, md, created_at)
 WITH (key_field = 'id');
 """
 
+CREATE_BM25_SEGMENT_INDEX_SQL = f"""
+CREATE INDEX IF NOT EXISTS search_{document_segment.__tablename__}_idx ON {document_segment.__tablename__}
+USING bm25 (id, segment_type, segment_index, text, md, created_at)
+WITH (key_field = 'id');
+"""
+
 DELETE_BM25_CHUNK_INDEX_SQL = f"""
 DROP INDEX search_{DocumentChunk.__tablename__}_idx;
 """
@@ -175,6 +181,8 @@ ALTER TABLE {document_artifact.__tablename__}
     ADD COLUMN IF NOT EXISTS modality text DEFAULT 'text';
 ALTER TABLE {document_segment.__tablename__}
     ADD COLUMN IF NOT EXISTS segment_view_id text;
+ALTER TABLE {document_segment.__tablename__}
+    ADD COLUMN IF NOT EXISTS ts_content tsvector;
 ALTER TABLE {DocumentChunk.__tablename__}
     ADD COLUMN IF NOT EXISTS authority_segment_id text;
 CREATE INDEX IF NOT EXISTS ix_{document_artifact.__tablename__}_modality
@@ -183,6 +191,22 @@ CREATE INDEX IF NOT EXISTS ix_{document_segment.__tablename__}_segment_view_id
     ON {document_segment.__tablename__} (segment_view_id);
 CREATE INDEX IF NOT EXISTS ix_{DocumentChunk.__tablename__}_authority_segment_id
     ON {DocumentChunk.__tablename__} (authority_segment_id);
+CREATE OR REPLACE FUNCTION update_document_segment_ts_content()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.ts_content := to_tsvector('english', COALESCE(NEW.text, ''));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS update_document_segment_ts_content_trigger ON {document_segment.__tablename__};
+CREATE TRIGGER update_document_segment_ts_content_trigger
+BEFORE INSERT OR UPDATE ON {document_segment.__tablename__}
+FOR EACH ROW EXECUTE FUNCTION update_document_segment_ts_content();
+UPDATE {document_segment.__tablename__}
+    SET ts_content = to_tsvector('english', COALESCE(text, ''))
+    WHERE ts_content IS NULL;
+CREATE INDEX IF NOT EXISTS {document_segment.__tablename__}_ts_content_gin
+    ON {document_segment.__tablename__} USING gin(ts_content);
 """
 
 def check_index_created(database: Session):
@@ -275,6 +299,7 @@ def initialize_database_engine(*, ensure_sparse_bootstrap: bool = True, ensure_d
             database.exec(text(CREATE_VECTOR_INDEX_SQL))
             database.exec(text(sparse_index_sql))
             database.exec(text(CREATE_BM25_CHUNK_INDEX_SQL))
+            database.exec(text(CREATE_BM25_SEGMENT_INDEX_SQL))
             database.exec(text(CREATE_BM25_DOC_INDEX_SQL))
             database.commit()
             

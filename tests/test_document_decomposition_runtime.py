@@ -10,8 +10,13 @@ from QueryLake.runtime.document_decomposition import (
     DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
     LEGACY_CHUNK_BACKFILL_SEGMENT_RECIPE_ID,
     build_chunk_backfill_payload,
+    build_operator_provenance_payload,
+    build_segment_member_payload,
     compute_chunk_segment_parity,
     evaluate_document_chunk_compatibility_contract,
+    normalize_canonical_segment_read,
+    resolve_chunk_authority_from_rows,
+    select_current_segment_view,
     summarize_document_decomposition_rows,
 )
 
@@ -104,3 +109,99 @@ def test_evaluate_document_chunk_compatibility_contract_reports_normalized_state
     assert audit["compatibility_contract"] == DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT
     assert audit["compatibility_normalized"] is True
     assert audit["verdict"] == "pass"
+
+
+def test_select_current_segment_view_prefers_current_ready_alias():
+    older = _Row(id="old", view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS, is_current=True, status="ready", created_at=1)
+    newer = _Row(id="new", view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS, is_current=True, status="ready", created_at=2)
+    inactive = _Row(id="inactive", view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS, is_current=False, status="ready", created_at=3)
+    other = _Row(id="other", view_alias="semantic", is_current=True, status="ready", created_at=4)
+
+    assert select_current_segment_view([older, newer, inactive, other]).id == "new"
+    assert select_current_segment_view([older, newer], view_alias="missing") is None
+
+
+def test_build_segment_member_payload_includes_unit_anchor_context():
+    payload = build_segment_member_payload(
+        members=[
+            _Row(unit_id="u2", member_index=1, role="main", unit_start_char=0, unit_end_char=3),
+            _Row(unit_id="u1", member_index=0, role="main", unit_start_char=2, unit_end_char=9),
+        ],
+        units=[
+            _Row(id="u1", unit_index=7, anchor_type="page_ref", anchor_payload={"page": 3}),
+            _Row(id="u2", unit_index=8, anchor_type="line_ref", anchor_payload={"line": 10}),
+        ],
+    )
+
+    assert [row["unit_id"] for row in payload] == ["u1", "u2"]
+    assert payload[0]["unit_index"] == 7
+    assert payload[0]["unit_anchor_type"] == "page_ref"
+    assert payload[0]["unit_anchor_payload"] == {"page": 3}
+
+
+def test_normalize_canonical_segment_read_marks_backfilled_degraded_lineage():
+    row = normalize_canonical_segment_read(
+        segment=_Row(id="s1", segment_view_id="sv1", segment_type="chunk", segment_index=0, text="Alpha", md={}),
+        segment_view=_Row(
+            id="sv1",
+            view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+            recipe_id=LEGACY_CHUNK_BACKFILL_SEGMENT_RECIPE_ID,
+            config={},
+        ),
+        members=[_Row(unit_id="u1", member_index=0, role="main", unit_start_char=0, unit_end_char=5)],
+        units=[_Row(id="u1", unit_index=0, anchor_type=None, anchor_payload={})],
+    )
+
+    assert row.segment_id == "s1"
+    assert row.segment_view_alias == DEFAULT_LOCAL_TEXT_VIEW_ALIAS
+    assert row.member_count == 1
+    assert row.degraded_lineage is True
+
+
+def test_resolve_chunk_authority_from_rows_classifies_states():
+    missing = resolve_chunk_authority_from_rows(
+        chunk=_Row(id="c1", document_id="doc1", authority_segment_id=None),
+        segments=[],
+        segment_views=[],
+        members=[],
+        units=[],
+    )
+    assert missing.status == "legacy_chunk_without_authority"
+
+    orphan = resolve_chunk_authority_from_rows(
+        chunk=_Row(id="c1", document_id="doc1", authority_segment_id="missing"),
+        segments=[],
+        segment_views=[],
+        members=[],
+        units=[],
+    )
+    assert orphan.status == "authority_segment_missing"
+
+    resolved = resolve_chunk_authority_from_rows(
+        chunk=_Row(id="c1", document_id="doc1", authority_segment_id="s1"),
+        segments=[_Row(id="s1", segment_view_id="sv1", segment_type="chunk", segment_index=0, text="Alpha", md={})],
+        segment_views=[_Row(id="sv1", view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS, recipe_id="canonical", config={})],
+        members=[_Row(segment_id="s1", unit_id="u1", member_index=0, role="main", unit_start_char=0, unit_end_char=5)],
+        units=[_Row(id="u1", unit_index=0, anchor_type="page_ref", anchor_payload={"page": 1})],
+    )
+    assert resolved.status == "resolved"
+    assert resolved.segment["segment_id"] == "s1"
+    assert resolved.segment["members"][0]["unit_anchor_payload"] == {"page": 1}
+
+
+def test_build_operator_provenance_payload_summarizes_anchors():
+    segment = normalize_canonical_segment_read(
+        segment=_Row(id="s1", segment_view_id="sv1", segment_type="chunk", segment_index=0, text="Alpha", md={}),
+        segment_view=_Row(id="sv1", view_alias=DEFAULT_LOCAL_TEXT_VIEW_ALIAS, recipe_id="canonical", config={}),
+        members=[_Row(unit_id="u1", member_index=0, role="main", unit_start_char=0, unit_end_char=5)],
+        units=[_Row(id="u1", unit_index=0, anchor_type="page_ref", anchor_payload={"page": 1})],
+    )
+    payload = build_operator_provenance_payload(
+        representation_type="canonical_segment_text",
+        document_id="doc1",
+        records=[segment],
+    )
+    assert payload["schema_version"] == "document_decomposition_operator_provenance_v1"
+    assert payload["record_count"] == 1
+    assert payload["anchor_count"] == 1
+    assert payload["records"][0]["members"][0]["unit_anchor_payload"] == {"page": 1}

@@ -486,6 +486,69 @@ def test_search_bm25_segment_requires_feature_flag(monkeypatch):
         assert "segment retrieval is disabled" in str(exc)
 
 
+def test_search_bm25_retrieval_view_routes_to_segment_when_enabled(monkeypatch):
+    class DummyDB:
+        pass
+
+    monkeypatch.setenv("QUERYLAKE_RETRIEVAL_SEGMENT_ENABLED", "1")
+    monkeypatch.setattr(search_api, "get_user", lambda database, auth: (SimpleNamespace(), SimpleNamespace(username="tester")))
+    monkeypatch.setattr(search_api, "assert_collections_priviledge", lambda database, auth, collection_ids: None)
+
+    statement = search_api.search_bm25(
+        database=DummyDB(),
+        auth={"username": "tester", "password_prehash": "x"},
+        query="boiler pressure limits",
+        collection_ids=["abc123"],
+        retrieval_view="canonical_segment",
+        return_statement=True,
+        group_chunks=False,
+    )
+    assert "FROM document_segment" in statement
+    assert "dsv.view_alias = 'default_local_text'" in statement
+
+
+def test_search_bm25_table_retrieval_view_filters_table_native_segment_view(monkeypatch):
+    class DummyDB:
+        pass
+
+    monkeypatch.setenv("QUERYLAKE_RETRIEVAL_SEGMENT_ENABLED", "1")
+    monkeypatch.setenv("QUERYLAKE_RETRIEVAL_TABLE_VIEW_ENABLED", "1")
+    monkeypatch.setattr(search_api, "get_user", lambda database, auth: (SimpleNamespace(), SimpleNamespace(username="tester")))
+    monkeypatch.setattr(search_api, "assert_collections_priviledge", lambda database, auth, collection_ids: None)
+
+    statement = search_api.search_bm25(
+        database=DummyDB(),
+        auth={"username": "tester", "password_prehash": "x"},
+        query="boiler pressure limits",
+        collection_ids=["abc123"],
+        retrieval_view="table",
+        return_statement=True,
+        group_chunks=False,
+    )
+    assert "FROM document_segment" in statement
+    assert "dsv.view_alias = 'table_native'" in statement
+
+
+def test_search_bm25_retrieval_view_falls_back_to_chunk_when_segment_disabled(monkeypatch):
+    class DummyDB:
+        pass
+
+    monkeypatch.setenv("QUERYLAKE_RETRIEVAL_SEGMENT_ENABLED", "0")
+    monkeypatch.setattr(search_api, "get_user", lambda database, auth: (SimpleNamespace(), SimpleNamespace(username="tester")))
+    monkeypatch.setattr(search_api, "assert_collections_priviledge", lambda database, auth, collection_ids: None)
+
+    statement = search_api.search_bm25(
+        database=DummyDB(),
+        auth={"username": "tester", "password_prehash": "x"},
+        query="boiler pressure limits",
+        collection_ids=["abc123"],
+        retrieval_view="canonical_segment",
+        return_statement=True,
+        group_chunks=False,
+    )
+    assert "FROM documentchunk" in statement
+
+
 def test_search_file_chunks_wildcard_statement_uses_created_at_sort(monkeypatch):
     class DummyDB:
         pass

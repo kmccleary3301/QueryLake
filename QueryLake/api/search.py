@@ -75,6 +75,7 @@ from ..runtime.retrieval_route_executors import (
     resolve_search_file_chunks_route_executor,
     resolve_search_hybrid_route_executor,
 )
+from ..runtime.retrieval_view_routing import resolve_retrieval_view_route
 from ..runtime.route_planning_v2 import instantiate_route_planning_v2
 from ..typing.retrieval_primitives import (
     RetrievalCandidate,
@@ -2419,9 +2420,15 @@ def search_bm25(
     _pipeline_override: Optional[Dict[str, str]] = None,
     lexical_variant_id: Optional[str] = None,
     quoted_query_canary: bool = False,
+    retrieval_view: Optional[str] = None,
 ) -> List[DocumentChunkDictionary]:
     t_1 = time.time()
     profile = get_deployment_profile()
+    retrieval_view_route = resolve_retrieval_view_route(
+        requested_view=retrieval_view,
+        current_table=str(table),
+    )
+    table = retrieval_view_route.table  # type: ignore[assignment]
     resolved_lexical_variant_id, lexical_variant_resolution = _resolve_lexical_variant_request(
         lexical_variant_id,
         route="search_bm25",
@@ -2447,11 +2454,13 @@ def search_bm25(
             collection_ids=list(collection_ids or []),
             planner_hints={
                 "table": str(table),
+                "retrieval_view_route": retrieval_view_route.to_payload(),
                 "lexical_variant_id": resolved_lexical_variant_id,
                 "lexical_variant_resolution": dict(lexical_variant_resolution),
             },
             query_metadata={
                 "table": str(table),
+                "retrieval_view_route": retrieval_view_route.to_payload(),
                 "lexical_variant_id": resolved_lexical_variant_id,
                 "lexical_variant_resolution": dict(lexical_variant_resolution),
             },
@@ -2620,6 +2629,7 @@ def search_bm25(
                                 "table": str(table),
                                 "group_chunks": bool(group_chunks),
                                 "web_search": bool(web_search),
+                                "retrieval_view_route": retrieval_view_route.to_payload(),
                             },
                         )
                 if not _skip_observability:
@@ -2736,6 +2746,7 @@ def search_bm25(
         offset=int(offset),
         return_statement=return_statement,
         lexical_variant_id=resolved_lexical_variant_id,
+        segment_view_alias=retrieval_view_route.segment_view_alias,
     )
     if return_statement:
         return bm25_execution.rows_or_statement
@@ -2800,6 +2811,7 @@ def search_bm25(
                     "table": str(table),
                     "group_chunks": bool(group_chunks),
                     "web_search": bool(web_search),
+                    "retrieval_view_route": retrieval_view_route.to_payload(),
                 },
             )
         if not _skip_observability:

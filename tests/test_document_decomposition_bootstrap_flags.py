@@ -22,3 +22,11 @@ def test_decomposition_scripts_disable_unrelated_sparse_bootstrap():
         if 'ensure_sparse_bootstrap=False' not in text:
             missing.append(rel_path)
     assert missing == []
+
+
+def test_decomposition_bootstrap_indexes_document_segment_ts_content():
+    text = Path("QueryLake/database/create_db_session.py").read_text(encoding="utf-8")
+    assert "ADD COLUMN IF NOT EXISTS ts_content tsvector" in text
+    assert "update_document_segment_ts_content" in text
+    assert "_ts_content_gin" in text
+    assert "UPDATE {document_segment.__tablename__}" in text

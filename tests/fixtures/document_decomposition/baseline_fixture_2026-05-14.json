@@ -1,0 +1,264 @@
+{
+  "schema_version": "document_decomposition_baseline_fixture_v1",
+  "created_at": "2026-05-14",
+  "source_artifact": "docs_tmp/RAG/CHUNKING/DOCUMENT_DECOMPOSITION_PHASEA_DOCTOR_SAMPLE25_POSTREPAIR_2026-05-14.json",
+  "privacy_note": "IDs and structural expected states only; no document text is included.",
+  "selection": {
+    "sample_order": "latest document_raw rows by creation_timestamp desc via doctor limit 25 after sample repair",
+    "canonical_count": 0,
+    "backfilled_compat_count": 25,
+    "partial_count": 0
+  },
+  "documents": [
+    {
+      "document_id": "2pqdHf18zIpqrkLtw0zIxJR4e6Wtm5Qt",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "oxy1ilnXbZSLUIVIGrYloVRIAmmoKeQW",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "I795nxQBereMTcht2x0qtoTxoV2O9GLa",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "3sZiS3Yumz3njauKna6H7D7zRx8ECivx",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "IowpKOBcNqEofKoflNvJaIkMbw8Y4jzY",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "z8YroB5b6UaTjVpPKrmt64EahElHUQuO",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "bsMR9Pd1ZSHI648sbZeiWAqz0coe0ik5",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "gJdPDvRqxrZutcJbhBgRCZQvj3tsHnMq",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "OCxQwySzpKbksy3YZ3hhuHdYk3nKuCBg",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "ZfCbzLAZztCn0s8xb2Zq7HKf9TUEOkqi",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "64jQd1CpPnYkOirA0sWYh5aM71Sco9yU",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "axuBa9q0awUE5mbPHZiswP36GaoWIypJ",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "nyWsWTcCCXHHBvKEyS8Yl91sNYHfErZv",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "7SY1YV2BRQFmywbVAl2DFhMo0C7urVUt",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "sPi5ehUQvsDEjiyJMQ51Jd2JJJlQxaK2",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "InroA4qtyR0ouUb2si5I3NsZ8gvYJ7PG",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "bFRWjlO37dqkDx5VBVnieOQPvNpQNcbS",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "HOjFdnWAVoRgeXHXJYIBN0VDvkCPtm2g",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "ATh6hZU93lgtqJ3VBCHqABQgbT4iQZ25",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "i8iLYyKwk7M7KgIZRxcZrAGZq6qaVtQc",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "RG3L8GiYxxBAGzKAzoowbBNrMe8YRhZm",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "Oki3wPFebpMr6vlvZEbGV187a521AMWA",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "T59ZWShDfIGxnLwEjM1B5E0Kbl8fZ7Yr",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "zSUASAOi7bsArEog1E8PbxAu8d3nYKFF",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    },
+    {
+      "document_id": "mEXuj7dkkcSehUj8V6Xar3yVCYdyoBC8",
+      "expected_status": "backfilled_compat",
+      "expected_chunk_count": 1,
+      "expected_authority_linked_chunk_count": 1,
+      "expected_default_segment_view_count": 1,
+      "expected_segment_count": 1,
+      "expected_segment_member_count": 1,
+      "backfilled_compat": true
+    }
+  ]
+}

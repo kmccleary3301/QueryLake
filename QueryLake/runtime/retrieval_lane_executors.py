@@ -24,6 +24,7 @@ class GoldBM25SearchPlan:
     order_by_field: str
     quoted_phrases: Tuple[str, ...]
     segment_collection_filter: str = ""
+    segment_view_alias: Optional[str] = None
     lexical_variant_id: str = "QL-L1"
     lexical_query_debug: Dict[str, Any] | None = None
 
@@ -39,6 +40,7 @@ def build_gold_bm25_search_plan(
     sort_dir: str,
     document_collection_attrs: Sequence[str],
     lexical_variant_id: Optional[str] = None,
+    segment_view_alias: Optional[str] = None,
 ) -> GoldBM25SearchPlan:
     lexical_plan = build_paradedb_lexical_query_plan(
         str(query or ""),
@@ -56,6 +58,7 @@ def build_gold_bm25_search_plan(
             clean_collection_ids = ",".join([f"'{c}'" for c in collection_ids])
             segment_collection_filter = f" AND COALESCE(document_segment.md->>'collection_id', '') IN ({clean_collection_ids})"
         parse_field = formatted_query
+        segment_view_alias = str(segment_view_alias or "default_local_text").strip() or "default_local_text"
     else:
         collection_spec = (
             f"""collection_id:IN {str(list(collection_ids)).replace("'", "")}"""
@@ -76,6 +79,7 @@ def build_gold_bm25_search_plan(
                 else f"{collection_spec}"
             )
         segment_collection_filter = ""
+        segment_view_alias = None
 
     score_allowed = formatted_query != "()"
     assert not (sort_by == "score" and not score_allowed), "Cannot sort by score if no query is specified"
@@ -88,6 +92,7 @@ def build_gold_bm25_search_plan(
         order_by_field=order_by_field,
         quoted_phrases=quoted_phrases,
         segment_collection_filter=segment_collection_filter,
+        segment_view_alias=segment_view_alias,
         lexical_variant_id=lexical_plan.variant_id,
         lexical_query_debug=dict(lexical_plan.debug),
     )
@@ -240,6 +245,7 @@ def execute_gold_bm25_search(
     formatted_query: str,
     quoted_phrases: Sequence[str],
     segment_collection_filter: str = "",
+    segment_view_alias: Optional[str] = None,
     return_statement: bool = False,
 ) -> Union[str, List[Any]]:
     score_field = "paradedb.score(id) AS score, " if formatted_query != "()" else ""
@@ -287,18 +293,29 @@ def execute_gold_bm25_search(
             **score_bind_params,
         )
     elif table == "segment":
+        segment_view_filter = ""
+        bind_values: Dict[str, Any] = {"limit": limit, "offset": offset}
+        if segment_view_alias:
+            segment_view_filter = """
+        AND EXISTS (
+            SELECT 1
+            FROM document_segment_view dsv
+            WHERE dsv.id = document_segment.segment_view_id
+              AND dsv.view_alias = :segment_view_alias
+              AND dsv.is_current = TRUE
+        )
+        """
+            bind_values["segment_view_alias"] = str(segment_view_alias)
         stmt = text(f"""
         SELECT id, {score_field}{chosen_attributes}
         FROM {chosen_table_name}
         WHERE id @@@ paradedb.parse('{parse_field}')
         {segment_collection_filter}
+        {segment_view_filter}
         {order_by_field}
         LIMIT :limit
         OFFSET :offset;
-        """).bindparams(
-            limit=limit,
-            offset=offset,
-        )
+        """).bindparams(**bind_values)
     else:
         stmt = text(f"""
         SELECT id, {score_field}{chosen_attributes}

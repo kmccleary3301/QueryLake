@@ -56,6 +56,40 @@ class DocumentDecompositionBackfillPayload:
     chunk_links: List[Tuple[str, str]]
 
 
+@dataclass(frozen=True)
+class CanonicalSegmentRead:
+    segment_id: str
+    segment_view_id: Optional[str]
+    segment_view_alias: Optional[str]
+    segment_type: str
+    segment_index: int
+    text: str
+    md: Dict[str, Any]
+    member_count: int
+    members: List[Dict[str, Any]]
+    degraded_lineage: bool
+
+
+@dataclass(frozen=True)
+class ChunkAuthorityResolution:
+    status: str
+    chunk_id: Optional[str]
+    document_id: Optional[str]
+    authority_segment_id: Optional[str]
+    segment: Optional[Dict[str, Any]]
+    notes: List[str]
+
+    def to_payload(self) -> Dict[str, Any]:
+        return {
+            "status": self.status,
+            "chunk_id": self.chunk_id,
+            "document_id": self.document_id,
+            "authority_segment_id": self.authority_segment_id,
+            "segment": self.segment,
+            "notes": list(self.notes),
+        }
+
+
 def _config_hash(payload: Dict[str, Any], *, salt: str) -> str:
     return content_fingerprint(text="", md=payload, salt=salt)
 
@@ -672,6 +706,312 @@ def fetch_document_decomposition_state(database: Session, *, document_id: str) -
         "members": members,
         "chunks": chunks,
     }
+
+
+def _row_value(row: Any, key: str, default: Any = None) -> Any:
+    if isinstance(row, dict):
+        return row.get(key, default)
+    return getattr(row, key, default)
+
+
+def select_current_segment_view(
+    segment_views: Sequence[Any],
+    *,
+    view_alias: str = DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+) -> Optional[Any]:
+    candidates = [
+        row for row in segment_views
+        if _row_value(row, "view_alias") == view_alias and bool(_row_value(row, "is_current", True))
+    ]
+    candidates.sort(
+        key=lambda row: (
+            str(_row_value(row, "status", "")) != "ready",
+            -float(_row_value(row, "created_at", 0.0) or 0.0),
+            str(_row_value(row, "id", "")),
+        )
+    )
+    return candidates[0] if candidates else None
+
+
+def fetch_current_segment_view(
+    database: Session,
+    *,
+    document_id: str,
+    view_alias: str = DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+) -> Optional[DocumentSegmentView]:
+    state = fetch_document_decomposition_state(database, document_id=document_id)
+    return select_current_segment_view(state["segment_views"], view_alias=view_alias)
+
+
+def fetch_ordered_segments_for_view(
+    database: Session,
+    *,
+    segment_view_id: str,
+) -> List[DocumentSegment]:
+    return list(database.exec(
+        select(DocumentSegment)
+        .where(DocumentSegment.segment_view_id == segment_view_id)
+        .order_by(DocumentSegment.segment_index.asc(), DocumentSegment.id.asc())
+    ).all())
+
+
+def build_segment_member_payload(
+    *,
+    members: Sequence[Any],
+    units: Sequence[Any],
+) -> List[Dict[str, Any]]:
+    units_by_id = {str(_row_value(row, "id")): row for row in units}
+    payload: List[Dict[str, Any]] = []
+    for member in sorted(members, key=lambda row: int(_row_value(row, "member_index", 0) or 0)):
+        unit_id = str(_row_value(member, "unit_id", "") or "")
+        unit = units_by_id.get(unit_id)
+        payload.append({
+            "member_index": int(_row_value(member, "member_index", 0) or 0),
+            "role": _row_value(member, "role"),
+            "unit_id": unit_id or None,
+            "unit_index": None if unit is None else int(_row_value(unit, "unit_index", 0) or 0),
+            "unit_start_char": int(_row_value(member, "unit_start_char", 0) or 0),
+            "unit_end_char": int(_row_value(member, "unit_end_char", 0) or 0),
+            "unit_anchor_type": None if unit is None else _row_value(unit, "anchor_type"),
+            "unit_anchor_payload": {} if unit is None else dict(_row_value(unit, "anchor_payload", {}) or {}),
+        })
+    return payload
+
+
+def normalize_canonical_segment_read(
+    *,
+    segment: Any,
+    segment_view: Optional[Any] = None,
+    members: Sequence[Any] = (),
+    units: Sequence[Any] = (),
+) -> CanonicalSegmentRead:
+    segment_md = dict(_row_value(segment, "md", {}) or {})
+    segment_view_md = dict(_row_value(segment_view, "config", {}) or {}) if segment_view is not None else {}
+    member_payload = build_segment_member_payload(members=members, units=units)
+    degraded_lineage = bool(
+        segment_md.get("degraded_lineage")
+        or segment_view_md.get("degraded_lineage")
+        or _row_value(segment_view, "recipe_id") == LEGACY_CHUNK_BACKFILL_SEGMENT_RECIPE_ID
+    )
+    return CanonicalSegmentRead(
+        segment_id=str(_row_value(segment, "id", "") or ""),
+        segment_view_id=None if _row_value(segment, "segment_view_id") is None else str(_row_value(segment, "segment_view_id")),
+        segment_view_alias=None if segment_view is None else _row_value(segment_view, "view_alias"),
+        segment_type=str(_row_value(segment, "segment_type", "") or ""),
+        segment_index=int(_row_value(segment, "segment_index", 0) or 0),
+        text=str(_row_value(segment, "text", "") or ""),
+        md=segment_md,
+        member_count=len(member_payload),
+        members=member_payload,
+        degraded_lineage=degraded_lineage,
+    )
+
+
+def fetch_segment_members_with_units(
+    database: Session,
+    *,
+    segment_id: str,
+) -> List[Dict[str, Any]]:
+    members = list(database.exec(
+        select(DocumentSegmentMember)
+        .where(DocumentSegmentMember.segment_id == segment_id)
+        .order_by(DocumentSegmentMember.member_index.asc())
+    ).all())
+    unit_ids = [row.unit_id for row in members]
+    units = list(database.exec(select(DocumentUnit).where(DocumentUnit.id.in_(unit_ids))).all()) if unit_ids else []
+    return build_segment_member_payload(members=members, units=units)
+
+
+def fetch_current_canonical_segment_reads(
+    database: Session,
+    *,
+    document_id: str,
+    view_alias: str = DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+) -> List[CanonicalSegmentRead]:
+    state = fetch_document_decomposition_state(database, document_id=document_id)
+    segment_view = select_current_segment_view(state["segment_views"], view_alias=view_alias)
+    if segment_view is None:
+        return []
+    segment_view_id = str(_row_value(segment_view, "id"))
+    segments = [
+        row for row in state["segments"]
+        if str(_row_value(row, "segment_view_id", "")) == segment_view_id
+    ]
+    segments.sort(key=lambda row: (int(_row_value(row, "segment_index", 0) or 0), str(_row_value(row, "id", ""))))
+    members_by_segment: Dict[str, List[Any]] = {}
+    for member in state["members"]:
+        members_by_segment.setdefault(str(_row_value(member, "segment_id")), []).append(member)
+    return [
+        normalize_canonical_segment_read(
+            segment=segment,
+            segment_view=segment_view,
+            members=members_by_segment.get(str(_row_value(segment, "id")), []),
+            units=state["units"],
+        )
+        for segment in segments
+    ]
+
+
+def build_operator_provenance_payload(
+    *,
+    representation_type: str,
+    document_id: Optional[str],
+    records: Sequence[CanonicalSegmentRead | Dict[str, Any]],
+    source: str = "document_decomposition",
+) -> Dict[str, Any]:
+    normalized_records: List[Dict[str, Any]] = []
+    anchor_count = 0
+    for record in records:
+        if isinstance(record, CanonicalSegmentRead):
+            payload = {
+                "segment_id": record.segment_id,
+                "segment_view_id": record.segment_view_id,
+                "segment_view_alias": record.segment_view_alias,
+                "segment_type": record.segment_type,
+                "segment_index": record.segment_index,
+                "member_count": record.member_count,
+                "members": list(record.members),
+                "degraded_lineage": bool(record.degraded_lineage),
+                "md": dict(record.md or {}),
+            }
+        else:
+            payload = dict(record)
+        members = list(payload.get("members") or [])
+        for member in members:
+            if isinstance(member, dict) and member.get("unit_anchor_payload"):
+                anchor_count += 1
+        normalized_records.append(payload)
+    return {
+        "schema_version": "document_decomposition_operator_provenance_v1",
+        "source": source,
+        "document_id": document_id,
+        "representation_type": representation_type,
+        "record_count": len(normalized_records),
+        "anchor_count": anchor_count,
+        "records": normalized_records,
+    }
+
+
+def fetch_document_operator_provenance(
+    database: Session,
+    *,
+    document_id: str,
+    view_alias: str = DEFAULT_LOCAL_TEXT_VIEW_ALIAS,
+    representation_type: str = "canonical_segment_text",
+) -> Dict[str, Any]:
+    records = fetch_current_canonical_segment_reads(
+        database,
+        document_id=document_id,
+        view_alias=view_alias,
+    )
+    return build_operator_provenance_payload(
+        representation_type=representation_type,
+        document_id=document_id,
+        records=records,
+        source="document_segment_view",
+    )
+
+
+def resolve_chunk_authority_from_rows(
+    *,
+    chunk: Any,
+    segments: Sequence[Any],
+    segment_views: Sequence[Any],
+    members: Sequence[Any],
+    units: Sequence[Any],
+) -> ChunkAuthorityResolution:
+    chunk_id = None if _row_value(chunk, "id") is None else str(_row_value(chunk, "id"))
+    document_id = None if _row_value(chunk, "document_id") is None else str(_row_value(chunk, "document_id"))
+    authority_segment_id = _row_value(chunk, "authority_segment_id")
+    if not authority_segment_id:
+        return ChunkAuthorityResolution(
+            status="legacy_chunk_without_authority",
+            chunk_id=chunk_id,
+            document_id=document_id,
+            authority_segment_id=None,
+            segment=None,
+            notes=["DocumentChunk has no authority_segment_id."],
+        )
+    authority_segment_id = str(authority_segment_id)
+    segment = next((row for row in segments if str(_row_value(row, "id")) == authority_segment_id), None)
+    if segment is None:
+        return ChunkAuthorityResolution(
+            status="authority_segment_missing",
+            chunk_id=chunk_id,
+            document_id=document_id,
+            authority_segment_id=authority_segment_id,
+            segment=None,
+            notes=["DocumentChunk authority_segment_id does not resolve to a document_segment row."],
+        )
+    segment_view_id = _row_value(segment, "segment_view_id")
+    segment_view = next(
+        (row for row in segment_views if segment_view_id is not None and str(_row_value(row, "id")) == str(segment_view_id)),
+        None,
+    )
+    segment_members = [row for row in members if str(_row_value(row, "segment_id")) == authority_segment_id]
+    normalized = normalize_canonical_segment_read(
+        segment=segment,
+        segment_view=segment_view,
+        members=segment_members,
+        units=units,
+    )
+    return ChunkAuthorityResolution(
+        status="resolved",
+        chunk_id=chunk_id,
+        document_id=document_id,
+        authority_segment_id=authority_segment_id,
+        segment={
+            **normalized.__dict__,
+            "compatibility_contract": DOCUMENT_CHUNK_COMPATIBILITY_CONTRACT,
+        },
+        notes=[],
+    )
+
+
+def resolve_document_chunk_authority(
+    database: Session,
+    *,
+    chunk_id: str,
+) -> ChunkAuthorityResolution:
+    chunk = database.exec(select(DocumentChunk).where(DocumentChunk.id == chunk_id)).first()
+    if chunk is None:
+        return ChunkAuthorityResolution(
+            status="chunk_missing",
+            chunk_id=str(chunk_id),
+            document_id=None,
+            authority_segment_id=None,
+            segment=None,
+            notes=["No DocumentChunk row exists for chunk_id."],
+        )
+    if not chunk.document_id:
+        return ChunkAuthorityResolution(
+            status="chunk_without_document",
+            chunk_id=str(chunk.id),
+            document_id=None,
+            authority_segment_id=None if chunk.authority_segment_id is None else str(chunk.authority_segment_id),
+            segment=None,
+            notes=["DocumentChunk has no document_id, so decomposition state cannot be resolved."],
+        )
+    state = fetch_document_decomposition_state(database, document_id=str(chunk.document_id))
+    return resolve_chunk_authority_from_rows(
+        chunk=chunk,
+        segments=state["segments"],
+        segment_views=state["segment_views"],
+        members=state["members"],
+        units=state["units"],
+    )
+
+
+def fetch_segment_compatibility_chunks(
+    database: Session,
+    *,
+    segment_id: str,
+) -> List[DocumentChunk]:
+    return list(database.exec(
+        select(DocumentChunk)
+        .where(DocumentChunk.authority_segment_id == segment_id)
+        .order_by(DocumentChunk.document_chunk_number.asc(), DocumentChunk.id.asc())
+    ).all())
 
 
 

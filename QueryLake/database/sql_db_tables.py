@@ -685,6 +685,7 @@ class document_segment(SQLModel, table=True):
     md: dict = Field(sa_column=Column(JSONB), default={})
     embedding: Optional[List[float]] = Field(sa_column=Column(HALFVEC(1024)), default=None)
     embedding_sparse: Optional[dict] = Field(sa_column=Column(SPARSEVEC()), default=None)
+    ts_content: Optional[str] = Field(sa_column=Column(TSVECTOR), default=None)
     created_at: float = Field(default_factory=time, index=True)
 
     __table_args__ = (
@@ -756,6 +757,25 @@ SEGMENT_INDEXED_COLUMNS = [
     "md",
     "created_at",
 ]
+
+document_segment_ts_trigger = DDL(f"""
+CREATE OR REPLACE FUNCTION update_document_segment_ts_content()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.ts_content := to_tsvector('english', COALESCE(NEW.text, ''));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_document_segment_ts_content_trigger ON {document_segment.__tablename__};
+
+CREATE TRIGGER update_document_segment_ts_content_trigger
+BEFORE INSERT OR UPDATE ON {document_segment.__tablename__}
+FOR EACH ROW EXECUTE FUNCTION update_document_segment_ts_content();
+
+CREATE INDEX IF NOT EXISTS document_segment_ts_content_gin ON {document_segment.__tablename__} USING gin(ts_content);
+""")
+event.listen(document_segment.__table__, 'after_create', document_segment_ts_trigger.execute_if(dialect='postgresql'))
 
 
 class DocumentChunk(SQLModel, table=True):

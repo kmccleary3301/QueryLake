@@ -573,6 +573,7 @@ def test_search_bm25_orchestrated_path_can_return_plan_explain(monkeypatch):
     assert result["plan_explain"]["pipeline"]["pipeline_id"] == "orchestrated.search_bm25.document_chunk"
     assert result["plan_explain"]["effective"]["lexical_query_debug"]["positive_term_count"] >= 2
     assert result["plan_explain"]["effective"]["lexical_query_debug"]["catch_all_fields"] == ["text"]
+    assert result["plan_explain"]["effective"]["lane_state"]["retrieval_view_route"]["effective_view"] == "compat_chunk"
     assert result["plan_explain"]["effective"]["compatibility_provenance"]["record_count"] == 1
     assert result["plan_explain"]["effective"]["compatibility_materializations"]["records"][0]["segment_materialization"]["id"] == "seg-1"
 
