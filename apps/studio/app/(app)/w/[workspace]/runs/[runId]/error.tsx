@@ -21,7 +21,7 @@ export default function RunError({ error, reset }: RunErrorProps) {
       <p className="text-sm text-muted-foreground">
         Something went wrong while loading this run view.
       </p>
-      <pre className="rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground whitespace-pre-wrap">
+      <pre className="ql-panel p-4 text-xs text-muted-foreground whitespace-pre-wrap">
         {error.message}
       </pre>
       <div className="flex flex-wrap gap-2">

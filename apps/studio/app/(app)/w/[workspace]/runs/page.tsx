@@ -127,7 +127,7 @@ export default function Page() {
         </div>
 
       {mode === "v2" && (
-        <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+        <div className="ql-runtime-inset p-4 text-xs text-muted-foreground">
           v2 sessions are listed here via the same legacy session index as v1 runs.
           If a session is missing, create a new one from the “New run” page or open
           it directly by ID.
@@ -135,17 +135,17 @@ export default function Page() {
       )}
 
       {!authReviewed ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-48" />
         </div>
       ) : !loginValid || !userData ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Sign in to view run history.
         </div>
       ) : runs.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           No runs recorded yet.
         </div>
       ) : (
@@ -197,11 +197,11 @@ export default function Page() {
           </div>
 
           {filteredRuns.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+            <div className="ql-panel p-6 text-sm text-muted-foreground">
               No runs match your filters.
             </div>
           ) : (
-            <div className="rounded-lg border border-border">
+            <div className="ql-data-surface">
               <div className="divide-y divide-border">
                 {filteredRuns.map((run) => (
                   <div

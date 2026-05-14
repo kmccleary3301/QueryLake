@@ -111,6 +111,10 @@ export default function ToolchainUISpecRuntime({
     [runtimeCtx]
   );
 
-  return <ToolchainUISpecRendererV2 spec={spec} renderComponent={renderComponent} />;
+  return (
+    <div className="ql-runtime-panel p-4">
+      <ToolchainUISpecRendererV2 spec={spec} renderComponent={renderComponent} />
+    </div>
+  );
 }
 

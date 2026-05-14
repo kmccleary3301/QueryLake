@@ -38,7 +38,7 @@ export default function AccountPreferencesPage() {
   const { theme: modeTheme, setTheme: setModeTheme } = useTheme();
   const { theme, setTheme } = useThemeContextAction();
 
-  const currentRegistryTheme = theme?.dark?.["theme-select-id"] ?? "rose";
+  const currentRegistryTheme = theme?.dark?.["theme-select-id"] ?? "querylake";
   const codeThemeValue = (shikiTheme?.theme ?? "tokyo-night") as BundledTheme;
 
   const providerKeysConfigured = useMemo(() => {
@@ -76,7 +76,7 @@ export default function AccountPreferencesPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <div>
             <div className="text-sm font-semibold">Color mode</div>
             <div className="text-xs text-muted-foreground">
@@ -98,7 +98,7 @@ export default function AccountPreferencesPage() {
           </Select>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <div>
             <div className="text-sm font-semibold">UI theme</div>
             <div className="text-xs text-muted-foreground">
@@ -128,7 +128,7 @@ export default function AccountPreferencesPage() {
           </Select>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5 space-y-3 md:col-span-2">
+        <div className="ql-panel space-y-3 p-5 md:col-span-2">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-sm font-semibold">Code highlight theme</div>
@@ -168,7 +168,7 @@ export default function AccountPreferencesPage() {
           />
         </div>
 
-        <div className="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground md:col-span-2">
+        <div className="ql-panel p-5 text-sm text-muted-foreground md:col-span-2">
           Provider keys configured: {providerKeysConfigured}. Manage them in{" "}
           <span className="text-foreground">Account → Providers</span>.
         </div>
@@ -180,7 +180,7 @@ export default function AccountPreferencesPage() {
           size="sm"
           onClick={() => {
             setModeTheme("system");
-            const defaultTheme = REGISTRY_THEMES_MAP.get("rose") as
+            const defaultTheme = REGISTRY_THEMES_MAP.get("querylake") as
               | dualThemeType
               | undefined;
             if (defaultTheme) setTheme(defaultTheme);

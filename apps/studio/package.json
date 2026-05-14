@@ -20,7 +20,8 @@
     "format:check": "prettier --check \"***.{ts,tsx,mdx}\" --cache",
     "build:docs": "node ./lib/build-documentation.js",
     "build:toolchain-components": "node ./lib/build-toolchain-components.js",
-    "build:themes": "node ./lib/build-themes.js"
+    "build:themes": "node ./lib/build-themes.js",
+    "smoke:auth": "node ./scripts/smoke-authenticated.mjs"
   },
   "dependencies": {
     "@date-fns/utc": "^2.1.0",
@@ -79,8 +80,8 @@
     "@vercel/og": "^0.0.21",
     "autoprefixer": "^10.4.14",
     "axios": "^1.6.8",
-    "class-variance-authority": "^0.4.0",
-    "clsx": "^1.2.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-autoplay": "8.0.0-rc15",
@@ -95,7 +96,6 @@
     "esm": "^3.2.25",
     "express": "^4.18.3",
     "framer-motion": "^11.0.8",
-    "frontend": "file:",
     "geist": "^1.1.0",
     "highlight.js": "^11.9.0",
     "hjson": "^3.2.2",
@@ -147,7 +147,7 @@
     "tailwindcss": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.1.4",
-    "typescript": "^4.9.5",
+    "typescript": "^5.9.3",
     "unist-builder": "3.0.0",
     "unist-util-visit": "^4.1.2",
     "vaul": "^0.2.0",

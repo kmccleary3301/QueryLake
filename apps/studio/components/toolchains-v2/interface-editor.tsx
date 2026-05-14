@@ -507,17 +507,24 @@ function isObjectRecord(value: unknown): value is Record<string, unknown> {
 
 function MockChatPreview() {
   return (
-    <div className="rounded-[14px] border border-border/70 bg-background/95 px-3 py-3 text-sm shadow-[0_10px_30px_hsl(var(--background)/0.18)]">
-      <div className="mb-2 text-xs text-muted-foreground">chat_history</div>
-      <div className="space-y-2">
-        <div className="rounded-[10px] bg-muted/40 px-2 py-1.5">
-          <div className="text-[11px] text-muted-foreground">You</div>
-          <div>Lorem ipsum dolor sit amet.</div>
+    <div className="ql-runtime-panel relative overflow-hidden px-4 py-4 text-sm">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Conversation artifact</div>
+          <div className="mt-1 text-sm font-medium text-foreground">chat_history</div>
         </div>
-        <div className="rounded-[10px] border border-border/60 bg-card px-2 py-1.5">
-          <div className="text-[11px] text-muted-foreground">QueryLake</div>
-          <div className="font-medium">Lorem Ipsum</div>
-          <div className="text-muted-foreground">dolor sit amet, consectetur adipiscing elit.</div>
+        <div className="rounded-full border border-border/70 bg-background/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">stream</div>
+      </div>
+      <div className="space-y-2.5">
+        <div className="ql-runtime-inset px-3 py-2">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Operator</div>
+          <div className="mt-1 text-[13px] text-foreground">Summarize the retrieval anomalies in the latest run.</div>
+        </div>
+        <div className="ql-runtime-muted px-3 py-2.5">
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">QueryLake</div>
+          <div className="mt-1 text-[13px] font-medium text-foreground">3 candidate failure clusters</div>
+          <div className="mt-1 text-[13px] leading-6 text-muted-foreground">Vector recall drift, schema mismatch, and stale collection routing are the strongest signals in the current run snapshot.</div>
         </div>
       </div>
     </div>
@@ -526,11 +533,12 @@ function MockChatPreview() {
 
 function MockChatInputPreview() {
   return (
-    <div className="rounded-[14px] border border-dashed border-border/70 bg-background/95 px-2 py-2 shadow-[0_10px_30px_hsl(var(--background)/0.14)]">
-      <div className="flex items-center gap-2 rounded-[10px] border border-border/70 bg-card px-2 py-1.5">
-        <span className="flex-1 text-sm text-muted-foreground">Message</span>
+    <div className="ql-runtime-panel px-3 py-3">
+      <div className="flex items-center gap-2 rounded-[12px] border border-border/70 bg-background/70 px-3 py-2">
+        <span className="flex-1 text-[13px] text-muted-foreground">Draft an operator prompt...</span>
         <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-        <SendHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="h-4 w-px bg-border/70" />
+        <SendHorizontal className="h-3.5 w-3.5 text-[hsl(var(--ql-accent-amber))]" />
       </div>
     </div>
   );
@@ -538,23 +546,26 @@ function MockChatInputPreview() {
 
 function MockBasfIntroPreview() {
   const chips = [
-    { label: "How do we handle vapor recovery?", icon: Flame },
-    { label: "Tell me about mineral oil procedures.", icon: Droplets },
-    { label: "Flue-gas analysis guides.", icon: Wind },
+    { label: "Vapor recovery procedures", icon: Flame },
+    { label: "Mineral oil safety references", icon: Droplets },
+    { label: "Flue-gas analysis guides", icon: Wind },
   ];
   return (
-    <div className="rounded-[16px] border border-border/70 bg-background/95 px-3 py-3 shadow-[0_12px_36px_hsl(var(--background)/0.18)]">
-      <div className="mb-3 text-center text-base font-semibold">What can I help you find?</div>
+    <div className="ql-runtime-panel relative overflow-hidden px-4 py-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
+      <div className="mb-4">
+        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Launch surface</div>
+        <div className="mt-1 text-base font-semibold text-foreground">What can I help you locate?</div>
+      </div>
       <div className="grid gap-2 md:grid-cols-3">
         {chips.map((chip) => {
           const Icon = chip.icon;
           return (
-            <div
-              key={chip.label}
-              className="rounded-[12px] border border-border/60 bg-muted/25 px-2 py-3 text-center"
-            >
-              <Icon className="mx-auto mb-1 h-4 w-4 text-muted-foreground" />
-              <div className="text-xs text-muted-foreground">{chip.label}</div>
+            <div key={chip.label} className="ql-runtime-muted flex min-h-[110px] flex-col items-start gap-3 px-3 py-3 text-left">
+              <div className="rounded-full border border-border/70 bg-background/60 p-2">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-[12px] leading-5 text-foreground">{chip.label}</div>
             </div>
           );
         })}
@@ -746,9 +757,10 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
     if (node.componentId === "chat-input") return <MockChatInputPreview />;
     if (node.componentId === "basf-intro-screen") return <MockBasfIntroPreview />;
     return (
-      <div className="rounded-sm border border-dashed border-border/70 bg-muted/10 px-3 py-2 text-xs text-muted-foreground">
-        <div className="font-medium text-foreground/80">{node.label ?? node.componentId}</div>
-        <div className="text-[11px] opacity-80">{node.componentId}</div>
+      <div className="ql-runtime-panel px-3 py-3 text-xs text-muted-foreground">
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Placeholder component</div>
+        <div className="mt-1 font-medium text-foreground/80">{node.label ?? node.componentId}</div>
+        <div className="mt-1 text-[11px] opacity-80">{node.componentId}</div>
       </div>
     );
   }, []);
@@ -1334,14 +1346,14 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
             <div className="space-y-1">
               <div className="text-xl font-semibold tracking-tight">Interface designer</div>
               <div className="max-w-3xl text-sm text-muted-foreground">
-                Build the toolchain surface as a visual artifact first. Tree structure and component schema should support the preview, not dominate it.
+                Compose the runtime surface like an instrument panel: structure supports the artifact, but the artifact remains the primary truth.
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">Toolchain <span className="ml-1 font-mono">{toolchain.id}</span></Badge>
               <Badge variant="outline">Nodes {Object.keys(spec.nodes).length}</Badge>
               {hasPreviewSelection ? (
-                <Badge variant="outline" className="border-cyan-400/50 bg-cyan-500/10 text-cyan-100">
+                <Badge variant="outline" className="border-primary/45 bg-primary/10 text-foreground">
                   Preview edit active
                 </Badge>
               ) : null}
@@ -1384,13 +1396,13 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
           </div>
         </div>
         <div className="mt-4 grid gap-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="rounded-[14px] border border-border/70 bg-background/35 px-3 py-2">
+          <div className="ql-panel-inset px-3 py-2">
             <div className="text-xs font-medium text-foreground">Interaction model</div>
             <div className="mt-1 text-xs text-muted-foreground">
               Click directly on preview nodes to select them. Use the structure map for navigation and drag reordering support.
             </div>
           </div>
-          <div className="rounded-[14px] border border-border/70 bg-background/35 px-3 py-2">
+          <div className="ql-panel-inset px-3 py-2">
             <div className="text-xs font-medium text-foreground">Current focus</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {selectedNode
@@ -1434,7 +1446,7 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)_320px]">
+      <div className="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)_340px]">
         <div
           className={cn(
             "ql-editor-panel p-3 transition-all duration-200",
@@ -1497,17 +1509,19 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
                         setDraggingNodeId(null);
                       }}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm hover:bg-muted",
-                        isSelected ? "bg-muted" : undefined,
+                        "group flex w-full items-center gap-2 rounded-[12px] border border-transparent px-2.5 py-2 text-left text-[13px] transition-[border-color,background-color,color,transform,opacity] duration-150 hover:-translate-y-px hover:border-border/70 hover:bg-muted/18",
+                        isSelected
+                          ? "border-primary/35 bg-primary/10 text-foreground shadow-[0_10px_24px_hsl(var(--background)/0.14)]"
+                          : undefined,
                         draggingNodeId === item.id ? "opacity-60" : undefined
                       )}
                       style={{ paddingLeft: 8 + item.depth * 12 }}
                     >
-                      <span className="text-xs text-muted-foreground">
-                        {node.kind === "layout" ? "L" : "C"}
+                      <span className="rounded-full border border-border/70 bg-background/60 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-foreground">
+                        {node.kind === "layout" ? "LAY" : "CMP"}
                       </span>
                       <span className="truncate">{nodeDisplayName(node)}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">
+                      <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
                         {item.id}
                       </span>
                     </button>
@@ -1522,7 +1536,7 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
           className={cn(
             "ql-editor-stage transition-all duration-200",
             hasPreviewSelection
-              ? "border-cyan-400/45 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_18px_42px_rgba(20,184,166,0.16)]"
+              ? "border-primary/35 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_18px_42px_hsl(var(--background)/0.2)]"
               : undefined
           )}
         >
@@ -1535,11 +1549,11 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {hasPreviewSelection && previewFocusLabel ? (
-                <div className="rounded-full border border-cyan-400/45 bg-cyan-500/10 px-2 py-1 text-[11px] text-cyan-100">
+                <div className="rounded-full border border-primary/45 bg-primary/10 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground">
                   Editing {previewFocusLabel}
                 </div>
               ) : null}
-              <div className="rounded-full border border-border/70 bg-background/40 px-2 py-1 text-[11px] text-muted-foreground">
+              <div className="rounded-full border border-border/70 bg-background/40 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                 Click preview nodes to select and edit
               </div>
             </div>
@@ -1548,7 +1562,7 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
             <div className="ql-editor-artifact-frame max-w-[1120px] p-4">
               {hasPreviewSelection && previewFocusLabel ? (
                 <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border/60 pb-3">
-                  <span className="rounded-full border border-cyan-400/45 bg-cyan-500/10 px-3 py-1 text-[11px] font-medium tracking-[0.08em] text-cyan-100">
+                  <span className="rounded-full border border-primary/45 bg-primary/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground">
                     Preview editing mode
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -1566,11 +1580,11 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
                 </div>
               ) : null}
               {selectedComponentNode && selectedComponentManifest ? (
-                <div className="mb-4 rounded-[16px] border border-cyan-400/35 bg-[radial-gradient(circle_at_top_left,hsl(var(--chart-2)/0.14),transparent_26%),linear-gradient(180deg,hsl(var(--background)/0.97),hsl(var(--card)/0.91))] p-4 shadow-[0_18px_36px_rgba(20,184,166,0.12)]">
+                <div className="ql-runtime-panel relative mb-4 overflow-hidden p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-2">
                       <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+                        <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                           Active component
                         </div>
                         <div className="mt-1 text-sm font-semibold text-foreground">
@@ -1640,7 +1654,7 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
                   </div>
 
                   <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-                    <div className="space-y-3 rounded-[14px] border border-border/70 bg-background/35 p-3">
+                    <div className="ql-panel-inset space-y-3 p-3">
                       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                         Quick component controls
                       </div>
@@ -1707,14 +1721,14 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
                             ))}
                           </div>
                         ) : (
-                          <div className="rounded-sm border border-dashed border-border/60 p-2 text-xs text-muted-foreground">
+                          <div className="ql-runtime-inset p-2 text-xs text-muted-foreground">
                             No manifest hooks. Use the advanced drawer for raw JSON if needed.
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[14px] border border-border/70 bg-background/35 p-3">
+                    <div className="ql-panel-inset space-y-3 p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           Quick config fields
@@ -1756,7 +1770,7 @@ export default function ToolchainInterfaceEditorV2({ params }: Props) {
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-sm border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
+                        <div className="ql-runtime-inset p-3 text-xs text-muted-foreground">
                           No quick config fields on this manifest. Use the advanced drawer if you need raw JSON or hook mapping controls.
                         </div>
                       )}
@@ -2246,7 +2260,7 @@ function ComponentInspector({
         <div className="text-xs text-muted-foreground">{manifest.description}</div>
       ) : null}
 
-      <div className="flex items-center justify-between rounded-sm border border-border/70 bg-muted/10 p-2">
+      <div className="ql-panel-inset flex items-center justify-between p-2">
         <div className="text-xs text-muted-foreground">
           Configure event hooks and raw JSON in drawer mode.
         </div>
@@ -2258,7 +2272,7 @@ function ComponentInspector({
       <div className="space-y-2">
         <div className="text-xs font-semibold text-muted-foreground">Config</div>
         {Object.entries(configSchema).length === 0 ? (
-          <div className="rounded-sm border border-dashed border-border p-2 text-xs text-muted-foreground">
+          <div className="ql-runtime-inset p-2 text-xs text-muted-foreground">
             No manifest config fields.
           </div>
         ) : (
@@ -2320,7 +2334,7 @@ function ComponentInspector({
 
             <ScrollArea className="flex-1">
               <div className="space-y-5 px-6 py-5">
-                <div className="space-y-2 rounded-sm border border-border/70 p-3">
+                <div className="ql-panel-inset space-y-2 p-3">
                   <div className="text-sm font-semibold">Component Styling</div>
                   <Label className="text-xs">Tailwind Classes</Label>
                   <Input
@@ -2330,7 +2344,7 @@ function ComponentInspector({
                   />
                 </div>
 
-                <div className="space-y-3 rounded-sm border border-border/70 p-3">
+                <div className="ql-panel-inset space-y-3 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-semibold">Event Hooks</div>
                     <Button type="button" size="sm" variant="outline" onClick={() => addHookDraft()}>
@@ -2358,7 +2372,7 @@ function ComponentInspector({
                   {hookDrafts.length ? (
                     <div className="space-y-3">
                       {hookDrafts.map((draft) => (
-                        <div key={draft.id} className="space-y-2 rounded-sm border border-border/60 bg-muted/10 p-2">
+                        <div key={draft.id} className="ql-runtime-inset space-y-2 p-2">
                           <div className="flex items-center justify-between gap-2">
                             <div className="text-xs font-semibold">
                               {draft.hook || "New hook"}
@@ -2442,7 +2456,7 @@ function ComponentInspector({
                             </div>
                             <div className="space-y-1">
                               <Label className="text-[11px]">Store</Label>
-                              <div className="flex min-h-8 items-center rounded-sm border border-border/60 px-2 py-1.5">
+                              <div className="ql-runtime-inset flex min-h-8 items-center px-2 py-1.5">
                                 <Checkbox
                                   checked={draft.store}
                                   onCheckedChange={(checked) =>
@@ -2462,13 +2476,13 @@ function ComponentInspector({
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-sm border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
+                    <div className="ql-runtime-inset p-3 text-xs text-muted-foreground">
                       No hook mappings configured yet.
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-2 rounded-sm border border-border/70 p-3">
+                <div className="ql-panel-inset space-y-2 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-semibold">Raw JSON Preview</div>
                     <Button type="button" variant="outline" size="sm" onClick={applyRawJson}>

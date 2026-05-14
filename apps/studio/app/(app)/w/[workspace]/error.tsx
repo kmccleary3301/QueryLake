@@ -20,7 +20,7 @@ export default function WorkspaceError({ error, reset }: WorkspaceErrorProps) {
       <p className="text-sm text-muted-foreground">
         An unexpected error occurred while loading this workspace page.
       </p>
-      <pre className="rounded-lg border border-border bg-card/40 p-4 text-xs text-muted-foreground whitespace-pre-wrap">
+      <pre className="ql-panel p-4 text-xs text-muted-foreground whitespace-pre-wrap">
         {error.message}
       </pre>
       <div className="flex flex-wrap gap-2">

@@ -296,7 +296,7 @@ export default function CollectionPage() {
         </div>
       </div>
 
-      <div ref={dropzoneRef} className="rounded-lg border border-border p-4">
+      <div ref={dropzoneRef} className="ql-panel p-4">
         <div className="text-sm font-medium">Upload documents</div>
         <p className="mt-1 text-xs text-muted-foreground">
           Drop files here to ingest them into this collection.
@@ -332,19 +332,19 @@ export default function CollectionPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-52" />
           <Skeleton className="h-4 w-36" />
         </div>
       ) : !collection ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Collection not found or unavailable.
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="rounded-lg border border-border p-5 space-y-3 text-sm">
+          <div className="ql-panel space-y-3 p-5 text-sm">
             <div className="font-semibold">Overview</div>
             <div className="text-muted-foreground">
               {collection.description || "No description provided."}
@@ -376,7 +376,7 @@ export default function CollectionPage() {
               </div>
             </div>
           </div>
-          <div className="rounded-lg border border-border p-5 text-sm">
+          <div className="ql-panel p-5 text-sm">
             <div className="font-semibold">Next steps</div>
             <ul className="mt-3 space-y-2 text-muted-foreground">
               <li>Upload files to populate this collection.</li>
@@ -387,7 +387,7 @@ export default function CollectionPage() {
         </div>
       )}
 
-      <div className="rounded-lg border border-border p-5 space-y-4">
+      <div className="ql-panel space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-sm font-semibold">Search in collection</div>
@@ -417,7 +417,7 @@ export default function CollectionPage() {
           </Button>
         </div>
 
-        <div className="rounded-lg border border-border">
+        <div className="ql-data-surface">
           <Table>
             <TableHeader>
               <TableRow>
@@ -512,7 +512,7 @@ export default function CollectionPage() {
         ) : null}
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="ql-data-surface">
         <Table>
           <TableHeader>
             <TableRow>

@@ -130,7 +130,7 @@ export default function AccountProvidersPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-border bg-card/40 p-5 space-y-4">
+      <div className="ql-panel space-y-4 p-5">
         <div className="text-sm font-semibold">Provider keys</div>
         <div className="flex flex-wrap gap-3">
           <Select value={currentProvider} onValueChange={setCurrentProvider}>
@@ -181,7 +181,7 @@ export default function AccountProvidersPage() {
         {status ? <p className="text-xs text-muted-foreground">{status}</p> : null}
       </div>
 
-      <div className="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground">
+      <div className="ql-panel p-5 text-sm text-muted-foreground">
         Looking for workspace-level integrations? Use{" "}
         <span className="text-foreground">Workspace → Settings → Integrations</span>{" "}
         to view workspace integration status and future webhook controls.

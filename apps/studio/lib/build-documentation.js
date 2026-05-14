@@ -230,21 +230,13 @@ export default ${toVariableName(fileName)};
   return content;
 };
 
-// Clear the cache folder if it exists
-try {
-  fs.rmSync("public/cache", { recursive: true });
-} catch (e) {
-  console.error(`Error while deleting cache directory. ${e}`);
-}
-
-// Create the cache folder
-try {
-  fs.mkdirSync("public/cache", { recursive: true });
-} catch (e) {
-  console.error(`Error while creating cache directory. ${e}`);
-}
-
 const READ_DIRECTORY = "documentation";
+const CACHE_DIRECTORY = path.join("public/cache", READ_DIRECTORY);
+
+// Clear only the documentation cache. Other generators own sibling cache
+// directories, especially public/cache/toolchains.
+fs.rmSync(CACHE_DIRECTORY, { recursive: true, force: true });
+fs.mkdirSync(CACHE_DIRECTORY, { recursive: true });
 
 let MainExportContent = create_export_content(READ_DIRECTORY, "allDocs");
 

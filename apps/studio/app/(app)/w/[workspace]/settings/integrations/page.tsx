@@ -68,13 +68,13 @@ export default function WorkspaceIntegrationsPage() {
       </div>
 
       {!isPersonalWorkspace(params.workspace) ? (
-        <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+        <div className="ql-panel p-4 text-sm text-muted-foreground">
           Workspace-level provider keys are not supported yet. User-scoped keys
           apply across all workspaces.
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-border bg-card/40 p-5 space-y-3">
+      <div className="ql-panel space-y-3 p-5">
           <div>
             <div className="text-sm font-semibold">Provider keys</div>
             <div className="text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export default function WorkspaceIntegrationsPage() {
               {configuredProviders.map((provider) => (
                 <span
                   key={provider}
-                  className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+                  className="rounded-full border border-border/70 bg-background/55 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                 >
                   {provider}
                 </span>

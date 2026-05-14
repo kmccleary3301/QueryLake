@@ -41,7 +41,7 @@ export default function AccountSecurityPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5 space-y-2">
+        <div className="ql-panel space-y-2 p-5">
           <div className="text-sm font-semibold">Provider keys</div>
           <p className="text-sm text-muted-foreground">
             Keep external provider keys private and rotate them if you suspect
@@ -52,7 +52,7 @@ export default function AccountSecurityPage() {
           </Button>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5 space-y-2">
+        <div className="ql-panel space-y-2 p-5">
           <div className="text-sm font-semibold">API keys</div>
           <p className="text-sm text-muted-foreground">
             API keys grant programmatic access. Create keys per application and
@@ -64,7 +64,7 @@ export default function AccountSecurityPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground">
+      <div className="ql-panel p-5 text-sm text-muted-foreground">
         Password reset and session/device management will be added as the auth
         provider abstraction stabilizes.
       </div>

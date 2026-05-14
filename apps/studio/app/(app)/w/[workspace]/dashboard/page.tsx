@@ -147,14 +147,17 @@ export default function DashboardPage() {
   if (!authReviewed) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-5 w-52" />
-          <Skeleton className="h-4 w-72" />
+        <div className="ql-page-header">
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-28" />
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-80" />
+          </div>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-40 w-full rounded-[18px]" />
+          <Skeleton className="h-40 w-full rounded-[18px]" />
+          <Skeleton className="h-40 w-full rounded-[18px]" />
         </div>
       </div>
     );
@@ -162,64 +165,88 @@ export default function DashboardPage() {
 
   if (!loginValid || !userData) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">Workspace dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Sign in to view your workspace overview.
-        </p>
-        <Button asChild size="sm">
-          <Link href="/auth/login">Go to login</Link>
-        </Button>
+      <div className="space-y-6">
+        <div className="ql-page-header">
+          <div>
+            <div className="ql-page-kicker">Workspace overview</div>
+            <h1 className="ql-page-title">Workspace dashboard</h1>
+            <p className="ql-page-copy">Sign in to view collections, activity, and usage for this workspace.</p>
+          </div>
+        </div>
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Authentication required</div>
+          <div className="mt-2 max-w-2xl leading-6">You need an authenticated session to view workspace metrics, recent runs, and operational activity.</div>
+          <div className="mt-4">
+            <Button asChild size="sm">
+              <Link href="/auth/login">Go to login</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      <div>
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href={`/w/${workspace}`}>Workspace</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Dashboard</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <h1 className="text-2xl font-semibold">Workspace dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Overview of collections, runs, and usage for this workspace.
-        </p>
-      </div>
+      <header className="ql-page-header">
+        <div>
+          <div className="ql-page-kicker">Workspace overview</div>
+          <Breadcrumb className="mt-2">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/w/${workspace}`}>Workspace</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <h1 className="ql-page-title">Workspace dashboard</h1>
+          <p className="ql-page-copy">
+            Operational view of collections, toolchain activity, and usage in this workspace.
+          </p>
+        </div>
+        <div className="ql-toolbar-strip">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/w/${workspace}/collections`}>Open collections</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/w/${workspace}/runs`}>Open runs</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href={`/w/${workspace}/toolchains`}>Open toolchains</Link>
+          </Button>
+        </div>
+      </header>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-border p-4 text-sm">
-          <div className="text-xs text-muted-foreground">Collections</div>
-          <div className="mt-1 text-2xl font-semibold">{collectionsCount}</div>
-          <div className="mt-3">
+        <div className="ql-metric-card">
+          <div className="ql-metric-label">Collections</div>
+          <div className="ql-metric-value">{collectionsCount}</div>
+          <div className="ql-metric-copy">Knowledge bases available for retrieval, search, and downstream toolchain execution.</div>
+          <div className="mt-4">
             <Button asChild size="sm" variant="outline">
               <Link href={`/w/${workspace}/collections`}>View collections</Link>
             </Button>
           </div>
         </div>
-        <div className="rounded-lg border border-border p-4 text-sm">
-          <div className="text-xs text-muted-foreground">Runs</div>
-          <div className="mt-1 text-2xl font-semibold">{runsCount}</div>
-          <div className="mt-3">
+
+        <div className="ql-metric-card">
+          <div className="ql-metric-label">Runs</div>
+          <div className="ql-metric-value">{runsCount}</div>
+          <div className="ql-metric-copy">Active and historical sessions currently indexed in the workspace runtime ledger.</div>
+          <div className="mt-4">
             <Button asChild size="sm" variant="outline">
               <Link href={`/w/${workspace}/runs`}>View runs</Link>
             </Button>
           </div>
         </div>
-        <div className="rounded-lg border border-border p-4 text-sm">
-          <div className="text-xs text-muted-foreground">
-            Usage entries (30d)
-          </div>
-          <div className="mt-1 text-2xl font-semibold">
-            {usageLoading ? "—" : usageEntriesCount}
-          </div>
-          <div className="mt-3">
+
+        <div className="ql-metric-card">
+          <div className="ql-metric-label">Usage entries · 30d</div>
+          <div className="ql-metric-value">{usageLoading ? "—" : usageEntriesCount}</div>
+          <div className="ql-metric-copy">Metering events recorded during the last thirty days for this workspace scope.</div>
+          <div className="mt-4">
             <Button asChild size="sm" variant="outline">
               <Link href={`/w/${workspace}/platform/usage`}>View usage</Link>
             </Button>
@@ -229,16 +256,12 @@ export default function DashboardPage() {
 
       <section className="grid gap-4 md:grid-cols-2">
         {quickLinks.map((link) => (
-          <div
-            key={link.title}
-            className="rounded-lg border border-border bg-card/40 p-5"
-          >
+          <div key={link.title} className="ql-panel p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold">{link.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {link.description}
-                </p>
+                <div className="ql-page-kicker">Navigate</div>
+                <h2 className="mt-2 text-base font-semibold text-foreground">{link.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{link.description}</p>
               </div>
               <Button asChild size="sm" variant="outline">
                 <Link href={`/w/${workspace}/${link.href}`}>Open</Link>
@@ -248,11 +271,15 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <section className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-        This dashboard will grow into an activity feed (uploads, ingestion,
-        run/job status) as the v2 runtime and Files pipelines get adopted.
+      <section className="ql-search-surface p-5">
+        <div className="ql-page-kicker">Roadmap surface</div>
+        <div className="mt-2 text-base font-semibold text-foreground">Activity and ingestion ledger</div>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+          This dashboard is the future home for upload activity, ingestion status, retrieval health,
+          runtime events, and background job instrumentation as the v2 files and toolchain systems
+          become the primary workspace workflow.
+        </p>
       </section>
     </div>
   );
 }
-

@@ -115,7 +115,7 @@ export default function NewRunPage() {
   if (!authReviewed) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-52" />
@@ -160,12 +160,12 @@ export default function NewRunPage() {
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="ql-editor-alert-error text-sm">
           {error}
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-border bg-card/40 p-5 space-y-4">
+      <div className="ql-panel space-y-4 p-5">
         <div className="grid gap-2">
           <div className="text-sm font-medium">Toolchain</div>
           <Select value={selectedToolchainId} onValueChange={setSelectedToolchainId}>

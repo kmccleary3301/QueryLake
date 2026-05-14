@@ -34,7 +34,7 @@ export default function Page() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">LLM playground</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Use the legacy LLM playground UI (workspace-scoped UI coming next).
@@ -45,7 +45,7 @@ export default function Page() {
             </Button>
           </div>
         </div>
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Collections</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Upload documents, search chunks, and inspect retrieval results.
@@ -56,7 +56,7 @@ export default function Page() {
             </Button>
           </div>
         </div>
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Files</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Upload PDFs and track ingestion status for your workspace.
@@ -67,7 +67,7 @@ export default function Page() {
             </Button>
           </div>
         </div>
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Runs</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Start toolchain runs and inspect sessions and streaming output.
@@ -80,7 +80,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+      <div className="ql-panel p-6 text-sm text-muted-foreground">
         This page is intentionally lightweight: it links to working surfaces
         (Collections/Files/Runs) and preserves the legacy LLM playground until a
         workspace-scoped replacement is ready.

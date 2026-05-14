@@ -743,22 +743,22 @@ export default function RunPage() {
       </div>
 
       {!authReviewed ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Loading run details...
         </div>
       ) : !loginValid || !userData ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Sign in to view run details.
         </div>
       ) : !run && mode !== "v2" ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Run not found in local history. Try refreshing or check the legacy
           session viewer.
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="space-y-4 rounded-lg border border-border p-5">
+            <div className="ql-panel space-y-4 p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Run overview</h2>
                 <span className="text-xs text-muted-foreground">
@@ -811,7 +811,7 @@ export default function RunPage() {
                 )}
               </div>
             </div>
-            <div className="rounded-lg border border-border p-5 text-sm">
+            <div className="ql-panel p-5 text-sm">
               <div className="font-semibold">Runtime notes</div>
               <p className="mt-2 text-muted-foreground">
                 {mode === "v2"
@@ -823,7 +823,7 @@ export default function RunPage() {
 
           {mode === "v2" && (
             <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-              <div className="rounded-lg border border-border p-5 space-y-4">
+              <div className="ql-panel space-y-4 p-5">
                 <div className="text-base font-semibold">Send event</div>
                 <div className="space-y-2">
                   {v2Toolchain?.nodes?.length ? (
@@ -891,7 +891,7 @@ export default function RunPage() {
                   </Button>
                 </div>
               </div>
-              <div className="rounded-lg border border-border p-5 space-y-3 text-sm">
+              <div className="ql-panel space-y-3 p-5 text-sm">
                 <div className="flex items-center justify-between">
                   <div className="font-semibold">Jobs</div>
                   <Button
@@ -912,7 +912,7 @@ export default function RunPage() {
                     {v2Jobs.map((job) => (
                       <div
                         key={job.job_id ?? `${job.node_id}-${job.status}`}
-                        className="rounded-md border border-border bg-background px-3 py-2 text-xs"
+                        className="ql-panel-inset px-3 py-2 text-xs"
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-medium">
@@ -958,18 +958,18 @@ export default function RunPage() {
           )}
 
           {mode === "v2" && v2SessionState && (
-            <div className="rounded-lg border border-border p-5">
+            <div className="ql-panel p-5">
               <div className="text-base font-semibold">Session state</div>
               <div className="mt-3 grid gap-4 lg:grid-cols-2">
                 <div>
                   <div className="text-xs text-muted-foreground">State</div>
-                  <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+                  <pre className="ql-panel-inset mt-2 max-h-64 overflow-auto p-3 text-xs text-muted-foreground">
                     {JSON.stringify(v2SessionState.state ?? {}, null, 2)}
                   </pre>
                 </div>
                 <div>
                   <div className="text-xs text-muted-foreground">Files</div>
-                  <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+                  <pre className="ql-panel-inset mt-2 max-h-64 overflow-auto p-3 text-xs text-muted-foreground">
                     {JSON.stringify(v2SessionState.files ?? {}, null, 2)}
                   </pre>
                 </div>
@@ -978,7 +978,7 @@ export default function RunPage() {
           )}
 
           {mode === "v2" && v2Events.length > 0 && (
-            <div className="rounded-lg border border-border p-5">
+            <div className="ql-panel p-5">
               <div className="flex items-center justify-between">
                 <div className="text-base font-semibold">Event timeline</div>
                 <span className="text-xs text-muted-foreground">
@@ -1026,7 +1026,7 @@ export default function RunPage() {
                       .map((event) => (
                         <div
                           key={`event-${event.rev}`}
-                          className="rounded-md border border-border bg-background px-4 py-3 text-sm"
+                          className="ql-panel-inset px-4 py-3 text-sm"
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-medium">{event.kind}</span>
@@ -1056,7 +1056,7 @@ export default function RunPage() {
             </div>
           )}
 
-          <div className="rounded-lg border border-border p-5">
+          <div className="ql-panel p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold">
                 Live event stream {mode === "v2" ? "(v2 SSE)" : "(v1 WS)"}
@@ -1092,7 +1092,7 @@ export default function RunPage() {
               </div>
             )}
             {pinnedLog && (
-              <div className="mt-4 rounded-md border border-border bg-card/40 p-3 text-xs">
+              <div className="ql-panel-inset mt-4 p-3 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-medium uppercase text-muted-foreground">
                     Pinned {pinnedLog.type}
@@ -1120,7 +1120,7 @@ export default function RunPage() {
                 logEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-md border border-border bg-background p-3 text-xs"
+                    className="ql-panel-inset p-3 text-xs"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium uppercase text-muted-foreground">

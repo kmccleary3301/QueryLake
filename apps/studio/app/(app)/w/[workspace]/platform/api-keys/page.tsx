@@ -103,7 +103,7 @@ export default function Page() {
   if (!authReviewed) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56" />
           <Skeleton className="h-4 w-44" />
@@ -197,13 +197,13 @@ export default function Page() {
       </div>
 
       {createdKey && (
-        <div className="rounded-lg border border-border bg-card/40 p-4 text-sm">
+        <div className="ql-panel p-4 text-sm">
           <div className="font-medium">New API key</div>
           <div className="mt-1 text-xs text-muted-foreground">
             This key is user-scoped (not workspace/org-scoped yet). Copy it now; it
             will not be shown again.
           </div>
-          <div className="mt-2 break-all rounded-md border border-border bg-background p-3 font-mono text-xs">
+          <div className="ql-panel-inset mt-2 break-all p-3 font-mono text-xs">
             {createdKey}
           </div>
           <div className="mt-2 flex gap-2">
@@ -224,19 +224,19 @@ export default function Page() {
       )}
 
       {status && (
-        <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground">
+        <div className="ql-panel-inset p-3 text-xs text-muted-foreground">
           {status}
         </div>
       )}
 
       {!isPersonalWorkspace(params.workspace) ? (
-        <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
+        <div className="ql-runtime-inset p-4 text-xs text-muted-foreground">
           Note: API keys are currently user-scoped. Workspace/org-scoped keys will
           be added once the backend supports organization-level key ownership.
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-border">
+      <div className="ql-data-surface">
         <Table>
           <TableHeader>
             <TableRow>
@@ -322,7 +322,7 @@ export default function Page() {
               clients using it will fail authentication.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+          <div className="ql-panel-inset p-3 text-xs text-muted-foreground">
             Preview: <span className="font-mono">{confirmingKey?.key_preview}</span>
           </div>
           <AlertDialogFooter>

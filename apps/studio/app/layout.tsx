@@ -1,26 +1,17 @@
-import "@/styles/globals.css"
-import { Metadata } from "next"
+import "@/styles/globals.css";
+import { Metadata } from "next";
 
-import { siteConfig } from "@/config/site"
-import { fontSans } from "@/lib/fonts"
-import { cn } from "@/lib/utils"
-import { Analytics } from "@/components/inherited/analytics"
-import { ThemeProvider } from "@/components/inherited/providers"
+import { siteConfig } from "@/config/site";
+import { fontConsolas, fontDisplay, fontMono, fontSans } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+import { Analytics } from "@/components/inherited/analytics";
+import { ThemeProvider } from "@/components/inherited/providers";
 import { StateThemeProvider, ThemeProviderWrapper } from "./theme-provider";
-import { TailwindIndicator } from "@/components/inherited/tailwind-indicator"
-import { ThemeSwitcher } from "@/components/inherited/theme-switcher"
-import { Toaster as DefaultToaster } from "@/components/ui/toaster"
-import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner"
-import { Toaster as NewYorkToaster } from "@/registry/new-york/ui/toaster"
-import { ContextProvider } from "./context-provider"
+import { TailwindIndicator } from "@/components/inherited/tailwind-indicator";
+import { ThemeSwitcher } from "@/components/inherited/theme-switcher";
+import { Toaster as NewYorkSonner } from "@/registry/new-york/ui/sonner";
+import { ContextProvider } from "./context-provider";
 import RouteShell from "./route-shell";
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-
-// import { useRouter } from "next/navigation"
-// import { AppProps } from "next/app"
-// import { AppProps, useRouter } from 'next/app'
-// import { AnimatePresence } from 'framer-motion'
 
 export const metadata: Metadata = {
   title: {
@@ -36,8 +27,9 @@ export const metadata: Metadata = {
     "Server Components",
     "Radix UI",
     "QueryLake",
-    "LSU",
-    "AI"
+    "Research",
+    "Workflow",
+    "Toolchains",
   ],
   authors: [
     {
@@ -75,66 +67,53 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: `${siteConfig.url}/site.webmanifest`,
-}
+};
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f4f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#11141a" },
   ],
-}
+};
 
 interface RootLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
-  // const router = useRouter();
-  // const pageKey = router.as;
-
   return (
-    <>
-      <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable}`}>
-        <head />
-        <body
-          className={cn(
-            "min-h-screen bg-background antialiased font-geist-sans font-normal",
-            GeistSans.className,
-          )}
-          style={{ scrollBehavior: "smooth"}}
-        >
-          {/* <ThemeWrapper> */}
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            // disableTransitionOnChange
-          >
-            <div vaul-drawer-wrapper="">
-              <ContextProvider 
-                userData={undefined} 
-                selectedCollections={new Map()}
-                toolchainSessions={new Map()}
-              >
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        fontSans.variable,
+        fontDisplay.variable,
+        fontMono.variable,
+        fontConsolas.variable
+      )}
+    >
+      <head />
+      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.className)}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <div vaul-drawer-wrapper="">
+            <ContextProvider
+              userData={undefined}
+              selectedCollections={new Map()}
+              toolchainSessions={new Map()}
+            >
               <StateThemeProvider>
-              <ThemeProviderWrapper>
-              <RouteShell>
-                {children}
-              </RouteShell>
-              <NewYorkSonner />
-              </ThemeProviderWrapper>
+                <ThemeProviderWrapper>
+                  <RouteShell>{children}</RouteShell>
+                  <NewYorkSonner />
+                </ThemeProviderWrapper>
               </StateThemeProvider>
-              </ContextProvider>
-            </div>
-            <TailwindIndicator />
-            <ThemeSwitcher />
-            <Analytics />
-            
-            
-          </ThemeProvider>
-          {/* </ThemeWrapper> */}
-        </body>
-      </html>
-    </>
-  )
+            </ContextProvider>
+          </div>
+          <TailwindIndicator />
+          <ThemeSwitcher />
+          <Analytics />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

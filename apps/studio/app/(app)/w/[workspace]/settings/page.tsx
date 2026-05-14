@@ -36,7 +36,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Members</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Invite teammates, manage roles, and review access.
@@ -48,7 +48,7 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Integrations</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Configure provider keys and external service connections.

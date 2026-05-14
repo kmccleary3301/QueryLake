@@ -121,9 +121,11 @@ export default function ToolchainPage() {
   return (
     <div className="space-y-6">
       <RuntimeModeBanner />
-      <div className="flex flex-wrap items-start justify-between gap-4">
+
+      <header className="ql-page-header">
         <div>
-          <Breadcrumb>
+          <div className="ql-page-kicker">Workflow detail</div>
+          <Breadcrumb className="mt-2">
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
@@ -140,125 +142,121 @@ export default function ToolchainPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <h1 className="text-2xl font-semibold">
-            Toolchain: {toolchain?.name ?? params.toolchainId}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Workspace {params.workspace}
+          <h1 className="ql-page-title">{toolchain?.name ?? params.toolchainId}</h1>
+          <p className="ql-page-copy">
+            Runtime entry points, graph editing surfaces, and recent execution history for this toolchain.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
+
+        <div className="ql-toolbar-strip">
+          <Button asChild size="sm" variant="outline">
             <Link href={`/w/${params.workspace}/toolchains`}>Back to toolchains</Link>
           </Button>
-          <Button onClick={openLegacyRunner} variant="outline">
+          <Button size="sm" variant="outline" onClick={openLegacyRunner}>
             Open legacy runner
           </Button>
-          {mode === "v2" && (
-            <Button onClick={createV2Session} disabled={creatingSession}>
+          {mode === "v2" ? (
+            <Button size="sm" onClick={createV2Session} disabled={creatingSession}>
               {creatingSession ? "Creating session..." : "Create v2 session"}
             </Button>
-          )}
-          <Button asChild variant="outline">
-            <Link
-              href={`/w/${params.workspace}/toolchains/${params.toolchainId}/edit`}
-            >
-              Open Toolchains V2 editor
+          ) : null}
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/w/${params.workspace}/toolchains/${params.toolchainId}/edit`}>
+              Open v2 editor
             </Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/nodes/node_editor">Open legacy builder</Link>
-          </Button>
         </div>
-      </div>
+      </header>
+
       {createError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          {createError}
-        </div>
+        <div className="ql-editor-alert-error text-sm">{createError}</div>
       ) : null}
 
       {loading ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-52" />
           <Skeleton className="h-4 w-56" />
           <Skeleton className="h-4 w-44" />
         </div>
       ) : !toolchain ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          Unable to load toolchain details. Check your auth and backend status.
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
+          Unable to load toolchain details. Check your auth state and backend availability.
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="space-y-4 rounded-lg border border-border p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Overview</h2>
-              <span className="text-xs text-muted-foreground">
-                Runtime: {mode === "v2" ? "v2 sessions" : "v1 legacy"}
-              </span>
-            </div>
-            <div className="grid gap-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">ID</span>
-                <span className="font-medium">{toolchain.id}</span>
+        <div className="grid gap-6 lg:grid-cols-[1.45fr_0.95fr]">
+          <section className="ql-panel p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+              <div>
+                <div className="ql-page-kicker">Overview</div>
+                <h2 className="mt-2 text-base font-semibold text-foreground">Workflow facts</h2>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Category</span>
-                <span className="font-medium">{toolchain.category}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Nodes</span>
-                <span className="font-medium">
-                  {toolchain.nodes?.length ?? 0}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">First event</span>
-                <span className="font-medium">
-                  {toolchain.first_event_follow_up ?? "—"}
-                </span>
+              <div className="rounded-full border border-border/70 bg-background/55 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Runtime {mode === "v2" ? "v2 sessions" : "legacy runtime"}
               </div>
             </div>
-          </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="ql-panel-inset p-3">
+                <div className="ql-metric-label">Identifier</div>
+                <div className="mt-2 break-all font-mono text-sm text-foreground">{toolchain.id}</div>
+              </div>
+              <div className="ql-panel-inset p-3">
+                <div className="ql-metric-label">Category</div>
+                <div className="mt-2 text-sm font-medium text-foreground">{toolchain.category}</div>
+              </div>
+              <div className="ql-panel-inset p-3">
+                <div className="ql-metric-label">Nodes</div>
+                <div className="mt-2 text-sm font-medium text-foreground">{toolchain.nodes?.length ?? 0}</div>
+              </div>
+              <div className="ql-panel-inset p-3">
+                <div className="ql-metric-label">First event</div>
+                <div className="mt-2 text-sm font-medium text-foreground">{toolchain.first_event_follow_up ?? "—"}</div>
+              </div>
+            </div>
+          </section>
 
-          <div className="rounded-lg border border-border p-5 text-sm">
-            <div className="font-semibold">Runtime notes</div>
-            <p className="mt-2 text-muted-foreground">
+          <section className="ql-panel p-5">
+            <div className="ql-page-kicker">Runtime notes</div>
+            <div className="mt-2 text-base font-semibold text-foreground">Execution path</div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               {mode === "v2"
-                ? "v2 sessions are not wired to the new UI yet. Use the legacy runner until the SSE pipeline is hooked up."
-                : "Legacy WebSocket runtime is active. Sessions will open in /app/create."}
+                ? "v2 sessions are available for the new runtime flow. Use the editor to refine the graph and interface surface, then create a session to validate end-to-end behavior."
+                : "Legacy WebSocket runtime is active for this workspace mode. Use the legacy runner for compatibility while the v2 execution path continues to land."}
             </p>
-          </div>
+          </section>
         </div>
       )}
 
-      {toolchain && (
-        <div className="rounded-lg border border-border p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Node preview</h2>
-            <span className="text-xs text-muted-foreground">
+      {toolchain ? (
+        <section className="ql-panel p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+            <div>
+              <div className="ql-page-kicker">Graph snapshot</div>
+              <h2 className="mt-2 text-base font-semibold text-foreground">Node preview</h2>
+            </div>
+            <div className="rounded-full border border-border/70 bg-background/55 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Showing {nodePreview.length} of {toolchain.nodes.length}
-            </span>
+            </div>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {nodePreview.map((node) => (
-              <div
-                key={node.id}
-                className="rounded-md border border-border bg-background px-4 py-3 text-sm"
-              >
-                <div className="font-medium">{node.id}</div>
-                <div className="text-xs text-muted-foreground">
+              <div key={node.id} className="ql-panel-inset p-4 text-sm">
+                <div className="font-medium text-foreground">{node.id}</div>
+                <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                   {node.api_function ?? "Custom node"}
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        </section>
+      ) : null}
 
-      <div className="rounded-lg border border-border p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">Recent runs</h2>
+      <section className="ql-panel p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+          <div>
+            <div className="ql-page-kicker">Execution history</div>
+            <h2 className="mt-2 text-base font-semibold text-foreground">Recent runs</h2>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild size="sm">
               <Link href={`/w/${params.workspace}/runs/new?toolchain=${params.toolchainId}`}>
@@ -270,20 +268,21 @@ export default function ToolchainPage() {
             </Button>
           </div>
         </div>
+
         {recentRuns.length === 0 ? (
-          <div className="mt-3 rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+          <div className="ql-runtime-inset mt-4 p-4 text-sm text-muted-foreground">
             No runs recorded for this toolchain yet.
           </div>
         ) : (
-          <div className="mt-3 divide-y divide-border rounded-md border border-border">
+          <div className="mt-4 divide-y divide-border rounded-[16px] border border-border/80 bg-card/65">
             {recentRuns.map((run) => (
               <div
                 key={run.id}
                 className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 text-sm"
               >
                 <div>
-                  <div className="font-medium">{run.title}</div>
-                  <div className="text-xs text-muted-foreground">{run.id}</div>
+                  <div className="font-medium text-foreground">{run.title}</div>
+                  <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{run.id}</div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{new Date(run.time * 1000).toLocaleString()}</span>
@@ -295,7 +294,7 @@ export default function ToolchainPage() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-5 space-y-4">
+      <div className="ql-panel space-y-4 p-5">
         <div>
           <div className="text-sm font-medium">Name</div>
           <Input

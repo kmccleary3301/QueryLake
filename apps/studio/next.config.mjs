@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+const querylakeApiBaseUrl =
+  process.env.QUERYLAKE_STUDIO_API_BASE_URL ?? "http://localhost:8000";
+
 const nextConfig = {
   // headers: async() => {
   //   return [
@@ -22,23 +25,23 @@ const nextConfig = {
 			// }
       {
         source: "/upload/:path*",
-        destination: "http://localhost:8000/upload_document/:path*"
+        destination: `${querylakeApiBaseUrl}/upload_document/:path*`
       },
       {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*"
+        destination: `${querylakeApiBaseUrl}/api/:path*`
       },
       {
         source: "/v2/kernel/:path*",
-        destination: "http://localhost:8000/v2/kernel/:path*"
+        destination: `${querylakeApiBaseUrl}/v2/kernel/:path*`
       },
       {
         source: "/sessions/:path*",
-        destination: "http://localhost:8000/sessions/:path*"
+        destination: `${querylakeApiBaseUrl}/sessions/:path*`
       },
       {
         source: "/toolchain",
-        destination: "http://localhost:8000/toolchain"
+        destination: `${querylakeApiBaseUrl}/toolchain`
       }
 		]
 	},

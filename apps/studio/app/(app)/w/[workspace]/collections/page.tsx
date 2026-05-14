@@ -77,17 +77,17 @@ export default function Page() {
       </div>
 
       {!authReviewed ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-52" />
         </div>
       ) : !loginValid || !userData ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Sign in to view collections.
         </div>
       ) : groupsToShow.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           <div>No collections loaded yet. Upload a file or create a collection to get started.</div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild size="sm" variant="outline">
@@ -105,7 +105,7 @@ export default function Page() {
       ) : (
         <div className="space-y-4">
           {groupsToShow.map((group) => (
-            <div key={group.title} className="rounded-lg border border-border p-5">
+            <div key={group.title} className="ql-panel p-5">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">{group.title}</h2>
                 <span className="text-xs text-muted-foreground">
@@ -116,7 +116,7 @@ export default function Page() {
                 {group.collections.map((collection) => (
                   <div
                     key={collection.hash_id}
-                    className="rounded-md border border-border bg-background px-4 py-3"
+                    className="ql-panel-inset px-4 py-3"
                   >
                     <div className="text-sm font-medium">{collection.title}</div>
                     <div className="mt-1 text-xs text-muted-foreground">

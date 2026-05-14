@@ -36,7 +36,7 @@ export default async function PlatformPage({ params }: PlatformPageProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">API keys</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Create and revoke API keys used for programmatic access.
@@ -48,7 +48,7 @@ export default async function PlatformPage({ params }: PlatformPageProps) {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <h2 className="text-base font-semibold">Usage</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             View and export usage metrics for this workspace.

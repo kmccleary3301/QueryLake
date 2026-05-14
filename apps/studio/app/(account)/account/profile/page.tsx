@@ -45,14 +45,14 @@ export default function AccountProfilePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <div className="text-sm font-medium text-muted-foreground">
             Username
           </div>
           <div className="mt-1 text-base font-semibold">{userData.username}</div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <div className="text-sm font-medium text-muted-foreground">
             Workspaces
           </div>
@@ -69,7 +69,7 @@ export default function AccountProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <div className="text-sm font-medium text-muted-foreground">
             External providers
           </div>
@@ -84,7 +84,7 @@ export default function AccountProfilePage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-card/40 p-5">
+        <div className="ql-panel p-5">
           <div className="text-sm font-medium text-muted-foreground">
             Default toolchain
           </div>

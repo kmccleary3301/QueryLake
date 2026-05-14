@@ -183,7 +183,7 @@ export default function Page() {
         </Button>
       </div>
 
-      <div ref={dropzoneRef} className="rounded-lg border border-border p-4">
+      <div ref={dropzoneRef} className="ql-panel p-4">
         <div className="text-sm font-medium">Upload to selected collection</div>
         <p className="mt-1 text-xs text-muted-foreground">
           Drop files here to ingest them into the selected collection.
@@ -223,17 +223,17 @@ export default function Page() {
       </div>
 
       {!authReviewed ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-52" />
         </div>
       ) : !loginValid || !userData ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Sign in to view and upload files.
         </div>
       ) : availableCollections.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           <div>No collections available yet. Create a collection to upload files.</div>
           <div className="mt-4">
             <Button asChild size="sm" variant="outline">
@@ -275,7 +275,7 @@ export default function Page() {
         )}
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="ql-data-surface">
         <Table>
           <TableHeader>
             <TableRow>

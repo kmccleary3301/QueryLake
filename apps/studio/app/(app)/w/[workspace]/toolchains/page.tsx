@@ -63,9 +63,11 @@ export default function Page() {
   return (
     <div className="space-y-6">
       <RuntimeModeBanner />
-      <div className="flex flex-wrap items-start justify-between gap-4">
+
+      <header className="ql-page-header">
         <div>
-          <Breadcrumb>
+          <div className="ql-page-kicker">Workflow catalog</div>
+          <Breadcrumb className="mt-2">
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink href={`/w/${params.workspace}`}>Workspace</BreadcrumbLink>
@@ -75,29 +77,35 @@ export default function Page() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <h1 className="text-2xl font-semibold">Toolchains</h1>
-          <p className="text-sm text-muted-foreground">
-            Build and manage toolchains for automation and workflows.
+          <h1 className="ql-page-title">Toolchains</h1>
+          <p className="ql-page-copy">
+            Workflow definitions, reusable execution graphs, and interaction surfaces for the current workspace.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/nodes/node_editor">Create toolchain (legacy builder)</Link>
-        </Button>
-      </div>
+        <div className="ql-toolbar-strip">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/w/${params.workspace}/runs/new`}>New run</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/nodes/node_editor">Create toolchain (legacy builder)</Link>
+          </Button>
+        </div>
+      </header>
 
       {!authReviewed ? (
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-4 w-64" />
           <Skeleton className="h-4 w-52" />
         </div>
       ) : !loginValid || !userData ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           Sign in to view your toolchains.
         </div>
       ) : categories.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          <div>No toolchains found yet. Create your first toolchain to get started.</div>
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Empty catalog</div>
+          <div className="mt-2">No toolchains found yet. Create your first workflow definition to get started.</div>
           <div className="mt-4">
             <Button asChild size="sm" variant="outline">
               <Link href="/nodes/node_editor">Create toolchain (legacy builder)</Link>
@@ -106,15 +114,15 @@ export default function Page() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="ql-toolbar-strip flex-wrap">
             <Input
-              className="w-[260px]"
+              className="w-[280px]"
               placeholder="Search toolchains..."
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
             />
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[220px]">
+              <SelectTrigger className="w-[240px]">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
@@ -138,48 +146,48 @@ export default function Page() {
           </div>
 
           {filteredCategories.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+            <div className="ql-panel p-6 text-sm text-muted-foreground">
               No toolchains match your filters.
             </div>
           ) : (
             filteredCategories.map((category) => (
-            <div key={category.category} className="rounded-lg border border-border p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">{category.category}</h2>
-                <span className="text-xs text-muted-foreground">
-                  {category.entries.length} toolchains
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {category.entries.map((toolchain) => (
-                  <div
-                    key={toolchain.id}
-                    className="rounded-md border border-border bg-background px-4 py-3"
-                  >
-                    <div className="text-sm font-medium">{toolchain.title}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Category: {toolchain.category}
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button asChild size="sm" variant="outline">
-                        <Link
-                          href={`/w/${params.workspace}/runs/new?toolchain=${toolchain.id}`}
-                        >
-                          Run
-                        </Link>
-                      </Button>
-                      <Button asChild size="sm" variant="outline">
-                        <Link
-                          href={`/w/${params.workspace}/toolchains/${toolchain.id}`}
-                        >
-                          Open
-                        </Link>
-                      </Button>
-                    </div>
+              <section key={category.category} className="ql-panel p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-4">
+                  <div>
+                    <div className="ql-page-kicker">Category</div>
+                    <h2 className="mt-2 text-base font-semibold text-foreground">{category.category}</h2>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="rounded-full border border-border/70 bg-background/55 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {category.entries.length} toolchains
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {category.entries.map((toolchain) => (
+                    <div key={toolchain.id} className="ql-panel-inset p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-foreground">{toolchain.title}</div>
+                          <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                            {toolchain.id}
+                          </div>
+                        </div>
+                        <div className="rounded-full border border-border/70 bg-background/55 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                          {toolchain.category}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/w/${params.workspace}/runs/new?toolchain=${toolchain.id}`}>Run</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="outline">
+                          <Link href={`/w/${params.workspace}/toolchains/${toolchain.id}`}>Open</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))
           )}
         </div>

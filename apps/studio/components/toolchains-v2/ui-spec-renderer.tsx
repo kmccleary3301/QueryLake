@@ -23,17 +23,17 @@ function styleToClassName(style?: StyleSpec) {
 
   const padding = {
     none: "p-0",
-    xs: "p-2",
+    xs: "p-2.5",
     sm: "p-3",
-    md: "p-3",
-    lg: "p-4",
+    md: "p-4",
+    lg: "p-5",
   } as const;
   const gap = {
     none: "gap-0",
     xs: "gap-2",
     sm: "gap-3",
-    md: "gap-3",
-    lg: "gap-4",
+    md: "gap-4",
+    lg: "gap-5",
   } as const;
   const width = {
     auto: "w-auto",
@@ -54,9 +54,9 @@ function styleToClassName(style?: StyleSpec) {
   } as const;
   const surface = {
     none: "",
-    panel: "bg-card",
-    muted: "bg-muted/40",
-    inset: "bg-muted/25",
+    panel: "ql-runtime-panel",
+    muted: "ql-runtime-muted",
+    inset: "ql-runtime-inset",
   } as const;
   const border = {
     none: "",
@@ -64,8 +64,8 @@ function styleToClassName(style?: StyleSpec) {
   } as const;
   const radius = {
     none: "",
-    sm: "rounded-sm",
-    md: "rounded-sm",
+    sm: "rounded-[10px]",
+    md: "rounded-[14px]",
   } as const;
 
   return cn(
@@ -85,12 +85,18 @@ function ComponentPlaceholder({ node }: { node: ComponentNode }) {
   return (
     <div
       className={cn(
-        "rounded-sm border border-dashed border-border/70 bg-muted/10 px-3 py-2 text-xs text-muted-foreground",
+        "ql-runtime-panel relative overflow-hidden px-3 py-3 text-left",
         styleToClassName(node.style)
       )}
     >
-      <div className="font-medium text-foreground/80">{node.label ?? node.componentId}</div>
-      <div className="text-[11px] opacity-80">{node.componentId}</div>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Component</div>
+          <div className="mt-1 truncate text-sm font-medium text-foreground">{node.label ?? node.componentId}</div>
+        </div>
+        <div className="rounded-full border border-border/70 bg-background/60 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{node.componentId}</div>
+      </div>
     </div>
   );
 }
@@ -198,13 +204,13 @@ export default function ToolchainUISpecRendererV2({
     return (
       <div
         className={cn(
-          "group relative min-w-0 min-h-0 rounded-[14px] transition-all duration-150",
-          "ring-1 ring-transparent hover:ring-border/70 hover:bg-muted/10",
+          "group relative min-w-0 min-h-0 rounded-[16px] border border-transparent transition-[border-color,background-color,box-shadow,transform,opacity] duration-150",
+          "hover:border-border/70 hover:bg-[hsl(var(--foreground)/0.02)]",
           isSelected
-            ? "ring-cyan-400/70 bg-cyan-500/[0.08] shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_18px_36px_hsl(var(--background)/0.24)]"
+            ? "border-[hsl(var(--ql-accent-amber)/0.5)] bg-[hsl(var(--ql-accent-amber)/0.07)] shadow-[0_0_0_1px_hsl(var(--ql-accent-amber)/0.12),0_18px_42px_hsl(var(--background)/0.28)]"
             : undefined,
           dropTarget?.nodeId === node.id
-            ? "ring-2 ring-cyan-300/60 bg-cyan-500/[0.06] shadow-[0_0_0_1px_rgba(34,211,238,0.16),0_18px_40px_hsl(var(--background)/0.28)]"
+            ? "border-[hsl(var(--ql-accent-cyan)/0.55)] bg-[hsl(var(--ql-accent-cyan)/0.06)] shadow-[0_0_0_1px_hsl(var(--ql-accent-cyan)/0.14),0_18px_42px_hsl(var(--background)/0.28)]"
             : undefined,
           isInteractive ? "cursor-pointer" : undefined,
           enableNodeReorderDnD && draggingNodeId === node.id ? "opacity-60" : undefined
@@ -256,14 +262,14 @@ export default function ToolchainUISpecRendererV2({
       >
         {showNodeFrames ? (
           <>
-            <span className="pointer-events-none absolute left-1 top-1 z-10 rounded-full border border-border/70 bg-background/90 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground shadow-sm">
+            <span className="pointer-events-none absolute left-1 top-1 z-10 rounded-full border border-border/70 bg-background/[0.94] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground shadow-sm">
               {node.kind === "layout" ? node.type : "component"}
             </span>
-            <span className="pointer-events-none absolute right-1 top-1 z-10 rounded-full border border-border/70 bg-background/90 px-2 py-0.5 font-mono text-[10px] text-muted-foreground shadow-sm">
+            <span className="pointer-events-none absolute right-1 top-1 z-10 rounded-full border border-border/70 bg-background/[0.94] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground shadow-sm">
               {node.id}
             </span>
             {isSelected ? (
-              <span className="pointer-events-none absolute left-1 top-8 z-10 rounded-full border border-cyan-400/45 bg-background/92 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-100 shadow-sm">
+              <span className="pointer-events-none absolute left-1 top-8 z-10 rounded-full border border-[hsl(var(--ql-accent-amber)/0.45)] bg-background/[0.92] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-[hsl(var(--ql-accent-amber))] shadow-sm">
                 Selected
               </span>
             ) : null}
@@ -275,7 +281,7 @@ export default function ToolchainUISpecRendererV2({
               className={cn(
                 "pointer-events-none absolute left-3 right-3 top-1 z-20 h-[3px] rounded-full bg-transparent transition-all duration-100",
                 dropTarget?.nodeId === node.id && dropTarget.placement === "before"
-                  ? "bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                  ? "bg-[hsl(var(--ql-accent-amber))] shadow-[0_0_18px_hsl(var(--ql-accent-amber)/0.45)]"
                   : undefined
               )}
             />
@@ -288,7 +294,7 @@ export default function ToolchainUISpecRendererV2({
                     : "opacity-0"
                 )}
               >
-                <div className="rounded-full border border-cyan-300/65 bg-cyan-500/12 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.22)]">
+                <div className="rounded-full border border-[hsl(var(--ql-accent-cyan)/0.55)] bg-[hsl(var(--ql-accent-cyan)/0.12)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[hsl(var(--ql-accent-cyan-foreground))] shadow-[0_0_20px_hsl(var(--ql-accent-cyan)/0.2)]">
                   Drop inside
                 </div>
               </div>
@@ -297,7 +303,7 @@ export default function ToolchainUISpecRendererV2({
               className={cn(
                 "pointer-events-none absolute left-3 right-3 bottom-1 z-20 h-[3px] rounded-full bg-transparent transition-all duration-100",
                 dropTarget?.nodeId === node.id && dropTarget.placement === "after"
-                  ? "bg-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.55)]"
+                  ? "bg-[hsl(var(--ql-accent-amber))] shadow-[0_0_18px_hsl(var(--ql-accent-amber)/0.45)]"
                   : undefined
               )}
             />
@@ -316,7 +322,7 @@ export default function ToolchainUISpecRendererV2({
               <>
                 <button
                   type="button"
-                  className="rounded-full border border-border/70 bg-background/95 px-2.5 py-1 text-[10px] text-muted-foreground shadow-sm hover:text-foreground"
+                  className="rounded-full border border-border/70 bg-background/[0.95] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground shadow-sm transition-colors hover:border-border hover:text-foreground"
                   title="Insert sibling before"
                   aria-label="Insert sibling before"
                   onClick={(event) => {
@@ -328,7 +334,7 @@ export default function ToolchainUISpecRendererV2({
                 </button>
                 <button
                   type="button"
-                  className="rounded-full border border-border/70 bg-background/95 px-2.5 py-1 text-[10px] text-muted-foreground shadow-sm hover:text-foreground"
+                  className="rounded-full border border-border/70 bg-background/[0.95] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground shadow-sm transition-colors hover:border-border hover:text-foreground"
                   title="Insert sibling after"
                   aria-label="Insert sibling after"
                   onClick={(event) => {
@@ -343,7 +349,7 @@ export default function ToolchainUISpecRendererV2({
             {onDeleteNode && node.id !== spec.root ? (
               <button
                 type="button"
-                className="rounded-full border border-border/70 bg-background/95 p-1.5 text-muted-foreground shadow-sm hover:text-destructive"
+                className="rounded-full border border-border/70 bg-background/[0.95] p-1.5 text-muted-foreground shadow-sm transition-colors hover:border-destructive/30 hover:text-destructive"
                 title="Delete node"
                 aria-label="Delete node"
                 onClick={(event) => {
@@ -365,15 +371,15 @@ export default function ToolchainUISpecRendererV2({
                 : "translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
             )}
           >
-            <div className="flex flex-wrap items-center gap-1 rounded-[12px] border border-border/70 bg-background/95 px-2 py-1.5 shadow-sm backdrop-blur-sm">
+            <div className="flex flex-wrap items-center gap-1 rounded-[12px] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--background)/0.96),hsl(var(--card)/0.92))] px-2 py-1.5 shadow-sm backdrop-blur-sm">
               {canWrapNode ? (
                 <>
-                  <span className="px-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  <span className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                     Wrap
                   </span>
                   <button
                     type="button"
-                    className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     onClick={(event) => {
                       event.stopPropagation();
                       onWrapNode?.(node.id, "split-horizontal");
@@ -383,7 +389,7 @@ export default function ToolchainUISpecRendererV2({
                   </button>
                   <button
                     type="button"
-                    className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     onClick={(event) => {
                       event.stopPropagation();
                       onWrapNode?.(node.id, "split-vertical");
@@ -393,7 +399,7 @@ export default function ToolchainUISpecRendererV2({
                   </button>
                   <button
                     type="button"
-                    className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     onClick={(event) => {
                       event.stopPropagation();
                       onWrapNode?.(node.id, "stack-vertical");
@@ -403,7 +409,7 @@ export default function ToolchainUISpecRendererV2({
                   </button>
                   <button
                     type="button"
-                    className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                     onClick={(event) => {
                       event.stopPropagation();
                       onWrapNode?.(node.id, "box");
@@ -418,14 +424,14 @@ export default function ToolchainUISpecRendererV2({
               ) : null}
               {canAddLayoutChildren ? (
                 <>
-                  <span className="px-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  <span className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                     Add child
                   </span>
                   {(["box", "stack", "split", "text", "divider"] as const).map((kind) => (
                     <button
                       key={`${node.id}-${kind}`}
                       type="button"
-                      className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                       onClick={(event) => {
                         event.stopPropagation();
                         onAddLayoutChild?.(node.id, kind);
@@ -448,10 +454,10 @@ export default function ToolchainUISpecRendererV2({
                 : "translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
             )}
           >
-            <div className="flex items-center gap-1 rounded-full border border-border/70 bg-background/95 px-2 py-1 shadow-sm">
+            <div className="flex items-center gap-1 rounded-full border border-border/70 bg-[linear-gradient(180deg,hsl(var(--background)/0.96),hsl(var(--card)/0.92))] px-2 py-1 shadow-sm">
               <button
                 type="button"
-                className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 aria-label="Insert sibling before"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -463,7 +469,7 @@ export default function ToolchainUISpecRendererV2({
               <div className="h-3 w-px bg-border/60" />
               <button
                 type="button"
-                className="rounded-full px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 aria-label="Insert sibling after"
                 onClick={(event) => {
                   event.stopPropagation();
@@ -483,7 +489,7 @@ export default function ToolchainUISpecRendererV2({
   const renderById = (id: string, visited: Set<string>): ReactNode => {
     if (visited.has(id)) {
       return (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-[12px] border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           Cycle detected at node &quot;{id}&quot;
         </div>
       );
@@ -491,7 +497,7 @@ export default function ToolchainUISpecRendererV2({
     const node = nodeMap[id];
     if (!node) {
       return (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div className="rounded-[12px] border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           Missing node &quot;{id}&quot;
         </div>
       );
@@ -524,7 +530,7 @@ export default function ToolchainUISpecRendererV2({
 
   const renderBoxNode = (node: BoxNode, visited: Set<string>) => {
     return (
-      <div className={cn("flex flex-col", styleToClassName(node.style))}>
+      <div className={cn("flex min-w-0 flex-col", styleToClassName(node.style))}>
         {node.header ? <div className="mb-2">{renderById(node.header, visited)}</div> : null}
         <div className={cn("flex flex-col", node.style?.gap ? undefined : "gap-2")}>
           {node.children.map((child) => (
@@ -588,7 +594,7 @@ export default function ToolchainUISpecRendererV2({
 
   const renderScrollNode = (node: ScrollNode, visited: Set<string>) => {
     return (
-      <div className={cn("min-h-0", styleToClassName({ ...node.style, overflow: "auto" }))}>
+      <div className={cn("min-h-0 min-w-0", styleToClassName({ ...node.style, overflow: "auto" }))}>
         {node.children.map((child) => (
           <Fragment key={child}>{renderById(child, visited)}</Fragment>
         ))}
@@ -597,12 +603,12 @@ export default function ToolchainUISpecRendererV2({
   };
 
   const renderDividerNode = (_node: DividerNode) => {
-    return <div className="my-2 h-px w-full bg-border/60" />;
+    return <div className="my-3 h-px w-full bg-border/70" />;
   };
 
   const renderTextNode = (node: TextNode) => {
     return (
-      <div className={cn("text-sm text-foreground", styleToClassName(node.style))}>
+      <div className={cn("text-[13px] leading-6 text-foreground", styleToClassName(node.style))}>
         {node.text}
       </div>
     );
@@ -618,5 +624,5 @@ export default function ToolchainUISpecRendererV2({
     return wrapNodeFrame(node, renderLayoutNode(node, visited));
   };
 
-  return <div className="min-h-0">{renderById(spec.root, new Set())}</div>;
+  return <div className="min-h-0 text-[13px] leading-6">{renderById(spec.root, new Set())}</div>;
 }

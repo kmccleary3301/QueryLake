@@ -553,8 +553,8 @@ function MappingEdge({
     targetY,
     targetPosition,
   });
-  const label = `${data?.destinationLabel ?? "NODE"} · ${data?.sourceModeLabel ?? "dry"}${data?.stream ? " · S" : ""}`;
-  const labelScale = Math.min(1.3, Math.max(0.92, 1 / Math.max(zoom, 0.01)));
+  const label = `${data?.sourceModeLabel ?? "dry"} → ${data?.destinationLabel ?? "NODE"}${data?.stream ? " · stream" : ""}`;
+  const labelScale = Math.min(1.2, Math.max(0.9, 1 / Math.max(zoom, 0.01)));
   const showExpandedActions = selected;
 
   return (
@@ -563,10 +563,10 @@ function MappingEdge({
       <EdgeLabelRenderer>
         <div
           className={cn(
-            "group nodrag nopan pointer-events-auto absolute flex min-h-9 items-center gap-1.5 rounded-[11px] border px-2.5 py-1.5 font-mono text-[11px] shadow-[0_10px_26px_hsl(var(--background)/0.28)] backdrop-blur-sm",
+            "group nodrag nopan pointer-events-auto absolute flex min-h-8 items-center gap-1 rounded-[12px] border px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] shadow-[0_14px_32px_hsl(var(--background)/0.26)] backdrop-blur-xl",
             selected
-              ? "border-cyan-300/60 bg-[linear-gradient(180deg,hsl(var(--background)/0.98),hsl(var(--card)/0.94))] text-foreground"
-              : "border-border/70 bg-[linear-gradient(180deg,hsl(var(--background)/0.96),hsl(var(--card)/0.9))] text-muted-foreground"
+              ? "border-[hsl(var(--ql-accent-amber)/0.48)] bg-[linear-gradient(180deg,hsl(var(--card)/0.98),hsl(var(--background)/0.94))] text-foreground"
+              : "border-border/[0.75] bg-[linear-gradient(180deg,hsl(var(--card)/0.94),hsl(var(--background)/0.92))] text-muted-foreground"
           )}
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px) scale(${labelScale})`,
@@ -576,7 +576,7 @@ function MappingEdge({
         >
           <button
             type="button"
-            className="truncate text-left hover:text-foreground"
+            className="truncate text-left transition-colors hover:text-foreground"
             onMouseDown={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation();
@@ -589,13 +589,13 @@ function MappingEdge({
           </button>
           <div
             className={cn(
-              "ml-0.5 flex items-center gap-1 transition-opacity",
+              "ml-0.5 flex items-center gap-1 transition-opacity duration-150",
               selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             )}
           >
             <button
               type="button"
-              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:bg-muted/40 hover:text-foreground"
+              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:border-[hsl(var(--ql-accent-amber)/0.42)] hover:text-foreground"
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -608,7 +608,7 @@ function MappingEdge({
             </button>
             <button
               type="button"
-              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:bg-muted/40 hover:text-foreground"
+              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:border-[hsl(var(--ql-accent-cyan)/0.42)] hover:text-foreground"
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -621,7 +621,7 @@ function MappingEdge({
             </button>
             <button
               type="button"
-              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:bg-muted/40 hover:text-foreground"
+              className="rounded-[8px] border border-border/70 px-1.5 py-0.5 text-[10px] hover:border-[hsl(var(--ql-accent-cyan)/0.42)] hover:text-foreground"
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
@@ -637,8 +637,8 @@ function MappingEdge({
               className={cn(
                 "rounded-[8px] border px-1.5 py-0.5 text-[10px]",
                 data?.stream
-                  ? "border-amber-400/70 bg-amber-500/10 text-amber-300"
-                  : "border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  ? "border-[hsl(var(--ql-accent-amber)/0.55)] bg-[hsl(var(--ql-accent-amber)/0.10)] text-[hsl(var(--ql-accent-amber))]"
+                  : "border-border/70 text-muted-foreground hover:border-[hsl(var(--ql-accent-amber)/0.42)] hover:text-foreground"
               )}
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
@@ -648,7 +648,7 @@ function MappingEdge({
               aria-label={data?.stream ? "Disable stream" : "Enable stream"}
               title={data?.stream ? "Disable stream" : "Enable stream"}
             >
-              {showExpandedActions ? (data?.stream ? "Stream off" : "Stream on") : "S"}
+              {showExpandedActions ? (data?.stream ? "Live" : "Static") : "S"}
             </button>
           </div>
         </div>
@@ -659,62 +659,57 @@ function MappingEdge({
 
 function GraphNodeCard({ data, selected }: NodeProps<GraphNodeData>) {
   const maxRows = Math.max(data.inputKeys.length, data.outputs.length + 1, 3);
-  const minHeight = 112 + maxRows * 18;
+  const minHeight = 126 + maxRows * 18;
 
   return (
     <div
       className={cn(
-        "relative w-[286px] rounded-[18px] p-[1px] transition-all duration-150",
+        "relative w-[298px] rounded-[18px] border bg-[linear-gradient(180deg,hsl(var(--ql-node)/0.98),hsl(var(--ql-surface-2)/0.94))] p-3 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.03),0_16px_34px_hsl(var(--background)/0.24)] transition-all duration-150",
+        "border-[hsl(var(--ql-node-border)/0.95)]",
         selected
-          ? "bg-[linear-gradient(140deg,#ec4899_0%,#8b5cf6_50%,#22d3ee_100%)]"
-          : "bg-[linear-gradient(140deg,rgba(236,72,153,0.55)_0%,rgba(139,92,246,0.45)_50%,rgba(34,211,238,0.55)_100%)]",
-        selected ? "shadow-[0_0_0_1px_rgba(236,72,153,0.16),0_0_36px_rgba(120,80,220,0.38)]" : "shadow-[0_0_28px_rgba(120,80,220,0.24)]",
-        data.highlightedAsDestination ? "ring-2 ring-cyan-300/70 shadow-[0_0_36px_rgba(34,211,238,0.34)]" : undefined,
-        data.showDropHint ? "ring-2 ring-emerald-300/70 shadow-[0_0_36px_rgba(52,211,153,0.34)]" : undefined,
-        data.isConnectSource ? "opacity-95 saturate-[1.05]" : undefined
+          ? "-translate-y-[1px] border-[hsl(var(--ql-accent-amber)/0.55)] shadow-[0_0_0_1px_hsl(var(--ql-accent-amber)/0.16),0_18px_36px_hsl(var(--background)/0.26)]"
+          : undefined,
+        data.highlightedAsDestination
+          ? "ring-1 ring-[hsl(var(--ql-accent-cyan)/0.65)]"
+          : undefined,
+        data.showDropHint ? "ring-2 ring-[hsl(var(--ql-accent-lime)/0.6)]" : undefined,
+        data.isConnectSource ? "scale-[1.01]" : undefined
       )}
       style={{ minHeight }}
     >
+      <div className="pointer-events-none absolute inset-x-3 top-0 h-[2px] rounded-full bg-[linear-gradient(90deg,hsl(var(--ql-accent-amber)/0.55),transparent_55%,hsl(var(--ql-accent-cyan)/0.45))]" />
       {data.showDropHint ? (
-        <div className="absolute left-3 top-2 z-20 rounded-sm border border-emerald-300/60 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200">
-          Drop mapping here
+        <div className="absolute left-3 top-2 z-20 rounded-full border border-[hsl(var(--ql-accent-lime)/0.55)] bg-[hsl(var(--ql-accent-lime)/0.10)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ql-accent-lime))]">
+          Drop mapping
         </div>
       ) : null}
       <Handle
         id="in"
         type="target"
         position={Position.Left}
-        style={{ top: 38 }}
-        className={cn(
-          "!h-4 !w-4 !border-2 !bg-background/95",
-          data.showDropHint ? "!border-emerald-300" : "!border-[#ec4899]"
-        )}
+        style={{ top: 44, borderColor: "hsl(var(--ql-accent-amber))" }}
+        className="!h-3.5 !w-3.5 !border-[2px] !bg-background/[0.95]"
       />
 
       {data.outputs.map((output) => {
-        const top = 62 + output.index * 22;
+        const top = 72 + output.index * 22;
         const color =
           output.kind === "node"
-            ? "#22d3ee"
+            ? "hsl(var(--ql-accent-cyan))"
             : output.kind === "state"
-              ? "#f59e0b"
-              : "#60a5fa";
+              ? "hsl(var(--ql-accent-amber))"
+              : "hsl(var(--chart-4))";
         return (
           <Handle
             key={output.index}
             id={`feed-${output.index}`}
             type="source"
             position={Position.Right}
-            style={{ top }}
+            style={{ top, borderColor: color }}
             isConnectable={output.kind === "node"}
-            className="!h-4 !w-4 !border-2 !bg-background/95"
+            className="!h-3.5 !w-3.5 !border-[2px] !bg-background/[0.95]"
             aria-label={`Output ${output.index + 1}`}
-          >
-            <span
-              className="pointer-events-none absolute inset-0 rounded-full"
-              style={{ boxShadow: `0 0 0 1px ${color}` }}
-            />
-          </Handle>
+          />
         );
       })}
 
@@ -722,120 +717,136 @@ function GraphNodeCard({ data, selected }: NodeProps<GraphNodeData>) {
         id="new-feed"
         type="source"
         position={Position.Right}
-        style={{ top: 62 + data.outputs.length * 22 }}
-        className="!h-4 !w-4 !border-2 !border-dashed !border-[#a78bfa] !bg-background/95"
+        style={{ top: 72 + data.outputs.length * 22 }}
+        className="!h-3.5 !w-3.5 !border-[2px] !border-dashed !border-[hsl(var(--muted-foreground)/0.9)] !bg-background/[0.95]"
         aria-label="Create output mapping"
       />
 
-      <div className="h-full rounded-[17px] bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.10),transparent_26%),radial-gradient(circle_at_top_right,rgba(236,72,153,0.10),transparent_24%),linear-gradient(180deg,rgba(20,20,28,0.97),rgba(12,12,18,0.985))] px-3.5 pb-3.5 pt-3 backdrop-blur-sm transition-colors duration-150">
-        <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/80">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               Toolchain node
             </div>
-            <div className="truncate font-mono text-[12px] font-semibold tracking-[0.03em]">{data.id}</div>
+            <div className="mt-1 truncate font-mono text-[12px] font-semibold tracking-[0.03em] text-foreground">
+              {data.id}
+            </div>
           </div>
-          <div className="rounded-full border border-border/60 bg-background/40 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="rounded-full border border-border/70 bg-background/55 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
             {data.apiFunction ? "API" : "Custom"}
           </div>
         </div>
-        <div className="mb-3 rounded-[12px] border border-border/70 bg-background/35 px-2.5 py-1.5 text-[11px] text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-          API: {data.apiFunction ?? "Custom node"}
+
+        <div className="rounded-[12px] border border-border/70 bg-background/45 px-3 py-2 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.03)]">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Function</div>
+          <div className="mt-1 truncate text-[12px] text-foreground">{data.apiFunction ?? "Custom node"}</div>
         </div>
 
         <div className="grid grid-cols-[1fr_1fr] gap-2 text-[11px]">
-          <div className="space-y-1 rounded-[12px] border border-border/50 bg-background/25 p-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="font-semibold uppercase tracking-[0.16em] text-muted-foreground">Inputs</div>
-              <div className="rounded-full border border-border/50 bg-background/45 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <div className="rounded-[14px] border border-border/70 bg-background/30 p-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Inputs</div>
+              <div className="rounded-full border border-border/60 bg-background/55 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {data.inputKeys.length}
               </div>
             </div>
-            {data.inputKeys.length ? (
-              data.inputKeys.map((key) => (
-                <div key={key} className="truncate rounded-[9px] border border-border/40 bg-muted/15 px-1.5 py-1 font-mono">
-                  {key}
+            <div className="space-y-1">
+              {data.inputKeys.length ? (
+                data.inputKeys.map((key) => (
+                  <div key={key} className="truncate rounded-[10px] border border-border/60 bg-background/35 px-2 py-1.5 font-mono text-[11px] text-foreground/90">
+                    {key}
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[10px] border border-dashed border-border/60 bg-background/20 px-2 py-1.5 text-[11px] text-muted-foreground">
+                  No inputs
                 </div>
-              ))
-            ) : (
-              <div className="text-muted-foreground/80">No inputs</div>
-            )}
+              )}
+            </div>
           </div>
-          <div className="space-y-1 rounded-[12px] border border-border/50 bg-background/25 p-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="font-semibold uppercase tracking-[0.16em] text-muted-foreground">Outputs</div>
-              <div className="rounded-full border border-border/50 bg-background/45 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+
+          <div className="rounded-[14px] border border-border/70 bg-background/30 p-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Outputs</div>
+              <div className="rounded-full border border-border/60 bg-background/55 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 {data.outputs.length}
               </div>
             </div>
-            {data.outputs.length ? (
-              data.outputs.map((output) => (
-                <div
-                  key={output.index}
-                  className={cn(
-                    "flex items-center gap-1 rounded-[9px] border border-border/40 bg-muted/15 px-1.5 py-1 transition-colors duration-150",
-                    data.selectedFeedIndex === output.index ? "ring-1 ring-primary/60" : undefined,
-                    data.hoveredFeedIndex === output.index ? "bg-muted/45" : undefined
-                  )}
-                  onMouseEnter={() => data.onHoverMapping?.(output.index)}
-                  onMouseLeave={() => data.onHoverMapping?.(null)}
-                >
-                  <button
-                    type="button"
-                    className="truncate font-mono text-left hover:text-foreground"
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      data.onEditMapping?.(output.index);
-                    }}
-                    >
-                    {destinationLabel(output.destination)}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-[8px] border border-border/70 px-1.5 font-mono text-[10px] text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                    title="Cycle destination"
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      data.onCycleDestination?.(output.index);
-                    }}
-                  >
-                    D
-                  </button>
-                  <button
-                    type="button"
+            <div className="space-y-1">
+              {data.outputs.length ? (
+                data.outputs.map((output) => (
+                  <div
+                    key={output.index}
                     className={cn(
-                      "ml-auto rounded-[8px] border px-1.5 font-mono text-[10px]",
-                      output.stream
-                        ? "border-amber-400/70 bg-amber-500/10 text-amber-300"
-                        : "border-border/70 text-muted-foreground hover:bg-muted/40"
+                      "flex items-center gap-1 rounded-[10px] border px-2 py-1.5 transition-colors duration-150",
+                      "border-border/60 bg-background/35",
+                      data.selectedFeedIndex === output.index
+                        ? "border-[hsl(var(--ql-accent-amber)/0.55)] bg-[hsl(var(--ql-accent-amber)/0.08)]"
+                        : undefined,
+                      data.hoveredFeedIndex === output.index ? "bg-accent/40" : undefined
                     )}
-                    title={output.stream ? "Disable stream" : "Enable stream"}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      data.onToggleStream?.(output.index);
-                    }}
+                    onMouseEnter={() => data.onHoverMapping?.(output.index)}
+                    onMouseLeave={() => data.onHoverMapping?.(null)}
                   >
-                    S
-                  </button>
+                    <button
+                      type="button"
+                      className="truncate text-left font-mono text-[11px] transition-colors hover:text-foreground"
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        data.onEditMapping?.(output.index);
+                      }}
+                    >
+                      {destinationLabel(output.destination)}
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-[8px] border border-border/70 px-1.5 font-mono text-[10px] text-muted-foreground hover:border-[hsl(var(--ql-accent-cyan)/0.42)] hover:text-foreground"
+                      title="Cycle destination"
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        data.onCycleDestination?.(output.index);
+                      }}
+                    >
+                      D
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        "ml-auto rounded-[8px] border px-1.5 font-mono text-[10px]",
+                        output.stream
+                          ? "border-[hsl(var(--ql-accent-amber)/0.55)] bg-[hsl(var(--ql-accent-amber)/0.10)] text-[hsl(var(--ql-accent-amber))]"
+                          : "border-border/70 text-muted-foreground hover:border-[hsl(var(--ql-accent-amber)/0.42)] hover:text-foreground"
+                      )}
+                      title={output.stream ? "Disable stream" : "Enable stream"}
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        data.onToggleStream?.(output.index);
+                      }}
+                    >
+                      {output.stream ? "ST" : "S"}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-[10px] border border-dashed border-border/60 bg-background/20 px-2 py-1.5 text-[11px] text-muted-foreground">
+                  No mappings
                 </div>
-              ))
-            ) : (
-              <div className="text-muted-foreground/80">No mappings</div>
-            )}
-            <button
-              type="button"
-              className="w-full rounded-[10px] border border-dashed border-border/80 bg-background/20 px-2 py-1.5 text-left text-muted-foreground hover:bg-muted/35"
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                data.onCreateMapping?.();
-              }}
-            >
-              + new mapping
-            </button>
+              )}
+              <button
+                type="button"
+                className="w-full rounded-[10px] border border-dashed border-border/70 bg-background/20 px-2 py-1.5 text-left font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:border-[hsl(var(--ql-accent-amber)/0.45)] hover:text-foreground"
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  data.onCreateMapping?.();
+                }}
+              >
+                + add mapping
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1512,7 +1523,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
       setSelectedFeed({ nodeId, index });
       setHoveredFeed({ nodeId, index });
     },
-    [clampCanvasOverlayPosition, toolchain]
+    [toolchain]
   );
 
   const edges = useMemo(() => {
@@ -2255,7 +2266,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
         <div
           className={cn(
             "grid gap-4",
-            focusCanvas ? "xl:grid-cols-1" : "xl:grid-cols-[240px_minmax(0,1fr)_320px]"
+            focusCanvas ? "xl:grid-cols-1" : "xl:grid-cols-[260px_minmax(0,1fr)_340px]"
           )}
         >
           {focusCanvas ? null : (
@@ -2280,9 +2291,9 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                     type="button"
                     onClick={() => selectNode(node.id)}
                     className={cn(
-                      "w-full rounded-sm border px-2 py-1.5 text-left transition-colors",
+                      "w-full rounded-[12px] border px-2.5 py-2 text-left transition-[border-color,background-color,transform] duration-150 hover:-translate-y-px",
                       isSelected
-                        ? "border-primary/50 bg-primary/10"
+                        ? "border-primary/50 bg-primary/10 shadow-[0_10px_20px_hsl(var(--background)/0.14)]"
                         : "border-border/70 hover:bg-muted/35"
                     )}
                   >
@@ -2300,7 +2311,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
             </div>
             <Separator className="my-3" />
             <div className="space-y-1 text-[11px] text-muted-foreground">
-              <div className="font-medium text-foreground">Handle legend</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">Handle legend</div>
               <div>- cyan: node destination</div>
               <div>- amber: state destination</div>
               <div>- blue: user destination</div>
@@ -2313,7 +2324,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
             className={cn(
               "ql-editor-stage transition-all duration-200",
               hasLocalCanvasEditor
-                ? "border-cyan-400/45 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_18px_42px_rgba(20,184,166,0.16)]"
+                ? "border-primary/35 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04),0_18px_42px_hsl(var(--background)/0.2)]"
                 : undefined
             )}
           >
@@ -2329,7 +2340,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                   {selectedFeed ? "Quick mapping active" : "Canvas browsing"}
                 </span>
                 {hasLocalCanvasEditor && activeCanvasEditorLabel ? (
-                  <span className="rounded-full border border-cyan-400/45 bg-cyan-500/10 px-2 py-1 text-cyan-100">
+                  <span className="rounded-full border border-primary/45 bg-primary/10 px-2 py-1 font-mono uppercase tracking-[0.12em] text-foreground">
                     Editing {activeCanvasEditorLabel}
                   </span>
                 ) : null}
@@ -2339,11 +2350,11 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
               </div>
             </div>
             {selectedFeed && selectedFeedSummary ? (
-              <div className="mb-3 rounded-[16px] border border-cyan-400/35 bg-[radial-gradient(circle_at_top_left,hsl(var(--chart-2)/0.15),transparent_26%),linear-gradient(180deg,hsl(var(--background)/0.96),hsl(var(--card)/0.9))] p-3 shadow-[0_16px_34px_rgba(20,184,166,0.12)]">
+              <div className="ql-runtime-panel relative mb-3 overflow-hidden p-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                         Active mapping
                       </div>
                       <div className="mt-1 text-sm font-semibold text-foreground">
@@ -2429,7 +2440,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                   className={cn(
                     "ql-editor-canvas",
                     focusCanvas ? "h-[820px]" : "h-[740px]",
-                    hasLocalCanvasEditor ? "ring-1 ring-cyan-400/35" : undefined
+                    hasLocalCanvasEditor ? "ring-1 ring-primary/35" : undefined
                   )}
                   onContextMenuCapture={(event) => {
                     if (!reactFlowInstance) return;
@@ -2441,14 +2452,14 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                   }}
                 >
                   {hasLocalCanvasEditor && activeCanvasEditorLabel ? (
-                    <div className="pointer-events-none absolute left-4 top-4 z-10 rounded-full border border-cyan-400/40 bg-background/88 px-3 py-1 text-[11px] font-medium tracking-[0.08em] text-cyan-100 backdrop-blur-sm">
+                    <div className="pointer-events-none absolute left-4 top-4 z-10 rounded-full border border-primary/40 bg-background/[0.88] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-foreground backdrop-blur-sm">
                       Canvas editing mode · {activeCanvasEditorLabel}
                     </div>
                   ) : null}
                   {selectedFeed && selectedFeedSummary ? (
-                    <div className="pointer-events-auto absolute bottom-4 left-4 z-10 max-w-[min(720px,calc(100%-2rem))] rounded-[14px] border border-cyan-400/40 bg-background/90 px-3 py-2 shadow-[0_16px_34px_rgba(20,184,166,0.16)] backdrop-blur-sm">
+                    <div className="pointer-events-auto absolute bottom-4 left-4 z-10 max-w-[min(720px,calc(100%-2rem))] rounded-[16px] border border-border/80 bg-card/[0.95] px-3 py-2 shadow-[0_16px_34px_hsl(var(--background)/0.22)] backdrop-blur-sm">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-cyan-400/45 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+                        <span className="rounded-full border border-primary/45 bg-primary/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-foreground">
                           Selected edge tools
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -2567,7 +2578,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                   defaultViewport={viewport}
                   fitView={!viewport}
                 >
-                    <Background gap={18} size={1} color="hsl(var(--border) / 0.9)" />
+                    <Background gap={24} size={1} color="hsl(var(--foreground) / 0.12)" />
                     <MiniMap
                       pannable
                       zoomable
@@ -2582,9 +2593,9 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                     <svg>
                       <defs>
                         <linearGradient id="toolchain-edge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#ec4899" />
-                          <stop offset="60%" stopColor="#8b5cf6" />
-                          <stop offset="100%" stopColor="#22d3ee" />
+                          <stop offset="0%" stopColor="hsl(var(--ql-accent-amber))" />
+                          <stop offset="50%" stopColor="hsl(var(--ql-edge))" />
+                          <stop offset="100%" stopColor="hsl(var(--ql-accent-cyan))" />
                         </linearGradient>
                       </defs>
                     </svg>
@@ -2592,7 +2603,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
 
                   {showCanvasQuickMapping && selectedFeed && inlineMappingForm ? (
                     <div
-                      className="pointer-events-auto absolute z-20 w-[390px] rounded-[14px] border border-primary/40 bg-background/96 p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+                      className="pointer-events-auto absolute z-20 w-[390px] rounded-[16px] border border-border/80 bg-card/[0.95] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl"
                       style={{ left: canvasMappingPosition?.x ?? 16, top: canvasMappingPosition?.y ?? 16 }}
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
@@ -2856,7 +2867,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
 
                   {showCanvasQuickInput && inputEditorTarget ? (
                     <div
-                      className="pointer-events-auto absolute z-20 w-[360px] rounded-[14px] border border-cyan-400/35 bg-background/96 p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-sm"
+                      className="pointer-events-auto absolute z-20 w-[360px] rounded-[16px] border border-border/80 bg-card/[0.95] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl"
                       style={{ left: canvasInputPosition?.x ?? 24, top: canvasInputPosition?.y ?? 24 }}
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
@@ -3011,7 +3022,7 @@ export default function ToolchainGraphEditorClient({ params }: Props) {
                   ) : null}
 
                   {showAnchoredDrawer ? (
-                    <div className="absolute inset-y-2 right-2 z-20 w-[390px] rounded-sm border border-border bg-background/95 shadow-xl backdrop-blur-sm">
+                    <div className="absolute inset-y-2 right-2 z-20 w-[390px] rounded-[16px] border border-border/80 bg-card/[0.95] shadow-[0_24px_60px_hsl(var(--background)/0.32)] backdrop-blur-sm">
                       <div className="flex items-start justify-between gap-2 border-b border-border/70 px-3 py-2">
                         <div>
                           <div className="text-sm font-semibold">

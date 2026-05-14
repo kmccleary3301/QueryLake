@@ -141,7 +141,7 @@ export default function Page() {
   if (!authReviewed) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-border p-5 space-y-3">
+        <div className="ql-panel space-y-3 p-5">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56" />
           <Skeleton className="h-4 w-44" />
@@ -226,25 +226,25 @@ export default function Page() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-lg border border-border p-4 text-sm">
+        <div className="ql-metric-card text-sm">
           <div className="text-xs text-muted-foreground">Entries</div>
           <div className="mt-1 text-2xl font-semibold">
             {loading ? "—" : summary.totalEntries}
           </div>
         </div>
-        <div className="rounded-lg border border-border p-4 text-sm">
+        <div className="ql-metric-card text-sm">
           <div className="text-xs text-muted-foreground">Active API keys</div>
           <div className="mt-1 text-2xl font-semibold">
             {loading ? "—" : summary.apiKeys}
           </div>
         </div>
-        <div className="rounded-lg border border-border p-4 text-sm">
+        <div className="ql-metric-card text-sm">
           <div className="text-xs text-muted-foreground">Active users</div>
           <div className="mt-1 text-2xl font-semibold">
             {loading ? "—" : summary.users}
           </div>
         </div>
-        <div className="rounded-lg border border-border p-4 text-sm">
+        <div className="ql-metric-card text-sm">
           <div className="text-xs text-muted-foreground">Active orgs</div>
           <div className="mt-1 text-2xl font-semibold">
             {loading ? "—" : summary.orgs}
@@ -252,13 +252,13 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-4 text-sm text-muted-foreground">
+      <div className="ql-panel p-4 text-sm text-muted-foreground">
         {loading
           ? `Loading usage for the last ${rangeDays} days...`
           : `Found ${summary.totalEntries} usage entries in the last ${rangeDays} days.`}
       </div>
 
-      <div className="rounded-lg border border-border">
+      <div className="ql-data-surface">
         <Table>
           <TableHeader>
             <TableRow>

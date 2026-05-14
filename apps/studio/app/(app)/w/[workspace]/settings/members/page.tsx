@@ -187,7 +187,7 @@ export default function Page() {
       </div>
 
       {isPersonalWorkspace(params.workspace) ? (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+        <div className="ql-panel p-6 text-sm text-muted-foreground">
           <p>
             Personal workspaces do not have members. Switch to an organization
             workspace to manage team access.
@@ -200,7 +200,7 @@ export default function Page() {
         </div>
       ) : (
         <>
-          <div className="rounded-lg border border-border p-5 space-y-4">
+          <div className="ql-panel space-y-4 p-5">
             <div className="text-sm font-semibold">Invite member</div>
             <div className="flex flex-wrap gap-3">
               <Input
@@ -236,7 +236,7 @@ export default function Page() {
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
           </div>
 
-          <div className="rounded-lg border border-border">
+          <div className="ql-data-surface">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -337,13 +337,13 @@ export default function Page() {
       )}
 
       {pendingInvites.length > 0 && (
-        <div className="rounded-lg border border-border p-5">
+        <div className="ql-panel p-5">
           <div className="text-sm font-semibold">Your pending invites</div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             {pendingInvites.map((invite) => (
               <div
                 key={invite.organization_id}
-                className="rounded-md border border-border bg-background px-4 py-3 text-sm"
+                className="ql-panel-inset px-4 py-3 text-sm"
               >
                 <div className="font-medium">{invite.organization_name}</div>
                 <div className="mt-1 text-xs text-muted-foreground">

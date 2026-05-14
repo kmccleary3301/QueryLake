@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 // import { Textarea } from "@/registry/default/ui/textarea";
 import Editor, { Monaco, OnMount } from '@monaco-editor/react';
-import { editor } from "monaco-editor-core";
+import type { editor } from "monaco-editor";
 // import { getHighlighter } from 'shiki';
 // import * as monaco from 'monaco-editor';
 

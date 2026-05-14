@@ -7,7 +7,7 @@
 
 import { breakpointType } from "@/app/context-provider";
 import { cn } from "@/lib/utils";
-import { ClassValue } from "class-variance-authority/dist/types";
+import type { ClassValue } from "clsx";
 
 const BREAKPOINTS_ORDERED : breakpointType[] = ["xs", "sm", "md", "lg", "xl", "2xl"];
 
