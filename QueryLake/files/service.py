@@ -22,6 +22,14 @@ from QueryLake.operation_classes.ray_chandra_class import (
     resolve_pdf_render_scale,
     resolve_profile_max_image_pixels,
 )
+from QueryLake.scanning.adapters import LegacyMarkdownScanResult, ScannerRunContext
+from QueryLake.scanning.chandra import build_chandra_compatibility_envelope
+from QueryLake.scanning.contracts import materialize_legacy_markdown_envelope
+from QueryLake.scanning.integration import (
+    build_scanner_enriched_ocr_done_payload,
+    build_scanner_job_result_metadata,
+)
+from QueryLake.scanning.persistence import write_scanner_envelope
 from QueryLake.runtime.sse import SessionStreamHub
 from QueryLake.api.single_user_auth import get_user
 try:
@@ -35,6 +43,7 @@ FILE_EVENT_KINDS = (
     "SAFETY_SCANNED",
     "OCR_DONE",
     "TEXT_NORMALIZED",
+    "SCANNER_DONE",
     "CHUNKED",
     "EMBEDDED",
     "INDEXED",
@@ -182,6 +191,14 @@ class FilesRuntimeService:
             os.getenv("QUERYLAKE_PDF_TEXT_MIN_COVERAGE", "0.80") or 0.80
         )
         self._pdf_text_min_coverage = min(1.0, max(0.0, self._pdf_text_min_coverage))
+        pdf_native_engine = (os.getenv("QUERYLAKE_PDF_NATIVE_ENGINE", "pypdf") or "pypdf").strip().lower()
+        if pdf_native_engine not in {"pypdf", "pymupdf4llm", "auto"}:
+            pdf_native_engine = "pypdf"
+        self._pdf_native_engine = pdf_native_engine
+        scanner_bridge_mode = (os.getenv("QUERYLAKE_SCANNER_RUNTIME_BRIDGE", "off") or "off").strip().lower()
+        if scanner_bridge_mode not in {"off", "enrich_ocr_done", "dual_event"}:
+            scanner_bridge_mode = "off"
+        self._scanner_runtime_bridge = scanner_bridge_mode
 
     @staticmethod
     def _compute_render_cache_key(
@@ -302,6 +319,76 @@ class FilesRuntimeService:
             "min_coverage": self._pdf_text_min_coverage,
         }
 
+    def _try_extract_pymupdf4llm_native(self, data: bytes) -> Tuple[Optional[str], Dict[str, Any]]:
+        meta: Dict[str, Any] = {
+            "engine": "pymupdf4llm",
+            "status": "not_selected",
+            "mode": self._pdf_text_layer_mode,
+            "native_engine": self._pdf_native_engine,
+        }
+        if self._pdf_text_layer_mode == "off":
+            meta["reason"] = "mode_off"
+            return None, meta
+
+        try:
+            from QueryLake.scanning.native import (
+                NativeTextQualityError,
+                NativeTextQualityPolicy,
+                PyMuPDF4LLMNativeAdapter,
+                assess_native_text_quality,
+                split_markdown_pages,
+            )
+        except Exception as exc:
+            meta.update({"reason": "scanner_native_import_error", "error": str(exc)})
+            return None, meta
+
+        adapter = PyMuPDF4LLMNativeAdapter(
+            quality_policy=NativeTextQualityPolicy(
+                min_chars_per_page=self._pdf_text_min_chars_per_page,
+                min_qualified_page_coverage=self._pdf_text_min_coverage,
+            )
+        )
+        availability = adapter.check_available()
+        if not availability.available:
+            meta.update({"reason": availability.reason, "availability": availability.to_payload()})
+            return None, meta
+
+        try:
+            extraction = adapter.extract_pdf_bytes(data)
+            page_markdown = extraction.page_markdown or split_markdown_pages(extraction.markdown)
+            quality = assess_native_text_quality(page_markdown, adapter.quality_policy)
+            if not quality.selected:
+                meta.update({"reason": quality.reason, "quality": quality.to_payload(), "status": "quality_rejected"})
+                return None, meta
+            page_count = max(1, int(quality.pages))
+            meta.update(
+                {
+                    "status": "parsed",
+                    "selected": True,
+                    "reason": "quality_pass",
+                    "pages": page_count,
+                    "output_contract": "text_layer_fastpath_markdown",
+                    "page_source_by_page": {
+                        f"{page_idx:04d}": "native_text"
+                        for page_idx in range(1, page_count + 1)
+                    },
+                    "page_source_counts": {
+                        "native_text": page_count,
+                        "text_layer": page_count,
+                        "ocr": 0,
+                    },
+                    "native_quality": quality.to_payload(),
+                    "backend_version": extraction.backend_version,
+                }
+            )
+            return extraction.markdown, meta
+        except NativeTextQualityError as exc:
+            meta.update({"reason": exc.assessment.reason, "quality": exc.assessment.to_payload(), "status": "quality_rejected"})
+            return None, meta
+        except Exception as exc:
+            meta.update({"reason": "extract_error", "error": str(exc)})
+            return None, meta
+
     def _evaluate_pdf_text_layer_page_overrides(self, page_texts: List[str]) -> Dict[str, Any]:
         mode = self._pdf_text_layer_mode
         page_count = len(page_texts)
@@ -395,6 +482,13 @@ class FilesRuntimeService:
         return page_texts, meta
 
     def _try_extract_pdf_text_layer(self, data: bytes) -> Tuple[Optional[str], Dict[str, Any]]:
+        if self._pdf_native_engine in {"pymupdf4llm", "auto"}:
+            native_text, native_meta = self._try_extract_pymupdf4llm_native(data)
+            if native_text is not None:
+                return native_text, native_meta
+            if self._pdf_native_engine == "pymupdf4llm":
+                return None, native_meta
+
         page_texts, meta = self._extract_pdf_text_layer_pages(data)
         if page_texts is None:
             return None, meta
@@ -804,6 +898,65 @@ class FilesRuntimeService:
         sha = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
         return {"fingerprint": payload, "sha": sha}
 
+    def _build_scanner_runtime_bridge(
+        self,
+        *,
+        file_id: str,
+        version_id: str,
+        text_result: Optional[str],
+        source_meta: Optional[Dict[str, Any]],
+        ocr_info_cas: Optional[str],
+        ocr_engine: str,
+        selected_profile: str,
+    ):
+        if self._scanner_runtime_bridge == "off":
+            return None
+        if not text_result or not source_meta:
+            return None
+        output_contract = source_meta.get("output_contract")
+        if output_contract not in {
+            "ocr_markdown",
+            "text_layer_fastpath_markdown",
+            "mixed_text_layer_fastpath_markdown",
+        }:
+            return None
+
+        run_id = f"scan_{version_id}"
+        if ocr_engine in {"chandra", "chandra_mixed"}:
+            envelope = build_chandra_compatibility_envelope(
+                context=ScannerRunContext(
+                    run_id=run_id,
+                    backend_id="chandra_1",
+                    backend_class="incumbent_continuity",
+                    support_tier="first_class",
+                    file_id=file_id,
+                    file_version_id=version_id,
+                    config_hash=selected_profile,
+                    md={"runtime_bridge": self._scanner_runtime_bridge, "ocr_engine": ocr_engine},
+                ),
+                result=LegacyMarkdownScanResult(
+                    markdown=text_result,
+                    meta=source_meta,
+                    ocr_info_cas=ocr_info_cas,
+                ),
+            )
+        elif ocr_engine == "pdf_text_layer":
+            envelope = materialize_legacy_markdown_envelope(
+                run_id=run_id,
+                backend_id="pymupdf4llm_native",
+                backend_class="native_digital_extraction",
+                support_tier="first_class",
+                legacy_output_contract=output_contract,
+                markdown=text_result,
+                meta=source_meta,
+                file_id=file_id,
+                file_version_id=version_id,
+            )
+        else:
+            return None
+
+        return envelope, write_scanner_envelope(self.store, envelope)
+
     async def process_version(
         self,
         file_id: str,
@@ -832,6 +985,10 @@ class FilesRuntimeService:
             "pdf_text_layer_min_chars_per_page": self._pdf_text_min_chars_per_page,
             "pdf_text_layer_min_coverage": self._pdf_text_min_coverage,
         }
+        if self._scanner_runtime_bridge != "off":
+            extra["scanner_runtime_bridge"] = self._scanner_runtime_bridge
+        if self._pdf_native_engine != "pypdf":
+            extra["pdf_native_engine"] = self._pdf_native_engine
         fp = self.compute_fingerprint(fv.bytes_cas, extra=extra)
         if fv.processing_fingerprint == fp:
             # Already processed under same config; short-circuit
@@ -854,6 +1011,10 @@ class FilesRuntimeService:
             ocr_engine = "none"
             render_cache_hits = 0
             render_cache_misses = 0
+            scanner_source_meta: Optional[Dict[str, Any]] = None
+            scanner_envelope_cas: Optional[str] = None
+            scanner_result_meta: Optional[Dict[str, Any]] = None
+            route_explanation_ref: Optional[str] = None
             # Try Chandra first for PDFs when available; fall back to Surya.
             if self.umbrella and (fv.mime_type or "").endswith("pdf"):
                 from io import BytesIO
@@ -867,6 +1028,7 @@ class FilesRuntimeService:
                     ocr_engine = "pdf_text_layer"
                     info_bytes = json.dumps(text_layer_meta, sort_keys=True).encode("utf-8")
                     ocr_info_cas = self.store.put_bytes(info_bytes)
+                    scanner_source_meta = text_layer_meta
                 mixed_page_overrides: Optional[Dict[int, str]] = None
                 mixed_routing_meta: Optional[Dict[str, Any]] = None
                 if (
@@ -914,6 +1076,7 @@ class FilesRuntimeService:
                             }
                         info_bytes = json.dumps(out_meta, sort_keys=True).encode("utf-8")
                         ocr_info_cas = self.store.put_bytes(info_bytes)
+                        scanner_source_meta = out_meta
                     except Exception as exc:
                         chandra_failed = str(exc)
 
@@ -936,6 +1099,7 @@ class FilesRuntimeService:
                             out_meta = {**out_meta, "chandra_error": chandra_failed}
                         info_bytes = json.dumps(out_meta, sort_keys=True).encode("utf-8")
                         ocr_info_cas = self.store.put_bytes(info_bytes)
+                        scanner_source_meta = out_meta
                     except Exception:
                         text_result = None
                         ocr_info_cas = self.store.put_bytes(b"{}")
@@ -955,20 +1119,93 @@ class FilesRuntimeService:
             )
             self.db.add(page)
             self.db.commit()
+            ocr_done_payload = {
+                "pages": pages_count,
+                "ocr_json_cas": ocr_info_cas,
+                "engine": ocr_engine,
+                "profile": selected_profile,
+                "render_cache_hits": render_cache_hits,
+                "render_cache_misses": render_cache_misses,
+            }
+            scanner_bridge_start = time.time()
+            scanner_bridge = None
+            scanner_bridge_error: Optional[str] = None
+            try:
+                scanner_bridge = self._build_scanner_runtime_bridge(
+                    file_id=file_id,
+                    version_id=version_id,
+                    text_result=text_result,
+                    source_meta=scanner_source_meta,
+                    ocr_info_cas=ocr_info_cas,
+                    ocr_engine=ocr_engine,
+                    selected_profile=selected_profile,
+                )
+            except Exception as exc:
+                scanner_bridge_error = str(exc)
+                metrics.record_scanner_run(
+                    backend_id=str(ocr_engine or "unknown"),
+                    status="failed",
+                    acquisition_mode="unknown",
+                    latency_seconds=time.time() - scanner_bridge_start,
+                    estimated_cost=0.0,
+                )
+            if scanner_bridge is not None:
+                scanner_envelope, persisted = scanner_bridge
+                scanner_envelope_cas = persisted.envelope_ref.storage_ref
+                route_explanation_ref = self.store.put_bytes(
+                    json.dumps(
+                        {
+                            "schema_version": "scanner_route_explanation_v1",
+                            "run_id": scanner_envelope.scan_run.run_id,
+                            "backend_id": scanner_envelope.scan_run.backend_id,
+                            "decisions": [
+                                decision.to_payload()
+                                for decision in scanner_envelope.routing
+                            ],
+                        },
+                        sort_keys=True,
+                    ).encode("utf-8")
+                )
+                scanner_result_meta = build_scanner_job_result_metadata(
+                    scanner_envelope,
+                    persisted,
+                    route_explanation_ref=route_explanation_ref,
+                )
+                metrics.record_scanner_run(
+                    backend_id=scanner_envelope.scan_run.backend_id,
+                    status=scanner_envelope.scan_run.status,
+                    acquisition_mode=scanner_envelope.contract.acquisition_mode,
+                    latency_seconds=time.time() - scanner_bridge_start,
+                    estimated_cost=float(scanner_envelope.scan_run.md.get("estimated_cost", 0.0) or 0.0),
+                )
+                if self._scanner_runtime_bridge in {"enrich_ocr_done", "dual_event"}:
+                    ocr_done_payload = build_scanner_enriched_ocr_done_payload(
+                        ocr_done_payload,
+                        scanner_envelope,
+                        persisted,
+                    )
+                    ocr_done_payload["scanner"]["route_explanation_ref"] = route_explanation_ref
+            elif scanner_bridge_error and self._scanner_runtime_bridge in {"enrich_ocr_done", "dual_event"}:
+                ocr_done_payload["scanner"] = {
+                    "status": "failed",
+                    "backend_id": ocr_engine,
+                    "error": scanner_bridge_error,
+                }
             ev = self.events.append(
                 file_id,
                 version_id,
                 "OCR_DONE",
-                {
-                    "pages": pages_count,
-                    "ocr_json_cas": ocr_info_cas,
-                    "engine": ocr_engine,
-                    "profile": selected_profile,
-                    "render_cache_hits": render_cache_hits,
-                    "render_cache_misses": render_cache_misses,
-                },
+                ocr_done_payload,
             )
             await self._publish(file_id, ev)
+            if scanner_bridge is not None and self._scanner_runtime_bridge == "dual_event":
+                ev = self.events.append(
+                    file_id,
+                    version_id,
+                    "SCANNER_DONE",
+                    scanner_result_meta["scanner"],
+                )
+                await self._publish(file_id, ev)
 
             # Normalize text (placeholder)
             ev = self.events.append(file_id, version_id, "TEXT_NORMALIZED", {"notes": "placeholder"})
@@ -1017,7 +1254,13 @@ class FilesRuntimeService:
             ev = self.events.append(file_id, version_id, "INDEXED", {"bm25": True, "hnsw": True})
             await self._publish(file_id, ev)
 
-            self.events.upsert_job(job_id, file_id, version_id, "COMPLETED")
+            result_meta = scanner_result_meta if scanner_result_meta is not None else None
+            if scanner_envelope_cas is not None:
+                result_meta = {
+                    **(result_meta or {}),
+                    "scanner_envelope_cas": scanner_envelope_cas,
+                }
+            self.events.upsert_job(job_id, file_id, version_id, "COMPLETED", result_meta=result_meta)
             return {"job_id": job_id, "status": "COMPLETED"}
         except Exception as e:
             self.events.upsert_job(job_id, file_id, version_id, "FAILED", result_meta={"error": str(e)})

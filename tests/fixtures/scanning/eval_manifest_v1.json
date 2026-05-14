@@ -1,0 +1,78 @@
+{
+  "schema_version": "scanner_eval_manifest_v1",
+  "cases": [
+    {
+      "case_id": "born_digital_clean_pdf",
+      "document_class": "born_digital_pdf",
+      "capture_mode": "born_digital",
+      "source_ref": "fixture://born_digital_clean_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["native_text"],
+      "required_projection_kinds": ["canonical_text", "canonical_markdown", "chunk_compat"],
+      "required_artifact_types": []
+    },
+    {
+      "case_id": "born_digital_table_heavy_pdf",
+      "document_class": "tables_heavy",
+      "capture_mode": "born_digital",
+      "source_ref": "fixture://born_digital_table_heavy_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["native_text", "mixed"],
+      "required_projection_kinds": ["canonical_text"]
+    },
+    {
+      "case_id": "weak_native_text_pdf",
+      "document_class": "weak_text_layer_pdf",
+      "capture_mode": "born_digital",
+      "source_ref": "fixture://weak_native_text_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["ocr", "mixed"],
+      "required_projection_kinds": ["canonical_text"]
+    },
+    {
+      "case_id": "simple_scanned_pdf",
+      "document_class": "scanned_pdf",
+      "capture_mode": "scanned",
+      "source_ref": "fixture://simple_scanned_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["ocr"],
+      "required_projection_kinds": ["canonical_text", "canonical_markdown"]
+    },
+    {
+      "case_id": "mixed_native_and_scanned_pdf",
+      "document_class": "mixed_pdf",
+      "capture_mode": "mixed",
+      "source_ref": "fixture://mixed_native_and_scanned_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["mixed"],
+      "required_projection_kinds": ["canonical_text", "chunk_compat"]
+    },
+    {
+      "case_id": "form_like_document",
+      "document_class": "form_like",
+      "capture_mode": "scanned",
+      "source_ref": "fixture://form_like_document",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["ocr", "vision_only"],
+      "required_projection_kinds": ["canonical_text"]
+    },
+    {
+      "case_id": "scientific_paper_pdf",
+      "document_class": "scientific_paper",
+      "capture_mode": "born_digital",
+      "source_ref": "fixture://scientific_paper_pdf",
+      "mime_type": "application/pdf",
+      "expected_acquisition_modes": ["native_text", "mixed"],
+      "required_projection_kinds": ["canonical_text"]
+    },
+    {
+      "case_id": "image_only_document",
+      "document_class": "image_document",
+      "capture_mode": "photo",
+      "source_ref": "fixture://image_only_document",
+      "mime_type": "image/png",
+      "expected_acquisition_modes": ["ocr", "vision_only"],
+      "required_projection_kinds": ["canonical_text"]
+    }
+  ]
+}

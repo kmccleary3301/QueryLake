@@ -109,6 +109,14 @@ ocr = [
   "surya-ocr==0.6.11",
 ]
 
+scanners-native = [
+  "pymupdf4llm",
+]
+
+scanners-local = [
+  "docling",
+]
+
 # vLLM runtime is intentionally separate in production (run as upstream HTTP service),
 # but is provided here as an optional extra for experiments.
 vllm = [

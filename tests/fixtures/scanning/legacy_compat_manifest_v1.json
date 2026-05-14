@@ -1,0 +1,67 @@
+{
+  "schema_version": "scanner_legacy_compat_manifest_v1",
+  "cases": [
+    {
+      "case_id": "ocr_markdown_chandra_2p",
+      "run_id": "fixture_ocr_2p",
+      "backend_id": "chandra_1",
+      "backend_class": "incumbent_continuity",
+      "support_tier": "first_class",
+      "legacy_output_contract": "ocr_markdown",
+      "markdown": "# Fixture OCR\n\nPage one text.\n\nPage two text.",
+      "meta": {
+        "engine": "chandra",
+        "pages": 2,
+        "page_source_by_page": {"0001": "ocr", "0002": "ocr"},
+        "page_source_counts": {"ocr": 2, "text_layer": 0},
+        "page_complexity_counts": {"simple": 1, "dense": 1}
+      },
+      "expected": {
+        "acquisition_mode": "ocr",
+        "page_modes": ["ocr", "ocr"],
+        "raw_backend_contract": "chandra_ocr_markdown"
+      }
+    },
+    {
+      "case_id": "text_layer_fastpath_1p",
+      "run_id": "fixture_native_1p",
+      "backend_id": "pymupdf4llm_native",
+      "backend_class": "native_digital_extraction",
+      "support_tier": "first_class",
+      "legacy_output_contract": "text_layer_fastpath_markdown",
+      "markdown": "# Fixture Native\n\nNative PDF text layer content.",
+      "meta": {
+        "engine": "pdf_text_layer",
+        "pages": 1,
+        "page_source_by_page": {"0001": "text_layer"},
+        "page_source_counts": {"ocr": 0, "text_layer": 1}
+      },
+      "expected": {
+        "acquisition_mode": "native_text",
+        "page_modes": ["native_text"],
+        "raw_backend_contract": "pdf_text_layer_fastpath_markdown"
+      }
+    },
+    {
+      "case_id": "mixed_text_layer_fastpath_3p",
+      "run_id": "fixture_mixed_3p",
+      "backend_id": "chandra_1",
+      "backend_class": "incumbent_continuity",
+      "support_tier": "first_class",
+      "legacy_output_contract": "mixed_text_layer_fastpath_markdown",
+      "markdown": "# Fixture Mixed\n\nNative page.\n\nOCR fallback page.\n\nNative final page.",
+      "meta": {
+        "engine": "chandra",
+        "pages": 3,
+        "page_source_by_page": {"0001": "text_layer", "0002": "ocr", "0003": "text_layer"},
+        "page_source_counts": {"ocr": 1, "text_layer": 2},
+        "page_complexity_counts": {"simple": 2, "dense": 1}
+      },
+      "expected": {
+        "acquisition_mode": "mixed",
+        "page_modes": ["native_text", "ocr", "native_text"],
+        "raw_backend_contract": "chandra_mixed_text_layer_fastpath_markdown"
+      }
+    }
+  ]
+}

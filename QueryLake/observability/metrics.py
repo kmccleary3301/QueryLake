@@ -82,6 +82,23 @@ if _PROM:
         "Retrieval cache events by stage/type",
         labelnames=("stage", "event"),
     )
+    SCANNER_RUNS_TOTAL = Counter(
+        "querylake_scanner_runs_total",
+        "Scanner runs by backend, status, and acquisition mode",
+        labelnames=("backend_id", "status", "acquisition_mode"),
+    )
+    SCANNER_LATENCY_SECONDS = Histogram(
+        "querylake_scanner_latency_seconds",
+        "Scanner runtime bridge latency by backend and acquisition mode",
+        labelnames=("backend_id", "acquisition_mode"),
+        buckets=(0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
+    )
+    SCANNER_ESTIMATED_COST = Histogram(
+        "querylake_scanner_estimated_cost",
+        "Scanner estimated cost by backend and acquisition mode",
+        labelnames=("backend_id", "acquisition_mode"),
+        buckets=(0, 0.0001, 0.001, 0.01, 0.1, 1, 10),
+    )
 
     GPU_REPLICA_RESIDENCY = Gauge(
         "querylake_gpu_replica_resident",
@@ -134,6 +151,21 @@ if _PROM:
     def record_retrieval_cache(stage: str, event: str) -> None:
         RETRIEVAL_CACHE_EVENTS_TOTAL.labels(stage=stage, event=event).inc()
 
+    def record_scanner_run(backend_id: str, status: str, acquisition_mode: str, latency_seconds: float = 0.0, estimated_cost: float = 0.0) -> None:
+        SCANNER_RUNS_TOTAL.labels(
+            backend_id=backend_id,
+            status=status,
+            acquisition_mode=acquisition_mode,
+        ).inc()
+        SCANNER_LATENCY_SECONDS.labels(
+            backend_id=backend_id,
+            acquisition_mode=acquisition_mode,
+        ).observe(max(0.0, float(latency_seconds)))
+        SCANNER_ESTIMATED_COST.labels(
+            backend_id=backend_id,
+            acquisition_mode=acquisition_mode,
+        ).observe(max(0.0, float(estimated_cost)))
+
     def record_gpu_runtime_metadata(
         role: str,
         model_id: str,
@@ -179,6 +211,11 @@ else:
         "querylake_retrieval_results_count_sum": {},
         "querylake_retrieval_results_count_count": {},
         "querylake_retrieval_cache_events_total": {},
+        "querylake_scanner_runs_total": {},
+        "querylake_scanner_latency_seconds_sum": {},
+        "querylake_scanner_latency_seconds_count": {},
+        "querylake_scanner_estimated_cost_sum": {},
+        "querylake_scanner_estimated_cost_count": {},
     }
     _gauges: Dict[str, Dict[Tuple[Tuple[str, str], ...], float]] = {
         "querylake_sse_subscribers": {},
@@ -239,6 +276,15 @@ else:
         _inc("querylake_retrieval_results_count_count", labels)
     def record_retrieval_cache(stage: str, event: str) -> None:
         _inc("querylake_retrieval_cache_events_total", {"stage": stage, "event": event})
+
+    def record_scanner_run(backend_id: str, status: str, acquisition_mode: str, latency_seconds: float = 0.0, estimated_cost: float = 0.0) -> None:
+        labels = {"backend_id": backend_id, "status": status, "acquisition_mode": acquisition_mode}
+        latency_labels = {"backend_id": backend_id, "acquisition_mode": acquisition_mode}
+        _inc("querylake_scanner_runs_total", labels)
+        _inc("querylake_scanner_latency_seconds_sum", latency_labels, max(0.0, float(latency_seconds)))
+        _inc("querylake_scanner_latency_seconds_count", latency_labels)
+        _inc("querylake_scanner_estimated_cost_sum", latency_labels, max(0.0, float(estimated_cost)))
+        _inc("querylake_scanner_estimated_cost_count", latency_labels)
 
     def record_gpu_runtime_metadata(
         role: str,
